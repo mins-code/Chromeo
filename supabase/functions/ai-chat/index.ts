@@ -1,6 +1,4 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { GoogleGenAI } from "https://esm.sh/@google/genai@0.1.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,40 +18,59 @@ serve(async (req) => {
       throw new Error('Missing GEMINI_API_KEY environment variable');
     }
 
-    const ai = new GoogleGenAI({ apiKey });
+    // Use fetch to call Gemini API directly
+    const endpoint = history 
+      ? 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent'
+      : 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
 
-    // If history is provided, it's a chat session
-    if (history) {
-        const chat = ai.chats.create({
-            model: 'gemini-2.0-flash-exp', // Updated model name or keep as requested
-            config: {
-                systemInstruction: systemInstruction,
-            },
-            history: history
-        });
+    const body = history ? {
+      contents: [
+        ...history.map(h => ({
+          role: h.role === 'model' ? 'model' : 'user',
+          parts: h.parts
+        })),
+        {
+          role: 'user',
+          parts: [{ text: message }]
+        }
+      ],
+      systemInstruction: {
+        parts: [{ text: systemInstruction }]
+      },
+      generationConfig: {
+        responseMimeType: "text/plain"
+      }
+    } : {
+      contents: [{
+        role: 'user',
+        parts: [{ text: message }]
+      }],
+      systemInstruction: {
+        parts: [{ text: systemInstruction }]
+      },
+      generationConfig: {
+        responseMimeType: "application/json"
+      }
+    };
 
-        const result = await chat.sendMessage({ message });
-        return new Response(JSON.stringify({ text: result.text }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-    } else {
-        // Single generation (for task enhancement)
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash-exp',
-            contents: message, // 'contents' expects the prompt string or parts
-            config: {
-                systemInstruction: systemInstruction,
-                responseMimeType: "application/json",
-                // schema is passed in systemInstruction or part of the prompt in the service
-                // but if we need JSON mode, we should pass it.
-                // For simplicity, we assume the prompt handles JSON structure requests
-                // OR we can pass config from body if needed.
-            }
-        });
-         return new Response(JSON.stringify({ text: response.text }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+    const response = await fetch(`${endpoint}?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.statusText}`);
     }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+
+    return new Response(JSON.stringify({ text }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
 
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
