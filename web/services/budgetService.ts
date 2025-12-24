@@ -42,7 +42,10 @@ export const getBudget = async (): Promise<Budget> => {
         duration: settings?.budget_duration || 'Monthly',
         savings: settings?.savings || 0,
         transactions: (transactions || []).map((t: any) => ({
-            ...t,
+            id: t.id,
+            description: t.description,
+            amount: t.amount,
+            type: t.type,
             date: parseInt(t.date) // Ensure number
         })),
         recurring: (recurring || []).map((r: any) => ({
