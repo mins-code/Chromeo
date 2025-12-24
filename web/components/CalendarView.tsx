@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Plus, X, Clock, Repeat } from 'lucide-react';
 import { Task, TaskPriority } from '../types';
 import Button from './Button';
+import CalendarDayCell from './CalendarDayCell';
 
 interface CalendarViewProps {
   tasks: Task[];
@@ -148,43 +149,14 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onDateClick, onEditT
             {/* Days Grid */}
             <div className="flex-1 grid grid-cols-7 grid-rows-6 gap-2 min-h-0">
                 {calendarDays.map((cell, idx) => (
-                    <div 
-                        key={idx} 
+                    <CalendarDayCell
+                        key={idx}
+                        day={cell.day}
+                        date={cell.date || null}
+                        tasks={cell.tasks}
+                        isToday={cell.date?.toDateString() === new Date().toDateString()}
                         onClick={() => cell.date && handleDayClick(cell.date)}
-                        className={`
-                            relative border rounded-xl p-2 flex flex-col transition-all cursor-pointer overflow-hidden
-                            ${!cell.day ? 'border-transparent cursor-default' : 'glass border-slate-200 dark:border-white/5 hover:border-brand-500/30 hover:shadow-lg'}
-                            ${cell.date?.toDateString() === new Date().toDateString() ? 'bg-brand-500/5 border-brand-500/30' : ''}
-                        `}
-                    >
-                        {cell.day && (
-                            <>
-                                <span className={`text-sm font-semibold mb-1 ${cell.date?.toDateString() === new Date().toDateString() ? 'text-brand-500' : 'text-slate-400'}`}>
-                                    {cell.day}
-                                </span>
-                                <div className="flex-1 flex flex-col gap-1 overflow-hidden">
-                                    {cell.tasks.slice(0, 3).map(task => (
-                                        <div 
-                                            key={task.id} 
-                                            className={`
-                                                text-[10px] px-1.5 py-0.5 rounded truncate border-l-2
-                                                ${task.priority === TaskPriority.HIGH ? 'bg-red-500/10 text-red-500 border-red-500' : 
-                                                  task.priority === TaskPriority.MEDIUM ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500' : 
-                                                  'bg-green-500/10 text-green-600 border-green-500'}
-                                            `}
-                                        >
-                                            {task.title}
-                                        </div>
-                                    ))}
-                                    {cell.tasks.length > 3 && (
-                                        <div className="text-[10px] text-slate-500 pl-1">
-                                            +{cell.tasks.length - 3} more
-                                        </div>
-                                    )}
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    />
                 ))}
             </div>
         </div>
