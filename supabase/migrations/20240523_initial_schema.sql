@@ -160,3 +160,5 @@ create policy "Users can insert/update own settings" on public.user_settings
 create index tasks_user_id_idx on public.tasks(user_id);
 create index transactions_user_id_idx on public.transactions(user_id);
 create index transactions_next_due_date_idx on public.transactions(next_due_date) where next_due_date is not null;
+-- Add this at the end of the file
+create index tasks_next_recurrence_date_idx on public.tasks(next_recurrence_date) where next_recurrence_date is not null;
