@@ -1,5 +1,6 @@
 
 import { Transaction } from "../types";
+import { supabase } from "./supabaseClient";
 
 // Regex patterns for Indian Bank SMS
 const REGEX_PATTERNS = {
@@ -62,4 +63,27 @@ export const parseSMS = (text: string, sender: string): ParsedSMS | null => {
         description,
         originalText: text
     };
+};
+
+export const processAndSaveSMS = async (text: string, sender: string): Promise<ParsedSMS | null> => {
+    const parsed = parseSMS(text, sender);
+    if (!parsed) return null;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return parsed; // Just return parsed data if not auth, for UI display
+
+    // Save to DB
+    const { error } = await supabase.from('transactions').insert({
+        user_id: user.id,
+        description: parsed.description,
+        amount: parsed.amount,
+        type: parsed.type,
+        date: new Date().toISOString()
+    });
+
+    if (error) {
+        console.error("Error saving SMS transaction:", error);
+    }
+
+    return parsed;
 };
