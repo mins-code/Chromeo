@@ -136,13 +136,14 @@ const App: React.FC = () => {
     const handleSmsEvent = async (event: CustomEvent) => {
         const { body, sender } = event.detail;
         if (body) {
-            const parsed = SmsService.parseSMS(body, sender || 'Unknown');
+            // Use processAndSaveSMS to ensure it goes to DB
+            const parsed = await SmsService.processAndSaveSMS(body, sender || 'Unknown');
             if (parsed) {
-                // Automatically add to budget
-                const updatedBudget = await BudgetService.addTransaction(parsed.description, parsed.amount, parsed.type);
-                setBudget(updatedBudget);
-                setLastSmsTransaction(parsed);
+                // Refresh budget to show new item
+                const loadedBudget = await BudgetService.getBudget();
+                setBudget(loadedBudget);
                 
+                setLastSmsTransaction(parsed);
                 setTimeout(() => setLastSmsTransaction(null), 5000);
             }
         }

@@ -1,9 +1,6 @@
 
-import { GoogleGenAI, Type, Schema } from "@google/genai";
+import { supabase } from "./supabaseClient";
 import { Task, TaskPriority } from "../types";
-
-// Initialize Gemini Client
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const SYSTEM_INSTRUCTION = `You are ChronoDeX AI, an elite productivity and financial assistant.
 Your goal is to help users manage tasks, schedule work, and plan their budget.
@@ -79,29 +76,32 @@ export const enhanceTaskWithAI = async (taskTitle: string, existingTags: string[
       ? `\n\nEXISTING TAGS: ${existingTags.join(', ')}. Please choose tags from this list if relevant. Only create new tags if absolutely necessary.`
       : '';
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Analyze the task "${taskTitle}". Provide a concise 1-sentence description, 3-5 actionable subtasks, a recommended priority level (LOW, MEDIUM, or HIGH), and 2 relevant tags.${tagsContext}`,
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            description: { type: Type.STRING },
-            subtasks: { type: Type.ARRAY, items: { type: Type.STRING } },
-            priority: { type: Type.STRING, enum: ["LOW", "MEDIUM", "HIGH"] },
-            tags: { type: Type.ARRAY, items: { type: Type.STRING } }
-          },
-          required: ["description", "subtasks", "priority", "tags"]
+    const message = `Analyze the task "${taskTitle}". Provide a concise 1-sentence description, 3-5 actionable subtasks, a recommended priority level (LOW, MEDIUM, or HIGH), and 2 relevant tags.${tagsContext}`;
+
+    const { data, error } = await supabase.functions.invoke('ai-chat', {
+        body: {
+            message,
+            systemInstruction: SYSTEM_INSTRUCTION + `\n\nEnsure output is strictly JSON with keys: description, subtasks (string array), priority, tags.`
         }
-      }
     });
+
+    if (error) {
+        console.error("AI Function Error:", error);
+        return null;
+    }
     
-    const text = response.text;
+    const text = data.text;
     if (!text) return null;
     
-    const result = JSON.parse(text) as AIEnrichedTask;
+    // Parse the JSON from the text response (which might contain markdown code blocks)
+    const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/{[\s\S]*}/);
+    let result: AIEnrichedTask;
+
+    if (jsonMatch) {
+         result = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+    } else {
+         result = JSON.parse(text);
+    }
     
     // Convert string priority to Enum
     let mappedPriority = TaskPriority.MEDIUM;
@@ -110,7 +110,7 @@ export const enhanceTaskWithAI = async (taskTitle: string, existingTags: string[
 
     return {
         description: result.description,
-        subtasks: result.subtasks.map(t => ({ id: crypto.randomUUID(), title: t, isCompleted: false })),
+        subtasks: result.subtasks.map((t: string) => ({ id: crypto.randomUUID(), title: t, isCompleted: false })),
         priority: mappedPriority,
         tags: result.tags
     };
@@ -129,16 +129,17 @@ export const chatWithAI = async (message: string, history: {role: 'user' | 'mode
 
         const dynamicInstruction = `${SYSTEM_INSTRUCTION}\n\nIMPORTANT: The user's name is "${userName}". Address them by name occasionally.${tagsContext}`;
 
-        const chat = ai.chats.create({
-            model: 'gemini-3-flash-preview',
-            config: {
-                systemInstruction: dynamicInstruction,
-            },
-            history: history
+        const { data, error } = await supabase.functions.invoke('ai-chat', {
+            body: {
+                message,
+                history,
+                userName,
+                systemInstruction: dynamicInstruction
+            }
         });
 
-        const result = await chat.sendMessage({ message });
-        return result.text || "I'm not sure how to respond to that.";
+        if (error) throw error;
+        return data.text || "I'm not sure how to respond to that.";
     } catch (error) {
         console.error("Chat error:", error);
         return "I'm having trouble connecting to the network right now.";
