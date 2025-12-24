@@ -87,13 +87,13 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onDateClick, onEditT
     return false;
   };
 
-  const calendarDays = useMemo(() => {
+const calendarDays = useMemo(() => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
     const daysInMonth = getDaysInMonth(year, month);
     const firstDay = getFirstDayOfMonth(year, month);
     
-    const days = [];
+    const days: Array<{ day: number | null; date?: Date; tasks?: Task[] }> = [];
     
     // Padding for prev month
     for (let i = 0; i < firstDay; i++) {
