@@ -46,7 +46,7 @@ export const getBudget = async (): Promise<Budget> => {
             description: t.description,
             amount: t.amount,
             type: t.type,
-            date: parseInt(t.date) // Ensure number
+            date: new Date(t.date).getTime()
         })),
         recurring: (recurring || []).map((r: any) => ({
             id: r.id,
@@ -77,7 +77,7 @@ export const addTransaction = async (description: string, amount: number, type: 
             description,
             amount,
             type,
-            date: Date.now()
+            date: new Date().toISOString()
         });
     }
     return getBudget();
