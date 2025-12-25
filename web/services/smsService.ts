@@ -1,4 +1,3 @@
-
 import { Transaction } from "../types";
 import { supabase } from "./supabaseClient";
 
@@ -86,4 +85,21 @@ export const processAndSaveSMS = async (text: string, sender: string): Promise<P
     }
 
     return parsed;
+};
+
+// ADDED: This function was missing and causing the build error
+export const listenForIncomingSMS = (callback: (sms: ParsedSMS) => void) => {
+    // Placeholder for SMS listening logic (e.g., waiting for messages from Android wrapper)
+    // For now, this effectively does nothing but satisfies the type checker and import.
+    
+    // Example implementation if you use a window event from a native wrapper:
+    /*
+    window.addEventListener('SMS_RECEIVED', (e: any) => {
+        if (e.detail && e.detail.text) {
+             const parsed = parseSMS(e.detail.text, e.detail.sender || 'Unknown');
+             if (parsed) callback(parsed);
+        }
+    });
+    */
+    console.log("SMS Listener initialized");
 };
