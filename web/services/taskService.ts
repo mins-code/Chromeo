@@ -1,6 +1,30 @@
-
-import { Task, TaskStatus, TaskPriority, Partner } from "../types";
+import { Task, TaskStatus, TaskPriority, Partner, RecurrenceConfig } from "../types";
 import { supabase } from "./supabaseClient";
+
+// Helper function to calculate next recurrence date
+const calculateNextRecurrence = (recurrence: RecurrenceConfig, startDate: string): string => {
+  const next = new Date(startDate);
+  const interval = recurrence.interval || 1;
+  
+  switch (recurrence.frequency) {
+    case 'daily':
+      next.setDate(next.getDate() + interval);
+      break;
+    case 'weekly':
+      next.setDate(next.getDate() + (7 * interval));
+      break;
+    case 'monthly':
+      next.setMonth(next.getMonth() + interval);
+      break;
+    case 'yearly':
+      next.setFullYear(next.getFullYear() + interval);
+      break;
+    case 'none':
+      return null as any; // No recurrence
+  }
+  
+  return next.toISOString();
+};
 
 export const getTasks = async (): Promise<Task[]> => {
   const { data, error } = await supabase
@@ -29,6 +53,13 @@ export const createTask = async (task: Omit<Task, 'id' | 'createdAt'>): Promise<
   
   if (!user) throw new Error("User not authenticated");
 
+  // Calculate next_recurrence_date if task has recurrence
+  let nextRecurrenceDate = null;
+  if (task.recurrence && task.recurrence.frequency !== 'none') {
+    const baseDate = task.dueDate || task.reminderTime || new Date().toISOString();
+    nextRecurrenceDate = calculateNextRecurrence(task.recurrence, baseDate);
+  }
+
   const dbTask = {
     user_id: user.id,
     title: task.title,
@@ -45,6 +76,7 @@ export const createTask = async (task: Omit<Task, 'id' | 'createdAt'>): Promise<
     dependency_ids: task.dependencyIds || [],
     is_shared: task.isShared || false,
     recurrence: task.recurrence,
+    next_recurrence_date: nextRecurrenceDate,
     created_at: new Date().toISOString()
   };
 
@@ -70,6 +102,13 @@ export const createTask = async (task: Omit<Task, 'id' | 'createdAt'>): Promise<
 };
 
 export const updateTask = async (updatedTask: Task): Promise<Task | null> => {
+  // Calculate next_recurrence_date if task has recurrence
+  let nextRecurrenceDate = null;
+  if (updatedTask.recurrence && updatedTask.recurrence.frequency !== 'none') {
+    const baseDate = updatedTask.dueDate || updatedTask.reminderTime || new Date().toISOString();
+    nextRecurrenceDate = calculateNextRecurrence(updatedTask.recurrence, baseDate);
+  }
+
   const dbTask = {
     title: updatedTask.title,
     description: updatedTask.description,
@@ -84,7 +123,8 @@ export const updateTask = async (updatedTask: Task): Promise<Task | null> => {
     location: updatedTask.location,
     dependency_ids: updatedTask.dependencyIds,
     is_shared: updatedTask.isShared,
-    recurrence: updatedTask.recurrence
+    recurrence: updatedTask.recurrence,
+    next_recurrence_date: nextRecurrenceDate
   };
 
   const { data, error } = await supabase
