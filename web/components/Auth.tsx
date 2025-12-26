@@ -41,22 +41,22 @@ const Auth: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-slate-900 relative overflow-hidden">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 relative overflow-hidden">
       {/* Background Decor */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-500/10 rounded-full blur-[100px]" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 rounded-full blur-[100px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-500/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/15 rounded-full blur-[120px]" />
       </div>
 
-      <div className="w-full max-w-md p-8 glass rounded-2xl shadow-2xl relative z-10 mx-4 border border-white/10">
+      <div className="w-full max-w-md p-8 bg-white rounded-3xl shadow-xl shadow-slate-200/50 relative z-10 mx-4 border border-slate-200">
         <div className="text-center mb-8">
-            <div className="flex justify-center mb-4">
-                <div className="p-3 bg-brand-500/20 rounded-xl text-brand-500 border border-brand-500/20">
-                    <LayoutGrid size={32} />
-                </div>
+          <div className="flex justify-center mb-4">
+            <div className="p-3 bg-brand-500/10 rounded-xl text-brand-500 border border-brand-500/20">
+              <LayoutGrid size={32} />
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent font-display mb-2">{APP_NAME}</h1>
-            <p className="text-slate-400">Your AI-powered productivity suite.</p>
+          </div>
+          <h1 className="text-3xl font-bold text-slate-800 font-display mb-2">{APP_NAME}</h1>
+          <p className="text-slate-500">Your AI-powered productivity suite.</p>
         </div>
 
         <form onSubmit={handleAuth} className="space-y-6">
@@ -67,7 +67,7 @@ const Auth: React.FC = () => {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="name@example.com"
             required
-            className="bg-black/20 border-white/10 text-white"
+            className="bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400"
           />
           <Input
             label="Password"
@@ -76,18 +76,18 @@ const Auth: React.FC = () => {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
             required
-            className="bg-black/20 border-white/10 text-white"
+            className="bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400"
           />
 
           {error && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
               {error}
             </div>
           )}
 
-          <Button 
-            variant="primary" 
-            className="w-full h-12 text-lg shadow-brand-500/20 shadow-lg" 
+          <Button
+            variant="primary"
+            className="w-full h-12 text-lg shadow-brand-500/30 shadow-lg"
             disabled={isLoading}
           >
             {isLoading ? <Loader2 className="animate-spin" /> : (isSignUp ? 'Create Account' : 'Sign In')}
@@ -95,19 +95,19 @@ const Auth: React.FC = () => {
         </form>
 
         <div className="mt-6 text-center">
-            <p className="text-slate-400 text-sm">
-                {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-                <button 
-                    onClick={() => setIsSignUp(!isSignUp)}
-                    className="text-brand-500 hover:text-brand-400 font-semibold transition-colors"
-                >
-                    {isSignUp ? "Sign In" : "Sign Up"}
-                </button>
-            </p>
+          <p className="text-slate-500 text-sm">
+            {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+            <button
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-brand-500 hover:text-brand-600 font-semibold transition-colors"
+            >
+              {isSignUp ? "Sign In" : "Sign Up"}
+            </button>
+          </p>
         </div>
-        
-        <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-center gap-2 text-xs text-slate-500">
-            <Sparkles size={12} /> Powered by Gemini AI & Supabase
+
+        <div className="mt-8 pt-6 border-t border-slate-200 flex items-center justify-center gap-2 text-xs text-slate-400">
+          <Sparkles size={12} /> Powered by Gemini AI & Supabase
         </div>
       </div>
     </div>
