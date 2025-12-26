@@ -212,9 +212,10 @@ export const Layout: React.FC<LayoutProps> = ({
                     {/* Sidebar Header */}
                     <div className="h-20 flex items-center justify-between px-6 border-b border-slate-200 dark:border-white/5 shrink-0">
                         <div className={`transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}`}>
-                            {/* Dark theme: Image logo, Light theme: Text logo */}
-                            <div className="hidden dark:block">
-                                <img src="/logo-dark.png" alt={APP_NAME} className="h-10 w-auto" />
+                            {/* Dark theme: Logo icon + text, Light theme: Text only */}
+                            <div className="hidden dark:flex items-center gap-2">
+                                <img src="/logo-dark.png" alt={APP_NAME} className="h-9 w-auto rounded-lg" />
+                                <span className="text-lg font-bold text-white tracking-tight font-display">{APP_NAME}</span>
                             </div>
                             <h1 className="dark:hidden text-xl font-bold bg-gradient-to-r from-brand-600 via-brand-500 to-purple-600 bg-clip-text text-transparent tracking-tight font-display">
                                 {APP_NAME}
