@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Task, ViewMode, TaskStatus, Partner, TaskPriority, TaskType, ThemeOption, Budget, RecurringTransaction } from './types';
 import * as TaskService from './services/taskService';
@@ -18,13 +19,43 @@ import Auth from './components/Auth';
 import { Search, Filter, Users, Link2, Share2, HeartHandshake, CalendarClock, Sparkles, LogOut, Bell, Palette, Check, CheckCircle2, Zap, Anchor, Sun, Moon, CalendarDays, Clock, CheckSquare, Activity, ArrowRight, Repeat, AlertCircle, User, MessageSquare, Loader2 } from 'lucide-react';
 import { enhanceTaskWithAI } from './services/geminiService';
 
+// Map URL paths to ViewMode for Layout compatibility
+const pathToViewMode: Record<string, ViewMode> = {
+    '/': 'dashboard',
+    '/activities': 'activities',
+    '/tasks': 'tasks',
+    '/reminders': 'reminders',
+    '/events': 'events',
+    '/appointments': 'appointments',
+    '/calendar': 'calendar',
+    '/budget': 'budget',
+    '/ai-chat': 'ai-chat',
+    '/settings': 'settings',
+};
+
+const viewModeToPath: Record<ViewMode, string> = {
+    'dashboard': '/',
+    'activities': '/activities',
+    'tasks': '/tasks',
+    'reminders': '/reminders',
+    'events': '/events',
+    'appointments': '/appointments',
+    'calendar': '/calendar',
+    'budget': '/budget',
+    'ai-chat': '/ai-chat',
+    'settings': '/settings',
+};
+
 const App: React.FC = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const currentView: ViewMode = pathToViewMode[location.pathname] || 'dashboard';
+
     const [session, setSession] = useState<any>(null);
     const [isAuthLoading, setIsAuthLoading] = useState(true);
     const [isDataLoading, setIsDataLoading] = useState(false);
 
     const [tasks, setTasks] = useState<Task[]>([]);
-    const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
     const [searchQuery, setSearchQuery] = useState('');
@@ -447,7 +478,7 @@ const App: React.FC = () => {
     return (
         <Layout
             currentView={currentView}
-            onNavigate={setCurrentView}
+            onNavigate={(view) => navigate(viewModeToPath[view])}
             onAddTask={(type) => handleCreateTask(undefined, type)}
             userStats={userStats}
             currentTheme={theme}
@@ -524,11 +555,11 @@ const App: React.FC = () => {
                             <p className="text-slate-500 dark:text-slate-400 mt-1 text-lg">You have {sortedTodoTasks.length} pending tasks today.</p>
                         </div>
                         <div className="hidden md:block">
-                            <Button variant="secondary" onClick={() => setCurrentView('tasks')}>View All Tasks</Button>
+                            <Button variant="secondary" onClick={() => navigate('/tasks')}>View All Tasks</Button>
                         </div>
                     </header>
 
-                    <Stats tasks={tasks} onNavigate={setCurrentView} />
+                    <Stats tasks={tasks} onNavigate={(view) => navigate(viewModeToPath[view])} />
 
                     <div className="pt-4">
                         <div className="flex items-center justify-between mb-6">
@@ -585,7 +616,7 @@ const App: React.FC = () => {
                             return (
                                 <div
                                     key={cat.id}
-                                    onClick={() => setCurrentView(cat.id as ViewMode)}
+                                    onClick={() => navigate(viewModeToPath[cat.id as ViewMode])}
                                     className="glass-panel p-6 rounded-2xl border border-slate-200 dark:border-white/5 hover:border-brand-500/30 transition-all cursor-pointer group relative overflow-hidden flex flex-col h-64"
                                 >
                                     <div className="flex justify-between items-start mb-4">
