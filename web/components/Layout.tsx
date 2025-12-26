@@ -46,6 +46,7 @@ export const Layout: React.FC<LayoutProps> = ({
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isSidebarHovered, setIsSidebarHovered] = useState(false);
     const [ignoreHover, setIgnoreHover] = useState(false);
+    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
     // Tag Editing State
     const [editingTag, setEditingTag] = useState<string | null>(null);
@@ -467,7 +468,10 @@ export const Layout: React.FC<LayoutProps> = ({
                         {/* Brand */}
                         <div className="flex items-center gap-6">
                             {/* Mobile Menu Trigger (Visible only on mobile) */}
-                            <button className="md:hidden text-slate-500">
+                            <button
+                                className="md:hidden text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors"
+                                onClick={() => setIsMobileSidebarOpen(true)}
+                            >
                                 <Menu size={24} />
                             </button>
 
@@ -547,20 +551,93 @@ export const Layout: React.FC<LayoutProps> = ({
                         </div>
                     </header>
 
-                    {/* Mobile Header (Simplified) */}
-                    <div className="md:hidden flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/5 glass sticky top-0 z-30">
-                        {/* Theme-specific logo + text (mobile simplified) */}
-                        <div className="flex items-center gap-2">
-                            <img
-                                src={currentTheme === 'cyberpunk' ? '/logo-cyberpunk.jpg' : currentTheme === 'dark' ? '/logo-dark.jpg' : '/logo-light.jpg'}
-                                alt={APP_NAME}
-                                className="h-8 w-auto rounded-lg"
+                    {/* Mobile Sidebar Drawer */}
+                    {isMobileSidebarOpen && (
+                        <div className="md:hidden fixed inset-0 z-50">
+                            {/* Backdrop */}
+                            <div
+                                className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
+                                onClick={() => setIsMobileSidebarOpen(false)}
                             />
-                            <span className={`text-lg font-bold tracking-tight font-display ${currentTheme === 'light' ? 'text-slate-800' : 'text-white'}`}>
-                                {APP_NAME}
-                            </span>
+                            {/* Drawer */}
+                            <aside className="absolute left-0 top-0 h-full w-72 glass shadow-2xl border-r border-slate-200 dark:border-white/5 flex flex-col animate-slide-in-left">
+                                {/* Drawer Header */}
+                                <div className="h-20 flex items-center justify-between px-6 border-b border-slate-200 dark:border-white/5 shrink-0">
+                                    <div className="flex items-center gap-2">
+                                        <img
+                                            src={currentTheme === 'cyberpunk' ? '/logo-cyberpunk.jpg' : currentTheme === 'dark' ? '/logo-dark.jpg' : '/logo-light.jpg'}
+                                            alt={APP_NAME}
+                                            className="h-9 w-auto rounded-lg"
+                                        />
+                                        <span className={`text-lg font-bold tracking-tight font-display ${currentTheme === 'light' ? 'text-slate-800' : 'text-white'}`}>
+                                            {APP_NAME}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={() => setIsMobileSidebarOpen(false)}
+                                        className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+
+                                {/* Drawer Nav */}
+                                <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto no-scrollbar">
+                                    {NAVIGATION_ITEMS.map((item) => {
+                                        const Icon = item.icon;
+                                        const isActive = currentView === item.id;
+                                        return (
+                                            <button
+                                                key={item.id}
+                                                onClick={() => { onNavigate(item.id as ViewMode); setIsMobileSidebarOpen(false); }}
+                                                className={`group w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 font-medium whitespace-nowrap ${isActive
+                                                    ? 'bg-brand-500/5 text-brand-600 dark:text-brand-300 border border-brand-500/10'
+                                                    : 'text-slate-600 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-slate-100'
+                                                    }`}
+                                            >
+                                                <div className="flex items-center justify-center w-6 h-6 shrink-0">
+                                                    <Icon size={20} className={`transition-colors ${isActive ? 'text-brand-500 dark:text-brand-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`} />
+                                                </div>
+                                                <span className="flex-1 text-left">{item.label}</span>
+                                                {isActive && (
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(14,165,233,0.6)]" />
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </nav>
+
+                                {/* Drawer Footer */}
+                                <div className="p-3 border-t border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-black/20">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2 p-1">
+                                            <div className="w-9 h-9 shrink-0 rounded-full bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold shadow-md ring-2 ring-white/20">
+                                                {userInitials}
+                                            </div>
+                                            <div className="min-w-0 pr-2">
+                                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{userStats.userName}</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Pro Plan</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <button
+                                                onClick={toggleTheme}
+                                                className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                                            >
+                                                {currentTheme === 'light' ? <Sun size={20} /> : <Moon size={20} />}
+                                            </button>
+                                            <button
+                                                onClick={() => { onNavigate('settings'); setIsMobileSidebarOpen(false); }}
+                                                className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors rounded-lg hover:bg-black/5 dark:hover:bg-white/5"
+                                            >
+                                                <Settings size={20} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </aside>
                         </div>
-                    </div>
+                    )}
 
                     {/* Content Scroll Container */}
                     <main className="flex-1 overflow-y-auto no-scrollbar pb-24 md:pb-0 relative scroll-smooth">
