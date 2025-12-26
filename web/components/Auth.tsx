@@ -4,7 +4,7 @@ import { supabase } from '../services/supabaseClient';
 import Button from './Button';
 import Input from './Input';
 import { APP_NAME } from '../constants';
-import { Lock, Mail, Loader2, Sparkles, LayoutGrid } from 'lucide-react';
+import { Lock, Mail, Loader2, Sparkles } from 'lucide-react';
 
 const Auth: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -51,9 +51,7 @@ const Auth: React.FC = () => {
       <div className="w-full max-w-md p-8 bg-white rounded-3xl shadow-xl shadow-slate-200/50 relative z-10 mx-4 border border-slate-200">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="p-3 bg-brand-500/10 rounded-xl text-brand-500 border border-brand-500/20">
-              <LayoutGrid size={32} />
-            </div>
+            <img src="/logo-light.jpg" alt={APP_NAME} className="h-16 w-auto rounded-2xl shadow-lg" />
           </div>
           <h1 className="text-3xl font-bold text-slate-800 font-display mb-2">{APP_NAME}</h1>
           <p className="text-slate-500">Your AI-powered productivity suite.</p>

@@ -212,14 +212,17 @@ export const Layout: React.FC<LayoutProps> = ({
                     {/* Sidebar Header */}
                     <div className="h-20 flex items-center justify-between px-6 border-b border-slate-200 dark:border-white/5 shrink-0">
                         <div className={`transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}`}>
-                            {/* Dark theme: Logo icon + text, Light theme: Text only */}
-                            <div className="hidden dark:flex items-center gap-2">
-                                <img src="/logo-dark.png" alt={APP_NAME} className="h-9 w-auto rounded-lg" />
-                                <span className="text-lg font-bold text-white tracking-tight font-display">{APP_NAME}</span>
+                            {/* Theme-specific logo + text */}
+                            <div className="flex items-center gap-2">
+                                <img
+                                    src={currentTheme === 'cyberpunk' ? '/logo-cyberpunk.jpg' : currentTheme === 'dark' ? '/logo-dark.jpg' : '/logo-light.jpg'}
+                                    alt={APP_NAME}
+                                    className="h-9 w-auto rounded-lg"
+                                />
+                                <span className={`text-lg font-bold tracking-tight font-display ${currentTheme === 'light' ? 'text-slate-800' : 'text-white'}`}>
+                                    {APP_NAME}
+                                </span>
                             </div>
-                            <h1 className="dark:hidden text-xl font-bold bg-gradient-to-r from-brand-600 via-brand-500 to-purple-600 bg-clip-text text-transparent tracking-tight font-display">
-                                {APP_NAME}
-                            </h1>
                         </div>
 
                         <button
@@ -468,13 +471,17 @@ export const Layout: React.FC<LayoutProps> = ({
                                 <Menu size={24} />
                             </button>
 
-                            {/* Dark theme: Image logo, Light theme: Text logo */}
-                            <div className="hidden dark:block md:hidden">
-                                <img src="/logo-dark.png" alt={APP_NAME} className="h-8 w-auto" />
+                            {/* Theme-specific logo + text (mobile) */}
+                            <div className="flex md:hidden items-center gap-2">
+                                <img
+                                    src={currentTheme === 'cyberpunk' ? '/logo-cyberpunk.jpg' : currentTheme === 'dark' ? '/logo-dark.jpg' : '/logo-light.jpg'}
+                                    alt={APP_NAME}
+                                    className="h-8 w-auto rounded-lg"
+                                />
+                                <span className={`text-lg font-bold tracking-tight font-display ${currentTheme === 'light' ? 'text-slate-800' : 'text-white'}`}>
+                                    {APP_NAME}
+                                </span>
                             </div>
-                            <h1 className="dark:hidden text-2xl font-bold bg-gradient-to-r from-brand-600 via-brand-500 to-purple-600 bg-clip-text text-transparent tracking-tight font-display md:hidden">
-                                {APP_NAME}
-                            </h1>
 
                             {/* Create Button moved to Header */}
                             <div className="relative hidden md:block" ref={createMenuRef}>
@@ -542,13 +549,17 @@ export const Layout: React.FC<LayoutProps> = ({
 
                     {/* Mobile Header (Simplified) */}
                     <div className="md:hidden flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/5 glass sticky top-0 z-30">
-                        {/* Dark theme: Image logo, Light theme: Text logo */}
-                        <div className="hidden dark:block">
-                            <img src="/logo-dark.png" alt={APP_NAME} className="h-8 w-auto" />
+                        {/* Theme-specific logo + text (mobile simplified) */}
+                        <div className="flex items-center gap-2">
+                            <img
+                                src={currentTheme === 'cyberpunk' ? '/logo-cyberpunk.jpg' : currentTheme === 'dark' ? '/logo-dark.jpg' : '/logo-light.jpg'}
+                                alt={APP_NAME}
+                                className="h-8 w-auto rounded-lg"
+                            />
+                            <span className={`text-lg font-bold tracking-tight font-display ${currentTheme === 'light' ? 'text-slate-800' : 'text-white'}`}>
+                                {APP_NAME}
+                            </span>
                         </div>
-                        <h1 className="dark:hidden text-xl font-bold bg-gradient-to-r from-brand-600 to-brand-400 bg-clip-text text-transparent font-display">
-                            {APP_NAME}
-                        </h1>
                     </div>
 
                     {/* Content Scroll Container */}
