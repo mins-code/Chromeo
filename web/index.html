@@ -1,0 +1,228 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>ChronoDeX</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;700&family=Rye&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: 'var(--brand-50)',
+                100: 'var(--brand-100)',
+                200: 'var(--brand-200)',
+                300: 'var(--brand-300)',
+                400: 'var(--brand-400)',
+                500: 'var(--brand-500)',
+                600: 'var(--brand-600)',
+                700: 'var(--brand-700)',
+                800: 'var(--brand-800)',
+                900: 'var(--brand-900)',
+              },
+              dark: {
+                bg: 'var(--bg-primary)', 
+                surface: 'var(--bg-secondary)', 
+                border: 'var(--border-color)'
+              }
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              display: ['Orbitron', 'sans-serif'], // For Cyberpunk
+              serif: ['Rye', 'serif'], // For One Piece
+            },
+            animation: {
+              'fade-in': 'fadeIn 0.3s ease-out',
+              'scale-in': 'scaleIn 0.2s ease-out',
+              'slide-up': 'slideUp 0.3s ease-out',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              scaleIn: {
+                '0%': { opacity: '0', transform: 'scale(0.95)' },
+                '100%': { opacity: '1', transform: 'scale(1)' },
+              },
+              slideUp: {
+                '0%': { transform: 'translateY(10px)', opacity: '0' },
+                '100%': { transform: 'translateY(0)', opacity: '1' },
+              }
+            }
+          },
+        },
+      }
+    </script>
+    <style>
+      :root {
+        /* Default Light */
+        --brand-50: #f0f9ff;
+        --brand-500: #0ea5e9;
+        --brand-600: #0284c7;
+        --bg-primary: #f8fafc;
+        --bg-secondary: #ffffff;
+        --text-primary: #0f172a;
+        --text-secondary: #64748b;
+        --border-color: #e2e8f0;
+        --glass-bg: rgba(255, 255, 255, 0.8);
+        --glass-border: rgba(255, 255, 255, 0.5);
+      }
+
+      .dark {
+        /* Default Dark (Midnight) */
+        --brand-50: #0f172a;
+        --brand-500: #3b82f6;
+        --brand-600: #2563eb;
+        --bg-primary: #020617;
+        --bg-secondary: #0f172a;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+        --border-color: #1e293b;
+        --glass-bg: rgba(15, 17, 42, 0.7);
+        --glass-border: rgba(255, 255, 255, 0.08);
+      }
+
+      /* Cyberpunk Theme */
+      .theme-cyberpunk {
+        --brand-50: #2a0a18;
+        --brand-500: #f472b6; /* Neon Pink */
+        --brand-600: #db2777;
+        --bg-primary: #050505;
+        --bg-secondary: #12020a;
+        --text-primary: #e0f2fe;
+        --text-secondary: #0ea5e9; /* Neon Blue Text */
+        --border-color: #38bdf8;
+        --glass-bg: rgba(10, 5, 20, 0.85);
+        --glass-border: rgba(244, 114, 182, 0.3);
+      }
+      .theme-cyberpunk .glass {
+         box-shadow: 0 0 15px rgba(244, 114, 182, 0.15);
+         border: 1px solid var(--glass-border);
+      }
+
+      /* Sunset (Pink/Orange) */
+      .theme-sunset {
+        --brand-50: #fff1f2;
+        --brand-500: #f43f5e;
+        --brand-600: #e11d48;
+        --bg-primary: #4c0519;
+        --bg-secondary: #881337;
+        --text-primary: #fff1f2;
+        --text-secondary: #fda4af;
+        --border-color: #fb7185;
+        --glass-bg: rgba(136, 19, 55, 0.6);
+        --glass-border: rgba(255, 255, 255, 0.15);
+      }
+      .theme-sunset .bg-gradient-main {
+        background: linear-gradient(to bottom right, #4c0519, #881337, #be123c);
+      }
+
+      /* One Piece (Wanted Poster / Pirate) */
+      .theme-onepiece {
+        --brand-50: #fffbe6;
+        --brand-500: #e62020; /* Luffy Red */
+        --brand-600: #b71c1c;
+        --bg-primary: #f4e4bc; /* Parchment Main */
+        --bg-secondary: #eaddcf; /* Worn Paper Surface */
+        --text-primary: #2c1810; /* Dark Ink */
+        --text-secondary: #5d4037; /* Brown Ink */
+        --border-color: #8d6e63; /* Wood/Leather */
+        --glass-bg: rgba(244, 228, 188, 0.9);
+        --glass-border: rgba(141, 110, 99, 0.4);
+      }
+      
+      .theme-onepiece body {
+        font-family: 'Rye', 'Courier New', serif; /* Wanted Poster Font */
+        background-color: #f4e4bc;
+      }
+
+      /* Log Pose Style FAB */
+      .theme-onepiece button.rounded-full {
+        border: 2px solid var(--text-primary);
+        box-shadow: 4px 4px 0px rgba(44, 24, 16, 0.3);
+      }
+
+      /* Straw Hat Calendar Highlight Override */
+      .theme-onepiece .bg-brand-500\/5 {
+         background-color: rgba(255, 215, 0, 0.2) !important; /* Straw Hat Gold tint */
+         border-color: rgba(255, 215, 0, 0.6) !important;
+      }
+      .theme-onepiece .text-brand-500 {
+         color: #d32f2f; /* Keep text Luffy Red */
+      }
+
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+      }
+      
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--text-secondary);
+        opacity: 0.3;
+        border-radius: 3px;
+      }
+      
+      /* Glassmorphism Utilities */
+      .glass {
+        background: var(--glass-bg);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--glass-border);
+      }
+
+      .glass-panel {
+        background: var(--glass-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+
+      .bg-gradient-main {
+        background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+      }
+
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "recharts": "https://esm.sh/recharts@^3.6.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.89.0"
+  }
+}
+</script>
+</head>
+  <body class="antialiased overflow-hidden h-screen w-screen selection:bg-brand-500 selection:text-white">
+    <div id="root" class="h-full w-full"></div>
+    <script type="module" src="/index.tsx"></script> 
+  </body>
+</html>

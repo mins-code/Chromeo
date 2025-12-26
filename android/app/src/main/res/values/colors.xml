@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#E62020</color> <!-- Luffy Red -->
+    <color name="colorPrimaryDark">#B71C1C</color>
+    <color name="colorAccent">#FFD700</color> <!-- Straw Hat Gold -->
+    <color name="colorSecondary">#008000</color> <!-- Zoro Green -->
+    <color name="colorBackground">#F4E4BC</color> <!-- Wanted Poster Parchment -->
+    <color name="colorSurface">#EADDCF</color> <!-- Worn Paper -->
+    <color name="colorTextPrimary">#2C1810</color> <!-- Dark Ink -->
+    <color name="colorTextSecondary">#5D4037</color> <!-- Brown Ink -->
+    <color name="colorWarning">#FF9800</color> <!-- Nami Orange -->
+</resources>
