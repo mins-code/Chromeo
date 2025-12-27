@@ -242,7 +242,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                     alt={APP_NAME}
                                     className="h-9 w-auto rounded-lg"
                                 />
-                                <span className={`text-lg font-bold tracking-tight font-display ${currentTheme === 'light' ? 'text-slate-800' : currentTheme === 'onepiece' ? 'text-[#E8DCD0]' : 'text-white'}`}>
+                                <span className={`text-lg font-bold tracking-wide font-display ${currentTheme === 'light' ? 'text-slate-800' : currentTheme === 'onepiece' ? 'text-[#E8DCD0]' : 'text-white'}`}>
                                     {APP_NAME}
                                 </span>
                             </div>
@@ -504,7 +504,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                     alt={APP_NAME}
                                     className="h-8 w-auto rounded-lg"
                                 />
-                                <span className={`text-lg font-bold tracking-tight font-display ${currentTheme === 'light' ? 'text-slate-800' : currentTheme === 'onepiece' ? 'text-[#E8DCD0]' : 'text-white'}`}>
+                                <span className={`text-lg font-bold tracking-wide font-display ${currentTheme === 'light' ? 'text-slate-800' : currentTheme === 'onepiece' ? 'text-[#E8DCD0]' : 'text-white'}`}>
                                     {APP_NAME}
                                 </span>
                             </div>
@@ -591,7 +591,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                             alt={APP_NAME}
                                             className="h-9 w-auto rounded-lg"
                                         />
-                                        <span className={`text-lg font-bold tracking-tight font-display ${currentTheme === 'light' ? 'text-slate-800' : currentTheme === 'onepiece' ? 'text-[#E8DCD0]' : 'text-white'}`}>
+                                        <span className={`text-lg font-bold tracking-wide font-display ${currentTheme === 'light' ? 'text-slate-800' : currentTheme === 'onepiece' ? 'text-[#E8DCD0]' : 'text-white'}`}>
                                             {APP_NAME}
                                         </span>
                                     </div>
