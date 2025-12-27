@@ -142,48 +142,63 @@
       background: linear-gradient(to bottom right, #4c0519, #881337, #be123c);
     }
 
-    /* One Piece (Wanted Poster / Pirate) */
+    /* One Piece - Classic Energetic Palette */
+    /* High contrast, primary colors, adventurous, youthful */
     .theme-onepiece {
-      --brand-50: #fffbe6;
-      --brand-500: #e62020;
-      /* Luffy Red */
-      --brand-600: #b71c1c;
-      --bg-primary: #f4e4bc;
-      /* Parchment Main */
-      --bg-secondary: #eaddcf;
-      /* Worn Paper Surface */
-      --text-primary: #2c1810;
-      /* Dark Ink */
-      --text-secondary: #5d4037;
-      /* Brown Ink */
-      --border-color: #8d6e63;
-      /* Wood/Leather */
-      --glass-bg: rgba(244, 228, 188, 0.9);
-      --glass-border: rgba(141, 110, 99, 0.4);
+      --brand-50: #FFE5E5;
+      /* Light Scarlet tint */
+      --brand-100: #FFCCCC;
+      --brand-200: #FF9999;
+      --brand-300: #FF6666;
+      --brand-400: #FF4D4D;
+      --brand-500: #FF3333;
+      /* Vibrant Scarlet - Primary Action */
+      --brand-600: #E62E2E;
+      --brand-700: #CC2929;
+      --accent-yellow: #F4D03F;
+      /* Warm Straw Yellow - Secondary Accent */
+      --accent-azure: #4A90E2;
+      /* Bright Azure - Nav/Footer */
+      --bg-primary: #F5F5F5;
+      /* Off-White/Clouds */
+      --bg-secondary: #FFFFFF;
+      --bg-nav: #4A90E2;
+      /* Bright Azure for navigation */
+      --text-primary: #1A1A2E;
+      /* Deep Denim Blue */
+      --text-secondary: #3D3D5C;
+      --border-color: #F4D03F;
+      /* Straw Yellow borders */
+      --glass-bg: rgba(245, 245, 245, 0.95);
+      --glass-border: rgba(244, 208, 63, 0.4);
     }
 
     .theme-onepiece body {
-      font-family: 'Rye', 'Courier New', serif;
-      /* Wanted Poster Font */
-      background-color: #f4e4bc;
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-primary);
     }
 
-    /* Log Pose Style FAB */
-    .theme-onepiece button.rounded-full {
-      border: 2px solid var(--text-primary);
-      box-shadow: 4px 4px 0px rgba(44, 24, 16, 0.3);
-    }
-
-    /* Straw Hat Calendar Highlight Override */
+    /* Straw Yellow highlight for badges/key elements */
     .theme-onepiece .bg-brand-500\/5 {
-      background-color: rgba(255, 215, 0, 0.2) !important;
-      /* Straw Hat Gold tint */
-      border-color: rgba(255, 215, 0, 0.6) !important;
+      background-color: rgba(244, 208, 63, 0.15) !important;
+      border-color: rgba(244, 208, 63, 0.6) !important;
     }
 
     .theme-onepiece .text-brand-500 {
-      color: #d32f2f;
-      /* Keep text Luffy Red */
+      color: #FF3333;
+      /* Vibrant Scarlet */
+    }
+
+    /* Azure accents for sidebar/nav */
+    .theme-onepiece aside,
+    .theme-onepiece .glass {
+      background: rgba(74, 144, 226, 0.08);
+      border-color: rgba(244, 208, 63, 0.3);
+    }
+
+    .theme-onepiece header {
+      background: rgba(255, 255, 255, 0.9);
+      border-bottom-color: rgba(244, 208, 63, 0.4);
     }
 
     body {
