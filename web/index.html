@@ -142,82 +142,113 @@
       background: linear-gradient(to bottom right, #4c0519, #881337, #be123c);
     }
 
-    /* One Piece - Deep Ocean Dark Mode */
-    /* Immersion, depth, danger, modern sleekness - reflects the deep sea */
+    /* One Piece - Vintage Nautical Palette */
+    /* Old-world cartography, exploration, parchment, organic */
     .theme-onepiece {
-      --brand-50: #0E7490;
-      /* Darker cyan tint */
-      --brand-100: #0891B2;
-      --brand-200: #22D3EE;
-      --brand-300: #67E8F9;
-      --brand-400: #06B6D4;
-      /* Electric Cyan */
-      --brand-500: #06B6D4;
-      /* Electric Cyan - Primary Accent/CTAs */
-      --brand-600: #0891B2;
-      --brand-700: #0E7490;
-      --accent-purple: #A855F7;
-      /* Royal Purple - Secondary Accent */
-      --accent-purple-glow: rgba(168, 85, 247, 0.4);
-      --bg-primary: #0F172A;
-      /* Dark Slate/Abyssal Navy */
-      --bg-secondary: #1E293B;
-      /* Lighter Navy - Cards/Sections */
-      --text-primary: #E2E8F0;
-      /* Soft White */
-      --text-secondary: #94A3B8;
-      /* Muted slate for secondary text */
-      --border-color: #334155;
-      /* Subtle slate border */
-      --glass-bg: rgba(30, 41, 59, 0.85);
-      --glass-border: rgba(6, 182, 212, 0.2);
+      --brand-50: #E6F2F2;
+      /* Light teal tint */
+      --brand-100: #B3D9D9;
+      --brand-200: #80C0C0;
+      --brand-300: #4DA6A6;
+      --brand-400: #1A8C8C;
+      --brand-500: #008080;
+      /* Teal/Sea Glass - Primary Accent */
+      --brand-600: #006666;
+      --brand-700: #004D4D;
+      --accent-gold: #D4AF37;
+      /* Muted Gold - Highlights */
+      --accent-wood: #8B4513;
+      /* Saddle Brown - Headers/Cards */
+      --bg-primary: #FDF5E6;
+      /* Old Lace/Parchment */
+      --bg-secondary: #FAF0DC;
+      /* Slightly darker parchment for cards */
+      --text-primary: #4B3621;
+      /* Deep Sepia/Coffee */
+      --text-secondary: #6B4E31;
+      /* Lighter sepia */
+      --border-color: #D4AF37;
+      /* Muted Gold borders */
+      --glass-bg: rgba(253, 245, 230, 0.95);
+      --glass-border: rgba(139, 69, 19, 0.3);
     }
 
     .theme-onepiece body {
       font-family: 'Inter', sans-serif;
-      background-color: #0F172A;
+      background-color: #FDF5E6;
     }
 
-    /* Bioluminescent glow effects for highlights */
+    /* Parchment-style gradient background */
+    .theme-onepiece .bg-gradient-main {
+      background: linear-gradient(135deg, #FDF5E6 0%, #FAF0DC 50%, #F5E6D3 100%);
+    }
+
+    /* Teal accent for interactive elements */
     .theme-onepiece .bg-brand-500\/5 {
-      background-color: rgba(6, 182, 212, 0.1) !important;
-      border-color: rgba(6, 182, 212, 0.4) !important;
-      box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
+      background-color: rgba(0, 128, 128, 0.08) !important;
+      border-color: rgba(212, 175, 55, 0.5) !important;
     }
 
     .theme-onepiece .text-brand-500 {
-      color: #06B6D4;
-      /* Electric Cyan */
-      text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+      color: #008080;
+      /* Teal for links/interactive */
     }
 
-    /* Deep ocean sidebar/nav styling */
-    .theme-onepiece aside,
+    .theme-onepiece .text-brand-600 {
+      color: #006666;
+    }
+
+    /* Saddle brown sidebar/nav with wood texture feel */
+    .theme-onepiece aside {
+      background: linear-gradient(180deg, rgba(139, 69, 19, 0.08) 0%, rgba(253, 245, 230, 0.95) 100%);
+      border-color: rgba(212, 175, 55, 0.4);
+    }
+
     .theme-onepiece .glass {
-      background: rgba(15, 23, 42, 0.9);
-      border-color: rgba(6, 182, 212, 0.15);
-      box-shadow: 0 0 30px rgba(6, 182, 212, 0.05);
+      background: rgba(253, 245, 230, 0.9);
+      border-color: rgba(139, 69, 19, 0.2);
     }
 
     .theme-onepiece header {
-      background: rgba(15, 23, 42, 0.95);
-      border-bottom-color: rgba(6, 182, 212, 0.2);
+      background: rgba(253, 245, 230, 0.95);
+      border-bottom: 2px solid rgba(212, 175, 55, 0.4);
     }
 
-    /* Purple gradient accent for depth */
-    .theme-onepiece .bg-gradient-main {
-      background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%);
+    /* Gold line separators */
+    .theme-onepiece .border-b,
+    .theme-onepiece .border-t {
+      border-color: rgba(212, 175, 55, 0.3);
     }
 
-    /* Glowing buttons for bioluminescent effect */
-    .theme-onepiece button.rounded-full {
-      box-shadow: 0 0 20px rgba(6, 182, 212, 0.3), 0 0 40px rgba(168, 85, 247, 0.1);
+    /* Wood-style cards */
+    .theme-onepiece .glass-panel {
+      background: rgba(250, 240, 220, 0.95);
+      border: 1px solid rgba(139, 69, 19, 0.2);
+      box-shadow: 2px 2px 8px rgba(75, 54, 33, 0.1);
     }
 
-    /* Card hover glow effect */
     .theme-onepiece .glass-panel:hover {
-      box-shadow: 0 0 25px rgba(6, 182, 212, 0.2);
-      border-color: rgba(6, 182, 212, 0.3);
+      border-color: rgba(0, 128, 128, 0.4);
+      box-shadow: 2px 2px 12px rgba(75, 54, 33, 0.15);
+    }
+
+    /* Teal buttons for CTAs */
+    .theme-onepiece button.rounded-full {
+      background: linear-gradient(135deg, #008080 0%, #006666 100%);
+      border: 2px solid rgba(212, 175, 55, 0.5);
+      box-shadow: 2px 2px 6px rgba(75, 54, 33, 0.2);
+    }
+
+    /* Gold icon accents */
+    .theme-onepiece .text-slate-400,
+    .theme-onepiece .text-slate-500 {
+      color: #8B7355;
+    }
+
+    /* Sepia-toned hover states */
+    .theme-onepiece a:hover,
+    .theme-onepiece button:hover {
+      color: #006666;
     }
 
     body {
