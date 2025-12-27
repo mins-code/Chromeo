@@ -142,63 +142,82 @@
       background: linear-gradient(to bottom right, #4c0519, #881337, #be123c);
     }
 
-    /* One Piece - Classic Energetic Palette */
-    /* High contrast, primary colors, adventurous, youthful */
+    /* One Piece - Deep Ocean Dark Mode */
+    /* Immersion, depth, danger, modern sleekness - reflects the deep sea */
     .theme-onepiece {
-      --brand-50: #FFE5E5;
-      /* Light Scarlet tint */
-      --brand-100: #FFCCCC;
-      --brand-200: #FF9999;
-      --brand-300: #FF6666;
-      --brand-400: #FF4D4D;
-      --brand-500: #FF3333;
-      /* Vibrant Scarlet - Primary Action */
-      --brand-600: #E62E2E;
-      --brand-700: #CC2929;
-      --accent-yellow: #F4D03F;
-      /* Warm Straw Yellow - Secondary Accent */
-      --accent-azure: #4A90E2;
-      /* Bright Azure - Nav/Footer */
-      --bg-primary: #F5F5F5;
-      /* Off-White/Clouds */
-      --bg-secondary: #FFFFFF;
-      --bg-nav: #4A90E2;
-      /* Bright Azure for navigation */
-      --text-primary: #1A1A2E;
-      /* Deep Denim Blue */
-      --text-secondary: #3D3D5C;
-      --border-color: #F4D03F;
-      /* Straw Yellow borders */
-      --glass-bg: rgba(245, 245, 245, 0.95);
-      --glass-border: rgba(244, 208, 63, 0.4);
+      --brand-50: #0E7490;
+      /* Darker cyan tint */
+      --brand-100: #0891B2;
+      --brand-200: #22D3EE;
+      --brand-300: #67E8F9;
+      --brand-400: #06B6D4;
+      /* Electric Cyan */
+      --brand-500: #06B6D4;
+      /* Electric Cyan - Primary Accent/CTAs */
+      --brand-600: #0891B2;
+      --brand-700: #0E7490;
+      --accent-purple: #A855F7;
+      /* Royal Purple - Secondary Accent */
+      --accent-purple-glow: rgba(168, 85, 247, 0.4);
+      --bg-primary: #0F172A;
+      /* Dark Slate/Abyssal Navy */
+      --bg-secondary: #1E293B;
+      /* Lighter Navy - Cards/Sections */
+      --text-primary: #E2E8F0;
+      /* Soft White */
+      --text-secondary: #94A3B8;
+      /* Muted slate for secondary text */
+      --border-color: #334155;
+      /* Subtle slate border */
+      --glass-bg: rgba(30, 41, 59, 0.85);
+      --glass-border: rgba(6, 182, 212, 0.2);
     }
 
     .theme-onepiece body {
       font-family: 'Inter', sans-serif;
-      background-color: var(--bg-primary);
+      background-color: #0F172A;
     }
 
-    /* Straw Yellow highlight for badges/key elements */
+    /* Bioluminescent glow effects for highlights */
     .theme-onepiece .bg-brand-500\/5 {
-      background-color: rgba(244, 208, 63, 0.15) !important;
-      border-color: rgba(244, 208, 63, 0.6) !important;
+      background-color: rgba(6, 182, 212, 0.1) !important;
+      border-color: rgba(6, 182, 212, 0.4) !important;
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
     }
 
     .theme-onepiece .text-brand-500 {
-      color: #FF3333;
-      /* Vibrant Scarlet */
+      color: #06B6D4;
+      /* Electric Cyan */
+      text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
     }
 
-    /* Azure accents for sidebar/nav */
+    /* Deep ocean sidebar/nav styling */
     .theme-onepiece aside,
     .theme-onepiece .glass {
-      background: rgba(74, 144, 226, 0.08);
-      border-color: rgba(244, 208, 63, 0.3);
+      background: rgba(15, 23, 42, 0.9);
+      border-color: rgba(6, 182, 212, 0.15);
+      box-shadow: 0 0 30px rgba(6, 182, 212, 0.05);
     }
 
     .theme-onepiece header {
-      background: rgba(255, 255, 255, 0.9);
-      border-bottom-color: rgba(244, 208, 63, 0.4);
+      background: rgba(15, 23, 42, 0.95);
+      border-bottom-color: rgba(6, 182, 212, 0.2);
+    }
+
+    /* Purple gradient accent for depth */
+    .theme-onepiece .bg-gradient-main {
+      background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%);
+    }
+
+    /* Glowing buttons for bioluminescent effect */
+    .theme-onepiece button.rounded-full {
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.3), 0 0 40px rgba(168, 85, 247, 0.1);
+    }
+
+    /* Card hover glow effect */
+    .theme-onepiece .glass-panel:hover {
+      box-shadow: 0 0 25px rgba(6, 182, 212, 0.2);
+      border-color: rgba(6, 182, 212, 0.3);
     }
 
     body {
