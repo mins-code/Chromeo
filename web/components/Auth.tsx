@@ -4,13 +4,14 @@ import { supabase } from '../services/supabaseClient';
 import Button from './Button';
 import Input from './Input';
 import { APP_NAME } from '../constants';
-import { Lock, Mail, Loader2, Sparkles } from 'lucide-react';
+import { Lock, Mail, Loader2, Sparkles, Eye, EyeOff } from 'lucide-react';
 
 const Auth: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -67,15 +68,25 @@ const Auth: React.FC = () => {
             required
             className="bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400"
           />
-          <Input
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            required
-            className="bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400"
-          />
+          <div className="relative">
+            <Input
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              className="bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400 pr-12"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-[35px] text-slate-400 hover:text-slate-600 transition-colors"
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
 
           {error && (
             <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
