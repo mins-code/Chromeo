@@ -1,17 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { Budget, Transaction } from '../types';
+import { Budget, Transaction, ThemeOption } from '../types';
 import * as BudgetService from '../services/budgetService';
 import Button from './Button';
 import Input from './Input';
 import { Wallet, TrendingUp, TrendingDown, Plus, Trash2, IndianRupee, Eye, EyeOff, Repeat, ArrowRight, Settings } from 'lucide-react';
+import { t } from '../themeText';
 
 interface BudgetPlannerProps {
     budget: Budget;
     onUpdate: (budget: Budget) => void;
+    currentTheme: ThemeOption;
 }
 
-const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ budget, onUpdate }) => {
+const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ budget, onUpdate, currentTheme }) => {
     const [limitInput, setLimitInput] = useState('');
     const [durationInput, setDurationInput] = useState('Monthly');
     const [transDesc, setTransDesc] = useState('');
@@ -53,9 +55,9 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ budget, onUpdate }) => {
         <div className="space-y-8 animate-fade-in h-full flex flex-col">
             <header className="border-b border-slate-200 dark:border-white/5 pb-6">
                 <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2 flex items-center gap-3">
-                    <Wallet className="text-brand-500" /> Budget Planner
+                    <Wallet className="text-brand-500" /> {t(currentTheme, 'budgetPlanner')}
                 </h2>
-                <p className="text-slate-500 dark:text-slate-400">Track your income, expenses, and savings goals.</p>
+                <p className="text-slate-500 dark:text-slate-400">Track your {t(currentTheme, 'income').toLowerCase()}, expenses, and savings goals.</p>
             </header>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -67,7 +69,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ budget, onUpdate }) => {
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 relative z-10">
                         <div>
-                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-widest font-mono">Total Budget</p>
+                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-widest font-mono">{t(currentTheme, 'totalBudget')}</p>
                             <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{formatCurrency(budget.limit)}</p>
                             <p className="text-[10px] text-slate-500 font-mono">/ {budget.duration}</p>
                         </div>
@@ -76,11 +78,11 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ budget, onUpdate }) => {
                             <p className="text-2xl font-bold text-red-500">{formatCurrency(totalExpenses)}</p>
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-widest font-mono">Remaining</p>
+                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-widest font-mono">{t(currentTheme, 'remaining')}</p>
                             <p className="text-2xl font-bold text-brand-500">{formatCurrency(remaining)}</p>
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-widest font-mono">Income</p>
+                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-widest font-mono">{t(currentTheme, 'income')}</p>
                             <p className="text-2xl font-bold text-emerald-500">{formatCurrency(totalIncome)}</p>
                         </div>
                     </div>

@@ -18,6 +18,7 @@ import Input from './components/Input';
 import Auth from './components/Auth';
 import { Search, Filter, Users, Link2, Share2, HeartHandshake, CalendarClock, Sparkles, LogOut, Bell, Palette, Check, CheckCircle2, Zap, Anchor, Sun, Moon, CalendarDays, Clock, CheckSquare, Activity, ArrowRight, Repeat, AlertCircle, User, MessageSquare, Loader2 } from 'lucide-react';
 import { enhanceTaskWithAI } from './services/geminiService';
+import { getGreeting, t } from './themeText';
 
 // Map URL paths to ViewMode for Layout compatibility
 const pathToViewMode: Record<string, ViewMode> = {
@@ -551,7 +552,7 @@ const App: React.FC = () => {
                             <p className="text-brand-500 font-medium text-sm mb-1 uppercase tracking-wide flex items-center gap-2">
                                 <CalendarClock size={16} /> {today}
                             </p>
-                            <h2 className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Good Day, {username}.</h2>
+                            <h2 className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">{getGreeting(theme, username)}</h2>
                             <p className="text-slate-500 dark:text-slate-400 mt-1 text-lg">You have {sortedTodoTasks.length} pending tasks today.</p>
                         </div>
                         <div className="hidden md:block">
@@ -734,7 +735,7 @@ const App: React.FC = () => {
 
             {/* VIEW: BUDGET */}
             {currentView === 'budget' && (
-                <BudgetPlanner budget={budget} onUpdate={handleBudgetUpdate} />
+                <BudgetPlanner budget={budget} onUpdate={handleBudgetUpdate} currentTheme={theme} />
             )}
 
             {/* VIEW: AI CHAT */}

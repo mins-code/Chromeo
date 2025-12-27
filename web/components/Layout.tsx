@@ -3,6 +3,21 @@ import React, { useState, useRef, useEffect } from 'react';
 import { NAVIGATION_ITEMS, APP_NAME } from '../constants';
 import { ViewMode, TaskType, ThemeOption } from '../types';
 import { Plus, Settings, X, Wallet, CheckCircle2, User, ChevronDown, Calendar, CheckSquare, Clock, Moon, Sun, ChevronLeft, ChevronRight, Menu, PanelLeft, PanelLeftClose, Bell, ChevronUp, Check, Pencil } from 'lucide-react';
+import { t, ThemeText } from '../themeText';
+
+// Map navigation IDs to themeText keys
+const navIdToTextKey: Record<string, keyof Omit<ThemeText, 'greeting'>> = {
+    'dashboard': 'dashboard',
+    'activities': 'activities',
+    'tasks': 'tasks',
+    'reminders': 'reminders',
+    'events': 'events',
+    'appointments': 'appointments',
+    'calendar': 'calendar',
+    'budget': 'budgetPlan',
+    'ai-chat': 'aiAssistant',
+    'settings': 'settings',
+};
 
 export interface UserStats {
     userName: string;
@@ -47,6 +62,13 @@ export const Layout: React.FC<LayoutProps> = ({
     const [isSidebarHovered, setIsSidebarHovered] = useState(false);
     const [ignoreHover, setIgnoreHover] = useState(false);
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+    // Helper function to get theme-specific navigation label
+    const getNavLabel = (id: string, defaultLabel: string): string => {
+        const textKey = navIdToTextKey[id];
+        return textKey ? t(currentTheme, textKey) : defaultLabel;
+    };
+
 
     // Tag Editing State
     const [editingTag, setEditingTag] = useState<string | null>(null);
@@ -267,7 +289,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                         </div>
 
                                         <span className={`transition-all duration-300 flex-1 text-left ${!isExpanded ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 ml-1'}`}>
-                                            {item.label}
+                                            {getNavLabel(item.id, item.label)}
                                         </span>
 
                                         {hasChildren && isExpanded && (
@@ -357,7 +379,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                                             <div className="flex items-center justify-center w-5 h-5 shrink-0">
                                                                 <ChildIcon size={18} strokeWidth={isChildActive ? 2.5 : 2} className={isChildActive ? 'text-brand-500 dark:text-brand-400' : 'text-current'} />
                                                             </div>
-                                                            <span>{child.label}</span>
+                                                            <span>{getNavLabel(child.id, child.label)}</span>
                                                         </button>
                                                     )
                                                 })
@@ -598,7 +620,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                                 <div className="flex items-center justify-center w-6 h-6 shrink-0">
                                                     <Icon size={20} className={`transition-colors ${isActive ? 'text-brand-500 dark:text-brand-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`} />
                                                 </div>
-                                                <span className="flex-1 text-left">{item.label}</span>
+                                                <span className="flex-1 text-left">{getNavLabel(item.id, item.label)}</span>
                                                 {isActive && (
                                                     <div className="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(14,165,233,0.6)]" />
                                                 )}
@@ -672,7 +694,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                         <div className={`p-1.5 rounded-full transition-all ${isActive ? 'bg-brand-500/10' : ''}`}>
                                             <Icon size={24} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'scale-110 transition-transform' : ''} />
                                         </div>
-                                        <span className={`text-[10px] font-medium ${isActive ? 'text-brand-500' : 'text-slate-500'}`}>{item.label}</span>
+                                        <span className={`text-[10px] font-medium ${isActive ? 'text-brand-500' : 'text-slate-500'}`}>{getNavLabel(item.id, item.label)}</span>
                                     </button>
                                 )
                             })}
