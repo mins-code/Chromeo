@@ -216,11 +216,11 @@ export const Layout: React.FC<LayoutProps> = ({
                             {/* Theme-specific logo + text */}
                             <div className="flex items-center gap-2">
                                 <img
-                                    src={currentTheme === 'cyberpunk' ? '/logo-cyberpunk.jpg' : currentTheme === 'dark' ? '/logo-dark.jpg' : '/logo-light.jpg'}
+                                    src={currentTheme === 'cyberpunk' ? '/logo-cyberpunk.jpg' : currentTheme === 'onepiece' ? '/logo-onepiece.png' : currentTheme === 'dark' ? '/logo-dark.jpg' : '/logo-light.jpg'}
                                     alt={APP_NAME}
                                     className="h-9 w-auto rounded-lg"
                                 />
-                                <span className={`text-lg font-bold tracking-tight font-display ${currentTheme === 'light' ? 'text-slate-800' : 'text-white'}`}>
+                                <span className={`text-lg font-bold tracking-tight font-display ${currentTheme === 'light' ? 'text-slate-800' : currentTheme === 'onepiece' ? 'text-[#E8DCD0]' : 'text-white'}`}>
                                     {APP_NAME}
                                 </span>
                             </div>
@@ -478,11 +478,11 @@ export const Layout: React.FC<LayoutProps> = ({
                             {/* Theme-specific logo + text (mobile) */}
                             <div className="flex md:hidden items-center gap-2">
                                 <img
-                                    src={currentTheme === 'cyberpunk' ? '/logo-cyberpunk.jpg' : currentTheme === 'dark' ? '/logo-dark.jpg' : '/logo-light.jpg'}
+                                    src={currentTheme === 'cyberpunk' ? '/logo-cyberpunk.jpg' : currentTheme === 'onepiece' ? '/logo-onepiece.png' : currentTheme === 'dark' ? '/logo-dark.jpg' : '/logo-light.jpg'}
                                     alt={APP_NAME}
                                     className="h-8 w-auto rounded-lg"
                                 />
-                                <span className={`text-lg font-bold tracking-tight font-display ${currentTheme === 'light' ? 'text-slate-800' : 'text-white'}`}>
+                                <span className={`text-lg font-bold tracking-tight font-display ${currentTheme === 'light' ? 'text-slate-800' : currentTheme === 'onepiece' ? 'text-[#E8DCD0]' : 'text-white'}`}>
                                     {APP_NAME}
                                 </span>
                             </div>
@@ -565,11 +565,11 @@ export const Layout: React.FC<LayoutProps> = ({
                                 <div className="h-20 flex items-center justify-between px-6 border-b border-slate-200 dark:border-white/5 shrink-0">
                                     <div className="flex items-center gap-2">
                                         <img
-                                            src={currentTheme === 'cyberpunk' ? '/logo-cyberpunk.jpg' : currentTheme === 'dark' ? '/logo-dark.jpg' : '/logo-light.jpg'}
+                                            src={currentTheme === 'cyberpunk' ? '/logo-cyberpunk.jpg' : currentTheme === 'onepiece' ? '/logo-onepiece.png' : currentTheme === 'dark' ? '/logo-dark.jpg' : '/logo-light.jpg'}
                                             alt={APP_NAME}
                                             className="h-9 w-auto rounded-lg"
                                         />
-                                        <span className={`text-lg font-bold tracking-tight font-display ${currentTheme === 'light' ? 'text-slate-800' : 'text-white'}`}>
+                                        <span className={`text-lg font-bold tracking-tight font-display ${currentTheme === 'light' ? 'text-slate-800' : currentTheme === 'onepiece' ? 'text-[#E8DCD0]' : 'text-white'}`}>
                                             {APP_NAME}
                                         </span>
                                     </div>
