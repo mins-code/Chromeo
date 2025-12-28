@@ -4,6 +4,7 @@ import { NAVIGATION_ITEMS, APP_NAME } from '../constants';
 import { ViewMode, TaskType, ThemeOption } from '../types';
 import { Plus, Settings, X, Wallet, CheckCircle2, User, ChevronDown, Calendar, CheckSquare, Clock, Moon, Sun, ChevronLeft, ChevronRight, Menu, PanelLeft, PanelLeftClose, Bell, ChevronUp, Check, Pencil } from 'lucide-react';
 import { t, ThemeText } from '../themeText';
+import MiniCalendar from './MiniCalendar';
 
 // Map navigation IDs to themeText keys
 const navIdToTextKey: Record<string, keyof Omit<ThemeText, 'greeting'>> = {
@@ -257,8 +258,18 @@ export const Layout: React.FC<LayoutProps> = ({
                         </button>
                     </div>
 
+                    {/* Mini Calendar */}
+                    <MiniCalendar 
+                        currentTheme={currentTheme} 
+                        isExpanded={isExpanded}
+                        onDateSelect={(date) => {
+                            // Navigate to calendar view when a date is clicked
+                            onNavigate('calendar');
+                        }}
+                    />
+
                     {/* Nav Links */}
-                    <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto overflow-x-hidden no-scrollbar">
+                    <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto overflow-x-hidden no-scrollbar">
                         {NAVIGATION_ITEMS.map((item) => {
                             const Icon = item.icon;
 
@@ -603,8 +614,18 @@ export const Layout: React.FC<LayoutProps> = ({
                                     </button>
                                 </div>
 
+                                {/* Mini Calendar for Mobile */}
+                                <MiniCalendar 
+                                    currentTheme={currentTheme} 
+                                    isExpanded={true}
+                                    onDateSelect={(date) => {
+                                        onNavigate('calendar');
+                                        setIsMobileSidebarOpen(false);
+                                    }}
+                                />
+
                                 {/* Drawer Nav */}
-                                <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto no-scrollbar">
+                                <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto no-scrollbar">
                                     {NAVIGATION_ITEMS.map((item) => {
                                         const Icon = item.icon;
                                         const isActive = currentView === item.id;
