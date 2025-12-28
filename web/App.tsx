@@ -4,7 +4,6 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Task, ViewMode, TaskStatus, Partner, TaskPriority, TaskType, ThemeOption, Budget, RecurringTransaction } from './types';
 import * as TaskService from './services/taskService';
-import * as BudgetService from './services/budgetService';
 import * as SmsService from './services/smsService';
 import { supabase } from './services/supabaseClient';
 import TaskCard from './components/TaskCard';
@@ -20,6 +19,12 @@ import CollaborationSettings from './components/CollaborationSettings';
 import { Search, Filter, Users, Link2, Share2, HeartHandshake, CalendarClock, Sparkles, LogOut, Bell, Palette, Check, CheckCircle2, Zap, Anchor, Sun, Moon, CalendarDays, Clock, CheckSquare, Activity, ArrowRight, Repeat, AlertCircle, User, MessageSquare, Loader2 } from 'lucide-react';
 import { enhanceTaskWithAI } from './services/geminiService';
 import { getGreeting, t } from './themeText';
+
+// Import new hooks and contexts
+import { useAuth } from './context/AuthContext';
+import { useTheme } from './context/ThemeContext';
+import { useTasks } from './hooks/useTasks';
+import { useBudget } from './hooks/useBudget';
 
 // Map URL paths to ViewMode for Layout compatibility
 const pathToViewMode: Record<string, ViewMode> = {
@@ -53,30 +58,41 @@ const App: React.FC = () => {
     const location = useLocation();
     const currentView: ViewMode = pathToViewMode[location.pathname] || 'dashboard';
 
-    const [session, setSession] = useState<any>(null);
-    const [isAuthLoading, setIsAuthLoading] = useState(true);
-    const [isDataLoading, setIsDataLoading] = useState(false);
+    // Use new contexts and hooks
+    const { session, isAuthLoading, signOut } = useAuth();
+    const { theme, setTheme } = useTheme();
+    const { 
+        tasks, 
+        isLoading: isTasksLoading, 
+        createTask, 
+        updateTask, 
+        deleteTask, 
+        toggleStatus 
+    } = useTasks();
+    const { 
+        budget, 
+        isLoading: isBudgetLoading, 
+        refetch: refetchBudget, 
+        processRecurring 
+    } = useBudget();
 
-    const [tasks, setTasks] = useState<Task[]>([]);
+    // Local UI state
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<string>('ALL');
 
-    // Theme State - defaults to light mode
-    const [theme, setTheme] = useState<ThemeOption>('light');
+    // Username state (still needs session for DB sync)
     const [username, setUsername] = useState('User');
 
     // State for creating task from calendar or create button
     const [calendarSelectedDate, setCalendarSelectedDate] = useState<Date | undefined>(undefined);
     const [editorInitialType, setEditorInitialType] = useState<TaskType>('TASK');
 
-    // Partner State
+    // Partner State (kept for compatibility)
     const [partner, setPartner] = useState<Partner | null>(null);
-    const [partnerEmailInput, setPartnerEmailInput] = useState('');
 
-    // Budget State
-    const [budget, setBudget] = useState<Budget>({ limit: 0, duration: 'Monthly', transactions: [], recurring: [], savings: 0 });
+    // Recurring transactions modal state
     const [dueRecurringItems, setDueRecurringItems] = useState<RecurringTransaction[]>([]);
     const [showRecurringModal, setShowRecurringModal] = useState(false);
 
@@ -86,83 +102,44 @@ const App: React.FC = () => {
     // Tag Filtering State for Calendar
     const [selectedCalendarTags, setSelectedCalendarTags] = useState<string[]>([]);
 
-    // Auth Initialization
+    // Load username when session changes
     useEffect(() => {
-        const initAuth = async () => {
-            try {
-                const { data, error } = await supabase.auth.getSession();
-                if (error) {
-                    console.error("Auth Session Error:", error.message);
+        const loadUsername = async () => {
+            if (session?.user) {
+                const { data } = await supabase
+                    .from('user_settings')
+                    .select('display_name')
+                    .eq('user_id', session.user.id)
+                    .single();
+                if (data?.display_name) {
+                    setUsername(data.display_name);
                 }
-                setSession(data?.session ?? null);
-            } catch (err) {
-                console.error("Auth Initialization Failed:", err);
-                setSession(null);
-            } finally {
-                setIsAuthLoading(false);
             }
         };
-
-        initAuth();
-
-        const {
-            data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-        });
-
-        return () => subscription.unsubscribe();
-    }, []);
-
-    // Data Loading
-    useEffect(() => {
-        if (session) {
-            loadData();
-        }
+        loadUsername();
     }, [session]);
 
-    const loadData = async () => {
-        setIsDataLoading(true);
-        try {
-            const loadedTasks = await TaskService.getTasks();
-            setTasks(loadedTasks);
-
-            // Initialize Tags
+    // Initialize calendar tags when tasks load
+    useEffect(() => {
+        if (tasks.length > 0) {
             const allUniqueTags = new Set<string>();
-            loadedTasks.forEach(t => t.tags.forEach(tag => allUniqueTags.add(tag)));
-            if (loadedTasks.some(t => t.tags.length === 0)) allUniqueTags.add('Untagged');
+            tasks.forEach(t => t.tags.forEach(tag => allUniqueTags.add(tag)));
+            if (tasks.some(t => t.tags.length === 0)) allUniqueTags.add('Untagged');
             setSelectedCalendarTags(Array.from(allUniqueTags));
+        }
+    }, [tasks]);
 
-            // Load Budget
-            const loadedBudget = await BudgetService.getBudget();
-            setBudget(loadedBudget);
-
-            // Check Recurring
+    // Check for due recurring items when budget loads
+    useEffect(() => {
+        if (budget.recurring.length > 0) {
             const now = new Date();
-            const due = loadedBudget.recurring.filter(r => new Date(r.nextDueDate) <= now);
+            const due = budget.recurring.filter(r => new Date(r.nextDueDate) <= now);
             if (due.length > 0) {
                 setDueRecurringItems(due);
                 setShowRecurringModal(true);
             }
-
-            // Get Display Name from DB (User Settings)
-            if (session?.user) {
-                const { data } = await supabase.from('user_settings').select('display_name, theme').eq('user_id', session.user.id).single();
-                if (data?.display_name) setUsername(data.display_name);
-                if (data?.theme) applyTheme(data.theme as ThemeOption, false);
-                else {
-                    // Initial Load Theme from LocalStorage fallback or default
-                    const savedTheme = localStorage.getItem('chronodex_theme') as ThemeOption | null;
-                    applyTheme(savedTheme || 'light', false);
-                }
-            }
-
-        } catch (error) {
-            console.error("Failed to load data", error);
-        } finally {
-            setIsDataLoading(false);
         }
-    };
+    }, [budget.recurring]);
 
     // Setup SMS Listener
     useEffect(() => {
@@ -173,8 +150,7 @@ const App: React.FC = () => {
                 const parsed = await SmsService.processAndSaveSMS(body, sender || 'Unknown');
                 if (parsed) {
                     // Refresh budget to show new item
-                    const loadedBudget = await BudgetService.getBudget();
-                    setBudget(loadedBudget);
+                    refetchBudget();
 
                     setLastSmsTransaction(parsed);
                     setTimeout(() => setLastSmsTransaction(null), 5000);
@@ -185,11 +161,10 @@ const App: React.FC = () => {
         return () => {
             window.removeEventListener('sms_received', handleSmsEvent as EventListener);
         };
-    }, []);
+    }, [refetchBudget]);
 
     const handleProcessRecurring = async (id: string) => {
-        const updatedBudget = await BudgetService.processRecurringTransaction(id);
-        setBudget(updatedBudget);
+        await processRecurring(id);
         setDueRecurringItems(prev => prev.filter(item => item.id !== id));
         if (dueRecurringItems.length <= 1) {
             setShowRecurringModal(false);
@@ -198,26 +173,6 @@ const App: React.FC = () => {
 
     const handleDismissRecurring = () => {
         setShowRecurringModal(false);
-    };
-
-    const applyTheme = (newTheme: ThemeOption, saveToDb = true) => {
-        setTheme(newTheme);
-        localStorage.setItem('chronodex_theme', newTheme);
-
-        document.documentElement.classList.remove('dark', 'theme-cyberpunk', 'theme-sunset', 'theme-onepiece');
-
-        if (newTheme === 'dark') document.documentElement.classList.add('dark');
-        else if (newTheme !== 'light') document.documentElement.classList.add('dark', `theme-${newTheme}`);
-
-        // Update favicon based on theme
-        const favicon = document.getElementById('app-favicon') as HTMLLinkElement;
-        if (favicon) {
-            favicon.href = `/favicon-${newTheme}.png`;
-        }
-
-        if (saveToDb && session?.user) {
-            supabase.from('user_settings').upsert({ user_id: session.user.id, theme: newTheme }).then();
-        }
     };
 
     const handleUsernameChange = (name: string) => {
@@ -252,15 +207,9 @@ const App: React.FC = () => {
         let savedTask: Task | null = null;
 
         if (taskData.id) {
-            savedTask = await TaskService.updateTask(taskData as Task);
-            if (savedTask) {
-                setTasks(prev => prev.map(t => t.id === savedTask!.id ? savedTask! : t));
-            }
+            savedTask = await updateTask(taskData as Task);
         } else {
-            savedTask = await TaskService.createTask(taskData as Omit<Task, 'id' | 'createdAt'>);
-            if (savedTask) {
-                setTasks(prev => [savedTask!, ...prev]);
-            }
+            savedTask = await createTask(taskData as Omit<Task, 'id' | 'createdAt'>);
         }
 
         if (savedTask && savedTask.tags) {
@@ -272,19 +221,14 @@ const App: React.FC = () => {
     };
 
     const handleDeleteTask = async (id: string) => {
-        const success = await TaskService.deleteTask(id);
+        const success = await deleteTask(id);
         if (success) {
-            setTasks(prev => prev.filter(t => t.id !== id));
             setIsEditorOpen(false);
         }
     };
 
     const handleToggleStatus = async (task: Task) => {
-        const newStatus = task.status === TaskStatus.DONE ? TaskStatus.TODO : TaskStatus.DONE;
-        const updated = await TaskService.updateTask({ ...task, status: newStatus });
-        if (updated) {
-            setTasks(prev => prev.map(t => t.id === updated.id ? updated : t));
-        }
+        await toggleStatus(task);
     };
 
     // Computed Values needed for AI context
@@ -303,23 +247,17 @@ const App: React.FC = () => {
                 title: s.title,
                 isCompleted: false
             }));
-            const updatedTask = await TaskService.updateTask({ ...task, subtasks: [...task.subtasks, ...subtasks] });
-            if (updatedTask) {
-                setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
-            }
+            await updateTask({ ...task, subtasks: [...task.subtasks, ...subtasks] });
         }
     };
 
     const handleAutoCreatedTask = async (taskData: Partial<Task>) => {
-        const newTask = await TaskService.createTask(taskData as Omit<Task, 'id' | 'createdAt'>);
-        if (newTask) {
-            setTasks(prev => [newTask, ...prev]);
-            if (newTask.tags && Array.isArray(newTask.tags)) {
-                setSelectedCalendarTags(prev => {
-                    const newTags = newTask.tags.filter(t => !prev.includes(t));
-                    return [...prev, ...newTags];
-                });
-            }
+        const newTask = await createTask(taskData as Omit<Task, 'id' | 'createdAt'>);
+        if (newTask && newTask.tags && Array.isArray(newTask.tags)) {
+            setSelectedCalendarTags(prev => {
+                const newTags = newTask.tags.filter(t => !prev.includes(t));
+                return [...prev, ...newTags];
+            });
         }
     };
 
@@ -333,23 +271,14 @@ const App: React.FC = () => {
         if (!newTag.trim() || oldTag === newTag) return;
         const finalTag = newTag.trim();
 
-        // Optimistic Update
-        setTasks(prev => prev.map(t => {
-            if (t.tags.includes(oldTag)) {
-                const newTags = t.tags.map(tag => tag === oldTag ? finalTag : tag);
-                return { ...t, tags: [...new Set(newTags)] };
-            }
-            return t;
-        }));
-
-        // Server Update (Fire and forget loop)
-        tasks.forEach(async (t) => {
+        // Server Update using the hook's updateTask
+        for (const t of tasks) {
             if (t.tags.includes(oldTag)) {
                 const newTags = t.tags.map(tag => tag === oldTag ? finalTag : tag);
                 const uniqueTags = [...new Set(newTags)];
-                await TaskService.updateTask({ ...t, tags: uniqueTags });
+                await updateTask({ ...t, tags: uniqueTags });
             }
-        });
+        }
 
         setSelectedCalendarTags(prev => {
             if (prev.includes(oldTag)) {
@@ -361,13 +290,12 @@ const App: React.FC = () => {
     };
 
     const handleBudgetUpdate = async (newBudget: Budget) => {
-        setBudget(newBudget);
+        // Budget is now managed by useBudget hook, this is for compatibility
+        // The BudgetPlanner component should be updated to use the hook directly
     };
 
     const handleSignOut = async () => {
-        await supabase.auth.signOut();
-        setTasks([]);
-        setSession(null);
+        await signOut();
     };
 
     const filteredTasks = useMemo(() => {
@@ -474,7 +402,7 @@ const App: React.FC = () => {
         return <Auth />;
     }
 
-    if (isDataLoading && tasks.length === 0) { // Only show full loader on initial fetch
+    if (isTasksLoading && tasks.length === 0) { // Only show full loader on initial fetch
         return (
             <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-900 text-brand-500 gap-4">
                 <Loader2 size={48} className="animate-spin" />
@@ -490,7 +418,7 @@ const App: React.FC = () => {
             onAddTask={(type) => handleCreateTask(undefined, type)}
             userStats={userStats}
             currentTheme={theme}
-            onThemeChange={(t) => applyTheme(t, true)}
+            onThemeChange={(t) => setTheme(t, true)}
             calendarTags={allTags}
             selectedTags={selectedCalendarTags}
             onToggleTag={handleToggleCalendarTag}
@@ -801,7 +729,7 @@ const App: React.FC = () => {
                                     {['dark', 'light', 'cyberpunk', 'sunset', 'onepiece'].map((t) => (
                                         <button
                                             key={t}
-                                            onClick={() => applyTheme(t as ThemeOption)}
+                                            onClick={() => setTheme(t as ThemeOption)}
                                             className={`relative p-4 rounded-xl border-2 transition-all group overflow-hidden ${theme === t ? 'border-brand-500 bg-brand-500/5' : 'border-slate-200 dark:border-white/10 hover:border-brand-500/50'}`}
                                         >
                                             <div className={`h-20 rounded-lg mb-3 border shadow-inner flex items-center justify-center ${t === 'dark' ? 'bg-[#000000] border-white/15' :
