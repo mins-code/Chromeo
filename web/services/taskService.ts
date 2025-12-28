@@ -8,7 +8,9 @@ const mapDbTaskToTask = (dbTask: any): Task => ({
   reminderTime: dbTask.reminder_time,
   dependencyIds: dbTask.dependency_ids || [],
   isShared: dbTask.is_shared,
-  createdAt: new Date(dbTask.created_at).getTime()
+  createdAt: new Date(dbTask.created_at).getTime(),
+  tags: dbTask.tags || [],
+  subtasks: dbTask.subtasks || []
 });
 
 // Helper function to calculate next recurrence date
