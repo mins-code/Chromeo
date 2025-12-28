@@ -16,6 +16,7 @@ import CalendarView from './components/CalendarView';
 import Button from './components/Button';
 import Input from './components/Input';
 import Auth from './components/Auth';
+import CollaborationSettings from './components/CollaborationSettings';
 import { Search, Filter, Users, Link2, Share2, HeartHandshake, CalendarClock, Sparkles, LogOut, Bell, Palette, Check, CheckCircle2, Zap, Anchor, Sun, Moon, CalendarDays, Clock, CheckSquare, Activity, ArrowRight, Repeat, AlertCircle, User, MessageSquare, Loader2 } from 'lucide-react';
 import { enhanceTaskWithAI } from './services/geminiService';
 import { getGreeting, t } from './themeText';
@@ -207,6 +208,12 @@ const App: React.FC = () => {
 
         if (newTheme === 'dark') document.documentElement.classList.add('dark');
         else if (newTheme !== 'light') document.documentElement.classList.add('dark', `theme-${newTheme}`);
+
+        // Update favicon based on theme
+        const favicon = document.getElementById('app-favicon') as HTMLLinkElement;
+        if (favicon) {
+            favicon.href = `/favicon-${newTheme}.png`;
+        }
 
         if (saveToDb && session?.user) {
             supabase.from('user_settings').upsert({ user_id: session.user.id, theme: newTheme }).then();
@@ -816,6 +823,12 @@ const App: React.FC = () => {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Collaboration Section */}
+                        <CollaborationSettings 
+                            currentUserId={session?.user?.id}
+                            currentUserEmail={session?.user?.email}
+                        />
                     </div>
                 </div>
             )}

@@ -55,6 +55,40 @@ export interface Partner {
   isConnected: boolean;
 }
 
+export interface Partnership {
+  id: string;
+  partnerId: string;
+  partnerEmail: string;
+  partnerName?: string;
+  status: 'pending' | 'accepted';
+  isIncoming: boolean; // true if this user received the invite
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  description?: string;
+  ownerId: string;
+  isOwner: boolean;
+  memberCount: number;
+  createdAt: string;
+}
+
+export interface TeamMember {
+  id: string;
+  userId: string;
+  email: string;
+  name?: string;
+  role: 'admin' | 'member';
+  status: 'pending' | 'accepted';
+}
+
+export interface UserSearchResult {
+  id: string;
+  email: string;
+  fullName?: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'model';
