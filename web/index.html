@@ -103,26 +103,116 @@
       --glass-border: rgba(255, 255, 255, 0.08);
     }
 
-    /* Cyberpunk Theme */
+    /* Cyberpunk Theme - Neon Cyan & Magenta */
+    /* Dark purple cityscape with vibrant neon accents */
     .theme-cyberpunk {
-      --brand-50: #2a0a18;
-      --brand-500: #f472b6;
-      /* Neon Pink */
-      --brand-600: #db2777;
-      --bg-primary: #050505;
-      --bg-secondary: #12020a;
-      --text-primary: #e0f2fe;
-      --text-secondary: #0ea5e9;
-      /* Neon Blue Text */
-      --border-color: #38bdf8;
-      --glass-bg: rgba(10, 5, 20, 0.85);
-      --glass-border: rgba(244, 114, 182, 0.3);
+      --brand-50: #1a0a2e; /* Deep purple tint */
+      --brand-100: #2d1b4e;
+      --brand-200: #4a2c7a;
+      --brand-300: #00FFFF; /* Neon Cyan */
+      --brand-400: #00E5E5;
+      --brand-500: #00FFFF; /* Neon Cyan - Primary accent */
+      --brand-600: #00CCCC;
+      --brand-700: #009999;
+      --accent-magenta: #FF00FF; /* Neon Magenta */
+      --accent-pink: #E040FB;
+      --bg-primary: #0a0014; /* Very dark purple-black */
+      --bg-secondary: #120028; /* Dark purple */
+      --text-primary: #E0FFFF; /* Light cyan-white */
+      --text-secondary: #B0E0E6; /* Pale cyan */
+      --border-color: rgba(0, 255, 255, 0.3); /* Cyan border */
+      --glass-bg: rgba(18, 0, 40, 0.9);
+      --glass-border: rgba(0, 255, 255, 0.2);
+    }
+
+    .theme-cyberpunk body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0a0014;
     }
 
     .theme-cyberpunk .glass {
-      box-shadow: 0 0 15px rgba(244, 114, 182, 0.15);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.15), 0 0 40px rgba(255, 0, 255, 0.08);
       border: 1px solid var(--glass-border);
     }
+
+    /* Neon glow text for accent */
+    .theme-cyberpunk .text-brand-500 {
+      color: #00FFFF;
+      text-shadow: 0 0 10px rgba(0, 255, 255, 0.7), 0 0 20px rgba(0, 255, 255, 0.4);
+    }
+
+    .theme-cyberpunk .text-brand-600 {
+      color: #FF00FF;
+      text-shadow: 0 0 10px rgba(255, 0, 255, 0.7);
+    }
+
+    /* Cyberpunk sidebar with neon accent */
+    .theme-cyberpunk aside {
+      background: linear-gradient(180deg, rgba(18, 0, 40, 0.98) 0%, rgba(10, 0, 20, 0.98) 100%);
+      border-color: rgba(0, 255, 255, 0.15);
+      box-shadow: 0 0 30px rgba(255, 0, 255, 0.05);
+    }
+
+    .theme-cyberpunk header {
+      background: rgba(10, 0, 20, 0.95);
+      border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    }
+
+    /* Neon cyan highlights */
+    .theme-cyberpunk .bg-brand-500\/5 {
+      background-color: rgba(0, 255, 255, 0.08) !important;
+      border-color: rgba(0, 255, 255, 0.3) !important;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+    }
+
+    /* Dark gradient background with purple tones */
+    .theme-cyberpunk .bg-gradient-main {
+      background: linear-gradient(135deg, #0a0014 0%, #120028 50%, #1a0a2e 100%);
+    }
+
+    /* Neon glow cards */
+    .theme-cyberpunk .glass-panel {
+      background: rgba(18, 0, 40, 0.85);
+      border: 1px solid rgba(0, 255, 255, 0.15);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 255, 255, 0.05);
+    }
+
+    .theme-cyberpunk .glass-panel:hover {
+      border-color: rgba(0, 255, 255, 0.4);
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.6), 0 0 25px rgba(0, 255, 255, 0.15), 0 0 40px rgba(255, 0, 255, 0.08);
+    }
+
+    /* Neon cyan buttons */
+    .theme-cyberpunk button.rounded-full {
+      background: linear-gradient(135deg, #00FFFF 0%, #00CCCC 100%);
+      border: none;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.4), 0 0 40px rgba(0, 255, 255, 0.2);
+      color: #0a0014;
+    }
+
+    /* Cyan/magenta icon accents */
+    .theme-cyberpunk .text-slate-400,
+    .theme-cyberpunk .text-slate-500 {
+      color: #7B68EE;
+    }
+
+    .theme-cyberpunk .text-slate-200,
+    .theme-cyberpunk .text-slate-100 {
+      color: #E0FFFF;
+    }
+
+    /* Neon hover states */
+    .theme-cyberpunk a:hover {
+      color: #00FFFF;
+      text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+
+    /* Line separators with neon glow */
+    .theme-cyberpunk .border-b,
+    .theme-cyberpunk .border-t {
+      border-color: rgba(0, 255, 255, 0.15);
+    }
+
 
     /* Sunset (Pink/Orange) */
     .theme-sunset {
