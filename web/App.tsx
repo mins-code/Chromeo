@@ -797,17 +797,17 @@ const App: React.FC = () => {
                                             onClick={() => applyTheme(t as ThemeOption)}
                                             className={`relative p-4 rounded-xl border-2 transition-all group overflow-hidden ${theme === t ? 'border-brand-500 bg-brand-500/5' : 'border-slate-200 dark:border-white/10 hover:border-brand-500/50'}`}
                                         >
-                                            <div className={`h-20 rounded-lg mb-3 border shadow-inner flex items-center justify-center ${t === 'dark' ? 'bg-[#020617] border-white/10' :
+                                            <div className={`h-20 rounded-lg mb-3 border shadow-inner flex items-center justify-center ${t === 'dark' ? 'bg-[#000000] border-white/15' :
                                                 t === 'light' ? 'bg-slate-50 border-slate-200' :
-                                                    t === 'cyberpunk' ? 'bg-[#050505] border-pink-500/30' :
+                                                    t === 'cyberpunk' ? 'bg-[#0a0014] border-[#00FFFF]/30' :
                                                         t === 'sunset' ? 'bg-[#4c0519] border-rose-500/30' :
-                                                            'bg-[#0c4a6e] border-yellow-500/30'
+                                                            'bg-[#0A0A0A] border-[#D4A574]/30'
                                                 }`}>
-                                                {t === 'dark' ? <Moon className="text-blue-500" /> :
+                                                {t === 'dark' ? <Moon className="text-[#E0E0E0]" /> :
                                                     t === 'light' ? <Sun className="text-orange-400" /> :
-                                                        t === 'cyberpunk' ? <Zap className="text-pink-500" /> :
+                                                        t === 'cyberpunk' ? <Zap className="text-[#00FFFF]" /> :
                                                             t === 'sunset' ? <Sun className="text-rose-400" /> :
-                                                                <Anchor className="text-yellow-400" />}
+                                                                <Anchor className="text-[#D4A574]" />}
                                             </div>
                                             <p className="text-sm font-bold text-slate-700 dark:text-slate-200 capitalize">{t}</p>
                                             {theme === t && <div className="absolute top-2 right-2 text-brand-500"><CheckCircle2 size={16} /></div>}
