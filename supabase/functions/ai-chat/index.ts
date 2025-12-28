@@ -1,79 +1,63 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.12.0"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { message, history, userName, systemInstruction } = await req.json();
-    const apiKey = Deno.env.get('GEMINI_API_KEY');
+    const apiKey = Deno.env.get('GEMINI_API_KEY')
+    if (!apiKey) throw new Error('GEMINI_API_KEY is not set')
 
-    if (!apiKey) {
-      throw new Error('Missing GEMINI_API_KEY environment variable');
-    }
+    const { message, history, systemInstruction } = await req.json()
+    const genAI = new GoogleGenerativeAI(apiKey)
 
-    // Gemini API endpoint
-    const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
+    let responseText = ""
 
-    const body = history ? {
-      contents: [
-        ...history.map(h => ({
+    // LOGIC FORK: Check if this is a Chat or a JSON Task
+    if (history && history.length > 0) {
+      // SCENARIO A: Chat Mode (Conversational)
+      const model = genAI.getGenerativeModel({ 
+        model: "gemini-2.0-flash", // Using the latest 2.0 Flash
+        systemInstruction: systemInstruction 
+      })
+
+      const chat = model.startChat({
+        history: history.map((h: any) => ({
           role: h.role === 'model' ? 'model' : 'user',
           parts: h.parts
         })),
-        {
-          role: 'user',
-          parts: [{ text: message }]
-        }
-      ],
-      systemInstruction: {
-        parts: [{ text: systemInstruction }]
-      },
-      generationConfig: {
-        responseMimeType: "text/plain"
-      }
-    } : {
-      contents: [{
-        role: 'user',
-        parts: [{ text: message }]
-      }],
-      systemInstruction: {
-        parts: [{ text: systemInstruction }]
-      },
-      generationConfig: {
-        responseMimeType: "application/json"
-      }
-    };
+      })
 
-    const response = await fetch(`${endpoint}?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body)
-    });
+      const result = await chat.sendMessage(message)
+      responseText = result.response.text()
 
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.statusText}`);
+    } else {
+      // SCENARIO B: Task Mode (Strict JSON for Cmd+K)
+      const model = genAI.getGenerativeModel({ 
+        model: "gemini-2.0-flash",
+        systemInstruction: systemInstruction,
+        generationConfig: { responseMimeType: "application/json" } // <--- CRITICAL FEATURE RESTORED
+      })
+
+      const result = await model.generateContent(message)
+      responseText = result.response.text()
     }
 
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
-
-    return new Response(JSON.stringify({ text }), {
+    return new Response(JSON.stringify({ text: responseText }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    })
 
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    })
   }
-});
+})
