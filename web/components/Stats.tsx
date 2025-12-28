@@ -1,14 +1,16 @@
 
 import React, { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
-import { Task, TaskStatus, ViewMode } from '../types';
+import { Task, TaskStatus, ViewMode, Budget } from '../types';
+import { Wallet } from 'lucide-react';
 
 interface StatsProps {
   tasks: Task[];
+  budget?: Budget;
   onNavigate?: (view: ViewMode) => void;
 }
 
-const Stats: React.FC<StatsProps> = ({ tasks, onNavigate }) => {
+const Stats: React.FC<StatsProps> = ({ tasks, budget, onNavigate }) => {
   const statusData = useMemo(() => {
     const counts = {
       [TaskStatus.TODO]: 0,
@@ -39,10 +41,35 @@ const Stats: React.FC<StatsProps> = ({ tasks, onNavigate }) => {
     return Math.round((done / tasks.length) * 100);
   }, [tasks]);
 
+  // Daily Safe Spend Calculation
+  const dailySafeSpend = useMemo(() => {
+    if (!budget || budget.limit === 0) return null;
+    
+    const totalExpenses = budget.transactions
+      .filter(t => t.type === 'expense')
+      .reduce((acc, curr) => acc + curr.amount, 0);
+    
+    const remaining = budget.limit - totalExpenses;
+    
+    // Calculate days remaining in the month
+    const now = new Date();
+    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const daysRemaining = Math.max(1, lastDayOfMonth.getDate() - now.getDate() + 1);
+    
+    const dailyAmount = remaining / daysRemaining;
+    
+    return {
+      amount: dailyAmount,
+      daysRemaining,
+      remaining,
+      isHealthy: dailyAmount > 0
+    };
+  }, [budget]);
+
   return (
     <div className="space-y-6 animate-fade-in">
         {/* Key Metrics */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className={`grid gap-6 ${dailySafeSpend ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <div 
                 onClick={() => onNavigate && onNavigate('tasks')}
                 className="glass-panel border border-slate-200 dark:border-white/5 p-6 rounded-2xl relative overflow-hidden group hover:border-brand-500/30 transition-all cursor-pointer hover:shadow-lg active:scale-[0.99]"
@@ -63,6 +90,27 @@ const Stats: React.FC<StatsProps> = ({ tasks, onNavigate }) => {
                 <h3 className="text-slate-500 dark:text-slate-400 text-xs uppercase font-bold tracking-widest mb-2">Completion Rate</h3>
                 <p className="text-4xl font-bold text-brand-500 tracking-tight">{completionRate}%</p>
             </div>
+
+            {/* Daily Safe Spend Card */}
+            {dailySafeSpend && (
+                <div 
+                    onClick={() => onNavigate && onNavigate('budget')}
+                    className="glass-panel border border-slate-200 dark:border-white/5 p-6 rounded-2xl relative overflow-hidden group hover:border-emerald-500/30 transition-all cursor-pointer hover:shadow-lg active:scale-[0.99]"
+                >
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <Wallet size={64} className={dailySafeSpend.isHealthy ? 'text-emerald-500' : 'text-red-500'} />
+                    </div>
+                    <h3 className="text-slate-500 dark:text-slate-400 text-xs uppercase font-bold tracking-widest mb-2 group-hover:text-emerald-500 transition-colors">
+                        Daily Safe Spend
+                    </h3>
+                    <p className={`text-4xl font-bold tracking-tight ${dailySafeSpend.isHealthy ? 'text-emerald-500' : 'text-red-500'}`}>
+                        ₹{Math.abs(dailySafeSpend.amount).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1">
+                        {dailySafeSpend.daysRemaining} days left • ₹{dailySafeSpend.remaining.toLocaleString('en-IN', { maximumFractionDigits: 0 })} remaining
+                    </p>
+                </div>
+            )}
         </div>
 
         {/* Charts Grid */}
@@ -129,3 +177,4 @@ const Stats: React.FC<StatsProps> = ({ tasks, onNavigate }) => {
 };
 
 export default Stats;
+

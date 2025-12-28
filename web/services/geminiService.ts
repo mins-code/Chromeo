@@ -145,3 +145,92 @@ export const chatWithAI = async (message: string, history: {role: 'user' | 'mode
         return "I'm having trouble connecting to the network right now.";
     }
 }
+
+// Natural Language Task Parsing for Quick-Add (Cmd+K)
+export interface ParsedTaskData {
+    title: string;
+    type: 'TASK' | 'EVENT' | 'APPOINTMENT' | 'REMINDER';
+    dueDate?: string;
+    reminderTime?: string;
+    description?: string;
+    priority?: 'HIGH' | 'MEDIUM' | 'LOW';
+    duration?: number;
+    location?: string;
+}
+
+export const parseNaturalLanguageTask = async (input: string): Promise<ParsedTaskData | null> => {
+    try {
+        const today = new Date();
+        const currentDateStr = today.toISOString().split('T')[0];
+        const currentTimeStr = today.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+
+        const parseInstruction = `You are a natural language task parser. Extract structured data from the user's input.
+
+CURRENT DATE/TIME: ${currentDateStr} ${currentTimeStr}
+
+RULES:
+1. Parse the input and extract: title, type, date, time, description, priority, duration, location
+2. TYPES: APPOINTMENT (meetings with people), EVENT (parties, conferences), REMINDER (alerts), TASK (to-dos)
+3. Convert relative dates (tomorrow, next week, etc.) to ISO 8601 format (YYYY-MM-DDTHH:mm:ss)
+4. If no time specified but date is given, use 09:00:00
+5. Infer priority from urgency words (urgent/asap = HIGH, important = MEDIUM, default = LOW)
+6. Extract duration if mentioned (e.g., "1 hour meeting" = 60 minutes)
+7. Extract location if mentioned
+
+Return ONLY a JSON object (no markdown, no explanation):
+{
+  "title": "extracted title",
+  "type": "TASK|EVENT|APPOINTMENT|REMINDER",
+  "dueDate": "ISO string or null",
+  "reminderTime": "ISO string or null",
+  "description": "brief description or null",
+  "priority": "HIGH|MEDIUM|LOW",
+  "duration": number or null,
+  "location": "string or null"
+}`;
+
+        const { data, error } = await supabase.functions.invoke('ai-chat', {
+            body: {
+                message: input,
+                systemInstruction: parseInstruction
+            }
+        });
+
+        if (error) {
+            console.error("AI Parse Error:", error);
+            return null;
+        }
+
+        const text = data.text;
+        if (!text) return null;
+
+        // Parse JSON from response (handle potential markdown wrapping)
+        let jsonStr = text;
+        const jsonMatch = text.match(/```(?:json)?\n?([\s\S]*?)\n?```/);
+        if (jsonMatch) {
+            jsonStr = jsonMatch[1];
+        }
+
+        const parsed = JSON.parse(jsonStr.trim());
+        
+        return {
+            title: parsed.title || input,
+            type: parsed.type || 'TASK',
+            dueDate: parsed.dueDate || undefined,
+            reminderTime: parsed.reminderTime || undefined,
+            description: parsed.description || undefined,
+            priority: parsed.priority || 'MEDIUM',
+            duration: parsed.duration || undefined,
+            location: parsed.location || undefined
+        };
+    } catch (error) {
+        console.error("Failed to parse natural language task:", error);
+        // Return a basic fallback with just the title
+        return {
+            title: input,
+            type: 'TASK',
+            priority: 'MEDIUM'
+        };
+    }
+};
+

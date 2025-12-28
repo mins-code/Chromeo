@@ -18,7 +18,9 @@ import Auth from './components/Auth';
 import CollaborationSettings from './components/CollaborationSettings';
 import { Search, Filter, Users, Link2, Share2, HeartHandshake, CalendarClock, Sparkles, LogOut, Bell, Palette, Check, CheckCircle2, Zap, Anchor, Sun, Moon, CalendarDays, Clock, CheckSquare, Activity, ArrowRight, Repeat, AlertCircle, User, MessageSquare, Loader2 } from 'lucide-react';
 import { enhanceTaskWithAI } from './services/geminiService';
+import { ParsedTaskData } from './services/geminiService';
 import { getGreeting, t } from './themeText';
+import CommandBar from './components/CommandBar';
 
 // Import new hooks and contexts
 import { useAuth } from './context/AuthContext';
@@ -102,6 +104,9 @@ const App: React.FC = () => {
     // Tag Filtering State for Calendar
     const [selectedCalendarTags, setSelectedCalendarTags] = useState<string[]>([]);
 
+    // Command Bar State (Cmd+K)
+    const [isCommandBarOpen, setIsCommandBarOpen] = useState(false);
+
     // Load username when session changes
     useEffect(() => {
         const loadUsername = async () => {
@@ -163,6 +168,18 @@ const App: React.FC = () => {
         };
     }, [refetchBudget]);
 
+    // Global Cmd+K keyboard listener for Command Bar
+    useEffect(() => {
+        const handleGlobalKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                setIsCommandBarOpen(true);
+            }
+        };
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    }, []);
+
     const handleProcessRecurring = async (id: string) => {
         await processRecurring(id);
         setDueRecurringItems(prev => prev.filter(item => item.id !== id));
@@ -201,6 +218,27 @@ const App: React.FC = () => {
         setCalendarSelectedDate(undefined);
         setEditorInitialType(taskData.type || 'TASK');
         setIsEditorOpen(true);
+    };
+
+    // Handler for Command Bar parsed task data
+    const handleCommandBarTask = (parsedData: ParsedTaskData) => {
+        const taskDraft: Partial<Task> = {
+            title: parsedData.title,
+            type: parsedData.type,
+            dueDate: parsedData.dueDate,
+            reminderTime: parsedData.reminderTime,
+            description: parsedData.description,
+            priority: parsedData.priority === 'HIGH' ? TaskPriority.HIGH :
+                      parsedData.priority === 'LOW' ? TaskPriority.LOW : TaskPriority.MEDIUM,
+            duration: parsedData.duration,
+            location: parsedData.location,
+            status: TaskStatus.TODO,
+            tags: [],
+            subtasks: [],
+            dependencyIds: [],
+            isShared: false
+        };
+        handleEditDraft(taskDraft);
     };
 
     const handleSaveTask = async (taskData: Partial<Task>) => {
@@ -495,7 +533,7 @@ const App: React.FC = () => {
                         </div>
                     </header>
 
-                    <Stats tasks={tasks} onNavigate={(view) => navigate(viewModeToPath[view])} />
+                    <Stats tasks={tasks} budget={budget} onNavigate={(view) => navigate(viewModeToPath[view])} />
 
                     <div className="pt-4">
                         <div className="flex items-center justify-between mb-6">
@@ -663,6 +701,7 @@ const App: React.FC = () => {
             {currentView === 'calendar' && (
                 <CalendarView
                     tasks={calendarFilteredTasks}
+                    recurringTransactions={budget.recurring}
                     onDateClick={(date) => handleCreateTask(date)}
                     onEditTask={handleEditTask}
                     onUpdateTask={(task) => updateTask(task)}
@@ -771,6 +810,13 @@ const App: React.FC = () => {
                 availableTasks={tasks}
                 initialDate={calendarSelectedDate}
                 initialType={editorInitialType}
+            />
+
+            {/* Command Bar (Cmd+K Quick Add) */}
+            <CommandBar
+                isOpen={isCommandBarOpen}
+                onClose={() => setIsCommandBarOpen(false)}
+                onTaskParsed={handleCommandBarTask}
             />
 
         </Layout>

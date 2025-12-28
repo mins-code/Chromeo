@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Plus, X, Clock, Repeat, Calendar, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Clock, Repeat, Calendar, CalendarDays, DollarSign } from 'lucide-react';
 import { DndContext, DragEndEvent, DragOverlay, pointerWithin } from '@dnd-kit/core';
-import { format, addWeeks, subWeeks, startOfWeek, addMonths, subMonths } from 'date-fns';
-import { Task, TaskPriority } from '../types';
+import { format, addWeeks, subWeeks, startOfWeek, addMonths, subMonths, isSameDay } from 'date-fns';
+import { Task, TaskPriority, RecurringTransaction } from '../types';
 import Button from './Button';
 import CalendarDayCell from './CalendarDayCell';
 import WeekView from './WeekView';
@@ -10,6 +10,7 @@ import DraggableTask, { TYPE_COLORS } from './DraggableTask';
 
 interface CalendarViewProps {
     tasks: Task[];
+    recurringTransactions?: RecurringTransaction[];
     onDateClick: (date: Date) => void;
     onEditTask: (task: Task) => void;
     onUpdateTask?: (task: Task) => void;
@@ -17,7 +18,7 @@ interface CalendarViewProps {
 
 type ViewMode = 'month' | 'week';
 
-const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onDateClick, onEditTask, onUpdateTask }) => {
+const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransactions = [], onDateClick, onEditTask, onUpdateTask }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('month');
@@ -90,13 +91,21 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onDateClick, onEditT
         return false;
     }, []);
 
+    // Helper to check if a recurring transaction is due on a specific date
+    const getFinancialItemsForDate = useCallback((date: Date): RecurringTransaction[] => {
+        return recurringTransactions.filter(transaction => {
+            const dueDate = new Date(transaction.nextDueDate);
+            return isSameDay(dueDate, date);
+        });
+    }, [recurringTransactions]);
+
     const calendarDays = useMemo(() => {
         const year = currentMonth.getFullYear();
         const month = currentMonth.getMonth();
         const daysInMonth = getDaysInMonth(year, month);
         const firstDay = getFirstDayOfMonth(year, month);
 
-        const days: Array<{ day: number | null; date?: Date; tasks?: Task[] }> = [];
+        const days: Array<{ day: number | null; date?: Date; tasks?: Task[]; financialItems?: RecurringTransaction[] }> = [];
 
         for (let i = 0; i < firstDay; i++) {
             days.push({ day: null });
@@ -105,11 +114,12 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onDateClick, onEditT
         for (let i = 1; i <= daysInMonth; i++) {
             const date = new Date(year, month, i);
             const dayTasks = tasks.filter(task => doesTaskOccurOnDate(task, date));
-            days.push({ day: i, date: date, tasks: dayTasks });
+            const financialItems = getFinancialItemsForDate(date);
+            days.push({ day: i, date: date, tasks: dayTasks, financialItems });
         }
 
         return days;
-    }, [currentMonth, tasks, doesTaskOccurOnDate]);
+    }, [currentMonth, tasks, doesTaskOccurOnDate, getFinancialItemsForDate]);
 
     const handleDayClick = (date: Date) => {
         setSelectedDate(date);
@@ -251,6 +261,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onDateClick, onEditT
                                     day={cell.day}
                                     date={cell.date || null}
                                     tasks={cell.tasks || []}
+                                    financialItems={cell.financialItems || []}
                                     isToday={cell.date?.toDateString() === new Date().toDateString()}
                                     onClick={() => cell.date && handleDayClick(cell.date)}
                                 />

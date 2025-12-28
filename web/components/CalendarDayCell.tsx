@@ -1,24 +1,33 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { format } from 'date-fns';
-import { Task } from '../types';
+import { Task, RecurringTransaction } from '../types';
 import DraggableTask, { TYPE_COLORS } from './DraggableTask';
+import { DollarSign, X } from 'lucide-react';
 
 interface CalendarDayCellProps {
   day: number | null;
   date: Date | null;
   tasks: Task[];
+  financialItems?: RecurringTransaction[];
   isToday: boolean;
   onClick: () => void;
 }
 
-const CalendarDayCell = memo(({ day, date, tasks, isToday, onClick }: CalendarDayCellProps) => {
+const CalendarDayCell = memo(({ day, date, tasks, financialItems = [], isToday, onClick }: CalendarDayCellProps) => {
+  const [showFinancialPopup, setShowFinancialPopup] = useState(false);
+  
   const droppableId = date ? format(date, 'yyyy-MM-dd') : `empty-${day}`;
   const { setNodeRef, isOver } = useDroppable({
     id: droppableId,
     data: { date },
     disabled: !date,
   });
+
+  const handleFinancialClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowFinancialPopup(true);
+  };
 
   return (
     <div
@@ -33,9 +42,24 @@ const CalendarDayCell = memo(({ day, date, tasks, isToday, onClick }: CalendarDa
     >
       {day && (
         <>
-          <span className={`text-sm font-semibold mb-1 ${isToday ? 'text-brand-500' : 'text-slate-400'}`}>
-            {day}
-          </span>
+          <div className="flex items-center justify-between mb-1">
+            <span className={`text-sm font-semibold ${isToday ? 'text-brand-500' : 'text-slate-400'}`}>
+              {day}
+            </span>
+            {/* Financial Indicator */}
+            {financialItems.length > 0 && (
+              <button
+                onClick={handleFinancialClick}
+                className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors group"
+                title="Financial items due"
+              >
+                <DollarSign size={10} className="text-emerald-500" />
+                <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                  {financialItems.length}
+                </span>
+              </button>
+            )}
+          </div>
           <div className="flex-1 flex flex-col gap-1 overflow-hidden">
             {tasks.slice(0, 3).map(task => (
               <DraggableTask key={task.id} task={task} variant="chip" />
@@ -48,13 +72,56 @@ const CalendarDayCell = memo(({ day, date, tasks, isToday, onClick }: CalendarDa
           </div>
         </>
       )}
+
+      {/* Financial Items Popup */}
+      {showFinancialPopup && financialItems.length > 0 && (
+        <div 
+          className="absolute inset-0 z-30 flex items-center justify-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div 
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm rounded-xl"
+            onClick={() => setShowFinancialPopup(false)}
+          />
+          <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-white/10 p-3 m-1 w-full max-h-full overflow-y-auto">
+            <button
+              onClick={() => setShowFinancialPopup(false)}
+              className="absolute top-1 right-1 p-0.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-slate-400"
+            >
+              <X size={12} />
+            </button>
+            <div className="flex items-center gap-1.5 mb-2">
+              <DollarSign size={12} className="text-emerald-500" />
+              <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Bills Due</span>
+            </div>
+            <div className="space-y-1.5">
+              {financialItems.map(item => (
+                <div 
+                  key={item.id}
+                  className={`p-1.5 rounded-md text-[10px] ${
+                    item.type === 'expense' 
+                      ? 'bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20' 
+                      : 'bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20'
+                  }`}
+                >
+                  <p className="font-medium text-slate-700 dark:text-slate-200 truncate">{item.description}</p>
+                  <p className={`font-bold ${item.type === 'expense' ? 'text-red-500' : 'text-emerald-500'}`}>
+                    {item.type === 'expense' ? '-' : '+'}₹{item.amount.toLocaleString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }, (prev, next) => {
   if (prev.day !== next.day) return false;
   if (prev.isToday !== next.isToday) return false;
   if (prev.date?.getTime() !== next.date?.getTime()) return false;
-  if (prev.tasks === next.tasks) return true;
+  if (prev.financialItems?.length !== next.financialItems?.length) return false;
+  if (prev.tasks === next.tasks && prev.financialItems === next.financialItems) return true;
   if (prev.tasks.length !== next.tasks.length) return false;
 
   for (let i = 0; i < prev.tasks.length; i++) {
