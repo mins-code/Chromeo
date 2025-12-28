@@ -90,18 +90,102 @@
     }
 
     .dark {
-      /* Default Dark (Midnight) */
-      --brand-50: #0f172a;
-      --brand-500: #3b82f6;
-      --brand-600: #2563eb;
-      --bg-primary: #020617;
-      --bg-secondary: #0f172a;
-      --text-primary: #f8fafc;
-      --text-secondary: #94a3b8;
-      --border-color: #1e293b;
-      --glass-bg: rgba(15, 17, 42, 0.7);
-      --glass-border: rgba(255, 255, 255, 0.08);
+      /* Default Dark - Monochrome Silver Theme */
+      /* Pure black with silver/white accents matching compass logo */
+      --brand-50: #1a1a1a;
+      --brand-100: #2a2a2a;
+      --brand-200: #4a4a4a;
+      --brand-300: #6a6a6a;
+      --brand-400: #8a8a8a;
+      --brand-500: #E0E0E0; /* Silver/White - Primary accent */
+      --brand-600: #CCCCCC;
+      --brand-700: #AAAAAA;
+      --bg-primary: #000000; /* Pure black */
+      --bg-secondary: #0a0a0a; /* Near black */
+      --text-primary: #FFFFFF; /* Pure white */
+      --text-secondary: #B0B0B0; /* Light silver */
+      --border-color: rgba(255, 255, 255, 0.12);
+      --glass-bg: rgba(10, 10, 10, 0.9);
+      --glass-border: rgba(255, 255, 255, 0.1);
     }
+
+    .dark body {
+      background-color: #000000;
+    }
+
+    .dark .glass {
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Silver accent text */
+    .dark .text-brand-500 {
+      color: #E0E0E0;
+    }
+
+    .dark .text-brand-600 {
+      color: #CCCCCC;
+    }
+
+    /* Dark sidebar with subtle silver borders */
+    .dark aside {
+      background: linear-gradient(180deg, rgba(15, 15, 15, 0.98) 0%, rgba(0, 0, 0, 0.98) 100%);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .dark header {
+      background: rgba(0, 0, 0, 0.95);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Silver highlights */
+    .dark .bg-brand-500\/5 {
+      background-color: rgba(224, 224, 224, 0.05) !important;
+      border-color: rgba(255, 255, 255, 0.15) !important;
+    }
+
+    /* Pure black gradient background */
+    .dark .bg-gradient-main {
+      background: linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%);
+    }
+
+    /* Dark cards with subtle borders */
+    .dark .glass-panel {
+      background: rgba(15, 15, 15, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    }
+
+    .dark .glass-panel:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.7);
+    }
+
+    /* Silver/white buttons */
+    .dark button.rounded-full {
+      background: linear-gradient(135deg, #E0E0E0 0%, #CCCCCC 100%);
+      border: none;
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+      color: #000000;
+    }
+
+    /* Silver icon accents */
+    .dark .text-slate-400,
+    .dark .text-slate-500 {
+      color: #808080;
+    }
+
+    .dark .text-slate-200,
+    .dark .text-slate-100 {
+      color: #E8E8E8;
+    }
+
+    /* Line separators */
+    .dark .border-b,
+    .dark .border-t {
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
 
     /* Cyberpunk Theme - Neon Cyan & Magenta */
     /* Dark purple cityscape with vibrant neon accents */
