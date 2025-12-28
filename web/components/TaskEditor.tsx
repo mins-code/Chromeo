@@ -134,6 +134,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
 
   const handleAddTag = (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' && newTag.trim()) {
+          e.preventDefault(); // Prevent form submission
           if(!tags.includes(newTag.trim())) {
               setTags([...tags, newTag.trim()]);
           }
