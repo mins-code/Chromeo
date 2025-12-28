@@ -665,6 +665,7 @@ const App: React.FC = () => {
                     tasks={calendarFilteredTasks}
                     onDateClick={(date) => handleCreateTask(date)}
                     onEditTask={handleEditTask}
+                    onUpdateTask={(task) => updateTask(task)}
                 />
             )}
 

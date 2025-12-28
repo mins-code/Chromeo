@@ -1,0 +1,78 @@
+import React from 'react';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
+import { Task, TaskType } from '../types';
+import { Clock } from 'lucide-react';
+
+interface DraggableTaskProps {
+  task: Task;
+  children?: React.ReactNode;
+  variant?: 'block' | 'chip';
+}
+
+// Type-based background colors
+export const TYPE_COLORS: Record<TaskType, string> = {
+  TASK: 'bg-blue-500/20 border-blue-500 text-blue-700 dark:text-blue-300',
+  EVENT: 'bg-purple-500/20 border-purple-500 text-purple-700 dark:text-purple-300',
+  REMINDER: 'bg-amber-500/20 border-amber-500 text-amber-700 dark:text-amber-300',
+  APPOINTMENT: 'bg-emerald-500/20 border-emerald-500 text-emerald-700 dark:text-emerald-300',
+};
+
+const DraggableTask: React.FC<DraggableTaskProps> = ({ task, children, variant = 'chip' }) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: task.id,
+    data: { task },
+  });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0.5 : 1,
+    cursor: isDragging ? 'grabbing' : 'grab',
+  };
+
+  const colorClass = TYPE_COLORS[task.type] || TYPE_COLORS.TASK;
+
+  if (children) {
+    return (
+      <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+        {children}
+      </div>
+    );
+  }
+
+  // Default chip rendering
+  if (variant === 'chip') {
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        {...listeners}
+        {...attributes}
+        className={`text-[10px] px-1.5 py-0.5 rounded truncate border-l-2 ${colorClass} transition-opacity`}
+      >
+        {task.title}
+      </div>
+    );
+  }
+
+  // Block variant for week view
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className={`absolute left-1 right-1 px-2 py-1 rounded-md border-l-4 ${colorClass} overflow-hidden shadow-sm hover:shadow-md transition-all`}
+    >
+      <div className="text-xs font-medium truncate">{task.title}</div>
+      {task.reminderTime && (
+        <div className="flex items-center gap-1 text-[10px] opacity-75 mt-0.5">
+          <Clock size={8} />
+          {new Date(task.reminderTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default DraggableTask;
