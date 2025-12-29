@@ -116,3 +116,128 @@ export const processRecurringTransaction = async (recurringId: string): Promise<
     
     return getBudget();
 };
+
+// ============ BUDGET SHARING ============
+
+import type { BudgetShare } from '../types';
+
+export const getBudgetShares = async (): Promise<BudgetShare[]> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+        .from('budget_shares')
+        .select(`
+            id,
+            partner_id,
+            created_at,
+            partner:profiles!budget_shares_partner_id_fkey(id, email, full_name)
+        `)
+        .eq('owner_id', user.id);
+
+    if (error) {
+        console.error('Error fetching budget shares:', error);
+        return [];
+    }
+
+    return (data || []).map((s: any) => ({
+        id: s.id,
+        partnerId: s.partner_id,
+        partnerEmail: s.partner?.email || '',
+        partnerName: s.partner?.full_name || undefined,
+        createdAt: s.created_at
+    }));
+};
+
+export const shareBudgetWithPartner = async (partnerId: string): Promise<boolean> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    // Check if already shared
+    const { data: existing } = await supabase
+        .from('budget_shares')
+        .select('id')
+        .eq('owner_id', user.id)
+        .eq('partner_id', partnerId)
+        .single();
+
+    if (existing) {
+        console.warn('Budget already shared with this partner');
+        return true; // Already shared, consider it success
+    }
+
+    const { error } = await supabase
+        .from('budget_shares')
+        .insert({
+            owner_id: user.id,
+            partner_id: partnerId
+        });
+
+    if (error) {
+        console.error('Error sharing budget:', error);
+        return false;
+    }
+
+    return true;
+};
+
+export const unshareBudgetWithPartner = async (shareId: string): Promise<boolean> => {
+    const { error } = await supabase
+        .from('budget_shares')
+        .delete()
+        .eq('id', shareId);
+
+    if (error) {
+        console.error('Error removing budget share:', error);
+        return false;
+    }
+
+    return true;
+};
+
+export const getSharedBudgetFromPartner = async (ownerId: string): Promise<Budget | null> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    // Verify this budget is shared with current user
+    const { data: share } = await supabase
+        .from('budget_shares')
+        .select('id')
+        .eq('owner_id', ownerId)
+        .eq('partner_id', user.id)
+        .single();
+
+    if (!share) {
+        console.warn('Budget not shared with you');
+        return null;
+    }
+
+    // Fetch the owner's budget settings
+    const { data: settings } = await supabase
+        .from('user_settings')
+        .select('*')
+        .eq('user_id', ownerId)
+        .single();
+
+    // Fetch the owner's transactions
+    const { data: transactions } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', ownerId)
+        .is('next_due_date', null)
+        .order('date', { ascending: false });
+
+    return {
+        limit: settings?.budget_limit || 0,
+        duration: settings?.budget_duration || 'Monthly',
+        savings: settings?.savings || 0,
+        transactions: (transactions || []).map((t: any) => ({
+            id: t.id,
+            description: t.description,
+            amount: t.amount,
+            type: t.type,
+            date: new Date(t.date).getTime()
+        })),
+        recurring: [] // Don't share recurring details
+    };
+};

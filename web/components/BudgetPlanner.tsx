@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { Budget, Transaction, ThemeOption } from '../types';
+import { Budget, Transaction, ThemeOption, BudgetShare, Partnership } from '../types';
 import * as BudgetService from '../services/budgetService';
+import * as PartnerService from '../services/partnerService';
 import Button from './Button';
 import Input from './Input';
-import { Wallet, TrendingUp, TrendingDown, Plus, Trash2, IndianRupee, Eye, EyeOff, Repeat, ArrowRight, Settings } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Plus, Trash2, IndianRupee, Eye, EyeOff, Repeat, ArrowRight, Settings, Share2, User, X, Loader2, UserPlus } from 'lucide-react';
 import { t } from '../themeText';
 
 interface BudgetPlannerProps {
@@ -20,10 +21,34 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ budget, onUpdate, current
     const [transAmount, setTransAmount] = useState('');
     const [transType, setTransType] = useState<'income' | 'expense'>('expense');
 
+    // Budget sharing state
+    const [budgetShares, setBudgetShares] = useState<BudgetShare[]>([]);
+    const [partnerships, setPartnerships] = useState<Partnership[]>([]);
+    const [isLoadingShares, setIsLoadingShares] = useState(true);
+    const [selectedPartnerId, setSelectedPartnerId] = useState('');
+    const [isSharing, setIsSharing] = useState(false);
+
     useEffect(() => {
         setLimitInput(budget.limit.toString());
         setDurationInput(budget.duration);
     }, [budget]);
+
+    // Load budget shares and partnerships on mount
+    useEffect(() => {
+        loadSharingData();
+    }, []);
+
+    const loadSharingData = async () => {
+        setIsLoadingShares(true);
+        const [shares, partners] = await Promise.all([
+            BudgetService.getBudgetShares(),
+            PartnerService.getPartnerships()
+        ]);
+        setBudgetShares(shares);
+        // Only show accepted partnerships
+        setPartnerships(partners.filter(p => p.status === 'accepted'));
+        setIsLoadingShares(false);
+    };
 
     const handleUpdateSettings = async () => {
         const num = parseFloat(limitInput);
@@ -43,6 +68,24 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ budget, onUpdate, current
         }
     };
 
+    const handleShareWithPartner = async () => {
+        if (!selectedPartnerId) return;
+        setIsSharing(true);
+        const success = await BudgetService.shareBudgetWithPartner(selectedPartnerId);
+        if (success) {
+            await loadSharingData();
+            setSelectedPartnerId('');
+        }
+        setIsSharing(false);
+    };
+
+    const handleRemoveShare = async (shareId: string) => {
+        const success = await BudgetService.unshareBudgetWithPartner(shareId);
+        if (success) {
+            setBudgetShares(prev => prev.filter(s => s.id !== shareId));
+        }
+    };
+
     const totalIncome = budget.transactions.filter(t => t.type === 'income').reduce((acc, curr) => acc + curr.amount, 0);
     const totalExpenses = budget.transactions.filter(t => t.type === 'expense').reduce((acc, curr) => acc + curr.amount, 0);
     const remaining = budget.limit - totalExpenses;
@@ -50,6 +93,11 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ budget, onUpdate, current
     const formatCurrency = (val: number) => {
         return val.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
     };
+
+    // Get partners not already shared with
+    const availablePartners = partnerships.filter(
+        p => !budgetShares.some(s => s.partnerId === p.partnerId)
+    );
 
     return (
         <div className="space-y-8 animate-fade-in h-full flex flex-col">
@@ -144,8 +192,101 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ budget, onUpdate, current
                     </Button>
                 </div>
             </div>
+
+            {/* Share Budget Section */}
+            <div className="glass-panel p-6 rounded-3xl space-y-4">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2 font-mono">
+                    <Share2 size={14} /> Share Budget
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Share your budget overview with connected partners so they can view your spending progress.
+                </p>
+
+                {isLoadingShares ? (
+                    <div className="py-4 flex items-center justify-center text-slate-400">
+                        <Loader2 className="animate-spin mr-2" size={18} />
+                        Loading...
+                    </div>
+                ) : (
+                    <>
+                        {/* Add Partner to Share */}
+                        {availablePartners.length > 0 ? (
+                            <div className="flex gap-3 items-end">
+                                <div className="flex-1">
+                                    <label className="text-[10px] font-bold uppercase text-slate-400 ml-1 font-mono">Select Partner</label>
+                                    <select
+                                        value={selectedPartnerId}
+                                        onChange={e => setSelectedPartnerId(e.target.value)}
+                                        className="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-4 h-11 text-sm text-slate-800 dark:text-slate-100 focus:outline-none"
+                                    >
+                                        <option value="">Choose a partner...</option>
+                                        {availablePartners.map(p => (
+                                            <option key={p.partnerId} value={p.partnerId}>
+                                                {p.partnerName || p.partnerEmail}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <Button
+                                    variant="primary"
+                                    onClick={handleShareWithPartner}
+                                    disabled={!selectedPartnerId || isSharing}
+                                    className="h-11"
+                                >
+                                    {isSharing ? <Loader2 className="animate-spin" size={16} /> : <UserPlus size={16} />}
+                                    <span className="ml-2">Share</span>
+                                </Button>
+                            </div>
+                        ) : partnerships.length === 0 ? (
+                            <div className="py-4 text-center text-slate-400 text-sm bg-slate-50 dark:bg-black/20 rounded-xl">
+                                <UserPlus className="mx-auto mb-2 text-slate-300" size={24} />
+                                No partners connected yet. Add partners in Settings → Collaboration.
+                            </div>
+                        ) : (
+                            <div className="py-2 text-sm text-slate-500 dark:text-slate-400">
+                                Budget shared with all connected partners.
+                            </div>
+                        )}
+
+                        {/* Shared Partners List */}
+                        {budgetShares.length > 0 && (
+                            <div className="space-y-2 pt-2">
+                                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Currently Shared With</p>
+                                {budgetShares.map(share => (
+                                    <div 
+                                        key={share.id}
+                                        className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500">
+                                                <User size={16} />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                                    {share.partnerName || share.partnerEmail}
+                                                </p>
+                                                {share.partnerName && (
+                                                    <p className="text-xs text-slate-500">{share.partnerEmail}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={() => handleRemoveShare(share.id)}
+                                            className="p-1.5 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                                            title="Remove Share"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
         </div>
     );
 };
 
 export default BudgetPlanner;
+

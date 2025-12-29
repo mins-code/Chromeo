@@ -113,6 +113,14 @@ export interface RecurringTransaction {
   nextDueDate: string; // ISO Date string
 }
 
+export interface BudgetShare {
+  id: string;
+  partnerId: string;
+  partnerEmail: string;
+  partnerName?: string;
+  createdAt: string;
+}
+
 export interface Budget {
   limit: number;
   duration: string; // e.g. "Monthly", "Weekly"
@@ -122,3 +130,5 @@ export interface Budget {
 }
 
 export type ViewMode = 'dashboard' | 'activities' | 'tasks' | 'reminders' | 'events' | 'appointments' | 'budget' | 'ai-chat' | 'settings' | 'calendar';
+
+export type ViewSourceMode = 'personal' | 'partners' | 'combined';

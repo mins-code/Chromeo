@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from './components/Layout';
-import { Task, ViewMode, TaskStatus, Partner, TaskPriority, TaskType, ThemeOption, Budget, RecurringTransaction } from './types';
+import { Task, ViewMode, TaskStatus, Partner, TaskPriority, TaskType, ThemeOption, Budget, RecurringTransaction, ViewSourceMode } from './types';
 import * as TaskService from './services/taskService';
 import * as SmsService from './services/smsService';
 import { supabase } from './services/supabaseClient';
@@ -27,6 +27,7 @@ import { useAuth } from './context/AuthContext';
 import { useTheme } from './context/ThemeContext';
 import { useTasks } from './hooks/useTasks';
 import { useBudget } from './hooks/useBudget';
+import * as PartnerService from './services/partnerService';
 
 // Map URL paths to ViewMode for Layout compatibility
 const pathToViewMode: Record<string, ViewMode> = {
@@ -107,6 +108,10 @@ const App: React.FC = () => {
     // Command Bar State (Cmd+K)
     const [isCommandBarOpen, setIsCommandBarOpen] = useState(false);
 
+    // View Source Mode State (Personal/Partners/Combined)
+    const [viewSourceMode, setViewSourceMode] = useState<ViewSourceMode>('personal');
+    const [hasConnectedPartners, setHasConnectedPartners] = useState(false);
+
     // Load username when session changes
     useEffect(() => {
         const loadUsername = async () => {
@@ -122,6 +127,18 @@ const App: React.FC = () => {
             }
         };
         loadUsername();
+    }, [session]);
+
+    // Check for connected partners to show view toggle
+    useEffect(() => {
+        const checkPartners = async () => {
+            if (session?.user) {
+                const partnerships = await PartnerService.getPartnerships();
+                const acceptedPartners = partnerships.filter(p => p.status === 'accepted');
+                setHasConnectedPartners(acceptedPartners.length > 0);
+            }
+        };
+        checkPartners();
     }, [session]);
 
     // Initialize calendar tags when tasks load
@@ -461,6 +478,9 @@ const App: React.FC = () => {
             selectedTags={selectedCalendarTags}
             onToggleTag={handleToggleCalendarTag}
             onRenameTag={handleRenameTag}
+            viewSourceMode={viewSourceMode}
+            onViewSourceModeChange={setViewSourceMode}
+            hasConnectedPartners={hasConnectedPartners}
         >
             {/* SMS Notification Toast */}
             {lastSmsTransaction && (

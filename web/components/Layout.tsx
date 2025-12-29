@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { NAVIGATION_ITEMS, APP_NAME } from '../constants';
-import { ViewMode, TaskType, ThemeOption } from '../types';
+import { ViewMode, TaskType, ThemeOption, ViewSourceMode } from '../types';
 import { Plus, Settings, X, Wallet, CheckCircle2, User, ChevronDown, Calendar, CheckSquare, Clock, Moon, Sun, ChevronLeft, ChevronRight, Menu, PanelLeft, PanelLeftClose, Bell, ChevronUp, Check, Pencil } from 'lucide-react';
 import { t, ThemeText } from '../themeText';
 import MiniCalendar from './MiniCalendar';
@@ -42,6 +42,10 @@ interface LayoutProps {
     onToggleTag: (tag: string) => void;
     // Rename Tag functionality
     onRenameTag?: (oldTag: string, newTag: string) => void;
+    // View Source Mode for Personal/Partners/Combined views
+    viewSourceMode: ViewSourceMode;
+    onViewSourceModeChange: (mode: ViewSourceMode) => void;
+    hasConnectedPartners?: boolean;
 }
 
 export const Layout: React.FC<LayoutProps> = ({
@@ -55,7 +59,10 @@ export const Layout: React.FC<LayoutProps> = ({
     calendarTags,
     selectedTags,
     onToggleTag,
-    onRenameTag
+    onRenameTag,
+    viewSourceMode,
+    onViewSourceModeChange,
+    hasConnectedPartners = false
 }) => {
     const [showProfileStats, setShowProfileStats] = useState(false);
     const [showCreateMenu, setShowCreateMenu] = useState(false);
@@ -568,7 +575,46 @@ export const Layout: React.FC<LayoutProps> = ({
                         </div>
 
                         {/* Right Side Header Items */}
-                        <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-4">
+                            {/* View Source Mode Toggle */}
+                            {hasConnectedPartners && (
+                                <div className="hidden md:flex items-center p-1 rounded-xl bg-slate-100 dark:bg-black/30 border border-slate-200 dark:border-white/10">
+                                    <button
+                                        onClick={() => onViewSourceModeChange('personal')}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                            viewSourceMode === 'personal'
+                                                ? 'bg-blue-500 text-white shadow-sm'
+                                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                                        }`}
+                                        title="View only your data"
+                                    >
+                                        Personal
+                                    </button>
+                                    <button
+                                        onClick={() => onViewSourceModeChange('partners')}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                            viewSourceMode === 'partners'
+                                                ? 'bg-purple-500 text-white shadow-sm'
+                                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                                        }`}
+                                        title="View partner's shared data"
+                                    >
+                                        Partners
+                                    </button>
+                                    <button
+                                        onClick={() => onViewSourceModeChange('combined')}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                            viewSourceMode === 'combined'
+                                                ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-sm'
+                                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                                        }`}
+                                        title="View combined data"
+                                    >
+                                        Combined
+                                    </button>
+                                </div>
+                            )}
+
                             {/* Budget Widget */}
                             <div className="hidden md:flex items-center gap-3 px-4 py-2 rounded-xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-white/10 transition-colors cursor-pointer shadow-sm" onClick={() => onNavigate('budget')}>
                                 <div className="p-1.5 bg-brand-500/10 rounded-lg text-brand-600 dark:text-brand-400">
