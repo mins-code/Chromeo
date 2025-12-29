@@ -1,0 +1,467 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========================================
+   CSS Variables - Theme Definitions
+   ======================================== */
+
+:root {
+  /* Default Light - Navy theme matching logo */
+  --brand-50: #e8eef5;
+  --brand-100: #c5d4e8;
+  --brand-200: #9db5d6;
+  --brand-300: #7596c4;
+  --brand-400: #4d77b2;
+  --brand-500: #1e3a5f;
+  /* Deep navy from logo */
+  --brand-600: #172d4a;
+  --brand-700: #102035;
+  --bg-primary: #f1f5f9;
+  --bg-secondary: #ffffff;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --border-color: #cbd5e1;
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(30, 58, 95, 0.15);
+}
+
+.dark {
+  /* Default Dark - Monochrome Silver Theme */
+  /* Pure black with silver/white accents matching compass logo */
+  --brand-50: #1a1a1a;
+  --brand-100: #2a2a2a;
+  --brand-200: #4a4a4a;
+  --brand-300: #6a6a6a;
+  --brand-400: #8a8a8a;
+  --brand-500: #e0e0e0; /* Silver/White - Primary accent */
+  --brand-600: #cccccc;
+  --brand-700: #aaaaaa;
+  --bg-primary: #000000; /* Pure black */
+  --bg-secondary: #0a0a0a; /* Near black */
+  --text-primary: #ffffff; /* Pure white */
+  --text-secondary: #b0b0b0; /* Light silver */
+  --border-color: rgba(255, 255, 255, 0.12);
+  --glass-bg: rgba(10, 10, 10, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+.dark body {
+  background-color: #000000;
+}
+
+.dark .glass {
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Silver accent text */
+.dark .text-brand-500 {
+  color: #e0e0e0;
+}
+
+.dark .text-brand-600 {
+  color: #cccccc;
+}
+
+/* Dark sidebar with subtle silver borders */
+.dark aside {
+  background: linear-gradient(
+    180deg,
+    rgba(15, 15, 15, 0.98) 0%,
+    rgba(0, 0, 0, 0.98) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark header {
+  background: rgba(0, 0, 0, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Silver highlights */
+.dark .bg-brand-500\/5 {
+  background-color: rgba(224, 224, 224, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Pure black gradient background */
+.dark .bg-gradient-main {
+  background: linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%);
+}
+
+/* Dark cards with subtle borders */
+.dark .glass-panel {
+  background: rgba(15, 15, 15, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+}
+
+.dark .glass-panel:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.7);
+}
+
+/* Silver/white buttons */
+.dark button.rounded-full {
+  background: linear-gradient(135deg, #e0e0e0 0%, #cccccc 100%);
+  border: none;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+  color: #000000;
+}
+
+/* Silver icon accents */
+.dark .text-slate-400,
+.dark .text-slate-500 {
+  color: #808080;
+}
+
+.dark .text-slate-200,
+.dark .text-slate-100 {
+  color: #e8e8e8;
+}
+
+/* Line separators */
+.dark .border-b,
+.dark .border-t {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ========================================
+   Cyberpunk Theme - Neon Cyan & Magenta
+   ======================================== */
+
+.theme-cyberpunk {
+  --brand-50: #1a0a2e; /* Deep purple tint */
+  --brand-100: #2d1b4e;
+  --brand-200: #4a2c7a;
+  --brand-300: #00ffff; /* Neon Cyan */
+  --brand-400: #00e5e5;
+  --brand-500: #00ffff; /* Neon Cyan - Primary accent */
+  --brand-600: #00cccc;
+  --brand-700: #009999;
+  --accent-magenta: #ff00ff; /* Neon Magenta */
+  --accent-pink: #e040fb;
+  --bg-primary: #0a0014; /* Very dark purple-black */
+  --bg-secondary: #120028; /* Dark purple */
+  --text-primary: #e0ffff; /* Light cyan-white */
+  --text-secondary: #b0e0e6; /* Pale cyan */
+  --border-color: rgba(0, 255, 255, 0.3); /* Cyan border */
+  --glass-bg: rgba(18, 0, 40, 0.9);
+  --glass-border: rgba(0, 255, 255, 0.2);
+}
+
+.theme-cyberpunk body {
+  font-family: "Inter", sans-serif;
+  background-color: #0a0014;
+}
+
+.theme-cyberpunk .glass {
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.15), 0 0 40px rgba(255, 0, 255, 0.08);
+  border: 1px solid var(--glass-border);
+}
+
+/* Neon glow text for accent */
+.theme-cyberpunk .text-brand-500 {
+  color: #00ffff;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.7), 0 0 20px rgba(0, 255, 255, 0.4);
+}
+
+.theme-cyberpunk .text-brand-600 {
+  color: #ff00ff;
+  text-shadow: 0 0 10px rgba(255, 0, 255, 0.7);
+}
+
+/* Cyberpunk sidebar with neon accent */
+.theme-cyberpunk aside {
+  background: linear-gradient(
+    180deg,
+    rgba(18, 0, 40, 0.98) 0%,
+    rgba(10, 0, 20, 0.98) 100%
+  );
+  border-color: rgba(0, 255, 255, 0.15);
+  box-shadow: 0 0 30px rgba(255, 0, 255, 0.05);
+}
+
+.theme-cyberpunk header {
+  background: rgba(10, 0, 20, 0.95);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+/* Neon cyan highlights */
+.theme-cyberpunk .bg-brand-500\/5 {
+  background-color: rgba(0, 255, 255, 0.08) !important;
+  border-color: rgba(0, 255, 255, 0.3) !important;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+}
+
+/* Dark gradient background with purple tones */
+.theme-cyberpunk .bg-gradient-main {
+  background: linear-gradient(135deg, #0a0014 0%, #120028 50%, #1a0a2e 100%);
+}
+
+/* Neon glow cards */
+.theme-cyberpunk .glass-panel {
+  background: rgba(18, 0, 40, 0.85);
+  border: 1px solid rgba(0, 255, 255, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 255, 255, 0.05);
+}
+
+.theme-cyberpunk .glass-panel:hover {
+  border-color: rgba(0, 255, 255, 0.4);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.6), 0 0 25px rgba(0, 255, 255, 0.15),
+    0 0 40px rgba(255, 0, 255, 0.08);
+}
+
+/* Neon cyan buttons */
+.theme-cyberpunk button.rounded-full {
+  background: linear-gradient(135deg, #00ffff 0%, #00cccc 100%);
+  border: none;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4), 0 0 40px rgba(0, 255, 255, 0.2);
+  color: #0a0014;
+}
+
+/* Cyan/magenta icon accents */
+.theme-cyberpunk .text-slate-400,
+.theme-cyberpunk .text-slate-500 {
+  color: #7b68ee;
+}
+
+.theme-cyberpunk .text-slate-200,
+.theme-cyberpunk .text-slate-100 {
+  color: #e0ffff;
+}
+
+/* Neon hover states */
+.theme-cyberpunk a:hover {
+  color: #00ffff;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+/* Line separators with neon glow */
+.theme-cyberpunk .border-b,
+.theme-cyberpunk .border-t {
+  border-color: rgba(0, 255, 255, 0.15);
+}
+
+/* ========================================
+   Sunset Theme - Pink/Orange
+   ======================================== */
+
+.theme-sunset {
+  --brand-50: #fff1f2;
+  --brand-500: #f43f5e;
+  --brand-600: #e11d48;
+  --bg-primary: #4c0519;
+  --bg-secondary: #881337;
+  --text-primary: #fff1f2;
+  --text-secondary: #fda4af;
+  --border-color: #fb7185;
+  --glass-bg: rgba(136, 19, 55, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.15);
+}
+
+.theme-sunset .bg-gradient-main {
+  background: linear-gradient(to bottom right, #4c0519, #881337, #be123c);
+}
+
+/* ========================================
+   One Piece Theme - Rose Gold Compass
+   ======================================== */
+
+.theme-onepiece {
+  --brand-50: #2a2420;
+  /* Dark rose tint */
+  --brand-100: #3d3530;
+  --brand-200: #8b7355;
+  --brand-300: #c9a080;
+  /* Lighter rose gold */
+  --brand-400: #d4a574;
+  /* Rose gold */
+  --brand-500: #d4a574;
+  /* Rose Gold - Primary Accent */
+  --brand-600: #c9a080;
+  --brand-700: #a88b6a;
+  --bg-primary: #0a0a0a;
+  /* Deep black background */
+  --bg-secondary: #141414;
+  /* Slightly lighter black for cards */
+  --text-primary: #e8dcd0;
+  /* Warm off-white for primary text */
+  --text-secondary: #b8a898;
+  /* Muted rose for secondary text */
+  --border-color: rgba(212, 165, 116, 0.3);
+  /* Rose gold borders */
+  --glass-bg: rgba(20, 20, 20, 0.95);
+  --glass-border: rgba(212, 165, 116, 0.2);
+}
+
+.theme-onepiece body {
+  font-family: "Inter", sans-serif;
+  background-color: #0a0a0a;
+}
+
+/* Dark gradient background */
+.theme-onepiece .bg-gradient-main {
+  background: linear-gradient(135deg, #0a0a0a 0%, #141414 50%, #0a0a0a 100%);
+}
+
+/* Rose gold accent for interactive elements */
+.theme-onepiece .bg-brand-500\/5 {
+  background-color: rgba(212, 165, 116, 0.08) !important;
+  border-color: rgba(212, 165, 116, 0.3) !important;
+}
+
+.theme-onepiece .text-brand-500 {
+  color: #d4a574;
+  /* Rose gold for accent text */
+}
+
+.theme-onepiece .text-brand-600 {
+  color: #c9a080;
+}
+
+.theme-onepiece .text-brand-300 {
+  color: #e8dcd0;
+}
+
+/* Dark sidebar with rose gold accents */
+.theme-onepiece aside {
+  background: linear-gradient(
+    180deg,
+    rgba(20, 20, 20, 0.98) 0%,
+    rgba(10, 10, 10, 0.98) 100%
+  );
+  border-color: rgba(212, 165, 116, 0.15);
+}
+
+.theme-onepiece .glass {
+  background: rgba(20, 20, 20, 0.95);
+  border-color: rgba(212, 165, 116, 0.15);
+}
+
+.theme-onepiece header {
+  background: rgba(10, 10, 10, 0.98);
+  border-bottom: 1px solid rgba(212, 165, 116, 0.2);
+}
+
+/* Rose gold line separators */
+.theme-onepiece .border-b,
+.theme-onepiece .border-t {
+  border-color: rgba(212, 165, 116, 0.15);
+}
+
+/* Dark cards with rose gold accents */
+.theme-onepiece .glass-panel {
+  background: rgba(20, 20, 20, 0.9);
+  border: 1px solid rgba(212, 165, 116, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.theme-onepiece .glass-panel:hover {
+  border-color: rgba(212, 165, 116, 0.3);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.5), 0 0 20px rgba(212, 165, 116, 0.1);
+}
+
+/* Rose gold gradient buttons */
+.theme-onepiece button.rounded-full {
+  background: linear-gradient(135deg, #d4a574 0%, #c9a080 100%);
+  border: none;
+  box-shadow: 0 4px 15px rgba(212, 165, 116, 0.3);
+  color: #0a0a0a;
+}
+
+/* Rose gold icon accents */
+.theme-onepiece .text-slate-400,
+.theme-onepiece .text-slate-500 {
+  color: #8b7a6a;
+}
+
+.theme-onepiece .text-slate-600,
+.theme-onepiece .text-slate-700 {
+  color: #b8a898;
+}
+
+.theme-onepiece .text-slate-200,
+.theme-onepiece .text-slate-100 {
+  color: #e8dcd0;
+}
+
+/* Warm hover states */
+.theme-onepiece a:hover,
+.theme-onepiece button:hover {
+  color: #d4a574;
+}
+
+/* Dark mode specific overrides for readability */
+.theme-onepiece .dark\:text-slate-200,
+.theme-onepiece .dark\:text-white {
+  color: #e8dcd0;
+}
+
+.theme-onepiece .dark\:text-slate-400 {
+  color: #b8a898;
+}
+
+/* ========================================
+   Base Styles
+   ======================================== */
+
+body {
+  font-family: "Inter", sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-secondary);
+  opacity: 0.3;
+  border-radius: 3px;
+}
+
+/* ========================================
+   Utility Classes
+   ======================================== */
+
+/* Glassmorphism Utilities */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.bg-gradient-main {
+  background: linear-gradient(
+    135deg,
+    var(--bg-primary) 0%,
+    var(--bg-secondary) 100%
+  );
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
