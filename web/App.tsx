@@ -29,7 +29,10 @@ import { useTasks } from './hooks/useTasks';
 import { useBudget } from './hooks/useBudget';
 import * as PartnerService from './services/partnerService';
 import * as NotificationService from './services/notificationService';
-import { NotificationSettings } from './types';
+import * as RoutineService from './services/routineService';
+import { NotificationSettings, Routine } from './types';
+import RoutineEditor from './components/RoutineEditor';
+import RoutineList from './components/RoutineList';
 
 // Map URL paths to ViewMode for Layout compatibility
 const pathToViewMode: Record<string, ViewMode> = {
@@ -43,6 +46,7 @@ const pathToViewMode: Record<string, ViewMode> = {
     '/budget': 'budget',
     '/ai-chat': 'ai-chat',
     '/settings': 'settings',
+    '/routines': 'routines',
 };
 
 const viewModeToPath: Record<ViewMode, string> = {
@@ -56,6 +60,7 @@ const viewModeToPath: Record<ViewMode, string> = {
     'budget': '/budget',
     'ai-chat': '/ai-chat',
     'settings': '/settings',
+    'routines': '/routines',
 };
 
 const App: React.FC = () => {
@@ -121,6 +126,11 @@ const App: React.FC = () => {
     const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>(
         NotificationService.getPermissionStatus()
     );
+
+    // Routine State
+    const [routines, setRoutines] = useState<Routine[]>(RoutineService.getRoutines());
+    const [isRoutineEditorOpen, setIsRoutineEditorOpen] = useState(false);
+    const [editingRoutine, setEditingRoutine] = useState<Routine | undefined>(undefined);
 
     // Load username when session changes
     useEffect(() => {
@@ -293,6 +303,36 @@ const App: React.FC = () => {
         const newSettings = { ...notificationSettings, [key]: value };
         setNotificationSettings(newSettings);
         NotificationService.saveSettings(newSettings);
+    };
+
+    // Routine Handlers
+    const handleSaveRoutine = (routine: Routine) => {
+        RoutineService.saveRoutine(routine);
+        setRoutines(RoutineService.getRoutines());
+        setIsRoutineEditorOpen(false);
+        setEditingRoutine(undefined);
+    };
+
+    const handleDeleteRoutine = (id: string) => {
+        RoutineService.deleteRoutine(id);
+        setRoutines(RoutineService.getRoutines());
+        setIsRoutineEditorOpen(false);
+        setEditingRoutine(undefined);
+    };
+
+    const handleToggleRoutine = (id: string) => {
+        RoutineService.toggleRoutine(id);
+        setRoutines(RoutineService.getRoutines());
+    };
+
+    const handleCreateRoutine = () => {
+        setEditingRoutine(undefined);
+        setIsRoutineEditorOpen(true);
+    };
+
+    const handleEditRoutine = (routine: Routine) => {
+        setEditingRoutine(routine);
+        setIsRoutineEditorOpen(true);
     };
 
     const handleUsernameChange = (name: string) => {
@@ -831,6 +871,17 @@ const App: React.FC = () => {
                 </div>
             )}
 
+            {/* VIEW: ROUTINES */}
+            {currentView === 'routines' && (
+                <RoutineList
+                    routines={routines}
+                    onEdit={handleEditRoutine}
+                    onDelete={handleDeleteRoutine}
+                    onToggle={handleToggleRoutine}
+                    onCreate={handleCreateRoutine}
+                />
+            )}
+
             {/* VIEW: SETTINGS */}
             {currentView === 'settings' && (
                 <div className="space-y-8 animate-fade-in h-full flex flex-col">
@@ -1108,6 +1159,15 @@ const App: React.FC = () => {
                 availableTasks={tasks}
                 initialDate={calendarSelectedDate}
                 initialType={editorInitialType}
+            />
+
+            {/* Routine Editor Modal */}
+            <RoutineEditor
+                isOpen={isRoutineEditorOpen}
+                onClose={() => setIsRoutineEditorOpen(false)}
+                onSave={handleSaveRoutine}
+                onDelete={handleDeleteRoutine}
+                routine={editingRoutine}
             />
 
             {/* Command Bar (Cmd+K Quick Add) */}

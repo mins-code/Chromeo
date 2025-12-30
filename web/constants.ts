@@ -1,5 +1,5 @@
 
-import { LayoutDashboard, CheckSquare, Calendar as CalendarIcon, Bot, Settings, Users, Wallet, Bell, Clock, FolderKanban, CalendarDays, LayoutGrid } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Calendar as CalendarIcon, Bot, Settings, Users, Wallet, Bell, Clock, FolderKanban, CalendarDays, LayoutGrid, Repeat } from 'lucide-react';
 
 export const APP_NAME = "ChronoDeX";
 
@@ -17,6 +17,7 @@ export const NAVIGATION_ITEMS = [
       { id: 'appointments', label: 'Appointments', icon: Clock },
     ]
   },
+  { id: 'routines', label: 'Routines', icon: Repeat },
   { id: 'budget', label: 'Budget Plan', icon: Wallet },
   { id: 'ai-chat', label: 'AI Assistant', icon: Bot },
 ];

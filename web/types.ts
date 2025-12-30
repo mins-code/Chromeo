@@ -134,7 +134,7 @@ export interface Budget {
   savings: number;
 }
 
-export type ViewMode = 'dashboard' | 'activities' | 'tasks' | 'reminders' | 'events' | 'appointments' | 'budget' | 'ai-chat' | 'settings' | 'calendar';
+export type ViewMode = 'dashboard' | 'activities' | 'tasks' | 'reminders' | 'events' | 'appointments' | 'budget' | 'ai-chat' | 'settings' | 'calendar' | 'routines';
 
 export type ViewSourceMode = 'personal' | 'partners' | 'combined';
 
@@ -144,4 +144,44 @@ export interface NotificationSettings {
   eventReminders: boolean;
   budgetAlerts: boolean;
   reminderMinutesBefore: number;
+}
+
+// Routine Pattern Types
+export type RoutinePatternType = 'weekday' | 'interval' | 'cycle';
+
+export interface WeekdayPattern {
+  type: 'weekday';
+  days: number[]; // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+}
+
+export interface IntervalPattern {
+  type: 'interval';
+  every: number; // Every N days
+  startDate: string; // ISO date to count from
+}
+
+export interface CycleItem {
+  name: string;
+  color?: string; // Optional color for visual distinction
+}
+
+export interface CyclePattern {
+  type: 'cycle';
+  items: CycleItem[]; // e.g., [{name: "Push"}, {name: "Pull"}, {name: "Legs"}, {name: "Rest"}]
+  startDate: string; // ISO date to start cycle from
+}
+
+export type RoutinePattern = WeekdayPattern | IntervalPattern | CyclePattern;
+
+export interface Routine {
+  id: string;
+  name: string;
+  description?: string;
+  pattern: RoutinePattern;
+  time?: string; // HH:mm format for when routine occurs
+  duration?: number; // Duration in minutes
+  isActive: boolean;
+  notificationEnabled?: boolean;
+  notificationMinutesBefore?: number;
+  createdAt: string;
 }
