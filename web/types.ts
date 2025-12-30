@@ -46,7 +46,12 @@ export interface Task {
   dependencyIds: string[]; // IDs of tasks that must be completed first
   isShared: boolean; // Shared with partner
   recurrence?: RecurrenceConfig;
+  
+  // Per-task notification settings (overrides global settings)
+  notificationEnabled?: boolean; // undefined = use global, true/false = override
+  notificationMinutesBefore?: number; // Custom lead time for this task
 }
+
 
 export interface Partner {
   id: string;

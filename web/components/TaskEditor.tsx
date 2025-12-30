@@ -38,6 +38,13 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
   const [recurrenceInterval, setRecurrenceInterval] = useState(1);
   const [recurrenceEnd, setRecurrenceEnd] = useState('');
 
+  // Per-task Notification Fields
+  const [notificationEnabled, setNotificationEnabled] = useState<boolean | undefined>(undefined);
+  const [notificationMinutesBefore, setNotificationMinutesBefore] = useState<number | undefined>(undefined);
+  const [showCustomNotification, setShowCustomNotification] = useState(false);
+  const [customNotificationValue, setCustomNotificationValue] = useState(30);
+  const [customNotificationUnit, setCustomNotificationUnit] = useState<'minutes' | 'hours' | 'days'>('minutes');
+
   const [isEnhancing, setIsEnhancing] = useState(false);
 
   useEffect(() => {
@@ -64,6 +71,25 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
         setRecurrenceInterval(1);
         setRecurrenceEnd('');
       }
+      
+      // Load notification settings
+      setNotificationEnabled(task.notificationEnabled);
+      setNotificationMinutesBefore(task.notificationMinutesBefore);
+      if (task.notificationMinutesBefore && ![5, 15, 60, 720, 1440].includes(task.notificationMinutesBefore)) {
+        setShowCustomNotification(true);
+        if (task.notificationMinutesBefore >= 1440) {
+          setCustomNotificationValue(Math.floor(task.notificationMinutesBefore / 1440));
+          setCustomNotificationUnit('days');
+        } else if (task.notificationMinutesBefore >= 60) {
+          setCustomNotificationValue(Math.floor(task.notificationMinutesBefore / 60));
+          setCustomNotificationUnit('hours');
+        } else {
+          setCustomNotificationValue(task.notificationMinutesBefore);
+          setCustomNotificationUnit('minutes');
+        }
+      } else {
+        setShowCustomNotification(false);
+      }
     } else {
         // Reset for new task
         setType(initialType);
@@ -82,6 +108,13 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
         setRecurrenceFreq('none');
         setRecurrenceInterval(1);
         setRecurrenceEnd('');
+        
+        // Reset notification settings
+        setNotificationEnabled(undefined);
+        setNotificationMinutesBefore(undefined);
+        setShowCustomNotification(false);
+        setCustomNotificationValue(30);
+        setCustomNotificationUnit('minutes');
     }
   }, [task, isOpen, initialDate, initialType]);
 
@@ -105,13 +138,15 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
       status,
       subtasks,
       tags,
-      dueDate: reminderTime ? new Date(reminderTime).toISOString() : undefined, // Simplify: map reminder input to due date for now
+      dueDate: reminderTime ? new Date(reminderTime).toISOString() : undefined,
       reminderTime: reminderTime ? new Date(reminderTime).toISOString() : undefined,
       dependencyIds,
       isShared,
       recurrence,
       duration: duration === '' ? undefined : Number(duration),
-      location
+      location,
+      notificationEnabled,
+      notificationMinutesBefore
     });
     onClose();
   };
@@ -299,6 +334,125 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                     </div>
                  )}
              </div>
+
+            {/* Per-Task Notification Settings */}
+            {reminderTime && (
+              <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-2xl border border-amber-200 dark:border-amber-500/20">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-amber-700 dark:text-amber-300">
+                    <Bell size={16} className="text-amber-500" />
+                    Notification for this {type.toLowerCase()}
+                  </div>
+                  <button
+                    onClick={() => {
+                      const newValue = notificationEnabled === undefined ? true : notificationEnabled === true ? false : undefined;
+                      setNotificationEnabled(newValue);
+                    }}
+                    className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${
+                      notificationEnabled === true ? 'bg-amber-500' : 
+                      notificationEnabled === false ? 'bg-slate-300 dark:bg-slate-600' :
+                      'bg-gradient-to-r from-slate-300 to-amber-400 dark:from-slate-600 dark:to-amber-500'
+                    }`}
+                    title={
+                      notificationEnabled === undefined ? 'Using global settings' :
+                      notificationEnabled ? 'Enabled' : 'Disabled'
+                    }
+                  >
+                    <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${
+                      notificationEnabled === true ? 'translate-x-6' : 
+                      notificationEnabled === false ? 'translate-x-0' :
+                      'translate-x-3'
+                    }`} />
+                  </button>
+                </div>
+                
+                <p className="text-xs text-amber-600 dark:text-amber-400 mb-3">
+                  {notificationEnabled === undefined && '• Using global notification settings'}
+                  {notificationEnabled === true && '• Notification enabled for this item'}
+                  {notificationEnabled === false && '• Notification disabled for this item'}
+                </p>
+
+                {(notificationEnabled === undefined || notificationEnabled === true) && (
+                  <div className="space-y-3">
+                    <label className="block text-xs font-semibold text-amber-700 dark:text-amber-300">
+                      Notify me before
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { value: undefined, label: 'Default' },
+                        { value: 5, label: '5 min' },
+                        { value: 15, label: '15 min' },
+                        { value: 60, label: '1 hr' },
+                        { value: 720, label: '12 hr' },
+                        { value: 1440, label: '1 day' },
+                      ].map((option) => (
+                        <button
+                          key={option.label}
+                          onClick={() => {
+                            setNotificationMinutesBefore(option.value);
+                            setShowCustomNotification(false);
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                            !showCustomNotification && notificationMinutesBefore === option.value
+                              ? 'bg-amber-500 text-white shadow-md'
+                              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-slate-700 border border-amber-200 dark:border-slate-600'
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => {
+                          setShowCustomNotification(true);
+                          const multiplier = customNotificationUnit === 'days' ? 1440 : customNotificationUnit === 'hours' ? 60 : 1;
+                          setNotificationMinutesBefore(customNotificationValue * multiplier);
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          showCustomNotification
+                            ? 'bg-amber-500 text-white shadow-md'
+                            : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-slate-700 border border-amber-200 dark:border-slate-600'
+                        }`}
+                      >
+                        Custom
+                      </button>
+                    </div>
+
+                    {showCustomNotification && (
+                      <div className="flex items-center gap-2 mt-2 animate-fade-in">
+                        <input
+                          type="number"
+                          min="1"
+                          max="999"
+                          value={customNotificationValue}
+                          onChange={(e) => {
+                            const num = parseInt(e.target.value) || 1;
+                            setCustomNotificationValue(num);
+                            const multiplier = customNotificationUnit === 'days' ? 1440 : customNotificationUnit === 'hours' ? 60 : 1;
+                            setNotificationMinutesBefore(num * multiplier);
+                          }}
+                          className="w-16 bg-white dark:bg-slate-800 border border-amber-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-sm text-center text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                        />
+                        <select
+                          value={customNotificationUnit}
+                          onChange={(e) => {
+                            const unit = e.target.value as 'minutes' | 'hours' | 'days';
+                            setCustomNotificationUnit(unit);
+                            const multiplier = unit === 'days' ? 1440 : unit === 'hours' ? 60 : 1;
+                            setNotificationMinutesBefore(customNotificationValue * multiplier);
+                          }}
+                          className="bg-white dark:bg-slate-800 border border-amber-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                        >
+                          <option value="minutes">minutes</option>
+                          <option value="hours">hours</option>
+                          <option value="days">days</option>
+                        </select>
+                        <span className="text-xs text-amber-600 dark:text-amber-400">before</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-6">
                 <div>

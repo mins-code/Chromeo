@@ -221,27 +221,55 @@ const App: React.FC = () => {
 
     // Schedule notifications for tasks with reminder times
     useEffect(() => {
-        if (!notificationSettings.enabled) return;
-
         tasks.forEach(task => {
             const reminderTime = task.reminderTime || task.dueDate;
-            if (reminderTime && task.status !== TaskStatus.DONE) {
-                NotificationService.scheduleTaskReminder(
-                    task.id,
-                    task.title,
-                    new Date(reminderTime),
-                    task.type,
-                    () => {
-                        handleEditTask(task);
-                    }
-                );
+            if (!reminderTime || task.status === TaskStatus.DONE) {
+                NotificationService.cancelNotification(`task-${task.id}`);
+                return;
             }
+
+            // Determine if notification should be enabled for this task
+            const taskNotificationEnabled = task.notificationEnabled !== undefined 
+                ? task.notificationEnabled 
+                : notificationSettings.enabled;
+
+            if (!taskNotificationEnabled) {
+                NotificationService.cancelNotification(`task-${task.id}`);
+                return;
+            }
+
+            // Determine lead time (task-specific or global)
+            const leadTimeMinutes = task.notificationMinutesBefore !== undefined 
+                ? task.notificationMinutesBefore 
+                : notificationSettings.reminderMinutesBefore;
+
+            // Schedule the notification with custom lead time
+            const notifyTime = new Date(new Date(reminderTime).getTime() - leadTimeMinutes * 60 * 1000);
+            
+            const typeLabels: Record<string, string> = {
+                'TASK': '📋 Task Reminder',
+                'EVENT': '🎉 Upcoming Event',
+                'APPOINTMENT': '📅 Appointment Soon',
+                'REMINDER': '⏰ Reminder',
+            };
+
+            NotificationService.scheduleNotification(
+                `task-${task.id}`,
+                typeLabels[task.type] || 'Reminder',
+                notifyTime,
+                {
+                    body: task.title,
+                    tag: `task-${task.id}`,
+                    onClick: () => handleEditTask(task)
+                }
+            );
         });
 
         return () => {
             NotificationService.cancelAllNotifications();
         };
-    }, [tasks, notificationSettings.enabled]);
+    }, [tasks, notificationSettings.enabled, notificationSettings.reminderMinutesBefore]);
+
 
     // Handle notification settings toggle
     const handleNotificationToggle = async (enabled: boolean) => {
@@ -960,21 +988,89 @@ const App: React.FC = () => {
                                         </label>
 
                                         {/* Lead Time Selector */}
-                                        <div className="pt-4 border-t border-slate-200 dark:border-white/10">
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                        <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                                                 Remind me before event starts
                                             </label>
-                                            <select
-                                                value={notificationSettings.reminderMinutesBefore}
-                                                onChange={(e) => handleNotificationPreferenceChange('reminderMinutesBefore', parseInt(e.target.value))}
-                                                className="w-full md:w-48 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
-                                            >
-                                                <option value={5}>5 minutes</option>
-                                                <option value={10}>10 minutes</option>
-                                                <option value={15}>15 minutes</option>
-                                                <option value={30}>30 minutes</option>
-                                                <option value={60}>1 hour</option>
-                                            </select>
+                                            <div className="flex flex-wrap gap-2">
+                                                {[
+                                                    { value: 5, label: '5 min' },
+                                                    { value: 15, label: '15 min' },
+                                                    { value: 60, label: '1 hour' },
+                                                    { value: 720, label: '12 hours' },
+                                                    { value: 1440, label: '1 day' },
+                                                ].map((option) => (
+                                                    <button
+                                                        key={option.value}
+                                                        onClick={() => handleNotificationPreferenceChange('reminderMinutesBefore', option.value)}
+                                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                                            notificationSettings.reminderMinutesBefore === option.value
+                                                                ? 'bg-brand-500 text-white shadow-md'
+                                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                                        }`}
+                                                    >
+                                                        {option.label}
+                                                    </button>
+                                                ))}
+                                                <button
+                                                    onClick={() => handleNotificationPreferenceChange('reminderMinutesBefore', -1)}
+                                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                                        ![5, 15, 60, 720, 1440].includes(notificationSettings.reminderMinutesBefore)
+                                                            ? 'bg-brand-500 text-white shadow-md'
+                                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                                    }`}
+                                                >
+                                                    Custom
+                                                </button>
+                                            </div>
+                                            
+                                            {/* Custom Input */}
+                                            {![5, 15, 60, 720, 1440].includes(notificationSettings.reminderMinutesBefore) && (
+                                                <div className="flex items-center gap-3 mt-3 animate-fade-in">
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        max="999"
+                                                        defaultValue={
+                                                            notificationSettings.reminderMinutesBefore >= 1440 
+                                                                ? Math.floor(notificationSettings.reminderMinutesBefore / 1440)
+                                                                : notificationSettings.reminderMinutesBefore >= 60
+                                                                    ? Math.floor(notificationSettings.reminderMinutesBefore / 60)
+                                                                    : notificationSettings.reminderMinutesBefore > 0 
+                                                                        ? notificationSettings.reminderMinutesBefore 
+                                                                        : 30
+                                                        }
+                                                        onChange={(e) => {
+                                                            const num = parseInt(e.target.value) || 1;
+                                                            const unitSelect = document.getElementById('reminder-unit') as HTMLSelectElement;
+                                                            const unit = unitSelect?.value || 'minutes';
+                                                            const multiplier = unit === 'days' ? 1440 : unit === 'hours' ? 60 : 1;
+                                                            handleNotificationPreferenceChange('reminderMinutesBefore', num * multiplier);
+                                                        }}
+                                                        className="w-20 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-center text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+                                                    />
+                                                    <select
+                                                        id="reminder-unit"
+                                                        defaultValue={
+                                                            notificationSettings.reminderMinutesBefore >= 1440 ? 'days' :
+                                                            notificationSettings.reminderMinutesBefore >= 60 ? 'hours' : 'minutes'
+                                                        }
+                                                        onChange={(e) => {
+                                                            const numInput = e.target.previousElementSibling as HTMLInputElement;
+                                                            const num = parseInt(numInput?.value) || 1;
+                                                            const unit = e.target.value;
+                                                            const multiplier = unit === 'days' ? 1440 : unit === 'hours' ? 60 : 1;
+                                                            handleNotificationPreferenceChange('reminderMinutesBefore', num * multiplier);
+                                                        }}
+                                                        className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+                                                    >
+                                                        <option value="minutes">minutes</option>
+                                                        <option value="hours">hours</option>
+                                                        <option value="days">days</option>
+                                                    </select>
+                                                    <span className="text-sm text-slate-500 dark:text-slate-400">before</span>
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Test Notification Button */}
