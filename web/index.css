@@ -110,10 +110,10 @@
   color: #000000;
 }
 
-/* Silver icon accents */
+/* Silver icon accents - Improved contrast */
 .dark .text-slate-400,
 .dark .text-slate-500 {
-  color: #808080;
+  color: #a0a0a0; /* Improved: brighter gray for better visibility */
 }
 
 .dark .text-slate-200,
@@ -224,7 +224,7 @@
 /* Cyan/magenta icon accents */
 .theme-cyberpunk .text-slate-400,
 .theme-cyberpunk .text-slate-500 {
-  color: #7b68ee;
+  color: #9890f0; /* Improved: brighter purple for better visibility */
 }
 
 .theme-cyberpunk .text-slate-200,
@@ -244,6 +244,25 @@
   border-color: rgba(0, 255, 255, 0.15);
 }
 
+/* Cyberpunk input styling */
+.theme-cyberpunk input,
+.theme-cyberpunk select,
+.theme-cyberpunk textarea {
+  background-color: rgba(18, 0, 40, 0.9) !important;
+  border-color: rgba(0, 255, 255, 0.3) !important;
+  color: #e0ffff !important;
+}
+
+.theme-cyberpunk input::placeholder,
+.theme-cyberpunk textarea::placeholder {
+  color: #9890f0 !important;
+}
+
+.theme-cyberpunk option {
+  background-color: #120028;
+  color: #e0ffff;
+}
+
 /* ========================================
    Sunset Theme - Pink/Orange
    ======================================== */
@@ -255,7 +274,7 @@
   --bg-primary: #4c0519;
   --bg-secondary: #881337;
   --text-primary: #fff1f2;
-  --text-secondary: #fda4af;
+  --text-secondary: #fecdd3; /* Improved: brighter pink for better contrast */
   --border-color: #fb7185;
   --glass-bg: rgba(136, 19, 55, 0.6);
   --glass-border: rgba(255, 255, 255, 0.15);
@@ -263,6 +282,55 @@
 
 .theme-sunset .bg-gradient-main {
   background: linear-gradient(to bottom right, #4c0519, #881337, #be123c);
+}
+
+/* Sunset theme text overrides for visibility */
+.theme-sunset .text-slate-400,
+.theme-sunset .text-slate-500 {
+  color: #fda4af; /* Rose-300 for muted text */
+}
+
+.theme-sunset .text-slate-600,
+.theme-sunset .text-slate-700 {
+  color: #fecdd3; /* Rose-200 for slightly muted */
+}
+
+.theme-sunset .text-slate-200,
+.theme-sunset .text-slate-100,
+.theme-sunset .text-slate-800 {
+  color: #fff1f2; /* Rose-50 for primary text */
+}
+
+/* Sunset theme input styling */
+.theme-sunset input,
+.theme-sunset select,
+.theme-sunset textarea {
+  background-color: rgba(136, 19, 55, 0.8) !important;
+  border-color: rgba(251, 113, 133, 0.4) !important;
+  color: #fff1f2 !important;
+}
+
+.theme-sunset input::placeholder,
+.theme-sunset textarea::placeholder {
+  color: #fda4af !important;
+}
+
+.theme-sunset .glass-panel {
+  background: rgba(136, 19, 55, 0.7);
+  border: 1px solid rgba(251, 113, 133, 0.3);
+}
+
+.theme-sunset aside {
+  background: linear-gradient(
+    180deg,
+    rgba(136, 19, 55, 0.98) 0%,
+    rgba(76, 5, 25, 0.98) 100%
+  );
+}
+
+.theme-sunset header {
+  background: rgba(76, 5, 25, 0.95);
+  border-bottom: 1px solid rgba(251, 113, 133, 0.3);
 }
 
 /* ========================================
@@ -288,7 +356,7 @@
   /* Slightly lighter black for cards */
   --text-primary: #e8dcd0;
   /* Warm off-white for primary text */
-  --text-secondary: #b8a898;
+  --text-secondary: #d0c4b8; /* Improved: brighter for better contrast */
   /* Muted rose for secondary text */
   --border-color: rgba(212, 165, 116, 0.3);
   /* Rose gold borders */
@@ -374,12 +442,12 @@
 /* Rose gold icon accents */
 .theme-onepiece .text-slate-400,
 .theme-onepiece .text-slate-500 {
-  color: #8b7a6a;
+  color: #a89888; /* Improved: brighter tone for better visibility on dark bg */
 }
 
 .theme-onepiece .text-slate-600,
 .theme-onepiece .text-slate-700 {
-  color: #b8a898;
+  color: #c9b9a8; /* Improved: brighter for better readability */
 }
 
 .theme-onepiece .text-slate-200,
@@ -400,7 +468,26 @@
 }
 
 .theme-onepiece .dark\:text-slate-400 {
-  color: #b8a898;
+  color: #c9b9a8;
+}
+
+/* One Piece input styling for visibility */
+.theme-onepiece input,
+.theme-onepiece select,
+.theme-onepiece textarea {
+  background-color: rgba(20, 20, 20, 0.95) !important;
+  border-color: rgba(212, 165, 116, 0.3) !important;
+  color: #e8dcd0 !important;
+}
+
+.theme-onepiece input::placeholder,
+.theme-onepiece textarea::placeholder {
+  color: #a89888 !important;
+}
+
+.theme-onepiece option {
+  background-color: #141414;
+  color: #e8dcd0;
 }
 
 /* ========================================

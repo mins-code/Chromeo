@@ -106,13 +106,13 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
         };
       case 'sunset':
         return {
-          text: 'text-rose-100',
-          textMuted: 'text-rose-300/50',
+          text: 'text-rose-50',
+          textMuted: 'text-rose-200/70', /* Improved: brighter for better visibility */
           accent: 'bg-rose-500',
           accentText: 'text-white',
-          hover: 'hover:bg-rose-500/10',
-          border: 'border-rose-500/20',
-          headerBg: 'bg-rose-500/5'
+          hover: 'hover:bg-rose-500/15',
+          border: 'border-rose-400/30',
+          headerBg: 'bg-rose-500/10'
         };
       case 'onepiece':
         return {
