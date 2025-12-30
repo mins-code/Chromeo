@@ -28,6 +28,8 @@ import { useTheme } from './context/ThemeContext';
 import { useTasks } from './hooks/useTasks';
 import { useBudget } from './hooks/useBudget';
 import * as PartnerService from './services/partnerService';
+import * as NotificationService from './services/notificationService';
+import { NotificationSettings } from './types';
 
 // Map URL paths to ViewMode for Layout compatibility
 const pathToViewMode: Record<string, ViewMode> = {
@@ -111,6 +113,14 @@ const App: React.FC = () => {
     // View Source Mode State (Personal/Partners/Combined)
     const [viewSourceMode, setViewSourceMode] = useState<ViewSourceMode>('personal');
     const [hasConnectedPartners, setHasConnectedPartners] = useState(false);
+
+    // Notification Settings State
+    const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(
+        NotificationService.getSettings()
+    );
+    const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>(
+        NotificationService.getPermissionStatus()
+    );
 
     // Load username when session changes
     useEffect(() => {
@@ -207,6 +217,54 @@ const App: React.FC = () => {
 
     const handleDismissRecurring = () => {
         setShowRecurringModal(false);
+    };
+
+    // Schedule notifications for tasks with reminder times
+    useEffect(() => {
+        if (!notificationSettings.enabled) return;
+
+        tasks.forEach(task => {
+            const reminderTime = task.reminderTime || task.dueDate;
+            if (reminderTime && task.status !== TaskStatus.DONE) {
+                NotificationService.scheduleTaskReminder(
+                    task.id,
+                    task.title,
+                    new Date(reminderTime),
+                    task.type,
+                    () => {
+                        handleEditTask(task);
+                    }
+                );
+            }
+        });
+
+        return () => {
+            NotificationService.cancelAllNotifications();
+        };
+    }, [tasks, notificationSettings.enabled]);
+
+    // Handle notification settings toggle
+    const handleNotificationToggle = async (enabled: boolean) => {
+        if (enabled && notificationPermission !== 'granted') {
+            const granted = await NotificationService.requestPermission();
+            setNotificationPermission(NotificationService.getPermissionStatus());
+            if (!granted) return;
+        }
+
+        const newSettings = { ...notificationSettings, enabled };
+        setNotificationSettings(newSettings);
+        NotificationService.saveSettings(newSettings);
+
+        if (enabled) {
+            NotificationService.sendTestNotification();
+        }
+    };
+
+    // Handle notification preference changes
+    const handleNotificationPreferenceChange = (key: keyof NotificationSettings, value: boolean | number) => {
+        const newSettings = { ...notificationSettings, [key]: value };
+        setNotificationSettings(newSettings);
+        NotificationService.saveSettings(newSettings);
     };
 
     const handleUsernameChange = (name: string) => {
@@ -812,11 +870,135 @@ const App: React.FC = () => {
                             </div>
                         </div>
 
+                        {/* Notifications Section */}
+                        <div className="col-span-1 lg:col-span-2 space-y-4">
+                            <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
+                                <Bell className="text-brand-500" />
+                                <h3>Notifications</h3>
+                            </div>
+                            <div className="bg-white/40 dark:bg-dark-surface/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+                                {/* Main Toggle */}
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Enable Notifications</h4>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                            Get notified about tasks, events, and budget alerts
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => handleNotificationToggle(!notificationSettings.enabled)}
+                                        className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${
+                                            notificationSettings.enabled ? 'bg-brand-500' : 'bg-slate-300 dark:bg-slate-600'
+                                        }`}
+                                        disabled={notificationPermission === 'denied'}
+                                    >
+                                        <div className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
+                                            notificationSettings.enabled ? 'translate-x-7' : 'translate-x-0'
+                                        }`} />
+                                    </button>
+                                </div>
+
+                                {/* Permission Status */}
+                                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-100 dark:bg-black/20">
+                                    <div className={`w-2 h-2 rounded-full ${
+                                        notificationPermission === 'granted' ? 'bg-emerald-500' :
+                                        notificationPermission === 'denied' ? 'bg-red-500' :
+                                        'bg-yellow-500'
+                                    }`} />
+                                    <span className="text-sm text-slate-600 dark:text-slate-400">
+                                        Permission: {
+                                            notificationPermission === 'granted' ? 'Granted' :
+                                            notificationPermission === 'denied' ? 'Denied (Enable in browser settings)' :
+                                            notificationPermission === 'unsupported' ? 'Not supported in this browser' :
+                                            'Not requested'
+                                        }
+                                    </span>
+                                </div>
+
+                                {/* Notification Preferences */}
+                                {notificationSettings.enabled && (
+                                    <div className="space-y-4 pt-2 border-t border-slate-200 dark:border-white/10">
+                                        <h5 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Notification Types</h5>
+                                        
+                                        <label className="flex items-center justify-between cursor-pointer group">
+                                            <div className="flex items-center gap-3">
+                                                <CheckSquare size={18} className="text-blue-500" />
+                                                <span className="text-slate-700 dark:text-slate-300">Task Reminders</span>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                checked={notificationSettings.taskReminders}
+                                                onChange={(e) => handleNotificationPreferenceChange('taskReminders', e.target.checked)}
+                                                className="w-4 h-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500"
+                                            />
+                                        </label>
+
+                                        <label className="flex items-center justify-between cursor-pointer group">
+                                            <div className="flex items-center gap-3">
+                                                <CalendarDays size={18} className="text-purple-500" />
+                                                <span className="text-slate-700 dark:text-slate-300">Event & Appointment Reminders</span>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                checked={notificationSettings.eventReminders}
+                                                onChange={(e) => handleNotificationPreferenceChange('eventReminders', e.target.checked)}
+                                                className="w-4 h-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500"
+                                            />
+                                        </label>
+
+                                        <label className="flex items-center justify-between cursor-pointer group">
+                                            <div className="flex items-center gap-3">
+                                                <AlertCircle size={18} className="text-amber-500" />
+                                                <span className="text-slate-700 dark:text-slate-300">Budget Alerts</span>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                checked={notificationSettings.budgetAlerts}
+                                                onChange={(e) => handleNotificationPreferenceChange('budgetAlerts', e.target.checked)}
+                                                className="w-4 h-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500"
+                                            />
+                                        </label>
+
+                                        {/* Lead Time Selector */}
+                                        <div className="pt-4 border-t border-slate-200 dark:border-white/10">
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                Remind me before event starts
+                                            </label>
+                                            <select
+                                                value={notificationSettings.reminderMinutesBefore}
+                                                onChange={(e) => handleNotificationPreferenceChange('reminderMinutesBefore', parseInt(e.target.value))}
+                                                className="w-full md:w-48 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+                                            >
+                                                <option value={5}>5 minutes</option>
+                                                <option value={10}>10 minutes</option>
+                                                <option value={15}>15 minutes</option>
+                                                <option value={30}>30 minutes</option>
+                                                <option value={60}>1 hour</option>
+                                            </select>
+                                        </div>
+
+                                        {/* Test Notification Button */}
+                                        <div className="pt-4">
+                                            <Button
+                                                variant="secondary"
+                                                onClick={() => NotificationService.sendTestNotification()}
+                                                className="flex items-center gap-2"
+                                            >
+                                                <Bell size={16} />
+                                                Send Test Notification
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                         {/* Collaboration Section */}
                         <CollaborationSettings 
                             currentUserId={session?.user?.id}
                             currentUserEmail={session?.user?.email}
                         />
+
                     </div>
                 </div>
             )}

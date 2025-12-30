@@ -132,3 +132,11 @@ export interface Budget {
 export type ViewMode = 'dashboard' | 'activities' | 'tasks' | 'reminders' | 'events' | 'appointments' | 'budget' | 'ai-chat' | 'settings' | 'calendar';
 
 export type ViewSourceMode = 'personal' | 'partners' | 'combined';
+
+export interface NotificationSettings {
+  enabled: boolean;
+  taskReminders: boolean;
+  eventReminders: boolean;
+  budgetAlerts: boolean;
+  reminderMinutesBefore: number;
+}
