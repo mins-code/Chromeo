@@ -1,12 +1,13 @@
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { ThemeOption, BudgetShare, Partnership } from '../types';
 import * as BudgetService from '../services/budgetService';
 import * as PartnerService from '../services/partnerService';
 import { useBudget } from '../hooks/useBudget';
+import { parseTransactionScreenshot } from '../services/geminiService';
 import Button from './Button';
 import Input from './Input';
-import { Wallet, TrendingUp, TrendingDown, Plus, Trash2, IndianRupee, Eye, EyeOff, Repeat, ArrowRight, Settings, Share2, User, X, Loader2, UserPlus } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Plus, Trash2, IndianRupee, Eye, EyeOff, Repeat, ArrowRight, Settings, Share2, User, X, Loader2, UserPlus, Camera } from 'lucide-react';
 import { t } from '../themeText';
 
 interface BudgetPlannerProps {
@@ -29,6 +30,8 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
     const [isLoadingShares, setIsLoadingShares] = useState(true);
     const [selectedPartnerId, setSelectedPartnerId] = useState('');
     const [isSharing, setIsSharing] = useState(false);
+    const [isScanning, setIsScanning] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         setLimitInput(budget.limit.toString());
@@ -65,6 +68,40 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
             await addTransaction({ description: transDesc, amount, type: transType });
             setTransDesc('');
             setTransAmount('');
+        }
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsScanning(true);
+        try {
+            const transactions = await parseTransactionScreenshot(file);
+            
+            if (transactions.length === 0) {
+                alert('No transactions found in the image. Please try with a clearer screenshot.');
+                return;
+            }
+
+            for (const tx of transactions) {
+                await addTransaction({
+                    description: tx.description,
+                    amount: tx.amount,
+                    type: tx.type
+                });
+            }
+
+            alert(`Successfully added ${transactions.length} transaction(s) from screenshot!`);
+        } catch (error) {
+            console.error('Failed to scan screenshot:', error);
+            alert('Failed to parse the screenshot. Please try again.');
+        } finally {
+            setIsScanning(false);
+            // Reset file input
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
     };
 
@@ -192,7 +229,24 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                     <Input label="Amount" type="number" value={transAmount} onChange={e => setTransAmount(e.target.value)} placeholder="0.00" />
                 </div>
                 <div className="flex gap-2">
+                    <input
+                        type="file"
+                        accept="image/*"
+                        ref={fileInputRef}
+                        onChange={handleFileUpload}
+                        className="hidden"
+                        id="upi-screenshot-input"
+                    />
                     <Button variant="primary" className="flex-1" onClick={handleAddTransaction}>Log</Button>
+                    <Button
+                        variant="secondary"
+                        className="w-12 px-0"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isScanning}
+                        title="Scan UPI Screenshot"
+                    >
+                        {isScanning ? <Loader2 className="animate-spin" size={18} /> : <Camera size={18} />}
+                    </Button>
                     <Button
                         variant="secondary"
                         className={`w-12 px-0 ${transType === 'income' ? 'text-emerald-500' : 'text-slate-400'}`}

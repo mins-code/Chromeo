@@ -149,3 +149,71 @@ export const parseNaturalLanguageTask = async (input: string): Promise<ParsedTas
         };
     }
 };
+
+// Scanned Transaction Interface
+export interface ScannedTransaction {
+    description: string;
+    amount: number;
+    type: 'income' | 'expense';
+    date: string | null;
+}
+
+// Parse UPI Transaction Screenshot
+export const parseTransactionScreenshot = async (file: File): Promise<ScannedTransaction[]> => {
+    try {
+        // Convert file to Base64
+        const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const result = reader.result as string;
+                // Strip the data URL prefix (e.g., "data:image/png;base64,")
+                const base64Data = result.split(',')[1];
+                resolve(base64Data);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+
+        const { data, error } = await supabase.functions.invoke('ai-chat', {
+            body: {
+                mode: 'parse-image',
+                image: base64,
+                message: 'Extract all transactions from this UPI screenshot.'
+            }
+        });
+
+        if (error) {
+            console.error("AI Function Error:", error);
+            return [];
+        }
+
+        const text = data.text;
+        if (!text) return [];
+
+        // Parse JSON from response (handle potential markdown wrapping)
+        let jsonStr = text;
+        const jsonMatch = text.match(/```(?:json)?\n?([\s\S]*?)\n?```/);
+        if (jsonMatch) {
+            jsonStr = jsonMatch[1];
+        }
+
+        const parsed = JSON.parse(jsonStr.trim());
+        
+        // Ensure we return an array
+        if (!Array.isArray(parsed)) {
+            console.error("Unexpected response format:", parsed);
+            return [];
+        }
+
+        return parsed.map((item: any) => ({
+            description: item.description || 'Unknown Transaction',
+            amount: typeof item.amount === 'number' ? item.amount : parseFloat(item.amount) || 0,
+            type: item.type === 'income' ? 'income' : 'expense',
+            date: item.date || null
+        }));
+
+    } catch (error) {
+        console.error("Failed to parse transaction screenshot:", error);
+        return [];
+    }
+};

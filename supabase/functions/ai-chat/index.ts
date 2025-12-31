@@ -68,6 +68,31 @@ Each item in the array **MUST** follow one of these schemas based on \`category\
 \`\`\`
 `;
 
+const RECEIPT_SYSTEM_INSTRUCTION = `You are a financial transaction extractor. Analyze the provided image of a UPI payment screenshot or bank transaction receipt.
+
+EXTRACT the following information for EACH transaction visible in the image:
+- description: Brief description of the transaction (merchant name, purpose)
+- amount: The transaction amount as a positive number
+- type: "expense" if money was sent/paid, "income" if money was received
+- date: The transaction date in ISO 8601 format (YYYY-MM-DDTHH:mm:ss) if visible, or null
+
+RULES:
+1. If multiple transactions are visible, extract ALL of them
+2. If the image is not a valid transaction screenshot, return an empty array
+3. Return ONLY a valid JSON array, no markdown or explanation
+4. Amount should always be a positive number regardless of type
+
+Output Format (JSON array):
+[
+  {
+    "description": "string",
+    "amount": number,
+    "type": "expense" | "income",
+    "date": "ISO string or null"
+  }
+]
+`;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -83,7 +108,8 @@ serve(async (req) => {
       mode,
       userName,
       tagsContext,
-      currentDateContext
+      currentDateContext,
+      image
     } = await req.json()
 
     const genAI = new GoogleGenerativeAI(apiKey)
@@ -129,6 +155,11 @@ Return ONLY a JSON object (no markdown, no explanation):
         isJsonMode = true;
         break;
 
+      case 'parse-image':
+        systemInstruction = RECEIPT_SYSTEM_INSTRUCTION;
+        isJsonMode = true;
+        break;
+
       default:
         // Fallback or Error. For now, default to chat if history present, else enhance.
         // But stricter security would reject unknown modes.
@@ -158,8 +189,27 @@ Return ONLY a JSON object (no markdown, no explanation):
       const result = await chat.sendMessage(message)
       responseText = result.response.text()
 
+    } else if (mode === 'parse-image' && image) {
+      // SCENARIO B: Image Parsing Mode (Multimodal)
+      const model = genAI.getGenerativeModel({ 
+        model: "gemini-2.0-flash",
+        systemInstruction: systemInstruction,
+        generationConfig: { responseMimeType: "application/json" }
+      })
+
+      const result = await model.generateContent([
+        {
+          inlineData: {
+            mimeType: "image/png",
+            data: image
+          }
+        },
+        { text: message || "Extract all transactions from this image." }
+      ])
+      responseText = result.response.text()
+
     } else {
-      // SCENARIO B: Task Mode (Strict JSON for Cmd+K or Enhance)
+      // SCENARIO C: Task Mode (Strict JSON for Cmd+K or Enhance)
       const model = genAI.getGenerativeModel({ 
         model: "gemini-2.0-flash",
         systemInstruction: systemInstruction,
