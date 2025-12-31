@@ -179,11 +179,21 @@ Return ONLY a JSON object (no markdown, no explanation):
         systemInstruction: systemInstruction 
       })
 
+      // Filter history: Gemini requires first message to be 'user', not 'model'
+      // Skip any leading 'model' messages (like welcome messages)
+      let filteredHistory = history.map((h: any) => ({
+        role: h.role === 'model' ? 'model' : 'user',
+        parts: h.parts
+      }));
+      
+      // Find first 'user' message and start from there
+      const firstUserIndex = filteredHistory.findIndex((h: any) => h.role === 'user');
+      if (firstUserIndex > 0) {
+        filteredHistory = filteredHistory.slice(firstUserIndex);
+      }
+
       const chat = model.startChat({
-        history: history.map((h: any) => ({
-          role: h.role === 'model' ? 'model' : 'user',
-          parts: h.parts
-        })),
+        history: filteredHistory,
       })
 
       const result = await chat.sendMessage(message)
@@ -225,6 +235,7 @@ Return ONLY a JSON object (no markdown, no explanation):
     })
 
   } catch (error) {
+    console.error("AI-CHAT ERROR:", error.message, error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
