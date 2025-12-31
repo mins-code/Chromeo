@@ -188,7 +188,11 @@ Return ONLY a JSON object (no markdown, no explanation):
       
       // Find first 'user' message and start from there
       const firstUserIndex = filteredHistory.findIndex((h: any) => h.role === 'user');
-      if (firstUserIndex > 0) {
+      if (firstUserIndex === -1) {
+        // No user messages in history, start with empty history
+        filteredHistory = [];
+      } else if (firstUserIndex > 0) {
+        // Skip leading model messages
         filteredHistory = filteredHistory.slice(firstUserIndex);
       }
 
