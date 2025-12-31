@@ -137,7 +137,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
       default: // dark
         return {
           text: 'text-slate-200',
-          textMuted: 'text-slate-500',
+          textMuted: 'text-slate-400',
           accent: 'bg-brand-500',
           accentText: 'text-white',
           hover: 'hover:bg-white/5',
@@ -256,7 +256,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
                 ? `${colors.accent} ${colors.accentText} font-bold shadow-md`
                 : dayInfo.isCurrentMonth
                   ? `${colors.text} ${colors.hover} font-medium`
-                  : `${colors.textMuted} opacity-40`
+                  : `${colors.textMuted} opacity-60`
             }`}
           >
             {dayInfo.day}
