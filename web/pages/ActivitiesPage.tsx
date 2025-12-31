@@ -2,7 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Task, TaskType, TaskStatus, TaskPriority, ViewMode } from '../types';
 import { useTasks } from '../hooks/useTasks';
-import { Activity, CheckSquare, Bell, CalendarDays, Clock, ArrowRight } from 'lucide-react';
+import { useRoutines } from '../hooks/useRoutines';
+import { Activity, CheckSquare, Bell, CalendarDays, Clock, ArrowRight, Repeat } from 'lucide-react';
 
 const viewModeToPath: Record<ViewMode, string> = {
   'dashboard': '/',
@@ -18,18 +19,22 @@ const viewModeToPath: Record<ViewMode, string> = {
   'routines': '/routines',
 };
 
+// Using null for type on routines since it's not a TaskType
 const ACTIVITY_CATEGORIES = [
   { id: 'tasks', label: 'Tasks', icon: CheckSquare, type: 'TASK' as TaskType, color: 'text-blue-500', bg: 'bg-blue-500/10' },
   { id: 'reminders', label: 'Reminders', icon: Bell, type: 'REMINDER' as TaskType, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
   { id: 'events', label: 'Events', icon: CalendarDays, type: 'EVENT' as TaskType, color: 'text-brand-500', bg: 'bg-brand-500/10' },
   { id: 'appointments', label: 'Appointments', icon: Clock, type: 'APPOINTMENT' as TaskType, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+  { id: 'routines', label: 'Routines', icon: Repeat, type: null as unknown as TaskType, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
 ];
 
 const ActivitiesPage: React.FC = () => {
   const navigate = useNavigate();
   const { tasks } = useTasks();
+  const { routines } = useRoutines();
 
-  const getTopItem = (type: TaskType): Task | undefined => {
+  const getTopItem = (type: TaskType | null): Task | undefined => {
+    if (!type) return undefined; // Routines don't have tasks
     return tasks
       .filter(t => t.type === type && t.status !== TaskStatus.DONE)
       .sort((a, b) => {
@@ -41,6 +46,13 @@ const ActivitiesPage: React.FC = () => {
         const dateB = b.dueDate || b.reminderTime || String(Number.MAX_SAFE_INTEGER);
         return new Date(dateA).getTime() - new Date(dateB).getTime();
       })[0];
+  };
+
+  const getCount = (cat: typeof ACTIVITY_CATEGORIES[0]) => {
+    if (cat.id === 'routines') {
+      return routines.filter(r => r.isEnabled).length;
+    }
+    return tasks.filter(t => t.type === cat.type && t.status !== TaskStatus.DONE).length;
   };
 
   return (
@@ -55,10 +67,11 @@ const ActivitiesPage: React.FC = () => {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {ACTIVITY_CATEGORIES.map(cat => {
-          const topItem = getTopItem(cat.type);
-          const count = tasks.filter(t => t.type === cat.type && t.status !== TaskStatus.DONE).length;
+          const isRoutines = cat.id === 'routines';
+          const topItem = isRoutines ? undefined : getTopItem(cat.type);
+          const count = getCount(cat);
           const Icon = cat.icon;
 
           return (
@@ -72,7 +85,7 @@ const ActivitiesPage: React.FC = () => {
                   <Icon size={24} />
                 </div>
                 <div className="bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full text-xs font-bold text-slate-600 dark:text-slate-300 transition-transform duration-300 group-hover:-translate-x-7">
-                  {count} Pending
+                  {isRoutines ? `${count} Active` : `${count} Pending`}
                 </div>
               </div>
 
@@ -80,10 +93,22 @@ const ActivitiesPage: React.FC = () => {
                 {cat.label}
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                Manage your {cat.label.toLowerCase()}
+                {isRoutines ? 'Manage recurring activities' : `Manage your ${cat.label.toLowerCase()}`}
               </p>
 
-              {topItem ? (
+              {isRoutines ? (
+                <div className="mt-auto bg-white/50 dark:bg-black/20 p-3 rounded-xl border border-slate-200 dark:border-white/5 flex items-center gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">
+                      {count > 0 ? `${count} active routine${count > 1 ? 's' : ''}` : 'No routines yet'}
+                    </p>
+                    <p className="text-xs text-slate-500 truncate">
+                      Set up recurring schedules
+                    </p>
+                  </div>
+                </div>
+              ) : topItem ? (
                 <div className="mt-auto bg-white/50 dark:bg-black/20 p-3 rounded-xl border border-slate-200 dark:border-white/5 flex items-center gap-3">
                   <div className={`w-1.5 h-1.5 rounded-full ${
                     topItem.priority === TaskPriority.HIGH ? 'bg-red-500' :

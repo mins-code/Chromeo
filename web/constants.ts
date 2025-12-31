@@ -15,9 +15,9 @@ export const NAVIGATION_ITEMS = [
       { id: 'reminders', label: 'Reminders', icon: Bell },
       { id: 'events', label: 'Events', icon: CalendarDays },
       { id: 'appointments', label: 'Appointments', icon: Clock },
+      { id: 'routines', label: 'Routines', icon: Repeat },
     ]
   },
-  { id: 'routines', label: 'Routines', icon: Repeat },
   { id: 'budget', label: 'Budget Plan', icon: Wallet },
   { id: 'ai-chat', label: 'AI Assistant', icon: Bot },
 ];

@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NAVIGATION_ITEMS, APP_NAME } from '../constants';
 import { ViewMode, TaskType, ThemeOption, ViewSourceMode } from '../types';
-import { Plus, Settings, X, Wallet, CheckCircle2, User, ChevronDown, Calendar, CheckSquare, Clock, Moon, Sun, ChevronLeft, ChevronRight, Menu, PanelLeft, PanelLeftClose, Bell, ChevronUp, Check, Pencil } from 'lucide-react';
+import { Plus, Settings, X, Wallet, CheckCircle2, User, ChevronDown, Calendar, CheckSquare, Clock, Moon, Sun, ChevronLeft, ChevronRight, Menu, PanelLeft, PanelLeftClose, Bell, ChevronUp, Check, Pencil, Repeat } from 'lucide-react';
 import { t, ThemeText } from '../themeText';
 import MiniCalendar from './MiniCalendar';
 
@@ -46,6 +46,8 @@ interface LayoutProps {
     viewSourceMode: ViewSourceMode;
     onViewSourceModeChange: (mode: ViewSourceMode) => void;
     hasConnectedPartners?: boolean;
+    // Routine creation callback
+    onCreateRoutine?: () => void;
 }
 
 export const Layout: React.FC<LayoutProps> = ({
@@ -62,7 +64,8 @@ export const Layout: React.FC<LayoutProps> = ({
     onRenameTag,
     viewSourceMode,
     onViewSourceModeChange,
-    hasConnectedPartners = false
+    hasConnectedPartners = false,
+    onCreateRoutine
 }) => {
     const [showProfileStats, setShowProfileStats] = useState(false);
     const [showCreateMenu, setShowCreateMenu] = useState(false);
@@ -569,6 +572,15 @@ export const Layout: React.FC<LayoutProps> = ({
                                             <Bell size={16} className="text-yellow-500 group-hover:scale-110 transition-transform" />
                                             <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Reminder</span>
                                         </button>
+                                        {onCreateRoutine && (
+                                            <button
+                                                onClick={() => { onCreateRoutine(); setShowCreateMenu(false); }}
+                                                className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-left transition-colors group"
+                                            >
+                                                <Repeat size={16} className="text-emerald-500 group-hover:scale-110 transition-transform" />
+                                                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Routine</span>
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>

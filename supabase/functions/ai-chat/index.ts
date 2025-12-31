@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.12.0"
+import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.21.0"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -100,6 +100,7 @@ serve(async (req) => {
 
   try {
     const apiKey = Deno.env.get('GEMINI_API_KEY')
+    console.log("DEBUG: API Key exists:", !!apiKey, "Length:", apiKey?.length || 0, "Prefix:", apiKey?.substring(0, 8) || "NONE");
     if (!apiKey) throw new Error('GEMINI_API_KEY is not set')
 
     const {
@@ -112,7 +113,18 @@ serve(async (req) => {
       image
     } = await req.json()
 
+    console.log("DEBUG: Mode:", mode, "Message length:", message?.length || 0);
+
     const genAI = new GoogleGenerativeAI(apiKey)
+    
+    // DEBUG: List available models
+    try {
+      const modelList = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+      const models = await modelList.json();
+      console.log("DEBUG: Available models:", JSON.stringify(models).substring(0, 500));
+    } catch (listErr) {
+      console.log("DEBUG: Failed to list models:", listErr);
+    }
     let systemInstruction = "";
     let isJsonMode = false;
 
@@ -175,7 +187,7 @@ Return ONLY a JSON object (no markdown, no explanation):
     if (!isJsonMode && history && history.length > 0) {
       // SCENARIO A: Chat Mode (Conversational)
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.0-flash",
+        model: "gemini-pro",
         systemInstruction: systemInstruction 
       })
 
@@ -206,7 +218,7 @@ Return ONLY a JSON object (no markdown, no explanation):
     } else if (mode === 'parse-image' && image) {
       // SCENARIO B: Image Parsing Mode (Multimodal)
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.0-flash",
+        model: "gemini-pro",
         systemInstruction: systemInstruction,
         generationConfig: { responseMimeType: "application/json" }
       })
@@ -225,7 +237,7 @@ Return ONLY a JSON object (no markdown, no explanation):
     } else {
       // SCENARIO C: Task Mode (Strict JSON for Cmd+K or Enhance)
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.0-flash",
+        model: "gemini-pro",
         systemInstruction: systemInstruction,
         generationConfig: { responseMimeType: "application/json" }
       })

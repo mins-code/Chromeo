@@ -611,6 +611,7 @@ const App: React.FC = () => {
             viewSourceMode={viewSourceMode}
             onViewSourceModeChange={setViewSourceMode}
             hasConnectedPartners={hasConnectedPartners}
+            onCreateRoutine={handleCreateRoutine}
         >
             {/* SMS Notification Toast */}
             {lastSmsTransaction && (
