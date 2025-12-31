@@ -3,13 +3,7 @@
  * Handles browser/system notifications using the Web Notifications API
  */
 
-export interface NotificationSettings {
-  enabled: boolean;
-  taskReminders: boolean;
-  eventReminders: boolean;
-  budgetAlerts: boolean;
-  reminderMinutesBefore: number;
-}
+import { NotificationSettings } from '../types';
 
 const DEFAULT_SETTINGS: NotificationSettings = {
   enabled: false,

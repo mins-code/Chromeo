@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Task, ViewMode, TaskStatus, Partner, TaskPriority, TaskType, ThemeOption, Budget, RecurringTransaction, ViewSourceMode } from './types';
@@ -8,10 +8,7 @@ import * as SmsService from './services/smsService';
 import { supabase } from './services/supabaseClient';
 import TaskCard from './components/TaskCard';
 import TaskEditor from './components/TaskEditor';
-import AIChat from './components/AIChat';
 import Stats from './components/Stats';
-import BudgetPlanner from './components/BudgetPlanner';
-import CalendarView from './components/CalendarView';
 import Button from './components/Button';
 import Input from './components/Input';
 import Auth from './components/Auth';
@@ -21,6 +18,11 @@ import { enhanceTaskWithAI } from './services/geminiService';
 import { ParsedTaskData } from './services/geminiService';
 import { getGreeting, t } from './themeText';
 import CommandBar from './components/CommandBar';
+
+// Lazy load heavy components for better initial bundle size
+const AIChat = lazy(() => import('./components/AIChat'));
+const CalendarView = lazy(() => import('./components/CalendarView'));
+const BudgetPlanner = lazy(() => import('./components/BudgetPlanner'));
 
 // Import new hooks and contexts
 import { useAuth } from './context/AuthContext';
@@ -470,11 +472,6 @@ const App: React.FC = () => {
         });
     };
 
-    const handleBudgetUpdate = async (newBudget: Budget) => {
-        // Budget is now managed by useBudget hook, this is for compatibility
-        // The BudgetPlanner component should be updated to use the hook directly
-    };
-
     const handleSignOut = async () => {
         await signOut();
     };
@@ -845,29 +842,35 @@ const App: React.FC = () => {
 
             {/* VIEW: CALENDAR */}
             {currentView === 'calendar' && (
-                <CalendarView
-                    tasks={calendarFilteredTasks}
-                    recurringTransactions={budget.recurring}
-                    onDateClick={(date) => handleCreateTask(date)}
-                    onEditTask={handleEditTask}
-                    onUpdateTask={(task) => updateTask(task)}
-                />
+                <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="animate-spin text-brand-500" size={32} /></div>}>
+                    <CalendarView
+                        tasks={calendarFilteredTasks}
+                        recurringTransactions={budget.recurring}
+                        onDateClick={(date) => handleCreateTask(date)}
+                        onEditTask={handleEditTask}
+                        onUpdateTask={(task) => updateTask(task)}
+                    />
+                </Suspense>
             )}
 
             {/* VIEW: BUDGET */}
             {currentView === 'budget' && (
-                <BudgetPlanner budget={budget} onUpdate={handleBudgetUpdate} currentTheme={theme} />
+                <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="animate-spin text-brand-500" size={32} /></div>}>
+                    <BudgetPlanner currentTheme={theme} />
+                </Suspense>
             )}
 
             {/* VIEW: AI CHAT */}
             {currentView === 'ai-chat' && (
                 <div className="h-full rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl bg-slate-50/50 dark:bg-dark-bg/50 animate-fade-in relative">
-                    <AIChat
-                        onConfirmTask={handleAutoCreatedTask}
-                        onEditTask={handleEditDraft}
-                        userName={username}
-                        existingTags={allTags}
-                    />
+                    <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="animate-spin text-brand-500" size={32} /></div>}>
+                        <AIChat
+                            onConfirmTask={handleAutoCreatedTask}
+                            onEditTask={handleEditDraft}
+                            userName={username}
+                            existingTags={allTags}
+                        />
+                    </Suspense>
                 </div>
             )}
 

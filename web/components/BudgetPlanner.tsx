@@ -1,20 +1,22 @@
 
 import React, { useState, useEffect } from 'react';
-import { Budget, Transaction, ThemeOption, BudgetShare, Partnership } from '../types';
+import { ThemeOption, BudgetShare, Partnership } from '../types';
 import * as BudgetService from '../services/budgetService';
 import * as PartnerService from '../services/partnerService';
+import { useBudget } from '../hooks/useBudget';
 import Button from './Button';
 import Input from './Input';
 import { Wallet, TrendingUp, TrendingDown, Plus, Trash2, IndianRupee, Eye, EyeOff, Repeat, ArrowRight, Settings, Share2, User, X, Loader2, UserPlus } from 'lucide-react';
 import { t } from '../themeText';
 
 interface BudgetPlannerProps {
-    budget: Budget;
-    onUpdate: (budget: Budget) => void;
     currentTheme: ThemeOption;
 }
 
-const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ budget, onUpdate, currentTheme }) => {
+const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
+    // Use the budget hook for state management
+    const { budget, updateSettings, addTransaction } = useBudget();
+
     const [limitInput, setLimitInput] = useState('');
     const [durationInput, setDurationInput] = useState('Monthly');
     const [transDesc, setTransDesc] = useState('');
@@ -53,16 +55,14 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ budget, onUpdate, current
     const handleUpdateSettings = async () => {
         const num = parseFloat(limitInput);
         if (!isNaN(num)) {
-            const updatedBudget = await BudgetService.updateBudgetSettings(num, durationInput);
-            onUpdate(updatedBudget);
+            await updateSettings({ limit: num, duration: durationInput });
         }
     };
 
     const handleAddTransaction = async () => {
         const amount = parseFloat(transAmount);
         if (transDesc && !isNaN(amount) && amount > 0) {
-            const updatedBudget = await BudgetService.addTransaction(transDesc, amount, transType);
-            onUpdate(updatedBudget);
+            await addTransaction({ description: transDesc, amount, type: transType });
             setTransDesc('');
             setTransAmount('');
         }

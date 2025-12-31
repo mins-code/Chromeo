@@ -1,8 +1,8 @@
-import { Task, TaskStatus, TaskPriority, Partner, RecurrenceConfig } from "../types";
+import { Task, TaskStatus, TaskPriority, Partner, RecurrenceConfig, DbTask } from "../types";
 import { supabase } from "./supabaseClient";
 
 // Helper function to map DB snake_case columns to TypeScript camelCase interface
-const mapDbTaskToTask = (dbTask: any): Task => ({
+const mapDbTaskToTask = (dbTask: DbTask): Task => ({
   ...dbTask,
   dueDate: dbTask.due_date,
   reminderTime: dbTask.reminder_time,

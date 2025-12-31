@@ -185,3 +185,66 @@ export interface Routine {
   notificationMinutesBefore?: number;
   createdAt: string;
 }
+
+// ============ Database Response Types (snake_case from Supabase) ============
+
+/** Database response for tasks table */
+export interface DbTask {
+  id: string;
+  user_id: string;
+  title: string;
+  description?: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  due_date?: string;
+  reminder_time?: string;
+  subtasks: SubTask[];
+  tags: string[];
+  type: TaskType;
+  duration?: number;
+  location?: string;
+  dependency_ids: string[];
+  is_shared: boolean;
+  recurrence?: RecurrenceConfig;
+  next_recurrence_date?: string;
+  created_at: string;
+}
+
+/** Database response for transactions table */
+export interface DbTransaction {
+  id: string;
+  user_id: string;
+  description: string;
+  amount: number;
+  type: 'income' | 'expense';
+  date: string;
+  frequency?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  next_due_date?: string;
+}
+
+/** Database response for user_settings table */
+export interface DbUserSettings {
+  user_id: string;
+  display_name?: string;
+  theme?: ThemeOption;
+  budget_limit?: number;
+  budget_duration?: string;
+  savings?: number;
+}
+
+/** Database response for budget_shares with joined profile */
+export interface DbBudgetShare {
+  id: string;
+  owner_id?: string;
+  partner_id: string;
+  created_at: string;
+  partner?: {
+    id: string;
+    email: string;
+    full_name?: string;
+  } | Array<{
+    id: string;
+    email: string;
+    full_name?: string;
+  }>;
+}

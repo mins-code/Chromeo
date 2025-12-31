@@ -1,5 +1,5 @@
 
-import { Budget, Transaction, RecurringTransaction } from "../types";
+import { Budget, Transaction, RecurringTransaction, DbTransaction, DbUserSettings, DbBudgetShare } from "../types";
 import { supabase } from "./supabaseClient";
 
 // Helper to construct a Budget object from disparate DB tables
@@ -41,14 +41,14 @@ export const getBudget = async (): Promise<Budget> => {
         limit: settings?.budget_limit || 0,
         duration: settings?.budget_duration || 'Monthly',
         savings: settings?.savings || 0,
-        transactions: (transactions || []).map((t: any) => ({
+        transactions: (transactions || []).map((t: DbTransaction) => ({
             id: t.id,
             description: t.description,
             amount: t.amount,
             type: t.type,
             date: new Date(t.date).getTime()
         })),
-        recurring: (recurring || []).map((r: any) => ({
+        recurring: (recurring || []).map((r: DbTransaction) => ({
             id: r.id,
             description: r.description,
             amount: r.amount,
@@ -140,13 +140,17 @@ export const getBudgetShares = async (): Promise<BudgetShare[]> => {
         return [];
     }
 
-    return (data || []).map((s: any) => ({
-        id: s.id,
-        partnerId: s.partner_id,
-        partnerEmail: s.partner?.email || '',
-        partnerName: s.partner?.full_name || undefined,
-        createdAt: s.created_at
-    }));
+    return (data || []).map((s: DbBudgetShare) => {
+        // Supabase joins can return single object or array - normalize it
+        const partner = Array.isArray(s.partner) ? s.partner[0] : s.partner;
+        return {
+            id: s.id,
+            partnerId: s.partner_id,
+            partnerEmail: partner?.email || '',
+            partnerName: partner?.full_name || undefined,
+            createdAt: s.created_at
+        };
+    });
 };
 
 export const shareBudgetWithPartner = async (partnerId: string): Promise<boolean> => {
@@ -231,7 +235,7 @@ export const getSharedBudgetFromPartner = async (ownerId: string): Promise<Budge
         limit: settings?.budget_limit || 0,
         duration: settings?.budget_duration || 'Monthly',
         savings: settings?.savings || 0,
-        transactions: (transactions || []).map((t: any) => ({
+        transactions: (transactions || []).map((t: DbTransaction) => ({
             id: t.id,
             description: t.description,
             amount: t.amount,
