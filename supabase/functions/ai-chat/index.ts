@@ -187,7 +187,7 @@ Return ONLY a JSON object (no markdown, no explanation):
     if (!isJsonMode && history && history.length > 0) {
       // SCENARIO A: Chat Mode (Conversational)
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-pro",
+        model: "gemini-2.5-flash",
         systemInstruction: systemInstruction 
       })
 
