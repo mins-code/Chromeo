@@ -13,7 +13,7 @@ import Button from './components/Button';
 import Input from './components/Input';
 import Auth from './components/Auth';
 import CollaborationSettings from './components/CollaborationSettings';
-import { Search, Filter, Users, Link2, Share2, HeartHandshake, CalendarClock, Sparkles, LogOut, Bell, Palette, Check, CheckCircle2, Zap, Anchor, Sun, Moon, CalendarDays, Clock, CheckSquare, Activity, ArrowRight, Repeat, AlertCircle, User, MessageSquare, Loader2 } from 'lucide-react';
+import { Search, Filter, Users, Link2, Share2, HeartHandshake, CalendarClock, Sparkles, LogOut, Bell, Palette, Check, CheckCircle2, Zap, Anchor, Sun, Moon, CalendarDays, Clock, CheckSquare, Activity, ArrowRight, Repeat, AlertCircle, User, MessageSquare, Loader2, X } from 'lucide-react';
 import { enhanceTaskWithAI } from './services/geminiService';
 import { ParsedTaskData } from './services/geminiService';
 import { getGreeting, t } from './themeText';
@@ -43,7 +43,7 @@ import ActivitiesPage from './pages/ActivitiesPage';
 
 // Map URL paths to ViewMode for Layout compatibility
 const pathToViewMode: Record<string, ViewMode> = {
-    '/': 'dashboard',
+    '/': 'activities',
     '/activities': 'activities',
     '/tasks': 'tasks',
     '/reminders': 'reminders',
@@ -121,6 +121,9 @@ const App: React.FC = () => {
 
     // Command Bar State (Cmd+K)
     const [isCommandBarOpen, setIsCommandBarOpen] = useState(false);
+
+    // AI Chat Modal State
+    const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
     // View Source Mode State (Personal/Partners/Combined)
     const [viewSourceMode, setViewSourceMode] = useState<ViewSourceMode>('personal');
@@ -612,6 +615,7 @@ const App: React.FC = () => {
             onViewSourceModeChange={setViewSourceMode}
             hasConnectedPartners={hasConnectedPartners}
             onCreateRoutine={handleCreateRoutine}
+            onOpenAI={() => setIsAIChatOpen(true)}
         >
             {/* SMS Notification Toast */}
             {lastSmsTransaction && (
@@ -668,14 +672,9 @@ const App: React.FC = () => {
                 </div>
             )}
 
-            {/* VIEW: DASHBOARD */}
-            {currentView === 'dashboard' && (
-                <DashboardPage username={username} onEditTask={handleEditTask} />
-            )}
-
-            {/* VIEW: ACTIVITIES */}
-            {currentView === 'activities' && (
-                <ActivitiesPage />
+            {/* VIEW: ACTIVITIES (Home) */}
+            {(currentView === 'dashboard' || currentView === 'activities') && (
+                <ActivitiesPage username={username} onEditTask={handleEditTask} />
             )}
 
             {/* VIEW: LISTS */}
@@ -758,17 +757,30 @@ const App: React.FC = () => {
                 </Suspense>
             )}
 
-            {/* VIEW: AI CHAT */}
-            {currentView === 'ai-chat' && (
-                <div className="h-full rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl bg-slate-50/50 dark:bg-dark-bg/50 animate-fade-in relative">
-                    <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="animate-spin text-brand-500" size={32} /></div>}>
-                        <AIChat
-                            onConfirmTask={handleAutoCreatedTask}
-                            onEditTask={handleEditDraft}
-                            userName={username}
-                            existingTags={allTags}
-                        />
-                    </Suspense>
+            {/* AI CHAT MODAL */}
+            {(currentView === 'ai-chat' || isAIChatOpen) && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="relative w-full max-w-4xl h-[85vh] rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl bg-white dark:bg-slate-900 animate-scale-in">
+                        <button
+                            onClick={() => {
+                                setIsAIChatOpen(false);
+                                if (currentView === 'ai-chat') {
+                                    navigate('/activities');
+                                }
+                            }}
+                            className="absolute top-4 right-4 z-10 p-2 rounded-xl bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors text-slate-600 dark:text-slate-300"
+                        >
+                            <X size={20} />
+                        </button>
+                        <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="animate-spin text-brand-500" size={32} /></div>}>
+                            <AIChat
+                                onConfirmTask={handleAutoCreatedTask}
+                                onEditTask={handleEditDraft}
+                                userName={username}
+                                existingTags={allTags}
+                            />
+                        </Suspense>
+                    </div>
                 </div>
             )}
 

@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NAVIGATION_ITEMS, APP_NAME } from '../constants';
 import { ViewMode, TaskType, ThemeOption, ViewSourceMode } from '../types';
-import { Plus, Settings, X, Wallet, CheckCircle2, User, ChevronDown, Calendar, CheckSquare, Clock, Moon, Sun, ChevronLeft, ChevronRight, Menu, PanelLeft, PanelLeftClose, Bell, ChevronUp, Check, Pencil, Repeat } from 'lucide-react';
+import { Plus, Settings, X, Wallet, CheckCircle2, User, ChevronDown, Calendar, CheckSquare, Clock, Moon, Sun, ChevronLeft, ChevronRight, Menu, PanelLeft, PanelLeftClose, Bell, ChevronUp, Check, Pencil, Repeat, Bot } from 'lucide-react';
 import { t, ThemeText } from '../themeText';
 import MiniCalendar from './MiniCalendar';
 
@@ -48,6 +48,8 @@ interface LayoutProps {
     hasConnectedPartners?: boolean;
     // Routine creation callback
     onCreateRoutine?: () => void;
+    // AI Assistant callback
+    onOpenAI?: () => void;
 }
 
 export const Layout: React.FC<LayoutProps> = ({
@@ -65,7 +67,8 @@ export const Layout: React.FC<LayoutProps> = ({
     viewSourceMode,
     onViewSourceModeChange,
     hasConnectedPartners = false,
-    onCreateRoutine
+    onCreateRoutine,
+    onOpenAI
 }) => {
     const [showProfileStats, setShowProfileStats] = useState(false);
     const [showCreateMenu, setShowCreateMenu] = useState(false);
@@ -779,6 +782,17 @@ export const Layout: React.FC<LayoutProps> = ({
                             })}
                         </div>
                     </div>
+
+                    {/* Floating AI Assistant Widget */}
+                    {onOpenAI && (
+                        <button
+                            onClick={onOpenAI}
+                            className="hidden md:flex fixed bottom-6 right-6 z-50 items-center gap-2 bg-gradient-to-r from-brand-500 to-indigo-600 text-white px-4 py-3 rounded-2xl shadow-[0_8px_30px_rgba(14,165,233,0.4)] hover:shadow-[0_12px_40px_rgba(14,165,233,0.5)] hover:scale-105 transition-all active:scale-95 group"
+                        >
+                            <Bot size={22} className="group-hover:animate-pulse" />
+                            <span className="font-semibold">AI Assistant</span>
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

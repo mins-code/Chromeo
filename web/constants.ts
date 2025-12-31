@@ -4,7 +4,6 @@ import { LayoutDashboard, CheckSquare, Calendar as CalendarIcon, Bot, Settings, 
 export const APP_NAME = "ChronoDeX";
 
 export const NAVIGATION_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'calendar', label: 'Calendar', icon: CalendarIcon },
   { 
     id: 'activities', 
@@ -19,7 +18,6 @@ export const NAVIGATION_ITEMS = [
     ]
   },
   { id: 'budget', label: 'Budget Plan', icon: Wallet },
-  { id: 'ai-chat', label: 'AI Assistant', icon: Bot },
 ];
 
 export const PRIORITY_COLORS = {
