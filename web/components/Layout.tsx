@@ -50,6 +50,8 @@ interface LayoutProps {
     onCreateRoutine?: () => void;
     // AI Assistant callback
     onOpenAI?: () => void;
+    // Calendar date selection callback
+    onCalendarDateSelect?: (date: Date) => void;
 }
 
 export const Layout: React.FC<LayoutProps> = ({
@@ -68,7 +70,8 @@ export const Layout: React.FC<LayoutProps> = ({
     onViewSourceModeChange,
     hasConnectedPartners = false,
     onCreateRoutine,
-    onOpenAI
+    onOpenAI,
+    onCalendarDateSelect
 }) => {
     const [showProfileStats, setShowProfileStats] = useState(false);
     const [showCreateMenu, setShowCreateMenu] = useState(false);
@@ -250,7 +253,11 @@ export const Layout: React.FC<LayoutProps> = ({
                     <div className="h-20 flex items-center justify-between px-6 border-b border-slate-200 dark:border-white/5 shrink-0">
                         <div className={`transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}`}>
                             {/* Theme-specific logo + text */}
-                            <div className="flex items-center gap-2">
+                            <div 
+                                className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => onNavigate('calendar')}
+                                title="Go to Calendar"
+                            >
                                 <img
                                     src={currentTheme === 'cyberpunk' ? '/logo-cyberpunk.jpg' : currentTheme === 'onepiece' ? '/logo-onepiece.png' : currentTheme === 'dark' ? '/logo-dark.jpg' : '/logo-light.jpg'}
                                     alt={APP_NAME}
@@ -276,8 +283,9 @@ export const Layout: React.FC<LayoutProps> = ({
                         currentTheme={currentTheme} 
                         isExpanded={isExpanded}
                         onDateSelect={(date) => {
-                            // Navigate to calendar view when a date is clicked
+                            // Navigate to calendar view and pass selected date
                             onNavigate('calendar');
+                            onCalendarDateSelect?.(date);
                         }}
                     />
 
@@ -522,7 +530,10 @@ export const Layout: React.FC<LayoutProps> = ({
                             </button>
 
                             {/* Theme-specific logo + text (mobile) */}
-                            <div className="flex md:hidden items-center gap-2">
+                            <div 
+                                className="flex md:hidden items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => onNavigate('calendar')}
+                            >
                                 <img
                                     src={currentTheme === 'cyberpunk' ? '/logo-cyberpunk.jpg' : currentTheme === 'onepiece' ? '/logo-onepiece.png' : currentTheme === 'dark' ? '/logo-dark.jpg' : '/logo-light.jpg'}
                                     alt={APP_NAME}
@@ -657,7 +668,10 @@ export const Layout: React.FC<LayoutProps> = ({
                             <aside className="absolute left-0 top-0 h-full w-72 glass shadow-2xl border-r border-slate-200 dark:border-white/5 flex flex-col animate-slide-in-left">
                                 {/* Drawer Header */}
                                 <div className="h-20 flex items-center justify-between px-6 border-b border-slate-200 dark:border-white/5 shrink-0">
-                                    <div className="flex items-center gap-2">
+                                    <div 
+                                        className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                                        onClick={() => { onNavigate('calendar'); setIsMobileSidebarOpen(false); }}
+                                    >
                                         <img
                                             src={currentTheme === 'cyberpunk' ? '/logo-cyberpunk.jpg' : currentTheme === 'onepiece' ? '/logo-onepiece.png' : currentTheme === 'dark' ? '/logo-dark.jpg' : '/logo-light.jpg'}
                                             alt={APP_NAME}
@@ -681,6 +695,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                     isExpanded={true}
                                     onDateSelect={(date) => {
                                         onNavigate('calendar');
+                                        onCalendarDateSelect?.(date);
                                         setIsMobileSidebarOpen(false);
                                     }}
                                 />
@@ -787,7 +802,17 @@ export const Layout: React.FC<LayoutProps> = ({
                     {onOpenAI && (
                         <button
                             onClick={onOpenAI}
-                            className="hidden md:flex fixed bottom-6 right-6 z-50 items-center gap-2 bg-gradient-to-r from-brand-500 to-indigo-600 text-white px-4 py-3 rounded-2xl shadow-[0_8px_30px_rgba(14,165,233,0.4)] hover:shadow-[0_12px_40px_rgba(14,165,233,0.5)] hover:scale-105 transition-all active:scale-95 group"
+                            className={`hidden md:flex fixed bottom-6 right-6 z-50 items-center gap-2 px-4 py-3 rounded-2xl hover:scale-105 transition-all active:scale-95 group ${
+                                currentTheme === 'cyberpunk'
+                                    ? 'bg-gradient-to-r from-[#00FFFF] to-[#FF00FF] text-[#0a0014] shadow-[0_8px_30px_rgba(0,255,255,0.4)] hover:shadow-[0_12px_40px_rgba(0,255,255,0.6)]'
+                                    : currentTheme === 'sunset'
+                                    ? 'bg-gradient-to-r from-rose-500 via-orange-500 to-amber-500 text-white shadow-[0_8px_30px_rgba(244,63,94,0.4)] hover:shadow-[0_12px_40px_rgba(244,63,94,0.5)]'
+                                    : currentTheme === 'onepiece'
+                                    ? 'bg-gradient-to-r from-[#D4A574] via-[#E8C399] to-[#D4A574] text-[#0A0A0A] shadow-[0_8px_30px_rgba(212,165,116,0.4)] hover:shadow-[0_12px_40px_rgba(212,165,116,0.5)]'
+                                    : currentTheme === 'light'
+                                    ? 'bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-[0_8px_30px_rgba(30,58,95,0.3)] hover:shadow-[0_12px_40px_rgba(30,58,95,0.4)]'
+                                    : 'bg-gradient-to-r from-white to-slate-200 text-slate-900 shadow-[0_8px_30px_rgba(255,255,255,0.2)] hover:shadow-[0_12px_40px_rgba(255,255,255,0.3)]'
+                            }`}
                         >
                             <Bot size={22} className="group-hover:animate-pulse" />
                             <span className="font-semibold">AI Assistant</span>

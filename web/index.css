@@ -66,11 +66,7 @@
 
 /* Dark sidebar with subtle silver borders */
 .dark aside {
-  background: linear-gradient(
-    180deg,
-    rgba(15, 15, 15, 0.98) 0%,
-    rgba(0, 0, 0, 0.98) 100%
-  );
+  background: linear-gradient(180deg, rgba(15, 15, 15, 0.98) 0%, rgba(0, 0, 0, 0.98) 100%);
   border-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -127,6 +123,24 @@
   border-color: rgba(255, 255, 255, 0.08);
 }
 
+/* Dark theme select dropdown styling */
+.dark select {
+  background-color: #0f0f0f !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #e0e0e0 !important;
+}
+
+.dark select option {
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+  padding: 8px 12px;
+}
+
+.dark select option:hover,
+.dark select option:checked {
+  background-color: #2a2a2a;
+}
+
 /* ========================================
    Cyberpunk Theme - Neon Cyan & Magenta
    ======================================== */
@@ -152,7 +166,7 @@
 }
 
 .theme-cyberpunk body {
-  font-family: "Inter", sans-serif;
+  font-family: 'Inter', sans-serif;
   background-color: #0a0014;
 }
 
@@ -174,11 +188,7 @@
 
 /* Cyberpunk sidebar with neon accent */
 .theme-cyberpunk aside {
-  background: linear-gradient(
-    180deg,
-    rgba(18, 0, 40, 0.98) 0%,
-    rgba(10, 0, 20, 0.98) 100%
-  );
+  background: linear-gradient(180deg, rgba(18, 0, 40, 0.98) 0%, rgba(10, 0, 20, 0.98) 100%);
   border-color: rgba(0, 255, 255, 0.15);
   box-shadow: 0 0 30px rgba(255, 0, 255, 0.05);
 }
@@ -321,16 +331,23 @@
 }
 
 .theme-sunset aside {
-  background: linear-gradient(
-    180deg,
-    rgba(136, 19, 55, 0.98) 0%,
-    rgba(76, 5, 25, 0.98) 100%
-  );
+  background: linear-gradient(180deg, rgba(136, 19, 55, 0.98) 0%, rgba(76, 5, 25, 0.98) 100%);
 }
 
 .theme-sunset header {
   background: rgba(76, 5, 25, 0.95);
   border-bottom: 1px solid rgba(251, 113, 133, 0.3);
+}
+
+.theme-sunset select option {
+  background-color: #4c0519;
+  color: #fff1f2;
+  padding: 8px 12px;
+}
+
+.theme-sunset select option:hover,
+.theme-sunset select option:checked {
+  background-color: #881337;
 }
 
 /* ========================================
@@ -365,7 +382,7 @@
 }
 
 .theme-onepiece body {
-  font-family: "Inter", sans-serif;
+  font-family: 'Inter', sans-serif;
   background-color: #0a0a0a;
 }
 
@@ -395,11 +412,7 @@
 
 /* Dark sidebar with rose gold accents */
 .theme-onepiece aside {
-  background: linear-gradient(
-    180deg,
-    rgba(20, 20, 20, 0.98) 0%,
-    rgba(10, 10, 10, 0.98) 100%
-  );
+  background: linear-gradient(180deg, rgba(20, 20, 20, 0.98) 0%, rgba(10, 10, 10, 0.98) 100%);
   border-color: rgba(212, 165, 116, 0.15);
 }
 
@@ -495,7 +508,7 @@
    ======================================== */
 
 body {
-  font-family: "Inter", sans-serif;
+  font-family: 'Inter', sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
 }
@@ -537,11 +550,7 @@ body {
 }
 
 .bg-gradient-main {
-  background: linear-gradient(
-    135deg,
-    var(--bg-primary) 0%,
-    var(--bg-secondary) 100%
-  );
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
 }
 
 .no-scrollbar::-webkit-scrollbar {

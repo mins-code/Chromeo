@@ -34,10 +34,32 @@ export function useTasks() {
 
   const deleteMutation = useMutation({
     mutationFn: TaskService.deleteTask,
-    onSuccess: (_success, id) => {
+    // Optimistic update: Remove task from cache immediately
+    onMutate: async (id) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      
+      // Snapshot the previous value
+      const previousTasks = queryClient.getQueryData<Task[]>(['tasks']);
+      
+      // Optimistically update the cache
       queryClient.setQueryData<Task[]>(['tasks'], (old = []) =>
         old.filter((t) => t.id !== id)
       );
+      
+      // Return a context object with the snapshot
+      return { previousTasks };
+    },
+    onError: (_error, _id, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['tasks'], context.previousTasks);
+      }
+      console.error('Failed to delete task:', _error);
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure cache is in sync
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
 

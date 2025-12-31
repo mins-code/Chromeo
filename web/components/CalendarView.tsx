@@ -1,11 +1,13 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Plus, X, Clock, Repeat, Calendar, CalendarDays, DollarSign } from 'lucide-react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { ChevronLeft, ChevronRight, Plus, X, Clock, Repeat, Calendar, CalendarDays, CalendarClock, Settings2, DollarSign, CheckCircle2, Circle } from 'lucide-react';
 import { DndContext, DragEndEvent, DragOverlay, pointerWithin } from '@dnd-kit/core';
-import { format, addWeeks, subWeeks, startOfWeek, addMonths, subMonths, isSameDay } from 'date-fns';
-import { Task, TaskPriority, RecurringTransaction } from '../types';
+import { format, addWeeks, subWeeks, startOfWeek, addMonths, subMonths, isSameDay, addDays, subDays } from 'date-fns';
+import { Task, TaskPriority, TaskStatus, RecurringTransaction } from '../types';
 import Button from './Button';
 import CalendarDayCell from './CalendarDayCell';
 import WeekView from './WeekView';
+import DayView from './DayView';
+import CustomIntervalView from './CustomIntervalView';
 import DraggableTask, { TYPE_COLORS } from './DraggableTask';
 
 interface CalendarViewProps {
@@ -14,15 +16,47 @@ interface CalendarViewProps {
     onDateClick: (date: Date) => void;
     onEditTask: (task: Task) => void;
     onUpdateTask?: (task: Task) => void;
+    onToggleStatus?: (task: Task) => void;
+    selectedDate?: Date; // Jump to this date when provided
 }
 
-type ViewMode = 'month' | 'week';
+type ViewMode = 'month' | 'week' | 'day' | 'custom';
 
-const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransactions = [], onDateClick, onEditTask, onUpdateTask }) => {
+// Custom interval options
+const INTERVAL_OPTIONS = [
+    { label: '3 Days', value: 3 },
+    { label: '5 Days', value: 5 },
+    { label: '2 Weeks', value: 14 },
+];
+
+const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransactions = [], onDateClick, onEditTask, onUpdateTask, onToggleStatus, selectedDate: propSelectedDate }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('month');
     const [activeTask, setActiveTask] = useState<Task | null>(null);
+    const [customInterval, setCustomInterval] = useState(3); // Default to 3 days
+    const [showIntervalDropdown, setShowIntervalDropdown] = useState(false);
+    const intervalDropdownRef = useRef<HTMLDivElement>(null);
+
+    // Handle selectedDate prop - jump to that date when it changes
+    useEffect(() => {
+        if (propSelectedDate) {
+            setCurrentDate(propSelectedDate);
+            setViewMode('day'); // Switch to day view when a specific date is selected
+        }
+    }, [propSelectedDate]);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (intervalDropdownRef.current && !intervalDropdownRef.current.contains(event.target as Node)) {
+                setShowIntervalDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
 
     const currentMonth = useMemo(() => new Date(currentDate.getFullYear(), currentDate.getMonth(), 1), [currentDate]);
 
@@ -37,10 +71,15 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
     const navigate = (direction: number) => {
         if (viewMode === 'month') {
             setCurrentDate(direction > 0 ? addMonths(currentDate, 1) : subMonths(currentDate, 1));
-        } else {
+        } else if (viewMode === 'week') {
             setCurrentDate(direction > 0 ? addWeeks(currentDate, 1) : subWeeks(currentDate, 1));
+        } else if (viewMode === 'day') {
+            setCurrentDate(direction > 0 ? addDays(currentDate, 1) : subDays(currentDate, 1));
+        } else if (viewMode === 'custom') {
+            setCurrentDate(direction > 0 ? addDays(currentDate, customInterval) : subDays(currentDate, customInterval));
         }
     };
+
 
     // Optimized helper to check if a recurring task happens on a specific date without re-parsing dates
     const checkRecurrence = useCallback((task: Task, taskDate: Date, date: Date): boolean => {
@@ -225,11 +264,18 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
     const getHeaderTitle = () => {
         if (viewMode === 'month') {
             return currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
-        } else {
+        } else if (viewMode === 'week') {
             const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
             return format(weekStart, 'MMM d, yyyy');
+        } else if (viewMode === 'day') {
+            return format(currentDate, 'EEEE, MMMM d, yyyy');
+        } else {
+            // Custom interval
+            const endDate = addDays(currentDate, customInterval - 1);
+            return `${format(currentDate, 'MMM d')} - ${format(endDate, 'MMM d, yyyy')}`;
         }
     };
+
 
     return (
         <DndContext
@@ -268,7 +314,70 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                 <CalendarDays size={16} />
                                 Week
                             </button>
+                            <button
+                                onClick={() => setViewMode('day')}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                                    viewMode === 'day'
+                                        ? 'bg-white dark:bg-slate-700 text-brand-500 shadow-sm'
+                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                }`}
+                            >
+                                <CalendarClock size={16} />
+                                Day
+                            </button>
+                            
+                            {/* Custom Interval Dropdown */}
+                            <div className="relative" ref={intervalDropdownRef}>
+                                <button
+                                    onClick={() => {
+                                        if (viewMode !== 'custom') {
+                                            setViewMode('custom');
+                                        }
+                                        setShowIntervalDropdown(!showIntervalDropdown);
+                                    }}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                                        viewMode === 'custom'
+                                            ? 'bg-white dark:bg-slate-700 text-brand-500 shadow-sm'
+                                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                    }`}
+                                >
+                                    <Settings2 size={16} />
+                                    {viewMode === 'custom' ? `${customInterval}D` : 'Custom'}
+                                </button>
+                                
+                                {showIntervalDropdown && (
+                                    <div className="absolute top-full right-0 mt-2 w-32 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-white/10 overflow-hidden z-50 animate-scale-in">
+                                        {INTERVAL_OPTIONS.map(option => (
+                                            <button
+                                                key={option.value}
+                                                onClick={() => {
+                                                    setCustomInterval(option.value);
+                                                    setViewMode('custom');
+                                                    setShowIntervalDropdown(false);
+                                                }}
+                                                className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-white/5 transition-colors ${
+                                                    customInterval === option.value && viewMode === 'custom'
+                                                        ? 'text-brand-500 font-semibold bg-brand-500/5'
+                                                        : 'text-slate-700 dark:text-slate-300'
+                                                }`}
+                                            >
+                                                {option.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
+
+                        {/* Today Button */}
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setCurrentDate(new Date())}
+                            className="text-brand-500 hover:text-brand-600"
+                        >
+                            Today
+                        </Button>
 
                         {/* Navigation */}
                         <div className="flex gap-2">
@@ -283,7 +392,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                 </div>
 
                 {/* Calendar Content */}
-                {viewMode === 'month' ? (
+                {viewMode === 'month' && (
                     <div className="flex-1 min-h-0 flex flex-col">
                         {/* Day Names */}
                         <div className="grid grid-cols-7 mb-2">
@@ -309,10 +418,29 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                             ))}
                         </div>
                     </div>
-                ) : (
+                )}
+
+                {viewMode === 'week' && (
                     <WeekView
                         tasks={tasks}
                         currentDate={currentDate}
+                        onEditTask={onEditTask}
+                    />
+                )}
+
+                {viewMode === 'day' && (
+                    <DayView
+                        tasks={tasks}
+                        currentDate={currentDate}
+                        onEditTask={onEditTask}
+                    />
+                )}
+
+                {viewMode === 'custom' && (
+                    <CustomIntervalView
+                        tasks={tasks}
+                        currentDate={currentDate}
+                        intervalDays={customInterval}
                         onEditTask={onEditTask}
                     />
                 )}
@@ -340,26 +468,50 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                 )}
                                 {selectedDayTasks.map(task => {
                                     const colorClass = TYPE_COLORS[task.type] || TYPE_COLORS.TASK;
+                                    const isDone = task.status === TaskStatus.DONE;
                                     return (
                                         <div
                                             key={task.id}
-                                            onClick={() => onEditTask(task)}
-                                            className={`group p-3 rounded-xl border-l-4 cursor-pointer transition-all ${colorClass} hover:shadow-md`}
+                                            className={`group p-3 rounded-xl border-l-4 cursor-pointer transition-all ${colorClass} hover:shadow-md ${isDone ? 'opacity-60' : ''}`}
                                         >
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="font-semibold text-sm">{task.title}</h4>
-                                                <div className="flex items-center gap-3 text-xs opacity-75 mt-1">
-                                                    {task.reminderTime && (
-                                                        <span className="flex items-center gap-1">
-                                                            <Clock size={10} />
-                                                            {new Date(task.reminderTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        </span>
-                                                    )}
-                                                    {task.recurrence && task.recurrence.frequency !== 'none' && (
-                                                        <span className="flex items-center gap-1">
-                                                            <Repeat size={10} /> {task.recurrence.frequency}
-                                                        </span>
-                                                    )}
+                                            <div className="flex items-start gap-3">
+                                                {/* Toggle Status Button */}
+                                                {onToggleStatus && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onToggleStatus(task);
+                                                        }}
+                                                        className={`mt-0.5 flex-shrink-0 transition-all duration-200 hover:scale-110 active:scale-95 ${
+                                                            isDone
+                                                                ? 'text-emerald-500 drop-shadow-sm'
+                                                                : 'text-slate-400 hover:text-brand-500'
+                                                        }`}
+                                                        aria-label={isDone ? "Mark as incomplete" : "Mark as complete"}
+                                                    >
+                                                        {isDone ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+                                                    </button>
+                                                )}
+                                                
+                                                {/* Task Content */}
+                                                <div className="flex-1 min-w-0" onClick={() => onEditTask(task)}>
+                                                    <h4 className={`font-semibold text-sm ${isDone ? 'line-through text-slate-400 dark:text-slate-500' : ''}`}>{task.title}</h4>
+                                                    <div className="flex items-center gap-3 text-xs opacity-75 mt-1">
+                                                        {task.reminderTime && (
+                                                            <span className="flex items-center gap-1">
+                                                                <Clock size={10} />
+                                                                {new Date(task.reminderTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </span>
+                                                        )}
+                                                        {task.recurrence && task.recurrence.frequency !== 'none' && (
+                                                            <span className="flex items-center gap-1">
+                                                                <Repeat size={10} /> {task.recurrence.frequency}
+                                                            </span>
+                                                        )}
+                                                        {isDone && (
+                                                            <span className="text-emerald-500 font-medium">✓ Done</span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>

@@ -1,9 +1,15 @@
 /**
  * Notification Service
- * Handles browser/system notifications using the Web Notifications API
+ * Handles Web Push Notifications for background/offline notifications
+ * 
+ * This service uses the Push API to deliver notifications even when:
+ * - The browser tab is closed
+ * - The PWA is in the background
+ * - The device is locked (but powered on)
  */
 
 import { NotificationSettings } from '../types';
+import { supabase } from './supabaseClient';
 
 const DEFAULT_SETTINGS: NotificationSettings = {
   enabled: false,
@@ -14,15 +20,24 @@ const DEFAULT_SETTINGS: NotificationSettings = {
 };
 
 const SETTINGS_KEY = 'chronodex_notification_settings';
+const PUSH_SUBSCRIPTION_KEY = 'chronodex_push_subscription';
 
-// Store scheduled notification timeouts for cleanup
-const scheduledNotifications = new Map<string, NodeJS.Timeout>();
+// VAPID public key - this should match your Supabase secrets
+// Generate with: npx web-push generate-vapid-keys
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
 
 /**
  * Check if browser supports notifications
  */
 export const isSupported = (): boolean => {
   return 'Notification' in window;
+};
+
+/**
+ * Check if browser supports Web Push
+ */
+export const isPushSupported = (): boolean => {
+  return 'PushManager' in window && 'serviceWorker' in navigator;
 };
 
 /**
@@ -75,9 +90,132 @@ export const saveSettings = (settings: NotificationSettings): void => {
 };
 
 /**
- * Send a notification immediately
+ * Convert VAPID key to Uint8Array for Push API
  */
-export const sendNotification = (
+const urlBase64ToUint8Array = (base64String: string): Uint8Array => {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+};
+
+/**
+ * Subscribe to Web Push notifications
+ */
+export const subscribeToPush = async (): Promise<boolean> => {
+  if (!isPushSupported()) {
+    console.warn('Push notifications not supported in this browser');
+    return false;
+  }
+
+  if (!VAPID_PUBLIC_KEY) {
+    console.error('VAPID_PUBLIC_KEY not configured');
+    return false;
+  }
+
+  try {
+    // Wait for service worker to be ready
+    const registration = await navigator.serviceWorker.ready;
+    
+    // Check for existing subscription
+    let subscription = await registration.pushManager.getSubscription();
+    
+    if (!subscription) {
+      // Create new subscription
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error('User not authenticated');
+      return false;
+    }
+
+    // Save subscription to backend
+    const { error } = await supabase.functions.invoke('push-notification', {
+      body: {
+        action: 'subscribe',
+        userId: user.id,
+        subscription: subscription.toJSON(),
+      },
+    });
+
+    if (error) throw error;
+
+    // Cache subscription locally
+    localStorage.setItem(PUSH_SUBSCRIPTION_KEY, JSON.stringify(subscription.toJSON()));
+    
+    console.log('Push notification subscription successful');
+    return true;
+  } catch (error) {
+    console.error('Error subscribing to push notifications:', error);
+    return false;
+  }
+};
+
+/**
+ * Unsubscribe from Web Push notifications
+ */
+export const unsubscribeFromPush = async (): Promise<boolean> => {
+  if (!isPushSupported()) return true;
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    
+    if (subscription) {
+      await subscription.unsubscribe();
+    }
+
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.functions.invoke('push-notification', {
+        body: {
+          action: 'unsubscribe',
+          userId: user.id,
+        },
+      });
+    }
+
+    localStorage.removeItem(PUSH_SUBSCRIPTION_KEY);
+    console.log('Unsubscribed from push notifications');
+    return true;
+  } catch (error) {
+    console.error('Error unsubscribing from push:', error);
+    return false;
+  }
+};
+
+/**
+ * Check if user is subscribed to push
+ */
+export const isPushSubscribed = async (): Promise<boolean> => {
+  if (!isPushSupported()) return false;
+  
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    return !!subscription;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Send a notification immediately (via Service Worker for background support)
+ */
+export const sendNotification = async (
   title: string,
   options?: {
     body?: string;
@@ -86,101 +224,133 @@ export const sendNotification = (
     data?: Record<string, unknown>;
     onClick?: () => void;
   }
-): Notification | null => {
-  if (!isSupported()) return null;
-  if (Notification.permission !== 'granted') return null;
+): Promise<boolean> => {
+  if (!isSupported()) return false;
+  if (Notification.permission !== 'granted') return false;
   
   const settings = getSettings();
-  if (!settings.enabled) return null;
+  if (!settings.enabled) return false;
 
   try {
-    const notification = new Notification(title, {
-      body: options?.body,
-      icon: options?.icon || '/logo-dark.jpg',
-      tag: options?.tag,
-      data: options?.data,
-      badge: '/logo-dark.jpg',
-      requireInteraction: false,
-    });
-
-    if (options?.onClick) {
-      notification.onclick = () => {
-        window.focus();
-        options.onClick?.();
-        notification.close();
-      };
+    // Use Service Worker showNotification for better background support
+    if ('serviceWorker' in navigator) {
+      const registration = await navigator.serviceWorker.ready;
+      await registration.showNotification(title, {
+        body: options?.body,
+        icon: options?.icon || '/logo-dark.jpg',
+        badge: '/logo-dark.jpg',
+        tag: options?.tag,
+        data: options?.data,
+        requireInteraction: false,
+        vibrate: [100, 50, 100],
+      });
+      return true;
     } else {
-      notification.onclick = () => {
-        window.focus();
-        notification.close();
-      };
+      // Fallback to regular Notification
+      const notification = new Notification(title, {
+        body: options?.body,
+        icon: options?.icon || '/logo-dark.jpg',
+        tag: options?.tag,
+        data: options?.data,
+      });
+
+      if (options?.onClick) {
+        notification.onclick = () => {
+          window.focus();
+          options.onClick?.();
+          notification.close();
+        };
+      }
+
+      setTimeout(() => notification.close(), 10000);
+      return true;
     }
-
-    // Auto-close after 10 seconds
-    setTimeout(() => notification.close(), 10000);
-
-    return notification;
   } catch (error) {
     console.error('Error sending notification:', error);
-    return null;
+    return false;
   }
 };
 
 /**
- * Schedule a notification for a specific time
+ * Schedule a notification for a specific time (via backend)
+ * This works even when the app is closed!
  */
-export const scheduleNotification = (
+export const scheduleNotification = async (
   id: string,
   title: string,
   scheduledTime: Date,
   options?: {
     body?: string;
-    icon?: string;
-    tag?: string;
-    data?: Record<string, unknown>;
-    onClick?: () => void;
+    taskId?: string;
   }
-): void => {
-  // Cancel any existing notification with this ID
-  cancelNotification(id);
+): Promise<boolean> => {
+  const settings = getSettings();
+  if (!settings.enabled) return false;
 
   const now = new Date();
   const delay = scheduledTime.getTime() - now.getTime();
 
-  // Don't schedule if time has passed or is more than 24 hours away
-  if (delay <= 0 || delay > 24 * 60 * 60 * 1000) return;
+  // Don't schedule if time has passed
+  if (delay <= 0) return false;
 
-  const timeout = setTimeout(() => {
-    sendNotification(title, options);
-    scheduledNotifications.delete(id);
-  }, delay);
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
 
-  scheduledNotifications.set(id, timeout);
+    const { error } = await supabase.functions.invoke('push-notification', {
+      body: {
+        action: 'schedule',
+        userId: user.id,
+        taskId: options?.taskId || id,
+        notification: {
+          title,
+          body: options?.body,
+          scheduledTime: scheduledTime.toISOString(),
+        },
+      },
+    });
+
+    if (error) throw error;
+    console.log(`Scheduled notification for ${scheduledTime.toISOString()}`);
+    return true;
+  } catch (error) {
+    console.error('Error scheduling notification:', error);
+    return false;
+  }
 };
 
 /**
  * Cancel a scheduled notification
  */
-export const cancelNotification = (id: string): void => {
-  const timeout = scheduledNotifications.get(id);
-  if (timeout) {
-    clearTimeout(timeout);
-    scheduledNotifications.delete(id);
+export const cancelNotification = async (taskId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase.functions.invoke('push-notification', {
+      body: {
+        action: 'cancel',
+        taskId,
+      },
+    });
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error cancelling notification:', error);
+    return false;
   }
 };
 
 /**
- * Cancel all scheduled notifications
+ * Cancel all scheduled notifications for a user
  */
-export const cancelAllNotifications = (): void => {
-  scheduledNotifications.forEach((timeout) => clearTimeout(timeout));
-  scheduledNotifications.clear();
+export const cancelAllNotifications = async (): Promise<void> => {
+  // This would require a backend endpoint to delete all user's scheduled notifications
+  console.log('Cancel all notifications - not implemented for push');
 };
 
 /**
  * Send a test notification
  */
-export const sendTestNotification = (): Notification | null => {
+export const sendTestNotification = async (): Promise<boolean> => {
   return sendNotification('ChronoDeX Notifications Enabled! 🎉', {
     body: 'You will now receive reminders for your tasks, events, and budget alerts.',
     tag: 'test-notification',
@@ -190,13 +360,13 @@ export const sendTestNotification = (): Notification | null => {
 /**
  * Schedule task reminder notification
  */
-export const scheduleTaskReminder = (
+export const scheduleTaskReminder = async (
   taskId: string,
   title: string,
   reminderTime: Date,
   taskType: 'TASK' | 'EVENT' | 'APPOINTMENT' | 'REMINDER',
-  onClickNavigate?: () => void
-): void => {
+  minutesBefore?: number
+): Promise<void> => {
   const settings = getSettings();
   
   // Check if this type of notification is enabled
@@ -206,7 +376,8 @@ export const scheduleTaskReminder = (
   if (taskType === 'REMINDER' && !settings.taskReminders) return;
 
   // Calculate notification time (subtract lead time)
-  const notifyTime = new Date(reminderTime.getTime() - settings.reminderMinutesBefore * 60 * 1000);
+  const leadTime = minutesBefore ?? settings.reminderMinutesBefore;
+  const notifyTime = new Date(reminderTime.getTime() - leadTime * 60 * 1000);
 
   const typeLabels: Record<string, string> = {
     'TASK': '📋 Task Reminder',
@@ -215,14 +386,13 @@ export const scheduleTaskReminder = (
     'REMINDER': '⏰ Reminder',
   };
 
-  scheduleNotification(
+  await scheduleNotification(
     `task-${taskId}`,
     typeLabels[taskType] || 'Reminder',
     notifyTime,
     {
       body: title,
-      tag: `task-${taskId}`,
-      onClick: onClickNavigate,
+      taskId: taskId,
     }
   );
 };
@@ -230,16 +400,16 @@ export const scheduleTaskReminder = (
 /**
  * Send budget alert notification
  */
-export const sendBudgetAlert = (
+export const sendBudgetAlert = async (
   alertType: 'low_budget' | 'recurring_due',
   details: {
     amount?: number;
     description?: string;
     remaining?: number;
   }
-): Notification | null => {
+): Promise<boolean> => {
   const settings = getSettings();
-  if (!settings.enabled || !settings.budgetAlerts) return null;
+  if (!settings.enabled || !settings.budgetAlerts) return false;
 
   if (alertType === 'low_budget' && details.remaining !== undefined) {
     return sendNotification('💰 Budget Alert', {
@@ -255,5 +425,25 @@ export const sendBudgetAlert = (
     });
   }
 
-  return null;
+  return false;
+};
+
+/**
+ * Initialize push notifications (call on app startup)
+ */
+export const initializePushNotifications = async (): Promise<boolean> => {
+  const settings = getSettings();
+  if (!settings.enabled) return false;
+  
+  if (Notification.permission !== 'granted') {
+    return false;
+  }
+
+  // Subscribe to push if not already
+  const isSubscribed = await isPushSubscribed();
+  if (!isSubscribed) {
+    return subscribeToPush();
+  }
+
+  return true;
 };

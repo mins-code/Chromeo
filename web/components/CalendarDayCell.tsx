@@ -127,7 +127,7 @@ const CalendarDayCell = memo(({ day, date, tasks, financialItems = [], isToday, 
   for (let i = 0; i < prev.tasks.length; i++) {
     const t1 = prev.tasks[i];
     const t2 = next.tasks[i];
-    if (t1.id !== t2.id || t1.title !== t2.title || t1.priority !== t2.priority || t1.type !== t2.type) return false;
+    if (t1.id !== t2.id || t1.title !== t2.title || t1.priority !== t2.priority || t1.type !== t2.type || t1.status !== t2.status) return false;
   }
 
   return true;

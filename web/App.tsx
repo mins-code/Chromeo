@@ -13,7 +13,7 @@ import Button from './components/Button';
 import Input from './components/Input';
 import Auth from './components/Auth';
 import CollaborationSettings from './components/CollaborationSettings';
-import { Search, Filter, Users, Link2, Share2, HeartHandshake, CalendarClock, Sparkles, LogOut, Bell, Palette, Check, CheckCircle2, Zap, Anchor, Sun, Moon, CalendarDays, Clock, CheckSquare, Activity, ArrowRight, Repeat, AlertCircle, User, MessageSquare, Loader2, X } from 'lucide-react';
+import { Search, Filter, Users, Link2, Share2, HeartHandshake, CalendarClock, Sparkles, LogOut, Bell, Palette, Check, CheckCircle2, Zap, Anchor, Sun, Moon, CalendarDays, Clock, CheckSquare, Activity, ArrowRight, Repeat, AlertCircle, User, MessageSquare, Loader2, X, AlertTriangle, Trash2 } from 'lucide-react';
 import { enhanceTaskWithAI } from './services/geminiService';
 import { ParsedTaskData } from './services/geminiService';
 import { getGreeting, t } from './themeText';
@@ -125,6 +125,9 @@ const App: React.FC = () => {
     // AI Chat Modal State
     const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
+    // Calendar Navigate Date State (from mini calendar clicks)
+    const [calendarNavigateDate, setCalendarNavigateDate] = useState<Date | undefined>(undefined);
+
     // View Source Mode State (Personal/Partners/Combined)
     const [viewSourceMode, setViewSourceMode] = useState<ViewSourceMode>('personal');
     const [hasConnectedPartners, setHasConnectedPartners] = useState(false);
@@ -171,6 +174,19 @@ const App: React.FC = () => {
                 const partnerships = await PartnerService.getPartnerships();
                 const acceptedPartners = partnerships.filter(p => p.status === 'accepted');
                 setHasConnectedPartners(acceptedPartners.length > 0);
+                
+                // Set the partner state with the first connected partner's info
+                if (acceptedPartners.length > 0) {
+                    const firstPartner = acceptedPartners[0];
+                    setPartner({
+                        id: firstPartner.partnerId,
+                        name: firstPartner.partnerName || firstPartner.partnerEmail,
+                        email: firstPartner.partnerEmail,
+                        isConnected: true
+                    });
+                } else {
+                    setPartner(null);
+                }
             }
         };
         checkPartners();
@@ -284,8 +300,7 @@ const App: React.FC = () => {
                 notifyTime,
                 {
                     body: task.title,
-                    tag: `task-${task.id}`,
-                    onClick: () => handleEditTask(task)
+                    taskId: task.id
                 }
             );
         });
@@ -616,6 +631,7 @@ const App: React.FC = () => {
             hasConnectedPartners={hasConnectedPartners}
             onCreateRoutine={handleCreateRoutine}
             onOpenAI={() => setIsAIChatOpen(true)}
+            onCalendarDateSelect={(date) => setCalendarNavigateDate(date)}
         >
             {/* SMS Notification Toast */}
             {lastSmsTransaction && (
@@ -746,6 +762,8 @@ const App: React.FC = () => {
                         onDateClick={(date) => handleCreateTask(date)}
                         onEditTask={handleEditTask}
                         onUpdateTask={(task) => updateTask(task)}
+                        onToggleStatus={handleToggleStatus}
+                        selectedDate={calendarNavigateDate}
                     />
                 </Suspense>
             )}
@@ -1050,6 +1068,53 @@ const App: React.FC = () => {
                                         </div>
                                     </div>
                                 )}
+                            </div>
+                        </div>
+
+                        {/* Danger Zone - Account Deletion */}
+                        <div className="glass rounded-2xl p-6 lg:col-span-2 border-2 border-red-500/20">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center">
+                                    <AlertTriangle size={20} className="text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-red-600 dark:text-red-400">Danger Zone</h3>
+                                    <p className="text-sm text-slate-500">Irreversible actions</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-red-50 dark:bg-red-500/10 rounded-xl p-4 border border-red-200 dark:border-red-500/20">
+                                <h4 className="font-semibold text-red-700 dark:text-red-400 mb-2">Delete Account</h4>
+                                <p className="text-sm text-red-600/80 dark:text-red-300/80 mb-4">
+                                    Once you delete your account, all your data will be permanently erased. This action cannot be undone.
+                                    You will receive a confirmation email before the deletion is processed.
+                                </p>
+                                <Button
+                                    variant="danger"
+                                    onClick={async () => {
+                                        if (!confirm('Are you sure you want to request account deletion? You will receive a confirmation email.')) {
+                                            return;
+                                        }
+                                        try {
+                                            const { data, error } = await supabase.functions.invoke('account-deletion', {
+                                                body: { action: 'request' }
+                                            });
+                                            if (error) throw error;
+                                            if (data.success) {
+                                                alert('A confirmation email has been sent to your email address. Please check your inbox to complete the deletion process. The link expires in 24 hours.');
+                                            } else {
+                                                alert(data.message || 'Failed to request deletion');
+                                            }
+                                        } catch (err: any) {
+                                            console.error('Deletion request error:', err);
+                                            alert('Failed to request account deletion. Please try again.');
+                                        }
+                                    }}
+                                    className="flex items-center gap-2"
+                                >
+                                    <Trash2 size={16} />
+                                    Request Account Deletion
+                                </Button>
                             </div>
                         </div>
 
