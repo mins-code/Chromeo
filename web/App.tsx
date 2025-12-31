@@ -897,7 +897,7 @@ const App: React.FC = () => {
                                         notificationPermission === 'denied' ? 'bg-red-500' :
                                         'bg-yellow-500'
                                     }`} />
-                                    <span className="text-sm text-slate-600 dark:text-slate-400">
+                                    <span className="text-sm text-slate-600 dark:text-slate-300">
                                         Permission: {
                                             notificationPermission === 'granted' ? 'Granted' :
                                             notificationPermission === 'denied' ? 'Denied (Enable in browser settings)' :
@@ -910,7 +910,7 @@ const App: React.FC = () => {
                                 {/* Notification Preferences */}
                                 {notificationSettings.enabled && (
                                     <div className="space-y-4 pt-2 border-t border-slate-200 dark:border-white/10">
-                                        <h5 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Notification Types</h5>
+                                        <h5 className="text-sm font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Notification Types</h5>
                                         
                                         <label className="flex items-center justify-between cursor-pointer group">
                                             <div className="flex items-center gap-3">
@@ -953,7 +953,7 @@ const App: React.FC = () => {
 
                                         {/* Lead Time Selector */}
                                         <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                                 Remind me before event starts
                                             </label>
                                             <div className="flex flex-wrap gap-2">
