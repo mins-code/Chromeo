@@ -21,20 +21,15 @@ interface CalendarViewProps {
 }
 
 type ViewMode = 'month' | 'week' | 'day' | 'custom';
-
-// Custom interval options
-const INTERVAL_OPTIONS = [
-    { label: '3 Days', value: 3 },
-    { label: '5 Days', value: 5 },
-    { label: '2 Weeks', value: 14 },
-];
+type IntervalUnit = 'day' | 'week' | 'month';
 
 const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransactions = [], onDateClick, onEditTask, onUpdateTask, onToggleStatus, selectedDate: propSelectedDate }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('month');
     const [activeTask, setActiveTask] = useState<Task | null>(null);
-    const [customInterval, setCustomInterval] = useState(3); // Default to 3 days
+    const [customIntervalValue, setCustomIntervalValue] = useState(3); // Numeric value
+    const [customIntervalUnit, setCustomIntervalUnit] = useState<IntervalUnit>('day'); // Unit
     const [showIntervalDropdown, setShowIntervalDropdown] = useState(false);
     const intervalDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -68,6 +63,49 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         return new Date(year, month, 1).getDay();
     };
 
+    // Calculate custom interval in days based on value and unit
+    const customIntervalDays = useMemo(() => {
+        switch (customIntervalUnit) {
+            case 'week': return customIntervalValue * 7;
+            case 'month': return customIntervalValue * 30; // Approximate
+            default: return customIntervalValue;
+        }
+    }, [customIntervalValue, customIntervalUnit]);
+
+    // Get display label for custom interval
+    const getCustomIntervalLabel = () => {
+        const unitLabels: Record<IntervalUnit, string> = { day: 'D', week: 'W', month: 'M' };
+        return `${customIntervalValue}${unitLabels[customIntervalUnit]}`;
+    };
+
+    // Validate and clamp interval value
+    const handleIntervalValueChange = (value: number) => {
+        // Calculate max value based on unit (12 months max = 365 days)
+        let maxValue: number;
+        switch (customIntervalUnit) {
+            case 'month': maxValue = 12; break;
+            case 'week': maxValue = 52; break; // ~12 months
+            default: maxValue = 365; break; // 12 months in days
+        }
+        const clampedValue = Math.max(1, Math.min(maxValue, value));
+        setCustomIntervalValue(clampedValue);
+    };
+
+    // Handle unit change and adjust value if needed
+    const handleIntervalUnitChange = (unit: IntervalUnit) => {
+        setCustomIntervalUnit(unit);
+        // Clamp value to new unit's max
+        let maxValue: number;
+        switch (unit) {
+            case 'month': maxValue = 12; break;
+            case 'week': maxValue = 52; break;
+            default: maxValue = 365; break;
+        }
+        if (customIntervalValue > maxValue) {
+            setCustomIntervalValue(maxValue);
+        }
+    };
+
     const navigate = (direction: number) => {
         if (viewMode === 'month') {
             setCurrentDate(direction > 0 ? addMonths(currentDate, 1) : subMonths(currentDate, 1));
@@ -76,7 +114,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         } else if (viewMode === 'day') {
             setCurrentDate(direction > 0 ? addDays(currentDate, 1) : subDays(currentDate, 1));
         } else if (viewMode === 'custom') {
-            setCurrentDate(direction > 0 ? addDays(currentDate, customInterval) : subDays(currentDate, customInterval));
+            setCurrentDate(direction > 0 ? addDays(currentDate, customIntervalDays) : subDays(currentDate, customIntervalDays));
         }
     };
 
@@ -271,7 +309,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
             return format(currentDate, 'EEEE, MMMM d, yyyy');
         } else {
             // Custom interval
-            const endDate = addDays(currentDate, customInterval - 1);
+            const endDate = addDays(currentDate, customIntervalDays - 1);
             return `${format(currentDate, 'MMM d')} - ${format(endDate, 'MMM d, yyyy')}`;
         }
     };
@@ -342,28 +380,38 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                     }`}
                                 >
                                     <Settings2 size={16} />
-                                    {viewMode === 'custom' ? `${customInterval}D` : 'Custom'}
+                                    {viewMode === 'custom' ? getCustomIntervalLabel() : 'Custom'}
                                 </button>
                                 
                                 {showIntervalDropdown && (
-                                    <div className="absolute top-full right-0 mt-2 w-32 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-white/10 overflow-hidden z-50 animate-scale-in">
-                                        {INTERVAL_OPTIONS.map(option => (
-                                            <button
-                                                key={option.value}
-                                                onClick={() => {
-                                                    setCustomInterval(option.value);
-                                                    setViewMode('custom');
-                                                    setShowIntervalDropdown(false);
-                                                }}
-                                                className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-white/5 transition-colors ${
-                                                    customInterval === option.value && viewMode === 'custom'
-                                                        ? 'text-brand-500 font-semibold bg-brand-500/5'
-                                                        : 'text-slate-700 dark:text-slate-300'
-                                                }`}
+                                    <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-white/10 p-3 z-50 animate-scale-in">
+                                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Custom Interval</p>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max={customIntervalUnit === 'month' ? 12 : customIntervalUnit === 'week' ? 52 : 365}
+                                                value={customIntervalValue}
+                                                onChange={(e) => handleIntervalValueChange(parseInt(e.target.value) || 1)}
+                                                className="w-16 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-md px-2 py-1.5 text-sm text-center text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+                                            />
+                                            <select
+                                                value={customIntervalUnit}
+                                                onChange={(e) => handleIntervalUnitChange(e.target.value as IntervalUnit)}
+                                                className="flex-1 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-md px-2 py-1.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
                                             >
-                                                {option.label}
-                                            </button>
-                                        ))}
+                                                <option value="day">Day{customIntervalValue !== 1 ? 's' : ''}</option>
+                                                <option value="week">Week{customIntervalValue !== 1 ? 's' : ''}</option>
+                                                <option value="month">Month{customIntervalValue !== 1 ? 's' : ''}</option>
+                                            </select>
+                                        </div>
+                                        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2">Min: 1 day • Max: 12 months</p>
+                                        <button
+                                            onClick={() => setShowIntervalDropdown(false)}
+                                            className="w-full mt-3 px-3 py-1.5 bg-brand-500 text-white text-sm font-medium rounded-md hover:bg-brand-600 transition-colors"
+                                        >
+                                            Apply
+                                        </button>
                                     </div>
                                 )}
                             </div>
@@ -440,7 +488,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                     <CustomIntervalView
                         tasks={tasks}
                         currentDate={currentDate}
-                        intervalDays={customInterval}
+                        intervalDays={customIntervalDays}
                         onEditTask={onEditTask}
                     />
                 )}
