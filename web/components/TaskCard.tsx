@@ -169,4 +169,4 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasks = [], onEdit, onTogg
   );
 };
 
-export default TaskCard;
+export default React.memo(TaskCard);

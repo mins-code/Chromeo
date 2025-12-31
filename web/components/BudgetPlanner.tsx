@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ThemeOption, BudgetShare, Partnership } from '../types';
 import * as BudgetService from '../services/budgetService';
 import * as PartnerService from '../services/partnerService';
@@ -86,17 +86,27 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
         }
     };
 
-    const totalIncome = budget.transactions.filter(t => t.type === 'income').reduce((acc, curr) => acc + curr.amount, 0);
-    const totalExpenses = budget.transactions.filter(t => t.type === 'expense').reduce((acc, curr) => acc + curr.amount, 0);
-    const remaining = budget.limit - totalExpenses;
+    // Memoized computed values to avoid recalculation on every render
+    const totalIncome = useMemo(() => 
+        budget.transactions.filter(t => t.type === 'income').reduce((acc, curr) => acc + curr.amount, 0),
+        [budget.transactions]
+    );
+    
+    const totalExpenses = useMemo(() => 
+        budget.transactions.filter(t => t.type === 'expense').reduce((acc, curr) => acc + curr.amount, 0),
+        [budget.transactions]
+    );
+    
+    const remaining = useMemo(() => budget.limit - totalExpenses, [budget.limit, totalExpenses]);
 
-    const formatCurrency = (val: number) => {
+    const formatCurrency = useCallback((val: number) => {
         return val.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
-    };
+    }, []);
 
     // Get partners not already shared with
-    const availablePartners = partnerships.filter(
-        p => !budgetShares.some(s => s.partnerId === p.partnerId)
+    const availablePartners = useMemo(() => 
+        partnerships.filter(p => !budgetShares.some(s => s.partnerId === p.partnerId)),
+        [partnerships, budgetShares]
     );
 
     return (
@@ -288,5 +298,5 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
     );
 };
 
-export default BudgetPlanner;
+export default React.memo(BudgetPlanner);
 

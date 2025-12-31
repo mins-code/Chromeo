@@ -33,3 +33,25 @@ export const STATUS_COLORS = {
   IN_PROGRESS: 'bg-brand-500/10 text-brand-400 border-brand-500/20',
   DONE: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
 };
+
+// Query configuration for TanStack Query hooks
+export const QUERY_CONFIG = {
+  staleTime: 1000 * 60 * 2, // Data is fresh for 2 minutes
+  gcTime: 1000 * 60 * 10, // Keep in cache for 10 minutes (formerly cacheTime)
+  refetchOnWindowFocus: true,
+  retry: 2,
+} as const;
+
+// API configuration
+export const API_CONFIG = {
+  defaultTimeout: 10000, // 10 seconds
+  maxRetries: 3,
+} as const;
+
+// Storage keys
+export const STORAGE_KEYS = {
+  ROUTINES: 'chronodex_routines',
+  NOTIFICATION_SETTINGS: 'chronodex_notification_settings',
+  PARTNER: 'chronodex_partner',
+} as const;
+

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Task, TaskStatus } from '../types';
 import * as TaskService from '../services/taskService';
+import { QUERY_CONFIG } from '../constants';
 
 export function useTasks() {
   const queryClient = useQueryClient();
@@ -8,6 +9,7 @@ export function useTasks() {
   const query = useQuery({
     queryKey: ['tasks'],
     queryFn: TaskService.getTasks,
+    ...QUERY_CONFIG,
   });
 
   const createMutation = useMutation({

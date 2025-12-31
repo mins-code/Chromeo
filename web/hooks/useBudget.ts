@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Budget } from '../types';
 import * as BudgetService from '../services/budgetService';
+import { QUERY_CONFIG } from '../constants';
 
 const DEFAULT_BUDGET: Budget = {
   limit: 0,
@@ -16,6 +17,7 @@ export function useBudget() {
   const query = useQuery({
     queryKey: ['budget'],
     queryFn: BudgetService.getBudget,
+    ...QUERY_CONFIG,
   });
 
   const updateSettingsMutation = useMutation({
