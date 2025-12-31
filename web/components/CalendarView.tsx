@@ -42,17 +42,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         }
     };
 
-    // Helper to check if a recurring task happens on a specific date
-    const doesTaskOccurOnDate = useCallback((task: Task, date: Date): boolean => {
-        let taskDateStr = task.dueDate || task.reminderTime;
-        if (!taskDateStr) return false;
-
-        if (taskDateStr.length === 10 && !taskDateStr.includes('T')) {
-            taskDateStr += 'T00:00:00';
-        }
-
-        const taskDate = new Date(taskDateStr);
-
+    // Optimized helper to check if a recurring task happens on a specific date without re-parsing dates
+    const checkRecurrence = useCallback((task: Task, taskDate: Date, date: Date): boolean => {
         const isSameDay = taskDate.getDate() === date.getDate() &&
             taskDate.getMonth() === date.getMonth() &&
             taskDate.getFullYear() === date.getFullYear();
@@ -91,6 +82,19 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         return false;
     }, []);
 
+    // Wrapper for single date checks (legacy support)
+    const doesTaskOccurOnDate = useCallback((task: Task, date: Date): boolean => {
+        let taskDateStr = task.dueDate || task.reminderTime;
+        if (!taskDateStr) return false;
+
+        if (taskDateStr.length === 10 && !taskDateStr.includes('T')) {
+            taskDateStr += 'T00:00:00';
+        }
+
+        const taskDate = new Date(taskDateStr);
+        return checkRecurrence(task, taskDate, date);
+    }, [checkRecurrence]);
+
     // Helper to check if a recurring transaction is due on a specific date
     const getFinancialItemsForDate = useCallback((date: Date): RecurringTransaction[] => {
         return recurringTransactions.filter(transaction => {
@@ -99,12 +103,49 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         });
     }, [recurringTransactions]);
 
+    // Optimized calendar generation: O(Tasks + Days) instead of O(Tasks * Days)
     const calendarDays = useMemo(() => {
         const year = currentMonth.getFullYear();
         const month = currentMonth.getMonth();
         const daysInMonth = getDaysInMonth(year, month);
         const firstDay = getFirstDayOfMonth(year, month);
 
+        // 1. Initialize Map for tasks
+        const tasksByDay = new Map<number, Task[]>();
+        for (let i = 1; i <= daysInMonth; i++) tasksByDay.set(i, []);
+
+        // 2. Iterate Tasks Once
+        tasks.forEach(task => {
+            let taskDateStr = task.dueDate || task.reminderTime;
+            if (!taskDateStr) return;
+
+            if (taskDateStr.length === 10 && !taskDateStr.includes('T')) {
+                taskDateStr += 'T00:00:00';
+            }
+
+            const taskDate = new Date(taskDateStr);
+
+            // Optimization for non-recurring (O(1) insertion)
+            if (!task.recurrence || task.recurrence.frequency === 'none') {
+                if (taskDate.getMonth() === month && taskDate.getFullYear() === year) {
+                    const day = taskDate.getDate();
+                    if (tasksByDay.has(day)) {
+                        tasksByDay.get(day)!.push(task);
+                    }
+                }
+            } else {
+                // Recurring: Check against days in month
+                // This is still iterated, but only for recurring tasks (minority)
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const currentDayDate = new Date(year, month, day);
+                    if (checkRecurrence(task, taskDate, currentDayDate)) {
+                        tasksByDay.get(day)!.push(task);
+                    }
+                }
+            }
+        });
+
+        // 3. Build Result Array
         const days: Array<{ day: number | null; date?: Date; tasks?: Task[]; financialItems?: RecurringTransaction[] }> = [];
 
         for (let i = 0; i < firstDay; i++) {
@@ -113,13 +154,13 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
 
         for (let i = 1; i <= daysInMonth; i++) {
             const date = new Date(year, month, i);
-            const dayTasks = tasks.filter(task => doesTaskOccurOnDate(task, date));
+            const dayTasks = tasksByDay.get(i) || [];
             const financialItems = getFinancialItemsForDate(date);
             days.push({ day: i, date: date, tasks: dayTasks, financialItems });
         }
 
         return days;
-    }, [currentMonth, tasks, doesTaskOccurOnDate, getFinancialItemsForDate]);
+    }, [currentMonth, tasks, checkRecurrence, getFinancialItemsForDate]);
 
     const handleDayClick = (date: Date) => {
         setSelectedDate(date);
