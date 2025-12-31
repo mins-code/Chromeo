@@ -43,6 +43,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasks = [], onEdit, onTogg
             if (!isBlocked) onToggleStatus(task);
           }}
           disabled={isBlocked && !isDone}
+          aria-label={isBlocked ? "Task blocked" : isDone ? "Mark as incomplete" : "Mark as complete"}
           className={`mt-0.5 flex-shrink-0 transition-all duration-200 hover:scale-110 active:scale-95 ${isBlocked && !isDone
               ? 'text-red-400/50 cursor-not-allowed'
               : isDone
@@ -141,7 +142,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasks = [], onEdit, onTogg
 
         {/* Hover Actions - Visible on group hover */}
         <div className="absolute top-4 right-4 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0">
-          <Button variant="secondary" size="icon" className="h-8 w-8 bg-white/80 dark:bg-slate-800/80 backdrop-blur" onClick={(e) => { e.stopPropagation(); onEdit(task); }}>
+          <Button
+            variant="secondary"
+            size="icon"
+            className="h-8 w-8 bg-white/80 dark:bg-slate-800/80 backdrop-blur"
+            onClick={(e) => { e.stopPropagation(); onEdit(task); }}
+            aria-label="Edit task"
+          >
             <MoreVertical size={14} />
           </Button>
           {onAIAnalysis && !isDone && (
@@ -151,6 +158,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasks = [], onEdit, onTogg
               className="h-8 w-8 text-purple-500 dark:text-purple-400 border-purple-200 dark:border-purple-500/20 hover:bg-purple-50 dark:hover:bg-purple-500/10"
               onClick={(e) => { e.stopPropagation(); onAIAnalysis(task); }}
               title="AI Breakdown"
+              aria-label="AI Breakdown"
             >
               <Sparkles size={14} />
             </Button>
