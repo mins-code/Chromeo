@@ -3,6 +3,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { Task } from '../types';
 import DraggableTask from './DraggableTask';
 import { format, isToday, parseISO, getHours, getMinutes } from 'date-fns';
+import { Maximize2, Minimize2 } from 'lucide-react';
 
 interface DayViewProps {
   tasks: Task[];
@@ -10,16 +11,19 @@ interface DayViewProps {
   onEditTask: (task: Task) => void;
 }
 
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
-const HOUR_HEIGHT = 60; // pixels per hour
+// Time intervals: 4-hour (compact) or 1-hour (expanded)
+const HOURS_COMPACT = [0, 4, 8, 12, 16, 20]; // 4-hour intervals
+const HOURS_EXPANDED = Array.from({ length: 24 }, (_, i) => i); // 1-hour intervals
 
 interface DroppableHourCellProps {
   dayDate: Date;
   hour: number;
+  height: number;
+  intervalHours: number;
   children?: React.ReactNode;
 }
 
-const DroppableHourCell: React.FC<DroppableHourCellProps> = ({ dayDate, hour, children }) => {
+const DroppableHourCell: React.FC<DroppableHourCellProps> = ({ dayDate, hour, height, intervalHours, children }) => {
   const id = `${format(dayDate, 'yyyy-MM-dd')}-${hour.toString().padStart(2, '0')}`;
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -32,8 +36,20 @@ const DroppableHourCell: React.FC<DroppableHourCellProps> = ({ dayDate, hour, ch
       className={`relative border-b border-slate-200 dark:border-white/5 transition-colors ${
         isOver ? 'bg-brand-500/10' : ''
       }`}
-      style={{ height: HOUR_HEIGHT }}
+      style={{ height }}
     >
+      {/* Show hour subdivisions in compact mode */}
+      {intervalHours > 1 && (
+        <>
+          {Array.from({ length: intervalHours - 1 }, (_, i) => (
+            <div
+              key={i}
+              className="absolute left-0 right-0 border-b border-dashed border-slate-200/50 dark:border-white/5"
+              style={{ top: `${((i + 1) / intervalHours) * 100}%` }}
+            />
+          ))}
+        </>
+      )}
       {children}
     </div>
   );
@@ -41,6 +57,11 @@ const DroppableHourCell: React.FC<DroppableHourCellProps> = ({ dayDate, hour, ch
 
 const DayView: React.FC<DayViewProps> = ({ tasks, currentDate, onEditTask }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isExpanded, setIsExpanded] = useState(false); // Default to compact (4hr)
+
+  const HOUR_HEIGHT = isExpanded ? 60 : 40; // Smaller cells in compact
+  const INTERVAL_HOURS = isExpanded ? 1 : 4;
+  const HOURS = isExpanded ? HOURS_EXPANDED : HOURS_COMPACT;
 
   // Update current time every minute
   useEffect(() => {
@@ -90,7 +111,9 @@ const DayView: React.FC<DayViewProps> = ({ tasks, currentDate, onEditTask }) => 
     const time = getTaskTime(task);
     if (!time) return { display: 'none' };
 
-    const top = time.hour * HOUR_HEIGHT + (time.minutes / 60) * HOUR_HEIGHT;
+    // Calculate position based on interval
+    const cellHeight = HOUR_HEIGHT * INTERVAL_HOURS;
+    const top = (time.hour / INTERVAL_HOURS) * cellHeight + (time.minutes / 60) * (HOUR_HEIGHT);
     const duration = task.duration || 60; // Default 60 minutes
     const height = Math.max((duration / 60) * HOUR_HEIGHT, 24); // Minimum 24px
 
@@ -104,8 +127,9 @@ const DayView: React.FC<DayViewProps> = ({ tasks, currentDate, onEditTask }) => 
   const currentTimePosition = useMemo(() => {
     const hours = currentTime.getHours();
     const minutes = currentTime.getMinutes();
-    return hours * HOUR_HEIGHT + (minutes / 60) * HOUR_HEIGHT;
-  }, [currentTime]);
+    const cellHeight = HOUR_HEIGHT * INTERVAL_HOURS;
+    return (hours / INTERVAL_HOURS) * cellHeight + (minutes / 60) * HOUR_HEIGHT;
+  }, [currentTime, HOUR_HEIGHT, INTERVAL_HOURS]);
 
   const isTodayView = isToday(currentDate);
 
@@ -113,7 +137,16 @@ const DayView: React.FC<DayViewProps> = ({ tasks, currentDate, onEditTask }) => 
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header with day name */}
       <div className="flex border-b border-slate-200 dark:border-white/5">
-        <div className="w-16 flex-shrink-0" /> {/* Time column spacer */}
+        <div className="w-16 flex-shrink-0 flex items-center justify-center">
+          {/* Expand/Collapse toggle */}
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+            title={isExpanded ? "Compact view (4hr)" : "Expanded view (1hr)"}
+          >
+            {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+          </button>
+        </div>
         <div
           className={`flex-1 text-center py-4 ${
             isTodayView ? 'bg-brand-500/5' : ''
@@ -139,8 +172,8 @@ const DayView: React.FC<DayViewProps> = ({ tasks, currentDate, onEditTask }) => 
             {HOURS.map(hour => (
               <div
                 key={hour}
-                className="text-right pr-2 text-xs text-slate-400 font-medium"
-                style={{ height: HOUR_HEIGHT }}
+                className="text-right pr-2 text-xs text-slate-400 font-medium flex items-start pt-1"
+                style={{ height: HOUR_HEIGHT * INTERVAL_HOURS }}
               >
                 {hour.toString().padStart(2, '0')}:00
               </div>
@@ -151,7 +184,13 @@ const DayView: React.FC<DayViewProps> = ({ tasks, currentDate, onEditTask }) => 
           <div className={`flex-1 relative ${isTodayView ? 'bg-brand-500/5' : ''}`}>
             {/* Hour cells (droppable) */}
             {HOURS.map(hour => (
-              <DroppableHourCell key={hour} dayDate={currentDate} hour={hour} />
+              <DroppableHourCell 
+                key={hour} 
+                dayDate={currentDate} 
+                hour={hour}
+                height={HOUR_HEIGHT * INTERVAL_HOURS}
+                intervalHours={INTERVAL_HOURS}
+              />
             ))}
 
             {/* Task blocks */}
@@ -186,3 +225,4 @@ const DayView: React.FC<DayViewProps> = ({ tasks, currentDate, onEditTask }) => 
 };
 
 export default DayView;
+

@@ -139,7 +139,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
           text: 'text-slate-200',
           textMuted: 'text-slate-400',
           accent: 'bg-brand-500',
-          accentText: 'text-white',
+          accentText: 'text-slate-900',
           hover: 'hover:bg-white/5',
           border: 'border-white/10',
           headerBg: 'bg-white/5'
@@ -194,21 +194,73 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
       {/* Month/Year Picker Dropdown */}
       {showPicker && (
         <div className={`mb-3 p-3 rounded-xl ${colors.headerBg} border ${colors.border} animate-fade-in`}>
-          {/* Year Selector */}
-          <div className="flex items-center justify-between mb-3">
-            <button
-              onClick={() => setPickerYear(pickerYear - 1)}
-              className={`p-1 rounded ${colors.textMuted} ${colors.hover}`}
-            >
-              <ChevronLeft size={14} />
-            </button>
-            <span className={`text-sm font-bold ${colors.text}`}>{pickerYear}</span>
-            <button
-              onClick={() => setPickerYear(pickerYear + 1)}
-              className={`p-1 rounded ${colors.textMuted} ${colors.hover}`}
-            >
-              <ChevronRight size={14} />
-            </button>
+          {/* Year Selector with Decade Navigation + Manual Input */}
+          <div className="mb-3">
+            {/* Year Range Navigation */}
+            <div className="flex items-center justify-between mb-2">
+              <button
+                onClick={() => setPickerYear(pickerYear - 12)}
+                className={`p-1 rounded ${colors.textMuted} ${colors.hover}`}
+                title="Previous 12 years"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              
+              {/* Manual Year Input */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={pickerYear}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (!isNaN(val) && val >= 1900 && val <= 2100) {
+                      setPickerYear(val);
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (isNaN(val) || val < 1900) setPickerYear(1900);
+                    if (val > 2100) setPickerYear(2100);
+                  }}
+                  className={`w-16 text-center text-sm font-bold ${colors.text} bg-transparent border-b-2 ${colors.border} focus:outline-none focus:border-brand-500 transition-colors`}
+                  min={1900}
+                  max={2100}
+                />
+              </div>
+              
+              <button
+                onClick={() => setPickerYear(pickerYear + 12)}
+                className={`p-1 rounded ${colors.textMuted} ${colors.hover}`}
+                title="Next 12 years"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+            
+            {/* Year Grid - 12 years at a time */}
+            <div className="grid grid-cols-4 gap-1 mb-3">
+              {Array.from({ length: 12 }, (_, i) => {
+                const yearOffset = Math.floor(pickerYear / 12) * 12;
+                const displayYear = yearOffset + i;
+                const isCurrentYear = displayYear === year;
+                const isSelectedYear = displayYear === pickerYear;
+                return (
+                  <button
+                    key={displayYear}
+                    onClick={() => setPickerYear(displayYear)}
+                    className={`px-2 py-1.5 text-xs rounded-lg font-medium transition-colors ${
+                      isSelectedYear
+                        ? `${colors.accent} ${colors.accentText}`
+                        : isCurrentYear
+                          ? `ring-1 ring-brand-500 ${colors.text}`
+                          : `${colors.text} ${colors.hover}`
+                    }`}
+                  >
+                    {displayYear}
+                  </button>
+                );
+              })}
+            </div>
           </div>
           
           {/* Month Grid */}

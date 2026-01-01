@@ -1071,7 +1071,13 @@ const App: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Danger Zone - Account Deletion */}
+                        {/* Collaboration Section */}
+                        <CollaborationSettings 
+                            currentUserId={session?.user?.id}
+                            currentUserEmail={session?.user?.email}
+                        />
+
+                        {/* Danger Zone - Account Deletion (at bottom) */}
                         <div className="glass rounded-2xl p-6 lg:col-span-2 border-2 border-red-500/20">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center">
@@ -1117,12 +1123,6 @@ const App: React.FC = () => {
                                 </Button>
                             </div>
                         </div>
-
-                        {/* Collaboration Section */}
-                        <CollaborationSettings 
-                            currentUserId={session?.user?.id}
-                            currentUserEmail={session?.user?.email}
-                        />
 
                     </div>
                 </div>

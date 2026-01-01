@@ -368,9 +368,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                             <div className="relative" ref={intervalDropdownRef}>
                                 <button
                                     onClick={() => {
-                                        if (viewMode !== 'custom') {
-                                            setViewMode('custom');
-                                        }
                                         setShowIntervalDropdown(!showIntervalDropdown);
                                     }}
                                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
@@ -407,8 +404,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                         </div>
                                         <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2">Min: 1 day • Max: 12 months</p>
                                         <button
-                                            onClick={() => setShowIntervalDropdown(false)}
-                                            className="w-full mt-3 px-3 py-1.5 bg-brand-500 text-white text-sm font-medium rounded-md hover:bg-brand-600 transition-colors"
+                                            onClick={() => {
+                                                setViewMode('custom');
+                                                setShowIntervalDropdown(false);
+                                            }}
+                                            className="w-full mt-3 px-3 py-1.5 bg-brand-500 text-white dark:text-slate-900 text-sm font-medium rounded-md hover:bg-brand-600 transition-colors"
                                         >
                                             Apply
                                         </button>
