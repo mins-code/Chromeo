@@ -121,7 +121,6 @@ serve(async (req) => {
     }
 
     const apiKey = Deno.env.get('GEMINI_API_KEY')
-    console.log("DEBUG: API Key exists:", !!apiKey, "Length:", apiKey?.length || 0, "Prefix:", apiKey?.substring(0, 8) || "NONE");
     if (!apiKey) throw new Error('GEMINI_API_KEY is not set')
 
     const {
@@ -134,18 +133,31 @@ serve(async (req) => {
       image
     } = await req.json()
 
-    console.log("DEBUG: Mode:", mode, "Message length:", message?.length || 0);
+    // Input validation
+    const MAX_MESSAGE_LENGTH = 10000;
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in base64 is ~6.7MB
+
+    if (message && typeof message !== 'string') {
+      throw new Error('Invalid message format');
+    }
+
+    if (message && message.length > MAX_MESSAGE_LENGTH) {
+      throw new Error(`Message exceeds maximum length of ${MAX_MESSAGE_LENGTH} characters`);
+    }
+
+    if (image) {
+      // Validate base64 image size (rough estimate: base64 is ~1.37x original size)
+      const estimatedSize = (image.length * 3) / 4;
+      if (estimatedSize > MAX_FILE_SIZE) {
+        throw new Error('Image file size exceeds 5MB limit');
+      }
+    }
+
+    if (mode && !['chat', 'enhance', 'parse', 'parse-image'].includes(mode)) {
+      throw new Error('Invalid mode parameter');
+    }
 
     const genAI = new GoogleGenerativeAI(apiKey)
-    
-    // DEBUG: List available models
-    try {
-      const modelList = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-      const models = await modelList.json();
-      console.log("DEBUG: Available models:", JSON.stringify(models).substring(0, 500));
-    } catch (listErr) {
-      console.log("DEBUG: Failed to list models:", listErr);
-    }
     let systemInstruction = "";
     let isJsonMode = false;
 

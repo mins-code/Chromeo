@@ -83,6 +83,32 @@ export default defineConfig(({ mode }) => {
       alias: {
         '@': path.resolve(__dirname, '.'),
       }
-    }
+    },
+    build: {
+      // Optimize bundle size
+      target: 'es2015',
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: mode === 'production', // Remove console.log in production
+          drop_debugger: true,
+        },
+      },
+      // Source maps for production debugging
+      sourcemap: mode === 'production' ? 'hidden' : true,
+      // Chunk splitting for better caching
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            'supabase': ['@supabase/supabase-js'],
+            'query': ['@tanstack/react-query'],
+            'ui': ['lucide-react', 'recharts'],
+          },
+        },
+      },
+      // Warn on large chunks
+      chunkSizeWarningLimit: 1000,
+    },
   };
 });

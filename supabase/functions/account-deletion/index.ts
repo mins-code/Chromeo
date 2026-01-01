@@ -116,8 +116,7 @@ serve(async (req) => {
         JSON.stringify({ 
           success: true, 
           message: "Deletion request created. Please check your email to confirm.",
-          // In production, remove this - only for testing
-          debug: { confirmationUrl, expiresAt: expiresAt.toISOString() }
+          expiresAt: expiresAt.toISOString()
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

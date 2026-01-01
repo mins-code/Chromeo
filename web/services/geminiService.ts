@@ -1,6 +1,8 @@
 
 import { supabase } from "./supabaseClient";
 import { Task, TaskPriority } from "../types";
+import { validateFile, validateAIMessage, sanitizeJSON } from "../utils/validation";
+import { logger } from "../utils/logger";
 
 interface AIEnrichedTask {
     description: string;
@@ -26,7 +28,7 @@ export const enhanceTaskWithAI = async (taskTitle: string, existingTags: string[
     });
 
     if (error) {
-        console.error("AI Function Error:", error);
+        logger.error("AI Function Error", error as Error, { taskTitle });
         return null;
     }
     
@@ -56,7 +58,7 @@ export const enhanceTaskWithAI = async (taskTitle: string, existingTags: string[
     };
 
   } catch (error) {
-    console.error("Failed to enhance task:", error);
+    logger.error("Failed to enhance task", error as Error, { taskTitle });
     return null;
   }
 };
@@ -80,7 +82,7 @@ export const chatWithAI = async (message: string, history: {role: 'user' | 'mode
         if (error) throw error;
         return data.text || "I'm not sure how to respond to that.";
     } catch (error) {
-        console.error("Chat error:", error);
+        logger.error("Chat error", error as Error, { messageLength: message?.length });
         return "I'm having trouble connecting to the network right now.";
     }
 }
@@ -113,7 +115,7 @@ export const parseNaturalLanguageTask = async (input: string): Promise<ParsedTas
         });
 
         if (error) {
-            console.error("AI Parse Error:", error);
+            logger.error("AI Parse Error", error as Error, { input });
             return null;
         }
 
@@ -140,7 +142,7 @@ export const parseNaturalLanguageTask = async (input: string): Promise<ParsedTas
             location: parsed.location || undefined
         };
     } catch (error) {
-        console.error("Failed to parse natural language task:", error);
+        logger.error("Failed to parse natural language task", error as Error, { input });
         // Return a basic fallback with just the title
         return {
             title: input,
@@ -161,6 +163,13 @@ export interface ScannedTransaction {
 // Parse UPI Transaction Screenshot
 export const parseTransactionScreenshot = async (file: File): Promise<ScannedTransaction[]> => {
     try {
+        // Validate file before processing
+        const validation = validateFile(file);
+        if (!validation.valid) {
+            logger.warn("File validation failed", { error: validation.error });
+            throw new Error(validation.error);
+        }
+
         // Convert file to Base64
         const base64 = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
@@ -183,7 +192,7 @@ export const parseTransactionScreenshot = async (file: File): Promise<ScannedTra
         });
 
         if (error) {
-            console.error("AI Function Error:", error);
+            logger.error("AI Function Error", error as Error, { fileName: file.name });
             return [];
         }
 
@@ -201,7 +210,7 @@ export const parseTransactionScreenshot = async (file: File): Promise<ScannedTra
         
         // Ensure we return an array
         if (!Array.isArray(parsed)) {
-            console.error("Unexpected response format:", parsed);
+            logger.error("Unexpected response format from AI", undefined, { parsed });
             return [];
         }
 
@@ -213,7 +222,7 @@ export const parseTransactionScreenshot = async (file: File): Promise<ScannedTra
         }));
 
     } catch (error) {
-        console.error("Failed to parse transaction screenshot:", error);
+        logger.error("Failed to parse transaction screenshot", error as Error, { fileName: file.name });
         return [];
     }
 };
