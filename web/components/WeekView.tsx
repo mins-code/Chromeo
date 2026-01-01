@@ -7,7 +7,6 @@ import {
   endOfWeek,
   eachDayOfInterval,
   format,
-  isSameDay,
   isToday,
   parseISO,
   getHours,
@@ -111,15 +110,31 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
   };
 
   // Group tasks by day
+  // Optimized: O(N) single pass instead of O(7N) nested loop
   const tasksByDay = useMemo(() => {
     const grouped: Record<string, Task[]> = {};
+    const weekMap = new Map<string, Task[]>();
+
+    // Initialize buckets for the week days
     weekDays.forEach(day => {
       const key = format(day, 'yyyy-MM-dd');
-      grouped[key] = tasks.filter(task => {
-        const taskDate = getTaskDate(task);
-        return taskDate && isSameDay(taskDate, day);
-      });
+      grouped[key] = [];
+      weekMap.set(key, grouped[key]);
     });
+
+    // Single pass through tasks
+    tasks.forEach(task => {
+      const taskDate = getTaskDate(task);
+      if (taskDate) {
+        // We use the same format logic as the keys to ensure matching local dates
+        const key = format(taskDate, 'yyyy-MM-dd');
+        const bucket = weekMap.get(key);
+        if (bucket) {
+          bucket.push(task);
+        }
+      }
+    });
+
     return grouped;
   }, [tasks, weekDays]);
 
