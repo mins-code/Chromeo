@@ -297,6 +297,8 @@ export const scheduleNotification = async (
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
+    // Silently fail if push notification function is not available
+    // This prevents CORS errors when the function isn't deployed or configured
     const { error } = await supabase.functions.invoke('push-notification', {
       body: {
         action: 'schedule',
@@ -308,13 +310,19 @@ export const scheduleNotification = async (
           scheduledTime: scheduledTime.toISOString(),
         },
       },
-    });
+    }).catch(() => ({ error: { message: 'Push notification service unavailable' } }));
 
-    if (error) throw error;
+    if (error) {
+      // Silently log the error instead of throwing
+      console.debug('Push notification scheduling skipped:', error.message);
+      return false;
+    }
+    
     console.log(`Scheduled notification for ${scheduledTime.toISOString()}`);
     return true;
   } catch (error) {
-    console.error('Error scheduling notification:', error);
+    // Silently handle errors to prevent console spam
+    console.debug('Error scheduling notification:', error);
     return false;
   }
 };
@@ -329,12 +337,15 @@ export const cancelNotification = async (taskId: string): Promise<boolean> => {
         action: 'cancel',
         taskId,
       },
-    });
+    }).catch(() => ({ error: { message: 'Push notification service unavailable' } }));
 
-    if (error) throw error;
+    if (error) {
+      console.debug('Push notification cancellation skipped:', error.message);
+      return false;
+    }
     return true;
   } catch (error) {
-    console.error('Error cancelling notification:', error);
+    console.debug('Error cancelling notification:', error);
     return false;
   }
 };

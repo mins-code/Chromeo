@@ -1105,15 +1105,24 @@ const App: React.FC = () => {
                                             const { data, error } = await supabase.functions.invoke('account-deletion', {
                                                 body: { action: 'request' }
                                             });
-                                            if (error) throw error;
-                                            if (data.success) {
+                                            
+                                            console.log('Account deletion response:', { data, error });
+                                            
+                                            if (error) {
+                                                console.error('Supabase function error:', error);
+                                                alert(`Failed to request account deletion: ${error.message || JSON.stringify(error)}`);
+                                                return;
+                                            }
+                                            
+                                            if (data?.success) {
                                                 alert('A confirmation email has been sent to your email address. Please check your inbox to complete the deletion process. The link expires in 24 hours.');
                                             } else {
-                                                alert(data.message || 'Failed to request deletion');
+                                                const errorMsg = data?.error || data?.message || 'Unknown error occurred';
+                                                alert(`Failed to request deletion: ${errorMsg}`);
                                             }
                                         } catch (err: any) {
                                             console.error('Deletion request error:', err);
-                                            alert('Failed to request account deletion. Please try again.');
+                                            alert(`Failed to request account deletion: ${err.message || 'Please try again.'}`);
                                         }
                                     }}
                                     className="flex items-center gap-2"
