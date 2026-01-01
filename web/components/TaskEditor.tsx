@@ -279,6 +279,26 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                 )}
             </div>
 
+            {/* Tags - Moved to top */}
+            <div>
+               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 ml-1">Tags</label>
+               <div className="flex flex-wrap gap-2 mb-3">
+                   {tags.map(tag => (
+                       <span key={tag} className="bg-brand-500/10 text-brand-600 dark:text-brand-300 text-xs font-medium px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-brand-500/20">
+                           {tag}
+                           <button onClick={() => removeTag(tag)} className="hover:text-slate-800 dark:hover:text-white"><X size={12} /></button>
+                       </span>
+                   ))}
+               </div>
+               <Input 
+                   placeholder="Type tag and press Enter" 
+                   value={newTag} 
+                   onChange={e => setNewTag(e.target.value)}
+                   onKeyDown={handleAddTag}
+                   className="text-sm py-2"
+               />
+            </div>
+
             <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 ml-1">Description</label>
                 <textarea 
@@ -625,29 +645,9 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                     )}
                 </div>
              </div>
+         </div>
 
-             {/* Tags */}
-             <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 ml-1">Tags</label>
-                <div className="flex flex-wrap gap-2 mb-3">
-                    {tags.map(tag => (
-                        <span key={tag} className="bg-brand-500/10 text-brand-600 dark:text-brand-300 text-xs font-medium px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-brand-500/20">
-                            {tag}
-                            <button onClick={() => removeTag(tag)} className="hover:text-slate-800 dark:hover:text-white"><X size={12} /></button>
-                        </span>
-                    ))}
-                </div>
-                <Input 
-                    placeholder="Type tag and press Enter" 
-                    value={newTag} 
-                    onChange={e => setNewTag(e.target.value)}
-                    onKeyDown={handleAddTag}
-                    className="text-sm py-2"
-                />
-             </div>
-        </div>
-
-        {/* Footer */}
+         {/* Footer */}
         <div className="p-6 border-t border-slate-200 dark:border-white/5 bg-white/80 dark:bg-slate-900/80 flex justify-between items-center z-10">
             {task ? (
                 <Button variant="danger" size="icon" onClick={() => onDelete && onDelete(task.id)} className="bg-red-500/10 hover:bg-red-500/20 text-red-500 dark:text-red-400">

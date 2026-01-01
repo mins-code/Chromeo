@@ -886,7 +886,7 @@ const App: React.FC = () => {
                                 <Bell className="text-brand-500" />
                                 <h3>Notifications</h3>
                             </div>
-                            <div className="bg-white/40 dark:bg-dark-surface/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+                            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 space-y-6">
                                 {/* Main Toggle */}
                                 <div className="flex items-center justify-between">
                                     <div>
@@ -928,12 +928,12 @@ const App: React.FC = () => {
                                 {/* Notification Preferences */}
                                 {notificationSettings.enabled && (
                                     <div className="space-y-4 pt-2 border-t border-slate-200 dark:border-white/10">
-                                        <h5 className="text-sm font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Notification Types</h5>
+                                        <h5 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">Notification Types</h5>
                                         
                                         <label className="flex items-center justify-between cursor-pointer group">
                                             <div className="flex items-center gap-3">
                                                 <CheckSquare size={18} className="text-blue-500" />
-                                                <span className="text-slate-700 dark:text-slate-300">Task Reminders</span>
+                                                <span className="text-slate-800 dark:text-slate-100 font-medium">Task Reminders</span>
                                             </div>
                                             <input
                                                 type="checkbox"
@@ -946,7 +946,7 @@ const App: React.FC = () => {
                                         <label className="flex items-center justify-between cursor-pointer group">
                                             <div className="flex items-center gap-3">
                                                 <CalendarDays size={18} className="text-purple-500" />
-                                                <span className="text-slate-700 dark:text-slate-300">Event & Appointment Reminders</span>
+                                                <span className="text-slate-800 dark:text-slate-100 font-medium">Event & Appointment Reminders</span>
                                             </div>
                                             <input
                                                 type="checkbox"
@@ -959,7 +959,7 @@ const App: React.FC = () => {
                                         <label className="flex items-center justify-between cursor-pointer group">
                                             <div className="flex items-center gap-3">
                                                 <AlertCircle size={18} className="text-amber-500" />
-                                                <span className="text-slate-700 dark:text-slate-300">Budget Alerts</span>
+                                                <span className="text-slate-800 dark:text-slate-100 font-medium">Budget Alerts</span>
                                             </div>
                                             <input
                                                 type="checkbox"
@@ -971,7 +971,7 @@ const App: React.FC = () => {
 
                                         {/* Lead Time Selector */}
                                         <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                                            <label className="block text-sm font-semibold text-slate-800 dark:text-slate-100">
                                                 Remind me before event starts
                                             </label>
                                             <div className="flex flex-wrap gap-2">

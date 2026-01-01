@@ -222,13 +222,8 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
 
             {/* Quick Transaction */}
             <div className="glass-panel p-6 rounded-3xl grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                <div className="md:col-span-2">
-                    <Input label="Description" value={transDesc} onChange={e => setTransDesc(e.target.value)} placeholder="E.g. Coffee" />
-                </div>
-                <div>
-                    <Input label="Amount" type="number" value={transAmount} onChange={e => setTransAmount(e.target.value)} placeholder="0.00" />
-                </div>
-                <div className="flex gap-2">
+                {/* Action Buttons - Now First */}
+                <div className="flex gap-2 md:col-span-1">
                     <input
                         type="file"
                         accept="image/*"
@@ -237,23 +232,36 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                         className="hidden"
                         id="upi-screenshot-input"
                     />
-                    <Button variant="primary" className="flex-1" onClick={handleAddTransaction}>Log</Button>
                     <Button
                         variant="secondary"
-                        className="w-12 px-0"
+                        className={`flex-1 h-11 ${transType === 'income' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}
+                        onClick={() => setTransType(prev => prev === 'expense' ? 'income' : 'expense')}
+                        title={transType === 'expense' ? 'Switch to Income' : 'Switch to Expense'}
+                    >
+                        <span className="text-xl font-bold">{transType === 'expense' ? '-' : '+'}</span>
+                        <span className="ml-2 text-xs uppercase font-semibold">{transType === 'expense' ? 'Exp' : 'Inc'}</span>
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        className="flex-1 h-11"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isScanning}
                         title="Scan UPI Screenshot"
                     >
-                        {isScanning ? <Loader2 className="animate-spin" size={18} /> : <Camera size={18} />}
+                        {isScanning ? <Loader2 className="animate-spin" size={20} /> : <Camera size={20} />}
                     </Button>
-                    <Button
-                        variant="secondary"
-                        className={`w-12 px-0 ${transType === 'income' ? 'text-emerald-500' : 'text-slate-400'}`}
-                        onClick={() => setTransType(prev => prev === 'expense' ? 'income' : 'expense')}
-                    >
-                        {transType === 'expense' ? '-' : '+'}
+                    <Button variant="primary" className="flex-1 h-11 font-semibold" onClick={handleAddTransaction}>
+                        <Plus size={18} className="mr-1" />
+                        Log
                     </Button>
+                </div>
+                
+                {/* Input Fields */}
+                <div className="md:col-span-2">
+                    <Input label="Description" value={transDesc} onChange={e => setTransDesc(e.target.value)} placeholder="E.g. Coffee" />
+                </div>
+                <div>
+                    <Input label="Amount" type="number" value={transAmount} onChange={e => setTransAmount(e.target.value)} placeholder="0.00" />
                 </div>
             </div>
 

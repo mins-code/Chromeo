@@ -142,37 +142,42 @@ const CustomIntervalView: React.FC<CustomIntervalViewProps> = ({
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Header with day names */}
-      <div className="flex border-b border-slate-200 dark:border-white/5 overflow-x-auto">
-        <div className="w-16 flex-shrink-0" /> {/* Time column spacer */}
-        {displayDays.map((day, idx) => (
-          <div
-            key={idx}
-            className={`flex-1 ${getColumnClass()} text-center py-3 border-r border-slate-200 dark:border-white/5 ${
-              isToday(day) ? 'bg-brand-500/5' : ''
-            }`}
-          >
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              {format(day, 'EEE')}
+      {/* Scrollable container for both header and grid */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header with day names - no separate scroll */}
+        <div className="flex border-b border-slate-200 dark:border-white/5 flex-shrink-0">
+          <div className="w-16 flex-shrink-0 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900 z-20" /> {/* Time column spacer */}
+          <div className="flex-1 overflow-hidden">
+            <div className="flex">
+              {displayDays.map((day, idx) => (
+                <div
+                  key={idx}
+                  className={`flex-1 ${getColumnClass()} text-center py-3 border-r border-slate-200 dark:border-white/5 ${
+                    isToday(day) ? 'bg-brand-500/5' : ''
+                  }`}
+                >
+                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    {format(day, 'EEE')}
+                  </div>
+                  <div className={`text-lg font-bold ${isToday(day) ? 'text-brand-500' : 'text-slate-700 dark:text-slate-200'}`}>
+                    {format(day, 'd')}
+                  </div>
+                  {/* Show month name for first day or when month changes */}
+                  {(idx === 0 || day.getDate() === 1) && (
+                    <div className="text-[10px] text-slate-400 font-medium">
+                      {format(day, 'MMM')}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-            <div className={`text-lg font-bold ${isToday(day) ? 'text-brand-500' : 'text-slate-700 dark:text-slate-200'}`}>
-              {format(day, 'd')}
-            </div>
-            {/* Show month name for first day or when month changes */}
-            {(idx === 0 || day.getDate() === 1) && (
-              <div className="text-[10px] text-slate-400 font-medium">
-                {format(day, 'MMM')}
-              </div>
-            )}
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* Scrollable grid area */}
-      <div className="flex-1 overflow-auto relative">
-        <div className="flex min-h-full">
-          {/* Time column */}
-          <div className="w-16 flex-shrink-0 border-r border-slate-200 dark:border-white/5 sticky left-0 bg-white dark:bg-slate-900 z-10">
+        {/* Scrollable grid area - controls horizontal scroll for both header and grid */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Time column - sticky */}
+          <div className="w-16 flex-shrink-0 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900 z-10 overflow-y-auto">
             {HOURS.map(hour => (
               <div
                 key={hour}
@@ -184,48 +189,52 @@ const CustomIntervalView: React.FC<CustomIntervalViewProps> = ({
             ))}
           </div>
 
-          {/* Day columns */}
-          {displayDays.map((day, dayIdx) => {
-            const dayKey = format(day, 'yyyy-MM-dd');
-            const dayTasks = tasksByDay[dayKey] || [];
+          {/* Day columns container - scrolls both x and y */}
+          <div className="flex-1 overflow-auto">
+            <div className="flex min-h-full">
+              {displayDays.map((day, dayIdx) => {
+                const dayKey = format(day, 'yyyy-MM-dd');
+                const dayTasks = tasksByDay[dayKey] || [];
 
-            return (
-              <div
-                key={dayIdx}
-                className={`flex-1 ${getColumnClass()} relative ${isToday(day) ? 'bg-brand-500/5' : ''}`}
-              >
-                {/* Hour cells (droppable) */}
-                {HOURS.map(hour => (
-                  <DroppableHourCell key={hour} dayDate={day} hour={hour} />
-                ))}
-
-                {/* Task blocks */}
-                {dayTasks.map(task => (
+                return (
                   <div
-                    key={task.id}
-                    style={getTaskStyle(task)}
-                    className="absolute left-1 right-1 z-10"
-                    onClick={() => onEditTask(task)}
+                    key={dayIdx}
+                    className={`flex-1 ${getColumnClass()} relative ${isToday(day) ? 'bg-brand-500/5' : ''}`}
                   >
-                    <DraggableTask task={task} variant="block" />
-                  </div>
-                ))}
+                    {/* Hour cells (droppable) */}
+                    {HOURS.map(hour => (
+                      <DroppableHourCell key={hour} dayDate={day} hour={hour} />
+                    ))}
 
-                {/* Current time indicator */}
-                {dayIdx === todayIndex && (
-                  <div
-                    className="absolute left-0 right-0 z-20 pointer-events-none"
-                    style={{ top: currentTimePosition }}
-                  >
-                    <div className="relative flex items-center">
-                      <div className="w-2 h-2 rounded-full bg-red-500 -ml-1" />
-                      <div className="flex-1 h-0.5 bg-red-500" />
-                    </div>
+                    {/* Task blocks */}
+                    {dayTasks.map(task => (
+                      <div
+                        key={task.id}
+                        style={getTaskStyle(task)}
+                        className="absolute left-1 right-1 z-10"
+                        onClick={() => onEditTask(task)}
+                      >
+                        <DraggableTask task={task} variant="block" />
+                      </div>
+                    ))}
+
+                    {/* Current time indicator */}
+                    {dayIdx === todayIndex && (
+                      <div
+                        className="absolute left-0 right-0 z-20 pointer-events-none"
+                        style={{ top: currentTimePosition }}
+                      >
+                        <div className="relative flex items-center">
+                          <div className="w-2 h-2 rounded-full bg-red-500 -ml-1" />
+                          <div className="flex-1 h-0.5 bg-red-500" />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </div>
