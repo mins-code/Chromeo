@@ -341,10 +341,10 @@ const App: React.FC = () => {
     // Computed Values needed for AI context
     const allTags = useMemo(() => {
         const tags = new Set<string>();
-        tasks.forEach(t => t.tags.forEach(tag => tags.add(tag)));
-        if (tasks.some(t => t.tags.length === 0)) tags.add('Untagged');
+        visibleTasks.forEach(t => t.tags.forEach(tag => tags.add(tag)));
+        if (visibleTasks.some(t => t.tags.length === 0)) tags.add('Untagged');
         return Array.from(tags).sort();
-    }, [tasks]);
+    }, [visibleTasks]);
 
     const handleAIAnalysis = async (task: Task) => {
         const enhanced = await enhanceTaskWithAI(task.title, allTags);
@@ -400,8 +400,23 @@ const App: React.FC = () => {
         await signOut();
     };
 
+    // Filter tasks based on View Source Mode (Personal, Partners, Combined)
+    const visibleTasks = useMemo(() => {
+        if (!session?.user?.id) return [];
+        switch (viewSourceMode) {
+            case 'personal':
+                return tasks.filter(t => t.user_id === session.user.id);
+            case 'partners':
+                return tasks.filter(t => t.user_id !== session.user.id);
+            case 'combined':
+                return tasks;
+            default:
+                return tasks.filter(t => t.user_id === session.user.id);
+        }
+    }, [tasks, viewSourceMode, session?.user?.id]);
+
     const filteredTasks = useMemo(() => {
-        return tasks.filter(t => {
+        return visibleTasks.filter(t => {
             if (currentView === 'tasks' && t.type !== 'TASK') return false;
             if (currentView === 'events' && t.type !== 'EVENT') return false;
             if (currentView === 'appointments' && t.type !== 'APPOINTMENT') return false;
@@ -412,10 +427,10 @@ const App: React.FC = () => {
             const matchesStatus = filterStatus === 'ALL' || t.status === filterStatus;
             return matchesSearch && matchesStatus;
         });
-    }, [tasks, searchQuery, filterStatus, currentView]);
+    }, [visibleTasks, searchQuery, filterStatus, currentView]);
 
     const calendarFilteredTasks = useMemo(() => {
-        return tasks.filter(t => {
+        return visibleTasks.filter(t => {
             if (t.tags.length === 0) {
                 return selectedCalendarTags.includes('Untagged');
             }
@@ -893,7 +908,7 @@ const App: React.FC = () => {
                                                         onClick={() => handleNotificationPreferenceChange('reminderMinutesBefore', option.value)}
                                                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                                                             notificationSettings.reminderMinutesBefore === option.value
-                                                                ? 'bg-brand-500 text-white shadow-md'
+                                                                ? 'bg-brand-500 text-white dark:text-slate-900 shadow-md'
                                                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                                                         }`}
                                                     >
@@ -904,7 +919,7 @@ const App: React.FC = () => {
                                                     onClick={() => handleNotificationPreferenceChange('reminderMinutesBefore', -1)}
                                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                                                         ![5, 15, 60, 720, 1440].includes(notificationSettings.reminderMinutesBefore)
-                                                            ? 'bg-brand-500 text-white shadow-md'
+                                                            ? 'bg-brand-500 text-white dark:text-slate-900 shadow-md'
                                                             : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                                                     }`}
                                                 >

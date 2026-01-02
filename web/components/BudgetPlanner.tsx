@@ -32,6 +32,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
     const [selectedPartnerId, setSelectedPartnerId] = useState('');
     const [isSharing, setIsSharing] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
+    const [showSavings, setShowSavings] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -163,7 +164,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                         <IndianRupee size={240} className="text-brand-500" />
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 relative z-10">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-8 relative z-10">
                         <div>
                             <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-widest font-mono">{t(currentTheme, 'totalBudget')}</p>
                             <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{formatCurrency(budget.limit)}</p>
@@ -180,6 +181,17 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                         <div>
                             <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-widest font-mono">{t(currentTheme, 'income')}</p>
                             <p className="text-2xl font-bold text-emerald-500">{formatCurrency(totalIncome)}</p>
+                        </div>
+                        <div className="relative group">
+                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-widest font-mono flex items-center gap-2">
+                                Savings
+                                <button onClick={() => setShowSavings(!showSavings)} className="text-slate-400 hover:text-brand-500 transition-colors">
+                                    {showSavings ? <EyeOff size={12} /> : <Eye size={12} />}
+                                </button>
+                            </p>
+                            <p className={`text-2xl font-bold ${totalIncome - totalExpenses >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
+                                {showSavings ? formatCurrency(totalIncome - totalExpenses) : '••••••'}
+                            </p>
                         </div>
                     </div>
 
