@@ -258,31 +258,32 @@ export const parseTransactionScreenshot = async (file: File): Promise<ScannedTra
             body: {
                 mode: 'parse-image',
                 image: base64,
+                mimeType: file.type, // Send actual file MIME type
                 message: 'Extract all transactions from this UPI screenshot.'
             }
         });
 
         if (error) {
             logger.error("AI Function Error", error as Error, { fileName: file.name });
-            return [];
+            throw new Error(error.message || 'Failed to process image. Please try again.');
         }
 
         const text = data.text;
-        if (!text) return [];
-
-        // Parse JSON from response (handle potential markdown wrapping)
-        let jsonStr = text;
-        const jsonMatch = text.match(/```(?:json)?\n?([\s\S]*?)\n?```/);
-        if (jsonMatch) {
-            jsonStr = jsonMatch[1];
+        if (!text) {
+            throw new Error('No response received from AI. Please try a clearer image.');
         }
 
-        const parsed = JSON.parse(jsonStr.trim());
+        // Parse JSON directly (backend uses responseMimeType: "application/json")
+        const parsed = JSON.parse(text);
         
         // Ensure we return an array
         if (!Array.isArray(parsed)) {
             logger.error("Unexpected response format from AI", undefined, { parsed });
-            return [];
+            throw new Error('Could not extract transactions from this image. Please try a different screenshot.');
+        }
+
+        if (parsed.length === 0) {
+            throw new Error('No transactions found in this image. Please ensure it shows a valid UPI receipt.');
         }
 
         return parsed.map((item: any) => ({
@@ -292,8 +293,12 @@ export const parseTransactionScreenshot = async (file: File): Promise<ScannedTra
             date: item.date || null
         }));
 
-    } catch (error) {
+    } catch (error: any) {
         logger.error("Failed to parse transaction screenshot", error as Error, { fileName: file.name });
-        return [];
+        // Re-throw with user-friendly message if it's our error, otherwise wrap it
+        if (error.message && !error.message.includes('network') && !error.message.includes('fetch')) {
+            throw error;
+        }
+        throw new Error('Failed to scan receipt. Please check your connection and try again.');
     }
 };

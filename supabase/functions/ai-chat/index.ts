@@ -130,7 +130,8 @@ serve(async (req) => {
       userName,
       tagsContext,
       currentDateContext,
-      image
+      image,
+      mimeType
     } = await req.json()
 
     // Rate Limiting
@@ -169,7 +170,7 @@ serve(async (req) => {
 
     // Input validation
     const MAX_MESSAGE_LENGTH = 10000;
-    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in base64 is ~6.7MB
+    const MAX_FILE_SIZE = 7 * 1024 * 1024; // 7MB to account for base64 encoding overhead
 
     if (message && typeof message !== 'string') {
       throw new Error('Invalid message format');
@@ -254,7 +255,7 @@ Return ONLY a JSON object (no markdown, no explanation):
     if (!isJsonMode && history && history.length > 0) {
       // SCENARIO A: Chat Mode (Conversational)
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.0-flash-exp",
+        model: "gemini-3-pro",
         systemInstruction: systemInstruction 
       })
 
@@ -285,7 +286,7 @@ Return ONLY a JSON object (no markdown, no explanation):
     } else if (mode === 'parse-image' && image) {
       // SCENARIO B: Image Parsing Mode (Multimodal)
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.0-flash-exp",
+        model: "gemini-3-pro",
         systemInstruction: systemInstruction,
         generationConfig: { responseMimeType: "application/json" }
       })
@@ -293,7 +294,7 @@ Return ONLY a JSON object (no markdown, no explanation):
       const result = await model.generateContent([
         {
           inlineData: {
-            mimeType: "image/png",
+            mimeType: mimeType || "image/png", // Use dynamic MIME type from request
             data: image
           }
         },
@@ -304,7 +305,7 @@ Return ONLY a JSON object (no markdown, no explanation):
     } else {
       // SCENARIO C: Task Mode (Strict JSON for Cmd+K or Enhance)
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-pro",
+        model: "gemini-3-pro", // PhD-level reasoning for complex tasks
         systemInstruction: systemInstruction,
         generationConfig: { responseMimeType: "application/json" }
       })

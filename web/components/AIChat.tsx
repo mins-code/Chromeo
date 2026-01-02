@@ -277,7 +277,7 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
 
   return (
     <div className="flex flex-col h-full glass rounded-2xl overflow-hidden">
-      <div className="p-4 border-b border-slate-200 dark:border-white/5 flex items-center justify-between gap-3 bg-white/60 dark:bg-slate-900/80 backdrop-blur-xl sticky top-0 z-10">
+      <div className="p-4 pr-16 border-b border-slate-200 dark:border-white/5 flex items-center justify-between gap-3 bg-white/60 dark:bg-slate-900/80 backdrop-blur-xl sticky top-0 z-10">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-gradient-to-br from-purple-500/20 to-indigo-500/20 border border-purple-500/20 rounded-xl text-purple-500 dark:text-purple-400">
               <Bot size={22} />
