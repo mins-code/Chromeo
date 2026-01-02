@@ -3,6 +3,7 @@ import { supabase } from "./supabaseClient";
 import { Task, TaskPriority } from "../types";
 import { validateFile, validateAIMessage, sanitizeJSON } from "../utils/validation";
 import { logger } from "../utils/logger";
+import { aiCache, generateCacheKey } from "../utils/aiChatCache";
 
 interface AIEnrichedTask {
     description: string;
@@ -11,21 +12,63 @@ interface AIEnrichedTask {
     tags: string[];
 }
 
+// Retry helper with exponential backoff
+const retryWithBackoff = async <T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  initialDelay: number = 1000
+): Promise<T> => {
+  let lastError: any;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+      
+      // Don't retry on validation errors or auth errors
+      if (error.status === 400 || error.status === 401 || error.status === 403) {
+        throw error;
+      }
+      
+      // Calculate delay with exponential backoff
+      const delay = initialDelay * Math.pow(2, i);
+      
+      // Don't delay on last retry attempt
+      if (i < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  
+  throw lastError;
+};
+
 export const enhanceTaskWithAI = async (taskTitle: string, existingTags: string[] = []): Promise<Partial<Task> | null> => {
   try {
+    // Check cache first
+    const cacheKey = generateCacheKey('enhance', taskTitle, existingTags.join(','));
+    const cached = aiCache.get<Partial<Task>>(cacheKey);
+    if (cached) {
+      logger.info('Task enhancement cache hit', { taskTitle });
+      return cached;
+    }
+
     const tagsContext = existingTags.length > 0 
       ? `\n\nEXISTING TAGS: ${existingTags.join(', ')}. Please choose tags from this list if relevant. Only create new tags if absolutely necessary.`
       : '';
 
     const message = `Analyze the task "${taskTitle}". Provide a concise 1-sentence description, 3-5 actionable subtasks, a recommended priority level (LOW, MEDIUM, or HIGH), and 2 relevant tags.`;
 
-    const { data, error } = await supabase.functions.invoke('ai-chat', {
+    const { data, error } = await retryWithBackoff(() => 
+      supabase.functions.invoke('ai-chat', {
         body: {
-            mode: 'enhance',
-            message,
-            tagsContext
+          mode: 'enhance',
+          message,
+          tagsContext
         }
-    });
+      })
+    );
 
     if (error) {
         logger.error("AI Function Error", error as Error, { taskTitle });
@@ -50,12 +93,17 @@ export const enhanceTaskWithAI = async (taskTitle: string, existingTags: string[
     if (result.priority === 'HIGH') mappedPriority = TaskPriority.HIGH;
     if (result.priority === 'LOW') mappedPriority = TaskPriority.LOW;
 
-    return {
+    const enrichedTask = {
         description: result.description,
         subtasks: result.subtasks.map((t: string) => ({ id: crypto.randomUUID(), title: t, isCompleted: false })),
         priority: mappedPriority,
         tags: result.tags
     };
+
+    // Cache the result for 1 hour
+    aiCache.set(cacheKey, enrichedTask, 3600000);
+
+    return enrichedTask;
 
   } catch (error) {
     logger.error("Failed to enhance task", error as Error, { taskTitle });
@@ -63,27 +111,50 @@ export const enhanceTaskWithAI = async (taskTitle: string, existingTags: string[
   }
 };
 
-export const chatWithAI = async (message: string, history: {role: 'user' | 'model', parts: [{text: string}]}[], userName: string = "User", existingTags: string[] = []): Promise<string> => {
+export const chatWithAI = async (
+    message: string, 
+    history: {role: 'user' | 'model', parts: [{text: string}]}[], 
+    userName: string = "User", 
+    existingTags: string[] = [],
+    abortSignal?: AbortSignal
+): Promise<string> => {
     try {
         const tagsContext = existingTags.length > 0
           ? `\n\nEXISTING TAGS: ${existingTags.join(', ')}. Use these for the "tags" field in your JSON output. Do not create new tags unless the user explicitly asks or the existing ones are completely irrelevant.`
           : '';
 
-        const { data, error } = await supabase.functions.invoke('ai-chat', {
-            body: {
-                mode: 'chat',
-                message,
-                history,
-                userName,
-                tagsContext
-            }
-        });
+        const { data, error } = await retryWithBackoff(() => 
+          supabase.functions.invoke('ai-chat', {
+              body: {
+                  mode: 'chat',
+                  message,
+                  history,
+                  userName,
+                  tagsContext
+              }
+          }),
+          2 // Only 2 retries for chat to keep it responsive
+        );
 
-        if (error) throw error;
+        if (error) {
+            // Provide user-friendly error messages
+            const errorMsg = error.message || 'Unknown error';
+            if (errorMsg.includes('timeout')) {
+                throw new Error('Request timed out. Please try a shorter message.');
+            } else if (errorMsg.includes('quota') || errorMsg.includes('429')) {
+                throw new Error('AI service is temporarily busy. Please try again in a moment.');
+            }
+            throw error;
+        }
         return data.text || "I'm not sure how to respond to that.";
-    } catch (error) {
+    } catch (error: any) {
         logger.error("Chat error", error as Error, { messageLength: message?.length });
-        return "I'm having trouble connecting to the network right now.";
+        
+        // Return the error message if it's user-friendly, otherwise generic message
+        if (error.message && !error.message.includes('network') && !error.message.includes('fetch')) {
+            return error.message;
+        }
+        return "I'm having trouble connecting right now. Please check your internet connection and try again.";
     }
 }
 

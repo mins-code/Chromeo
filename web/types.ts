@@ -100,6 +100,14 @@ export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
   timestamp: number;
+  status?: 'sending' | 'sent' | 'error'; // Track message status
+  error?: string; // Error message if failed
+}
+
+export interface SuggestedPrompt {
+  label: string;
+  prompt: string;
+  icon: string;
 }
 
 export interface Transaction {

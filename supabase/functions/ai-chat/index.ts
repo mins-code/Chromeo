@@ -254,7 +254,7 @@ Return ONLY a JSON object (no markdown, no explanation):
     if (!isJsonMode && history && history.length > 0) {
       // SCENARIO A: Chat Mode (Conversational)
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.5-flash",
+        model: "gemini-2.0-flash-exp",
         systemInstruction: systemInstruction 
       })
 
@@ -285,7 +285,7 @@ Return ONLY a JSON object (no markdown, no explanation):
     } else if (mode === 'parse-image' && image) {
       // SCENARIO B: Image Parsing Mode (Multimodal)
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-pro",
+        model: "gemini-2.0-flash-exp",
         systemInstruction: systemInstruction,
         generationConfig: { responseMimeType: "application/json" }
       })
@@ -317,10 +317,35 @@ Return ONLY a JSON object (no markdown, no explanation):
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
-  } catch (error) {
+  } catch (err) {
+    const error = err as any;
     console.error("AI-CHAT ERROR:", error.message, error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
+    
+    // Provide specific error messages for better debugging
+    let errorMessage = error.message || 'An unexpected error occurred';
+    let statusCode = 500;
+    
+    if (error.message?.includes('API key')) {
+      errorMessage = 'AI service configuration error. Please contact support.';
+      statusCode = 503;
+    } else if (error.message?.includes('quota') || error.message?.includes('429')) {
+      errorMessage = 'AI service is temporarily unavailable. Please try again in a few moments.';
+      statusCode = 429;
+    } else if (error.message?.includes('timeout')) {
+      errorMessage = 'Request timed out. Please try a shorter message.';
+      statusCode = 408;
+    } else if (error.message?.includes('Invalid')) {
+      errorMessage = error.message; // Keep validation errors as-is
+      statusCode = 400;
+    } else {
+      errorMessage = 'An unexpected error occurred. Please try again.';
+    }
+    
+    return new Response(JSON.stringify({ 
+      error: errorMessage,
+      code: error.code || 'UNKNOWN_ERROR'
+    }), {
+      status: statusCode,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
