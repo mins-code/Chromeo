@@ -533,10 +533,10 @@ const App: React.FC = () => {
 
     const getHeaderInfo = () => {
         switch (currentView) {
-            case 'reminders': return { title: 'Reminders', subtitle: 'Don\'t forget these important items', icon: Bell };
-            case 'events': return { title: 'Events', subtitle: 'Upcoming social and work gatherings', icon: CalendarDays };
-            case 'appointments': return { title: 'Appointments', subtitle: 'Scheduled meetings and visits', icon: Clock };
-            case 'tasks': return { title: 'My Tasks', subtitle: 'Manage and track your daily activities', icon: CheckSquare };
+            case 'reminders': return { title: t(theme, 'reminders'), subtitle: 'Don\'t forget these important items', icon: Bell };
+            case 'events': return { title: t(theme, 'events'), subtitle: 'Upcoming social and work gatherings', icon: CalendarDays };
+            case 'appointments': return { title: t(theme, 'appointments'), subtitle: 'Scheduled meetings and visits', icon: Clock };
+            case 'tasks': return { title: t(theme, 'tasks'), subtitle: 'Manage and track your daily activities', icon: CheckSquare };
             default: return { title: 'Items', subtitle: 'List View', icon: CheckSquare };
         }
     };

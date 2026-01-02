@@ -578,28 +578,28 @@ export const Layout: React.FC<LayoutProps> = ({
                                             className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-left transition-colors group"
                                         >
                                             <Calendar size={16} className="text-brand-500 group-hover:scale-110 transition-transform" />
-                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Event</span>
+                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t(currentTheme, 'eventType')}</span>
                                         </button>
                                         <button
                                             onClick={() => { onAddTask('TASK'); setShowCreateMenu(false); }}
                                             className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-left transition-colors group"
                                         >
                                             <CheckSquare size={16} className="text-blue-500 group-hover:scale-110 transition-transform" />
-                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Task</span>
+                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t(currentTheme, 'taskType')}</span>
                                         </button>
                                         <button
                                             onClick={() => { onAddTask('APPOINTMENT'); setShowCreateMenu(false); }}
                                             className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-left transition-colors group"
                                         >
                                             <Clock size={16} className="text-purple-500 group-hover:scale-110 transition-transform" />
-                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Appointment</span>
+                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t(currentTheme, 'appointmentType')}</span>
                                         </button>
                                         <button
                                             onClick={() => { onAddTask('REMINDER'); setShowCreateMenu(false); }}
                                             className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-left transition-colors group"
                                         >
                                             <Bell size={16} className="text-yellow-500 group-hover:scale-110 transition-transform" />
-                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Reminder</span>
+                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t(currentTheme, 'reminderType')}</span>
                                         </button>
                                         {onCreateRoutine && (
                                             <button
@@ -624,7 +624,13 @@ export const Layout: React.FC<LayoutProps> = ({
                                         onClick={() => onViewSourceModeChange('personal')}
                                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                                             viewSourceMode === 'personal'
-                                                ? 'bg-blue-500 text-white shadow-sm'
+                                                ? currentTheme === 'onepiece'
+                                                    ? 'bg-[#D4A574] text-[#0A0A0A] shadow-sm'
+                                                    : currentTheme === 'cyberpunk'
+                                                    ? 'bg-[#00FFFF] text-[#0a0014] shadow-sm'
+                                                    : currentTheme === 'sunset'
+                                                    ? 'bg-rose-500 text-white shadow-sm'
+                                                    : 'bg-blue-500 text-white shadow-sm'
                                                 : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                                         }`}
                                         title="View only your data"
@@ -635,7 +641,13 @@ export const Layout: React.FC<LayoutProps> = ({
                                         onClick={() => onViewSourceModeChange('partners')}
                                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                                             viewSourceMode === 'partners'
-                                                ? 'bg-purple-500 text-white shadow-sm'
+                                                ? currentTheme === 'onepiece'
+                                                    ? 'bg-[#8B4513] text-white shadow-sm'
+                                                    : currentTheme === 'cyberpunk'
+                                                    ? 'bg-[#FF00FF] text-white shadow-sm'
+                                                    : currentTheme === 'sunset'
+                                                    ? 'bg-orange-500 text-white shadow-sm'
+                                                    : 'bg-purple-500 text-white shadow-sm'
                                                 : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                                         }`}
                                         title="View partner's shared data"
@@ -646,7 +658,13 @@ export const Layout: React.FC<LayoutProps> = ({
                                         onClick={() => onViewSourceModeChange('combined')}
                                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                                             viewSourceMode === 'combined'
-                                                ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-sm'
+                                                ? currentTheme === 'onepiece'
+                                                    ? 'bg-gradient-to-r from-[#D4A574] to-[#8B4513] text-[#0A0A0A] shadow-sm'
+                                                    : currentTheme === 'cyberpunk'
+                                                    ? 'bg-gradient-to-r from-[#00FFFF] to-[#FF00FF] text-white shadow-sm'
+                                                    : currentTheme === 'sunset'
+                                                    ? 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-sm'
+                                                    : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-sm'
                                                 : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                                         }`}
                                         title="View combined data"

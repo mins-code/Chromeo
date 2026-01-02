@@ -9,7 +9,7 @@ import TaskCard from '../components/TaskCard';
 import Stats from '../components/Stats';
 import Button from '../components/Button';
 import { Activity, CheckSquare, Bell, CalendarDays, Clock, ArrowRight, Repeat, CalendarClock, Sparkles } from 'lucide-react';
-import { getGreeting } from '../themeText';
+import { getGreeting, t } from '../themeText';
 import { enhanceTaskWithAI } from '../services/geminiService';
 
 const viewModeToPath: Record<ViewMode, string> = {
@@ -26,12 +26,12 @@ const viewModeToPath: Record<ViewMode, string> = {
   'routines': '/routines',
 };
 
-// Using null for type on routines since it's not a TaskType
-const ACTIVITY_CATEGORIES = [
-  { id: 'tasks', label: 'Tasks', icon: CheckSquare, type: 'TASK' as TaskType, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-  { id: 'reminders', label: 'Reminders', icon: Bell, type: 'REMINDER' as TaskType, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
-  { id: 'events', label: 'Events', icon: CalendarDays, type: 'EVENT' as TaskType, color: 'text-brand-500', bg: 'bg-brand-500/10' },
-  { id: 'appointments', label: 'Appointments', icon: Clock, type: 'APPOINTMENT' as TaskType, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+// Function to get activity categories with themed labels
+const getActivityCategories = (theme: string) => [
+  { id: 'tasks', label: t(theme as any, 'tasks'), icon: CheckSquare, type: 'TASK' as TaskType, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+  { id: 'reminders', label: t(theme as any, 'reminders'), icon: Bell, type: 'REMINDER' as TaskType, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
+  { id: 'events', label: t(theme as any, 'events'), icon: CalendarDays, type: 'EVENT' as TaskType, color: 'text-brand-500', bg: 'bg-brand-500/10' },
+  { id: 'appointments', label: t(theme as any, 'appointments'), icon: Clock, type: 'APPOINTMENT' as TaskType, color: 'text-purple-500', bg: 'bg-purple-500/10' },
   { id: 'routines', label: 'Routines', icon: Repeat, type: null as unknown as TaskType, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
 ];
 
@@ -119,7 +119,7 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
       })[0];
   };
 
-  const getCount = (cat: typeof ACTIVITY_CATEGORIES[0]) => {
+  const getCount = (cat: ReturnType<typeof getActivityCategories>[0]) => {
     if (cat.id === 'routines') {
       return routines.filter(r => r.isEnabled).length;
     }
@@ -203,7 +203,7 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
 
         {/* Activity Category Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {ACTIVITY_CATEGORIES.map(cat => {
+          {getActivityCategories(theme).map(cat => {
             const isRoutines = cat.id === 'routines';
             const topItem = isRoutines ? undefined : getTopItem(cat.type);
             const count = getCount(cat);
