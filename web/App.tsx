@@ -375,12 +375,19 @@ const App: React.FC = () => {
         if (!newTag.trim() || oldTag === newTag) return;
         const finalTag = newTag.trim();
 
+        console.log(`Renaming tag "${oldTag}" to "${finalTag}"`);
+        const tasksToUpdate = tasks.filter(t => t.tags.includes(oldTag));
+        console.log(`Found ${tasksToUpdate.length} tasks with tag "${oldTag}"`);
+
         // Server Update using the hook's updateTask
-        for (const t of tasks) {
-            if (t.tags.includes(oldTag)) {
-                const newTags = t.tags.map(tag => tag === oldTag ? finalTag : tag);
-                const uniqueTags = [...new Set(newTags)];
+        for (const t of tasksToUpdate) {
+            const newTags = t.tags.map(tag => tag === oldTag ? finalTag : tag);
+            const uniqueTags = [...new Set(newTags)];
+            try {
                 await updateTask({ ...t, tags: uniqueTags });
+                console.log(`✓ Updated task "${t.title}" tags:`, uniqueTags);
+            } catch (error) {
+                console.error(`✗ Failed to update task "${t.title}":`, error);
             }
         }
 
@@ -391,6 +398,8 @@ const App: React.FC = () => {
             }
             return prev;
         });
+        
+        console.log(`Tag rename complete: "${oldTag}" -> "${finalTag}"`);
     };
 
     const handleSignOut = async () => {
