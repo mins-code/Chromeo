@@ -282,7 +282,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                 setSearchContext('partner');
                 setShowSearchDropdown(true);
               }}
-              className="w-full bg-slate-100 dark:bg-dark-surface border border-slate-200 dark:border-dark-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-all placeholder-slate-400"
+              className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-dark-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-all placeholder-slate-400 dark:placeholder-slate-500"
             />
           </div>
           {showSearchDropdown && searchContext === 'partner' && renderSearchDropdown(handleAddPartner)}
@@ -303,7 +303,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
             {partnerships.map(p => (
               <div 
                 key={p.id} 
-                className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5"
+                className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500">
@@ -323,14 +323,14 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                       <>
                         <button 
                           onClick={() => handleAcceptPartner(p.id)}
-                          className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors"
+                          className="p-1.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 dark:hover:bg-emerald-500/30 transition-colors"
                           title="Accept"
                         >
                           <Check size={16} />
                         </button>
                         <button 
                           onClick={() => handleRejectPartner(p.id)}
-                          className="p-1.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                          className="p-1.5 rounded-lg bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/20 dark:hover:bg-red-500/30 transition-colors"
                           title="Reject"
                         >
                           <X size={16} />
@@ -348,7 +348,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                       </span>
                       <button 
                         onClick={() => handleRemovePartner(p.id)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                        className="p-1.5 rounded-lg text-slate-400 hover:bg-red-500/10 dark:hover:bg-red-500/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         title="Remove"
                       >
                         <UserMinus size={16} />
@@ -392,13 +392,13 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                   <div className="flex gap-2">
                     <button 
                       onClick={() => handleAcceptTeamInvite(team.id)}
-                      className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20"
+                      className="p-1.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 dark:hover:bg-emerald-500/30"
                     >
                       <Check size={14} />
                     </button>
                     <button 
                       onClick={() => handleRejectTeamInvite(team.id)}
-                      className="p-1.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20"
+                      className="p-1.5 rounded-lg bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/20 dark:hover:bg-red-500/30"
                     >
                       <X size={14} />
                     </button>
@@ -454,7 +454,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
             {teams.map(team => (
               <div 
                 key={team.id} 
-                className="rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 overflow-hidden"
+                className="rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 overflow-hidden"
               >
                 {/* Team Header */}
                 <div 
@@ -480,7 +480,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                     {team.isOwner && (
                       <button 
                         onClick={(e) => { e.stopPropagation(); handleDeleteTeam(team.id); }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                        className="p-1.5 rounded-lg text-slate-400 hover:bg-red-500/10 dark:hover:bg-red-500/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         title="Delete Team"
                       >
                         <Trash2 size={16} />
