@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "npm:@supabase/supabase-js@2.45.4"
-import { GoogleGenAI } from "npm:@google/genai@^1.34.0" 
+import { GoogleGenerativeAI } from "npm:@google/generative-ai@^0.21.0"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -150,7 +150,7 @@ serve(async (req) => {
         .select('*')
         .eq('key', rateLimitKey)
         .gte('window_start', new Date(Date.now() - 60 * 1000).toISOString()) // 1 minute window
-        .single()
+        .maybeSingle()
 
 
     if (limitData && limitData.count >= 10) { // Limit: 10 requests per minute
@@ -255,7 +255,7 @@ Return ONLY a JSON object (no markdown, no explanation):
     if (!isJsonMode && history && history.length > 0) {
       // SCENARIO A: Chat Mode (Conversational)
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-3-pro",
+        model: "gemini-1.5-pro",
         systemInstruction: systemInstruction 
       })
 
@@ -286,7 +286,7 @@ Return ONLY a JSON object (no markdown, no explanation):
     } else if (mode === 'parse-image' && image) {
       // SCENARIO B: Image Parsing Mode (Multimodal)
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-3-pro",
+        model: "gemini-1.5-pro",
         systemInstruction: systemInstruction,
         generationConfig: { responseMimeType: "application/json" }
       })
@@ -305,7 +305,7 @@ Return ONLY a JSON object (no markdown, no explanation):
     } else {
       // SCENARIO C: Task Mode (Strict JSON for Cmd+K or Enhance)
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-3-pro", // PhD-level reasoning for complex tasks
+        model: "gemini-1.5-pro",
         systemInstruction: systemInstruction,
         generationConfig: { responseMimeType: "application/json" }
       })
