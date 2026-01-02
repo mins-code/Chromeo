@@ -452,7 +452,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                         </div>
 
                         {/* Days Grid */}
-                        <div className="flex-1 grid grid-cols-7 grid-rows-6 gap-2 min-h-0">
+                        <div className="flex-1 grid grid-cols-7 grid-rows-6 gap-2 min-h-[960px]">
                             {calendarDays.map((cell, idx) => (
                                 <CalendarDayCell
                                     key={idx}

@@ -402,9 +402,12 @@ const App: React.FC = () => {
         if (!session?.user?.id) return [];
         switch (viewSourceMode) {
             case 'personal':
-                return tasks.filter(t => t.user_id === session.user.id);
+                return tasks.filter(t => t.user_id === session.user.id && !t.isShared);
             case 'partners':
-                return tasks.filter(t => t.user_id !== session.user.id);
+                return tasks.filter(t => 
+                    t.user_id !== session.user.id || // Tasks created by partners
+                    (t.user_id === session.user.id && t.isShared) // Tasks created by user and shared
+                );
             case 'combined':
                 return tasks;
             default:
@@ -816,7 +819,7 @@ const App: React.FC = () => {
                                 <Bell className="text-brand-500" />
                                 <h3>Notifications</h3>
                             </div>
-                            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 space-y-6">
+                            <div className="bg-white/40 dark:bg-dark-surface/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 backdrop-blur-sm space-y-6">
                                 {/* Main Toggle */}
                                 <div className="flex items-center justify-between">
                                     <div>
@@ -959,7 +962,7 @@ const App: React.FC = () => {
                                                             const multiplier = unit === 'days' ? 1440 : unit === 'hours' ? 60 : 1;
                                                             handleNotificationPreferenceChange('reminderMinutesBefore', num * multiplier);
                                                         }}
-                                                        className="w-20 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-center text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+                                                        className="w-20 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-center text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
                                                     />
                                                     <select
                                                         id="reminder-unit"
@@ -974,7 +977,7 @@ const App: React.FC = () => {
                                                             const multiplier = unit === 'days' ? 1440 : unit === 'hours' ? 60 : 1;
                                                             handleNotificationPreferenceChange('reminderMinutesBefore', num * multiplier);
                                                         }}
-                                                        className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+                                                        className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
                                                     >
                                                         <option value="minutes">minutes</option>
                                                         <option value="hours">hours</option>
