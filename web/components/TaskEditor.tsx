@@ -40,6 +40,8 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
 
   // Per-task Notification Fields
   const [notificationEnabled, setNotificationEnabled] = useState<boolean | undefined>(undefined);
+  const [notificationMode, setNotificationMode] = useState<'relative' | 'absolute'>('relative');
+  const [notificationTime, setNotificationTime] = useState('');
   const [notificationMinutesBefore, setNotificationMinutesBefore] = useState<number | undefined>(undefined);
   const [showCustomNotification, setShowCustomNotification] = useState(false);
   const [customNotificationValue, setCustomNotificationValue] = useState(30);
@@ -73,22 +75,32 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
       }
       
       // Load notification settings
+      // Load notification settings
       setNotificationEnabled(task.notificationEnabled);
-      setNotificationMinutesBefore(task.notificationMinutesBefore);
-      if (task.notificationMinutesBefore && ![5, 15, 60, 720, 1440].includes(task.notificationMinutesBefore)) {
-        setShowCustomNotification(true);
-        if (task.notificationMinutesBefore >= 1440) {
-          setCustomNotificationValue(Math.floor(task.notificationMinutesBefore / 1440));
-          setCustomNotificationUnit('days');
-        } else if (task.notificationMinutesBefore >= 60) {
-          setCustomNotificationValue(Math.floor(task.notificationMinutesBefore / 60));
-          setCustomNotificationUnit('hours');
-        } else {
-          setCustomNotificationValue(task.notificationMinutesBefore);
-          setCustomNotificationUnit('minutes');
-        }
+      if (task.notificationTime) {
+          setNotificationMode('absolute');
+          setNotificationTime(new Date(task.notificationTime).toISOString().slice(0, 16));
+          setNotificationMinutesBefore(undefined);
       } else {
-        setShowCustomNotification(false);
+          setNotificationMode('relative');
+          setNotificationTime('');
+          setNotificationMinutesBefore(task.notificationMinutesBefore);
+          
+          if (task.notificationMinutesBefore && ![5, 15, 60, 720, 1440].includes(task.notificationMinutesBefore)) {
+            setShowCustomNotification(true);
+            if (task.notificationMinutesBefore >= 1440) {
+              setCustomNotificationValue(Math.floor(task.notificationMinutesBefore / 1440));
+              setCustomNotificationUnit('days');
+            } else if (task.notificationMinutesBefore >= 60) {
+              setCustomNotificationValue(Math.floor(task.notificationMinutesBefore / 60));
+              setCustomNotificationUnit('hours');
+            } else {
+              setCustomNotificationValue(task.notificationMinutesBefore);
+              setCustomNotificationUnit('minutes');
+            }
+          } else {
+            setShowCustomNotification(false);
+          }
       }
     } else {
         // Reset for new task
@@ -110,7 +122,10 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
         setRecurrenceEnd('');
         
         // Reset notification settings
+        // Reset notification settings
         setNotificationEnabled(undefined);
+        setNotificationMode('relative');
+        setNotificationTime('');
         setNotificationMinutesBefore(undefined);
         setShowCustomNotification(false);
         setCustomNotificationValue(30);
@@ -145,8 +160,10 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
       recurrence,
       duration: duration === '' ? undefined : Number(duration),
       location,
+
       notificationEnabled,
-      notificationMinutesBefore
+      notificationMinutesBefore: notificationMode === 'relative' ? notificationMinutesBefore : undefined,
+      notificationTime: notificationMode === 'absolute' && notificationTime ? new Date(notificationTime).toISOString() : undefined
     });
     onClose();
   };
@@ -397,80 +414,129 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
 
                 {(notificationEnabled === undefined || notificationEnabled === true) && (
                   <div className="space-y-3">
-                    <label className="block text-xs font-semibold text-amber-700 dark:text-amber-300">
-                      Notify me before
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { value: undefined, label: 'Default' },
-                        { value: 5, label: '5 min' },
-                        { value: 15, label: '15 min' },
-                        { value: 60, label: '1 hr' },
-                        { value: 720, label: '12 hr' },
-                        { value: 1440, label: '1 day' },
-                      ].map((option) => (
+                    {/* Notification Mode Toggle */}
+                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg w-fit">
                         <button
-                          key={option.label}
-                          onClick={() => {
-                            setNotificationMinutesBefore(option.value);
-                            setShowCustomNotification(false);
-                          }}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                            !showCustomNotification && notificationMinutesBefore === option.value
-                              ? 'bg-amber-500 text-white shadow-md'
-                              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-slate-700 border border-amber-200 dark:border-slate-600'
-                          }`}
+                            onClick={() => setNotificationMode('relative')}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                                notificationMode === 'relative' 
+                                ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' 
+                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                            }`}
                         >
-                          {option.label}
+                            Time Before
                         </button>
-                      ))}
-                      <button
-                        onClick={() => {
-                          setShowCustomNotification(true);
-                          const multiplier = customNotificationUnit === 'days' ? 1440 : customNotificationUnit === 'hours' ? 60 : 1;
-                          setNotificationMinutesBefore(customNotificationValue * multiplier);
-                        }}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                          showCustomNotification
-                            ? 'bg-amber-500 text-white shadow-md'
-                            : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-slate-700 border border-amber-200 dark:border-slate-600'
-                        }`}
-                      >
-                        Custom
-                      </button>
+                        <button
+                            onClick={() => {
+                                setNotificationMode('absolute');
+                                // Default absolute time to reminder time if available, or now. Wait, use reminder time only if it's there
+                                if (!notificationTime) {
+                                  setNotificationTime(reminderTime || new Date().toISOString().slice(0, 16));
+                                }
+                            }}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                                notificationMode === 'absolute' 
+                                ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' 
+                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                            }`}
+                        >
+                            Specific Time
+                        </button>
                     </div>
 
-                    {showCustomNotification && (
-                      <div className="flex items-center gap-2 mt-2 animate-fade-in">
-                        <input
-                          type="number"
-                          min="1"
-                          max="999"
-                          value={customNotificationValue}
-                          onChange={(e) => {
-                            const num = parseInt(e.target.value) || 1;
-                            setCustomNotificationValue(num);
-                            const multiplier = customNotificationUnit === 'days' ? 1440 : customNotificationUnit === 'hours' ? 60 : 1;
-                            setNotificationMinutesBefore(num * multiplier);
-                          }}
-                          className="w-16 bg-white dark:bg-slate-800 border border-amber-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-sm text-center text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-                        />
-                        <select
-                          value={customNotificationUnit}
-                          onChange={(e) => {
-                            const unit = e.target.value as 'minutes' | 'hours' | 'days';
-                            setCustomNotificationUnit(unit);
-                            const multiplier = unit === 'days' ? 1440 : unit === 'hours' ? 60 : 1;
-                            setNotificationMinutesBefore(customNotificationValue * multiplier);
-                          }}
-                          className="bg-white dark:bg-slate-800 border border-amber-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-                        >
-                          <option value="minutes">minutes</option>
-                          <option value="hours">hours</option>
-                          <option value="days">days</option>
-                        </select>
-                        <span className="text-xs text-amber-600 dark:text-amber-400">before</span>
-                      </div>
+                    {notificationMode === 'relative' ? (
+                        <>
+                            <label className="block text-xs font-semibold text-amber-700 dark:text-amber-300">
+                              Notify me before
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                              {[
+                                { value: undefined, label: 'Default' },
+                                { value: 5, label: '5 min' },
+                                { value: 15, label: '15 min' },
+                                { value: 60, label: '1 hr' },
+                                { value: 720, label: '12 hr' },
+                                { value: 1440, label: '1 day' },
+                              ].map((option) => (
+                                <button
+                                  key={option.label}
+                                  onClick={() => {
+                                    setNotificationMinutesBefore(option.value);
+                                    setShowCustomNotification(false);
+                                  }}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                                    !showCustomNotification && notificationMinutesBefore === option.value
+                                      ? 'bg-amber-500 text-white shadow-md'
+                                      : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-slate-700 border border-amber-200 dark:border-slate-600'
+                                  }`}
+                                >
+                                  {option.label}
+                                </button>
+                              ))}
+                              <button
+                                onClick={() => {
+                                  setShowCustomNotification(true);
+                                  const multiplier = customNotificationUnit === 'days' ? 1440 : customNotificationUnit === 'hours' ? 60 : 1;
+                                  setNotificationMinutesBefore(customNotificationValue * multiplier);
+                                }}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                                  showCustomNotification
+                                    ? 'bg-amber-500 text-white shadow-md'
+                                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-slate-700 border border-amber-200 dark:border-slate-600'
+                                }`}
+                              >
+                                Custom
+                              </button>
+                            </div>
+
+                            {showCustomNotification && (
+                              <div className="flex items-center gap-2 mt-2 animate-fade-in">
+                                <input
+                                  type="number"
+                                  min="1"
+                                  max="999"
+                                  value={customNotificationValue}
+                                  onChange={(e) => {
+                                    const num = parseInt(e.target.value) || 1;
+                                    setCustomNotificationValue(num);
+                                    const multiplier = customNotificationUnit === 'days' ? 1440 : customNotificationUnit === 'hours' ? 60 : 1;
+                                    setNotificationMinutesBefore(num * multiplier);
+                                  }}
+                                  className="w-16 bg-white dark:bg-slate-800 border border-amber-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-sm text-center text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                                />
+                                <select
+                                  value={customNotificationUnit}
+                                  onChange={(e) => {
+                                    const unit = e.target.value as 'minutes' | 'hours' | 'days';
+                                    setCustomNotificationUnit(unit);
+                                    const multiplier = unit === 'days' ? 1440 : unit === 'hours' ? 60 : 1;
+                                    setNotificationMinutesBefore(customNotificationValue * multiplier);
+                                  }}
+                                  className="bg-white dark:bg-slate-800 border border-amber-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                                >
+                                  <option value="minutes">minutes</option>
+                                  <option value="hours">hours</option>
+                                  <option value="days">days</option>
+                                </select>
+                                <span className="text-xs text-amber-600 dark:text-amber-400">before</span>
+                              </div>
+                            )}
+                        </>
+                    ) : (
+                        <div className="animate-fade-in">
+                            <label className="block text-xs font-semibold text-amber-700 dark:text-amber-300 mb-2">
+                                Notify exactly at
+                            </label>
+                            <input 
+                                type="datetime-local"
+                                value={notificationTime}
+                                onChange={(e) => setNotificationTime(e.target.value)}
+                                className="w-full bg-white dark:bg-slate-800 border border-amber-200 dark:border-slate-600 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 [color-scheme:light] dark:[color-scheme:dark]" 
+                            />
+                             <p className="mt-2 text-xs text-amber-600/80 dark:text-amber-400/80">
+                                This notification time is fixed and won't change even if you reschedule the task.
+                            </p>
+                        </div>
                     )}
                   </div>
                 )}

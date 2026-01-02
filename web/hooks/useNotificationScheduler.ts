@@ -30,13 +30,27 @@ export const useNotificationScheduler = (
                 return;
             }
 
-            // Determine lead time (task-specific or global)
-            const leadTimeMinutes = task.notificationMinutesBefore !== undefined 
-                ? task.notificationMinutesBefore 
-                : notificationSettings.reminderMinutesBefore;
+            // Determine notification time
+            let notifyTime: Date;
 
-            // Schedule the notification with custom lead time
-            const notifyTime = new Date(new Date(reminderTime).getTime() - leadTimeMinutes * 60 * 1000);
+            if (task.notificationTime) {
+                // Use absolute notification time if set
+                notifyTime = new Date(task.notificationTime);
+            } else {
+                // Fallback to relative time logic
+                const reminderTime = task.reminderTime || task.dueDate;
+                
+                // Determine lead time (task-specific or global)
+                const leadTimeMinutes = task.notificationMinutesBefore !== undefined 
+                    ? task.notificationMinutesBefore 
+                    : notificationSettings.reminderMinutesBefore;
+
+                 if (reminderTime) {
+                    notifyTime = new Date(new Date(reminderTime).getTime() - leadTimeMinutes * 60 * 1000);
+                 } else {
+                     return; // No time base available
+                 }
+            }
             
             const typeLabels: Record<string, string> = {
                 'TASK': '📋 Task Reminder',

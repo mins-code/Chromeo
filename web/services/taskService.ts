@@ -10,7 +10,8 @@ const mapDbTaskToTask = (dbTask: DbTask): Task => ({
   isShared: dbTask.is_shared,
   createdAt: new Date(dbTask.created_at).getTime(),
   tags: dbTask.tags || [],
-  subtasks: dbTask.subtasks || []
+  subtasks: dbTask.subtasks || [],
+  notificationTime: dbTask.notification_time
 });
 
 // Helper function to calculate next recurrence date
@@ -81,7 +82,8 @@ export const createTask = async (task: Omit<Task, 'id' | 'createdAt'>): Promise<
     is_shared: task.isShared || false,
     recurrence: task.recurrence,
     next_recurrence_date: nextRecurrenceDate,
-    created_at: new Date().toISOString()
+    created_at: new Date().toISOString(),
+    notification_time: task.notificationTime || null
   };
 
   const { data, error } = await supabase
@@ -121,7 +123,8 @@ export const updateTask = async (updatedTask: Task): Promise<Task | null> => {
     dependency_ids: updatedTask.dependencyIds,
     is_shared: updatedTask.isShared,
     recurrence: updatedTask.recurrence,
-    next_recurrence_date: nextRecurrenceDate
+    next_recurrence_date: nextRecurrenceDate,
+    notification_time: updatedTask.notificationTime || null
   };
 
   const { data, error } = await supabase

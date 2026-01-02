@@ -184,6 +184,7 @@ export interface Routine {
   isActive: boolean;
   notificationEnabled?: boolean;
   notificationMinutesBefore?: number;
+  notificationTime?: string; // Absolute ISO date string for notification
   createdAt: string;
 }
 
@@ -209,6 +210,7 @@ export interface DbTask {
   recurrence?: RecurrenceConfig;
   next_recurrence_date?: string;
   created_at: string;
+  notification_time?: string;
 }
 
 /** Database response for transactions table */
