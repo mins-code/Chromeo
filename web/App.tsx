@@ -1095,41 +1095,75 @@ const App: React.FC = () => {
                                     Once you delete your account, all your data will be permanently erased. This action cannot be undone.
                                     You will receive a confirmation email before the deletion is processed.
                                 </p>
-                                <Button
-                                    variant="danger"
-                                    onClick={async () => {
-                                        if (!confirm('Are you sure you want to request account deletion? You will receive a confirmation email.')) {
-                                            return;
-                                        }
-                                        try {
-                                            const { data, error } = await supabase.functions.invoke('account-deletion', {
-                                                body: { action: 'request' }
-                                            });
-                                            
-                                            console.log('Account deletion response:', { data, error });
-                                            
-                                            if (error) {
-                                                console.error('Supabase function error:', error);
-                                                alert(`Failed to request account deletion: ${error.message || JSON.stringify(error)}`);
+                                <div className="flex flex-wrap gap-3">
+                                    <Button
+                                        variant="danger"
+                                        onClick={async () => {
+                                            if (!confirm('Are you sure you want to request account deletion? You will receive a confirmation email.')) {
                                                 return;
                                             }
-                                            
-                                            if (data?.success) {
-                                                alert('A confirmation email has been sent to your email address. Please check your inbox to complete the deletion process. The link expires in 24 hours.');
-                                            } else {
-                                                const errorMsg = data?.error || data?.message || 'Unknown error occurred';
-                                                alert(`Failed to request deletion: ${errorMsg}`);
+                                            try {
+                                                const { data, error } = await supabase.functions.invoke('account-deletion', {
+                                                    body: { action: 'request' }
+                                                });
+                                                
+                                                console.log('Account deletion response:', { data, error });
+                                                
+                                                if (error) {
+                                                    console.error('Supabase function error:', error);
+                                                    alert(`Failed to request account deletion: ${error.message || JSON.stringify(error)}`);
+                                                    return;
+                                                }
+                                                
+                                                if (data?.success) {
+                                                    alert('A confirmation email has been sent to your email address. Please check your inbox to complete the deletion process. The link expires in 24 hours.');
+                                                } else {
+                                                    const errorMsg = data?.error || data?.message || 'Unknown error occurred';
+                                                    alert(`Failed to request deletion: ${errorMsg}`);
+                                                }
+                                            } catch (err: any) {
+                                                console.error('Deletion request error:', err);
+                                                alert(`Failed to request account deletion: ${err.message || 'Please try again.'}`);
                                             }
-                                        } catch (err: any) {
-                                            console.error('Deletion request error:', err);
-                                            alert(`Failed to request account deletion: ${err.message || 'Please try again.'}`);
-                                        }
-                                    }}
-                                    className="flex items-center gap-2"
-                                >
-                                    <Trash2 size={16} />
-                                    Request Account Deletion
-                                </Button>
+                                        }}
+                                        className="flex items-center gap-2"
+                                    >
+                                        <Trash2 size={16} />
+                                        Request Account Deletion
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        onClick={async () => {
+                                            try {
+                                                const { data, error } = await supabase.functions.invoke('account-deletion', {
+                                                    body: { action: 'resend' }
+                                                });
+                                                
+                                                console.log('Resend email response:', { data, error });
+                                                
+                                                if (error) {
+                                                    console.error('Resend error:', error);
+                                                    alert(`Failed to resend email: ${error.message || JSON.stringify(error)}`);
+                                                    return;
+                                                }
+                                                
+                                                if (data?.success) {
+                                                    alert(data.message || 'Confirmation email has been resent. Please check your inbox.');
+                                                } else {
+                                                    const errorMsg = data?.error || data?.message || 'Unknown error occurred';
+                                                    alert(`Failed to resend email: ${errorMsg}`);
+                                                }
+                                            } catch (err: any) {
+                                                console.error('Resend error:', err);
+                                                alert(`Failed to resend email: ${err.message || 'Please try again.'}`);
+                                            }
+                                        }}
+                                        className="flex items-center gap-2 border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
+                                    >
+                                        <Bell size={16} />
+                                        Resend Confirmation Email
+                                    </Button>
+                                </div>
                             </div>
                         </div>
 
