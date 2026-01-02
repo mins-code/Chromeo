@@ -91,31 +91,70 @@ serve(async (req) => {
 
       if (insertError) throw insertError;
 
-      // Send confirmation email using Supabase Auth's built-in email
+      // Build confirmation URL
       const confirmationUrl = `${appUrl}/confirm-delete?token=${confirmToken}`;
-
-      // Use Supabase's built-in email sending via admin API
-      const { error: emailError } = await supabase.auth.admin.inviteUserByEmail(
-        user.email!,
-        {
-          data: {
-            type: "account_deletion",
-            confirmation_url: confirmationUrl,
-          },
-          redirectTo: confirmationUrl,
-        }
-      );
-
-      // If invite doesn't work (user already exists), send a magic link styled email
-      // Actually, we'll use a custom approach - send email via Supabase Edge Function email
-      // For now, we'll return the URL and handle email via a different method
-      
       console.log(`Deletion confirmation URL for ${user.email}: ${confirmationUrl}`);
+
+      // Send confirmation email using Resend
+      const resendApiKey = Deno.env.get("RESEND_API_KEY");
+      let emailSent = false;
+      
+      if (resendApiKey) {
+        try {
+          const emailResponse = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${resendApiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: "Chromeo <onboarding@resend.dev>",
+              to: [user.email],
+              subject: "Confirm Account Deletion - Chromeo",
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                  <h1 style="color: #dc2626;">Account Deletion Request</h1>
+                  <p>Hello,</p>
+                  <p>We received a request to delete your Chromeo account. If you made this request, click the button below to confirm:</p>
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${confirmationUrl}" 
+                       style="background-color: #dc2626; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                      Confirm Account Deletion
+                    </a>
+                  </div>
+                  <p><strong>This link will expire in 24 hours.</strong></p>
+                  <p>If you didn't request this, you can safely ignore this email. Your account will remain active.</p>
+                  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+                  <p style="color: #6b7280; font-size: 12px;">
+                    If the button doesn't work, copy and paste this link into your browser:<br>
+                    <a href="${confirmationUrl}" style="color: #3b82f6;">${confirmationUrl}</a>
+                  </p>
+                </div>
+              `,
+            }),
+          });
+
+          if (emailResponse.ok) {
+            emailSent = true;
+            console.log("Confirmation email sent successfully via Resend");
+          } else {
+            const errorData = await emailResponse.text();
+            console.error("Resend email error:", errorData);
+          }
+        } catch (emailErr) {
+          console.error("Failed to send email via Resend:", emailErr);
+        }
+      } else {
+        console.log("RESEND_API_KEY not configured - email not sent");
+      }
 
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: "Deletion request created. Please check your email to confirm.",
+          message: emailSent 
+            ? "Deletion request created. Please check your email to confirm."
+            : "Deletion request created. Email could not be sent - please contact support.",
+          emailSent,
           expiresAt: expiresAt.toISOString()
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
