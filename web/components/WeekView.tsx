@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect, useState, memo } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { Task } from '../types';
 import DraggableTask, { TYPE_COLORS } from './DraggableTask';
@@ -32,7 +32,7 @@ interface DroppableHourCellProps {
   children?: React.ReactNode;
 }
 
-const DroppableHourCell: React.FC<DroppableHourCellProps> = ({ dayDate, hour, height, intervalHours, children }) => {
+const DroppableHourCell: React.FC<DroppableHourCellProps> = memo(({ dayDate, hour, height, intervalHours, children }) => {
   const id = `${format(dayDate, 'yyyy-MM-dd')}-${hour.toString().padStart(2, '0')}`;
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -62,7 +62,7 @@ const DroppableHourCell: React.FC<DroppableHourCellProps> = ({ dayDate, hour, he
       {children}
     </div>
   );
-};
+});
 
 const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) => {
   const [currentTime, setCurrentTime] = useState(new Date());

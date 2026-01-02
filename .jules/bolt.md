@@ -1,0 +1,3 @@
+## 2024-05-23 - [Preventing Unnecessary WeekView Re-renders]
+**Learning:** The `WeekView` component had a `useEffect` that updated `currentTime` every minute to move a red line. This state change caused the entire component tree, including hundreds of `DroppableHourCell` and `DraggableTask` components, to re-render. Since these components were not memoized, this caused significant unnecessary work on the main thread every 60 seconds.
+**Action:** When implementing time-based updates in a large list or grid, always ensure the child components (grid cells, items) are wrapped in `React.memo` so they ignore parent state updates that don't affect them.
