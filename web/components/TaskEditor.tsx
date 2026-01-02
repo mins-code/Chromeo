@@ -17,6 +17,17 @@ interface TaskEditorProps {
 }
 
 const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, onClose, onSave, onDelete, initialDate, initialType = 'TASK' }) => {
+  // Helper function to format date for datetime-local input (without timezone conversion)
+  const formatDateTimeLocal = (date: Date | string): string => {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   const [type, setType] = useState<TaskType>(initialType);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -48,6 +59,26 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
   const [customNotificationUnit, setCustomNotificationUnit] = useState<'minutes' | 'hours' | 'days'>('minutes');
 
   const [isEnhancing, setIsEnhancing] = useState(false);
+  
+  // Tag autocomplete states
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
+  
+  // Extract all existing tags from available tasks
+  const existingTags = React.useMemo(() => {
+    const tagSet = new Set<string>();
+    availableTasks.forEach(t => t.tags.forEach(tag => tagSet.add(tag)));
+    return Array.from(tagSet).sort();
+  }, [availableTasks]);
+  
+  // Filter tags based on input
+  const suggestedTags = React.useMemo(() => {
+    if (!newTag.trim()) return existingTags;
+    const searchTerm = newTag.toLowerCase();
+    return existingTags.filter(tag => 
+      tag.toLowerCase().includes(searchTerm) && !tags.includes(tag)
+    );
+  }, [newTag, existingTags, tags]);
 
   useEffect(() => {
     if (task) {
@@ -58,7 +89,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
       setStatus(task.status);
       setSubtasks(task.subtasks);
       setTags(task.tags);
-      setReminderTime(task.reminderTime ? new Date(task.reminderTime).toISOString().slice(0, 16) : (task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : ''));
+      setReminderTime(task.reminderTime ? formatDateTimeLocal(task.reminderTime) : (task.dueDate ? formatDateTimeLocal(task.dueDate) : ''));
       setDependencyIds(task.dependencyIds || []);
       setIsShared(task.isShared || false);
       setDuration(task.duration || '');
@@ -79,7 +110,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
       setNotificationEnabled(task.notificationEnabled);
       if (task.notificationTime) {
           setNotificationMode('absolute');
-          setNotificationTime(new Date(task.notificationTime).toISOString().slice(0, 16));
+          setNotificationTime(formatDateTimeLocal(task.notificationTime));
           setNotificationMinutesBefore(undefined);
       } else {
           setNotificationMode('relative');
@@ -112,7 +143,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
         setSubtasks([]);
         setTags([]);
         // If initialDate provided (from Calendar), set it as default reminder/due date
-        setReminderTime(initialDate ? initialDate.toISOString().slice(0, 16) : '');
+        setReminderTime(initialDate ? formatDateTimeLocal(initialDate) : '');
         setDependencyIds([]);
         setIsShared(false);
         setDuration('');
@@ -185,13 +216,55 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
   };
 
   const handleAddTag = (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' && newTag.trim()) {
+      if (e.key === 'Enter') {
           e.preventDefault(); // Prevent form submission
-          if(!tags.includes(newTag.trim())) {
-              setTags([...tags, newTag.trim()]);
+          
+          // If suggestions are shown and there's a selection, add the suggested tag
+          if (showTagSuggestions && suggestedTags.length > 0 && selectedSuggestionIndex >= 0) {
+              const selectedTag = suggestedTags[selectedSuggestionIndex];
+              if (!tags.includes(selectedTag)) {
+                  setTags([...tags, selectedTag]);
+              }
+              setNewTag('');
+              setShowTagSuggestions(false);
+              setSelectedSuggestionIndex(0);
+          } else if (newTag.trim()) {
+              // Otherwise add the typed tag
+              if (!tags.includes(newTag.trim())) {
+                  setTags([...tags, newTag.trim()]);
+              }
+              setNewTag('');
+              setShowTagSuggestions(false);
           }
-          setNewTag('');
+      } else if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (suggestedTags.length > 0) {
+              setShowTagSuggestions(true);
+              setSelectedSuggestionIndex(prev => 
+                  prev < suggestedTags.length - 1 ? prev + 1 : 0
+              );
+          }
+      } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (suggestedTags.length > 0) {
+              setShowTagSuggestions(true);
+              setSelectedSuggestionIndex(prev => 
+                  prev > 0 ? prev - 1 : suggestedTags.length - 1
+              );
+          }
+      } else if (e.key === 'Escape') {
+          setShowTagSuggestions(false);
+          setSelectedSuggestionIndex(0);
       }
+  };
+
+  const selectSuggestedTag = (tag: string) => {
+      if (!tags.includes(tag)) {
+          setTags([...tags, tag]);
+      }
+      setNewTag('');
+      setShowTagSuggestions(false);
+      setSelectedSuggestionIndex(0);
   };
 
   const removeTag = (t: string) => {
@@ -297,10 +370,10 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
             </div>
 
             {/* Tags - Moved to top */}
-            <div>
+            <div className="relative">
                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 ml-1 flex items-center gap-2">
                    Tags
-                   {newTag && <span className="text-[10px] normal-case font-normal text-brand-500 animate-fade-in">Type tag and press Enter</span>}
+                   {newTag && <span className="text-[10px] normal-case font-normal text-brand-500 animate-fade-in">Type or select from suggestions</span>}
                </label>
                <div className="flex flex-wrap gap-2 mb-3">
                    {tags.map(tag => (
@@ -313,10 +386,46 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                <Input 
                    placeholder="Type tag and press Enter" 
                    value={newTag} 
-                   onChange={e => setNewTag(e.target.value)}
+                   onChange={e => {
+                       setNewTag(e.target.value);
+                       setShowTagSuggestions(true);
+                       setSelectedSuggestionIndex(0);
+                   }}
                    onKeyDown={handleAddTag}
+                   onFocus={() => {
+                       if (suggestedTags.length > 0) {
+                           setShowTagSuggestions(true);
+                       }
+                   }}
+                   onBlur={() => {
+                       // Delay to allow click on suggestion
+                       setTimeout(() => setShowTagSuggestions(false), 150);
+                   }}
                    className="text-sm py-2"
                />
+               
+               {/* Autocomplete Dropdown */}
+               {showTagSuggestions && suggestedTags.length > 0 && (
+                   <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto animate-scale-in">
+                       {suggestedTags.map((tag, index) => (
+                           <button
+                               key={tag}
+                               type="button"
+                               onClick={() => selectSuggestedTag(tag)}
+                               className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                                   index === selectedSuggestionIndex
+                                       ? 'bg-brand-500/20 text-brand-700 dark:text-brand-300'
+                                       : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                               }`}
+                           >
+                               <span className="flex items-center gap-2">
+                                   <span className="w-2 h-2 rounded-full bg-brand-500"></span>
+                                   {tag}
+                               </span>
+                           </button>
+                       ))}
+                   </div>
+               )}
             </div>
 
             <div>
