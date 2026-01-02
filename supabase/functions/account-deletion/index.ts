@@ -49,7 +49,7 @@ serve(async (req) => {
       // Check for existing pending request
       const { data: existingRequest } = await supabase
         .from("account_deletion_requests")
-        .select("id, expires_at")
+        .select("id, token, expires_at")
         .eq("user_id", user.id)
         .eq("status", "pending")
         .single();
@@ -58,10 +58,12 @@ serve(async (req) => {
         // If request exists and not expired, inform user
         const expiresAt = new Date(existingRequest.expires_at);
         if (expiresAt > new Date()) {
+          const confirmationUrl = `${appUrl}/confirm-delete?token=${existingRequest.token}`;
           return new Response(
             JSON.stringify({ 
               success: false, 
-              message: "A deletion request is already pending. Please check your email.",
+              message: "A deletion request is already pending. Use the confirmation URL to complete deletion.",
+              confirmationUrl: confirmationUrl, // Return URL directly
               expiresAt: existingRequest.expires_at
             }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -139,82 +141,13 @@ serve(async (req) => {
       const confirmationUrl = `${appUrl}/confirm-delete?token=${existingRequest.token}`;
       console.log(`Resending deletion confirmation URL for ${user.email}: ${confirmationUrl}`);
 
-      const brevoApiKey = Deno.env.get("BREVO_API_KEY");
-      let emailSent = false;
-      
-      if (brevoApiKey) {
-        try {
-          const emailResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
-            method: "POST",
-            headers: {
-              "api-key": brevoApiKey,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              sender: { name: "Chromeo", email: "noreply@chromeo.app" },
-              to: [{ email: user.email }],
-              subject: "Confirm Account Deletion - Chromeo (Resent)",
-              htmlContent: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                  <h1 style="color: #dc2626;">Account Deletion Request</h1>
-                  <p>Hello,</p>
-                  <p>We received a request to delete your Chromeo account. If you made this request, click the button below to confirm:</p>
-                  <div style="text-align: center; margin: 30px 0;">
-                    <a href="${confirmationUrl}" 
-                       style="background-color: #dc2626; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">
-                      Confirm Account Deletion
-                    </a>
-                  </div>
-                  <p><strong>This link will expire at ${expiresAt.toLocaleString()}.</strong></p>
-                  <p>If you didn't request this, you can safely ignore this email. Your account will remain active.</p>
-                  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-                  <p style="color: #6b7280; font-size: 12px;">
-                    If the button doesn't work, copy and paste this link into your browser:<br>
-                    <a href="${confirmationUrl}" style="color: #3b82f6;">${confirmationUrl}</a>
-                  </p>
-                </div>
-              `,
-            }),
-          });
-
-          if (emailResponse.ok) {
-            emailSent = true;
-            console.log("Confirmation email resent successfully via Brevo");
-          } else {
-            const errorData = await emailResponse.text();
-            console.error("Brevo email error:", errorData);
-            // Return the actual error for debugging
-            return new Response(
-              JSON.stringify({ 
-                success: false, 
-                message: `Email service error: ${errorData}`,
-                emailSent: false
-              }),
-              { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
-          }
-        } catch (emailErr) {
-          console.error("Failed to resend email via Brevo:", emailErr);
-          return new Response(
-            JSON.stringify({ 
-              success: false, 
-              message: `Email error: ${emailErr}`,
-              emailSent: false
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-      } else {
-        console.log("BREVO_API_KEY not configured - email not sent");
-      }
-
+      // Return the URL directly since email services are having issues
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: emailSent 
-            ? "Confirmation email has been resent. Please check your inbox."
-            : "Could not send email. RESEND_API_KEY not configured.",
-          emailSent,
+          message: "Confirmation link retrieved. Use the URL to complete deletion.",
+          confirmationUrl: confirmationUrl,
+          emailSent: false,
           expiresAt: existingRequest.expires_at
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }

@@ -1117,7 +1117,7 @@ const App: React.FC = () => {
                                                 
                                                 if (data?.success) {
                                                     if (data.confirmationUrl) {
-                                                        // Show URL directly if email failed
+                                                        // Show URL directly
                                                         alert(`Click OK to copy the confirmation URL, then paste it in your browser to complete deletion.\n\nURL: ${data.confirmationUrl}\n\nThis link expires in 24 hours.`);
                                                         // Copy to clipboard
                                                         navigator.clipboard.writeText(data.confirmationUrl);
@@ -1125,8 +1125,14 @@ const App: React.FC = () => {
                                                         alert('A confirmation email has been sent to your email address. Please check your inbox to complete the deletion process. The link expires in 24 hours.');
                                                     }
                                                 } else {
-                                                    const errorMsg = data?.error || data?.message || 'Unknown error occurred';
-                                                    alert(`Failed to request deletion: ${errorMsg}`);
+                                                    // Handle pending request case where URL is returned despite success: false
+                                                    if (data?.confirmationUrl) {
+                                                        alert(`Click OK to copy the confirmation URL, then paste it in your browser to complete deletion.\n\nURL: ${data.confirmationUrl}\n\nThis link expires in 24 hours.`);
+                                                        navigator.clipboard.writeText(data.confirmationUrl);
+                                                    } else {
+                                                        const errorMsg = data?.error || data?.message || 'Unknown error occurred';
+                                                        alert(`Failed to request deletion: ${errorMsg}`);
+                                                    }
                                                 }
                                             } catch (err: any) {
                                                 console.error('Deletion request error:', err);
@@ -1155,7 +1161,14 @@ const App: React.FC = () => {
                                                 }
                                                 
                                                 if (data?.success) {
-                                                    alert(data.message || 'Confirmation email has been resent. Please check your inbox.');
+                                                    if (data.confirmationUrl) {
+                                                        // Show URL directly
+                                                        alert(`Click OK to copy the confirmation URL, then paste it in your browser to complete deletion.\n\nURL: ${data.confirmationUrl}`);
+                                                        // Copy to clipboard
+                                                        navigator.clipboard.writeText(data.confirmationUrl);
+                                                    } else {
+                                                        alert(data.message || 'Confirmation email has been resent. Please check your inbox.');
+                                                    }
                                                 } else {
                                                     const errorMsg = data?.error || data?.message || 'Unknown error occurred';
                                                     alert(`Failed to resend email: ${errorMsg}`);
