@@ -255,7 +255,7 @@ Return ONLY a JSON object (no markdown, no explanation):
     if (!isJsonMode && history && history.length > 0) {
       // SCENARIO A: Chat Mode (Conversational)
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-pro",
+        model: "gemini-2.5-flash",
         systemInstruction: systemInstruction 
       })
 
@@ -286,7 +286,7 @@ Return ONLY a JSON object (no markdown, no explanation):
     } else if (mode === 'parse-image' && image) {
       // SCENARIO B: Image Parsing Mode (Multimodal)
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-pro",
+        model: "gemini-2.5-flash",
         systemInstruction: systemInstruction,
         generationConfig: { responseMimeType: "application/json" }
       })
@@ -305,7 +305,7 @@ Return ONLY a JSON object (no markdown, no explanation):
     } else {
       // SCENARIO C: Task Mode (Strict JSON for Cmd+K or Enhance)
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-pro",
+        model: "gemini-2.5-flash",
         systemInstruction: systemInstruction,
         generationConfig: { responseMimeType: "application/json" }
       })
