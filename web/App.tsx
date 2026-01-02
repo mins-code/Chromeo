@@ -490,13 +490,31 @@ const App: React.FC = () => {
             })[0];
     }
 
+    // Calculate tasks due today
+    const todaysPendingTasks = useMemo(() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        return visibleTasks.filter(t => {
+            if (t.status === TaskStatus.DONE) return false;
+            
+            const dateStr = t.dueDate || t.reminderTime;
+            if (!dateStr) return false;
+            
+            const taskDate = new Date(dateStr);
+            return taskDate >= today && taskDate < tomorrow;
+        });
+    }, [visibleTasks]);
+
     // Budget Calculations
     const totalExpenses = budget.transactions.filter(t => t.type === 'expense').reduce((acc, curr) => acc + curr.amount, 0);
     const budgetRemaining = budget.limit - totalExpenses;
 
     const userStats = {
         userName: username,
-        pendingTasks: sortedTodoTasks.length,
+        pendingTasks: todaysPendingTasks.length,
         totalTasks: tasks.length,
         budgetRemaining: budgetRemaining,
         partnerName: partner?.name

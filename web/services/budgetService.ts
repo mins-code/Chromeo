@@ -83,6 +83,30 @@ export const addTransaction = async (description: string, amount: number, type: 
     return getBudget();
 };
 
+export const updateTransaction = async (id: string, description: string, amount: number, type: 'income' | 'expense'): Promise<Budget> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+        await supabase
+            .from('transactions')
+            .update({ description, amount, type })
+            .eq('id', id)
+            .eq('user_id', user.id); // Security: only update own transactions
+    }
+    return getBudget();
+};
+
+export const deleteTransaction = async (id: string): Promise<Budget> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+        await supabase
+            .from('transactions')
+            .delete()
+            .eq('id', id)
+            .eq('user_id', user.id); // Security: only delete own transactions
+    }
+    return getBudget();
+};
+
 // Recurring Logic
 
 export const processRecurringTransaction = async (recurringId: string): Promise<Budget> => {

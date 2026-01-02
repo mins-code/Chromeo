@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NAVIGATION_ITEMS, APP_NAME } from '../constants';
 import { ViewMode, TaskType, ThemeOption, ViewSourceMode } from '../types';
-import { Plus, Settings, X, Wallet, CheckCircle2, User, ChevronDown, Calendar, CheckSquare, Clock, Moon, Sun, ChevronLeft, ChevronRight, Menu, PanelLeft, PanelLeftClose, Bell, ChevronUp, Check, Pencil, Repeat, Bot } from 'lucide-react';
+import { Plus, Settings, X, Wallet, CheckCircle2, User, ChevronDown, Calendar, CheckSquare, Clock, Moon, Sun, ChevronLeft, ChevronRight, Menu, PanelLeft, PanelLeftClose, Bell, ChevronUp, Check, Pencil, Repeat, Bot, ArrowRight } from 'lucide-react';
 import { t, ThemeText } from '../themeText';
 import MiniCalendar from './MiniCalendar';
 
@@ -485,9 +485,16 @@ export const Layout: React.FC<LayoutProps> = ({
                                 </div>
 
                                 <div className="space-y-4">
-                                    <div className="flex items-center justify-between">
+                                    <button 
+                                        onClick={() => {
+                                            onNavigate('calendar');
+                                            onCalendarDateSelect?.(new Date());
+                                            setShowProfileStats(false);
+                                        }}
+                                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group cursor-pointer"
+                                    >
                                         <div className="flex items-center gap-3">
-                                            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
                                                 <CheckCircle2 size={16} />
                                             </div>
                                             <div>
@@ -495,11 +502,18 @@ export const Layout: React.FC<LayoutProps> = ({
                                                 <p className="text-sm text-slate-700 dark:text-slate-200 font-semibold">{userStats.pendingTasks} Pending</p>
                                             </div>
                                         </div>
-                                    </div>
+                                        <ArrowRight size={16} className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </button>
 
-                                    <div className="flex items-center justify-between">
+                                    <button 
+                                        onClick={() => {
+                                            onNavigate('settings');
+                                            setShowProfileStats(false);
+                                        }}
+                                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group cursor-pointer"
+                                    >
                                         <div className="flex items-center gap-3">
-                                            <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                                            <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:bg-blue-500/20 transition-colors">
                                                 <User size={16} />
                                             </div>
                                             <div>
@@ -507,7 +521,8 @@ export const Layout: React.FC<LayoutProps> = ({
                                                 <p className="text-sm text-slate-700 dark:text-slate-200 font-semibold">{userStats.partnerName || 'Not Connected'}</p>
                                             </div>
                                         </div>
-                                    </div>
+                                        <ArrowRight size={16} className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </button>
                                 </div>
                             </div>
                         )}

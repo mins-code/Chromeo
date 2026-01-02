@@ -17,7 +17,7 @@ interface BudgetPlannerProps {
 
 const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
     // Use the budget hook for state management
-    const { budget, updateSettings, addTransaction } = useBudget();
+    const { budget, updateSettings, addTransaction, updateTransaction, deleteTransaction } = useBudget();
 
     const [limitInput, setLimitInput] = useState('');
     const [durationInput, setDurationInput] = useState('Monthly');
@@ -371,7 +371,11 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
             </div>
 
             {/* Transaction List */}
-            <TransactionList transactions={budget.transactions} />
+            <TransactionList 
+                transactions={budget.transactions}
+                onEdit={updateTransaction}
+                onDelete={deleteTransaction}
+            />
         </div>
     );
 };

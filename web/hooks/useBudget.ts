@@ -50,6 +50,30 @@ export function useBudget() {
     },
   });
 
+  const updateTransactionMutation = useMutation({
+    mutationFn: ({
+      id,
+      description,
+      amount,
+      type,
+    }: {
+      id: string;
+      description: string;
+      amount: number;
+      type: 'income' | 'expense';
+    }) => BudgetService.updateTransaction(id, description, amount, type),
+    onSuccess: (updatedBudget) => {
+      queryClient.setQueryData(['budget'], updatedBudget);
+    },
+  });
+
+  const deleteTransactionMutation = useMutation({
+    mutationFn: (id: string) => BudgetService.deleteTransaction(id),
+    onSuccess: (updatedBudget) => {
+      queryClient.setQueryData(['budget'], updatedBudget);
+    },
+  });
+
   return {
     budget: query.data ?? DEFAULT_BUDGET,
     isLoading: query.isLoading,
@@ -57,9 +81,13 @@ export function useBudget() {
     refetch: query.refetch,
     updateSettings: updateSettingsMutation.mutateAsync,
     addTransaction: addTransactionMutation.mutateAsync,
+    updateTransaction: updateTransactionMutation.mutateAsync,
+    deleteTransaction: deleteTransactionMutation.mutateAsync,
     processRecurring: processRecurringMutation.mutateAsync,
     isUpdating: updateSettingsMutation.isPending,
     isAddingTransaction: addTransactionMutation.isPending,
+    isUpdatingTransaction: updateTransactionMutation.isPending,
+    isDeletingTransaction: deleteTransactionMutation.isPending,
     isProcessingRecurring: processRecurringMutation.isPending,
   };
 }

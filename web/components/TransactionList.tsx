@@ -1,19 +1,70 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Transaction } from '../types';
-import { ArrowUpRight, ArrowDownLeft, Calendar, Search } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Calendar, Search, Edit2, Trash2, Check, X } from 'lucide-react';
 
 interface TransactionListProps {
     transactions: Transaction[];
     className?: string;
+    onEdit?: (params: { id: string; description: string; amount: number; type: 'income' | 'expense' }) => Promise<any>;
+    onDelete?: (id: string) => Promise<any>;
 }
 
-const TransactionList: React.FC<TransactionListProps> = ({ transactions, className = '' }) => {
+const TransactionList: React.FC<TransactionListProps> = ({ transactions, className = '', onEdit, onDelete }) => {
     const [searchTerm, setSearchTerm] = React.useState('');
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editDesc, setEditDesc] = useState('');
+    const [editAmount, setEditAmount] = useState('');
+    const [editType, setEditType] = useState<'income' | 'expense'>('expense');
 
     const filteredTransactions = transactions.filter(t => 
         t.description.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const startEdit = (transaction: Transaction) => {
+        setEditingId(transaction.id);
+        setEditDesc(transaction.description);
+        setEditAmount(transaction.amount.toString());
+        setEditType(transaction.type);
+    };
+
+    const cancelEdit = () => {
+        setEditingId(null);
+        setEditDesc('');
+        setEditAmount('');
+        setEditType('expense');
+    };
+
+    const saveEdit = async (id: string) => {
+        if (!onEdit) return;
+        
+        const amount = parseFloat(editAmount);
+        if (!editDesc.trim() || isNaN(amount) || amount <= 0) {
+            alert('Please enter valid description and amount');
+            return;
+        }
+
+        try {
+            await onEdit({ id, description: editDesc, amount, type: editType });
+            cancelEdit();
+        } catch (error) {
+            console.error('Failed to update transaction:', error);
+            alert('Failed to update transaction');
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!onDelete) return;
+        
+        if (confirm('Are you sure you want to delete this transaction?')) {
+            try {
+                await onDelete(id);
+            } catch (error) {
+                console.error('Failed to delete transaction:', error);
+                alert('Failed to delete transaction');
+            }
+        }
+    };
 
     if (!transactions.length) {
         return null;
@@ -43,33 +94,117 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                         No transactions found
                     </div>
                 ) : (
-                    filteredTransactions.map((t) => (
-                        <div key={t.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50/50 dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors group">
-                            <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                    t.type === 'income' 
-                                        ? 'bg-emerald-500/10 text-emerald-500' 
-                                        : 'bg-red-500/10 text-red-500'
-                                }`}>
-                                    {t.type === 'income' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
-                                </div>
-                                <div>
-                                    <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm">{t.description}</p>
-                                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                                        <Calendar size={12} />
-                                        <span>{new Date(t.date).toLocaleDateString()}</span>
-                                        <span>•</span>
-                                        <span>{new Date(t.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <span className={`font-bold font-mono ${
-                                t.type === 'income' ? 'text-emerald-500' : 'text-slate-700 dark:text-slate-300'
+                    filteredTransactions.map((t) => {
+                        const isEditing = editingId === t.id;
+
+                        return (
+                            <div key={t.id} className={`flex items-center justify-between p-3 rounded-xl border transition-colors group ${
+                                isEditing 
+                                    ? 'bg-brand-500/5 border-brand-500/30' 
+                                    : 'bg-slate-50/50 dark:bg-white/5 border-slate-100 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/10'
                             }`}>
-                                {t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
-                            </span>
-                        </div>
-                    ))
+                                {isEditing ? (
+                                    <>
+                                        <div className="flex items-center gap-3 flex-1">
+                                            <button
+                                                onClick={() => setEditType(editType === 'expense' ? 'income' : 'expense')}
+                                                className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                                    editType === 'income' 
+                                                        ? 'bg-emerald-500/10 text-emerald-500' 
+                                                        : 'bg-red-500/10 text-red-500'
+                                                }`}
+                                                title="Toggle type"
+                                            >
+                                                {editType === 'income' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
+                                            </button>
+                                            <div className="flex-1 flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={editDesc}
+                                                    onChange={(e) => setEditDesc(e.target.value)}
+                                                    className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+                                                    placeholder="Description"
+                                                />
+                                                <input
+                                                    type="number"
+                                                    value={editAmount}
+                                                    onChange={(e) => setEditAmount(e.target.value)}
+                                                    className="w-32 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+                                                    placeholder="Amount"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => saveEdit(t.id)}
+                                                className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors"
+                                                title="Save"
+                                            >
+                                                <Check size={16} />
+                                            </button>
+                                            <button
+                                                onClick={cancelEdit}
+                                                className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+                                                title="Cancel"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="flex items-center gap-3 flex-1">
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                                t.type === 'income' 
+                                                    ? 'bg-emerald-500/10 text-emerald-500' 
+                                                    : 'bg-red-500/10 text-red-500'
+                                            }`}>
+                                                {t.type === 'income' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm truncate">{t.description}</p>
+                                                <div className="flex items-center gap-2 text-xs text-slate-500">
+                                                    <Calendar size={12} />
+                                                    <span>{new Date(t.date).toLocaleDateString()}</span>
+                                                    <span>•</span>
+                                                    <span>{new Date(t.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`font-bold font-mono ${
+                                                t.type === 'income' ? 'text-emerald-500' : 'text-slate-700 dark:text-slate-300'
+                                            }`}>
+                                                {t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                                            </span>
+                                            {(onEdit || onDelete) && (
+                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    {onEdit && (
+                                                        <button
+                                                            onClick={() => startEdit(t)}
+                                                            className="p-1.5 rounded-lg text-slate-400 hover:bg-brand-500/10 hover:text-brand-500 transition-colors"
+                                                            title="Edit"
+                                                        >
+                                                            <Edit2 size={14} />
+                                                        </button>
+                                                    )}
+                                                    {onDelete && (
+                                                        <button
+                                                            onClick={() => handleDelete(t.id)}
+                                                            className="p-1.5 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                                                            title="Delete"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        );
+                    })
                 )}
             </div>
         </div>

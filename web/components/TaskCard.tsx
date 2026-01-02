@@ -55,9 +55,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasks = [], onEdit, onTogg
         </button>
 
         {/* Content Area */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 pr-20">
           <div className="flex items-center justify-between mb-1">
-            <h3 className={`font-semibold text-[15px] truncate pr-2 flex items-center gap-2 ${isDone ? 'text-slate-400 dark:text-slate-500 line-through decoration-slate-400' : 'text-slate-800 dark:text-slate-100'} ${isBlocked && !isDone ? 'text-slate-500' : ''}`}>
+            <h3 className={`font-semibold text-[15px] truncate flex items-center gap-2 ${isDone ? 'text-slate-400 dark:text-slate-500 line-through decoration-slate-400' : 'text-slate-800 dark:text-slate-100'} ${isBlocked && !isDone ? 'text-slate-500' : ''}`}>
               {task.title}
             </h3>
 
