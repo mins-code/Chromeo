@@ -1099,7 +1099,7 @@ const App: React.FC = () => {
                                     <Button
                                         variant="danger"
                                         onClick={async () => {
-                                            if (!confirm('Are you sure you want to request account deletion? You will receive a confirmation email.')) {
+                                            if (!confirm('Are you sure you want to request account deletion? You will receive a confirmation link.')) {
                                                 return;
                                             }
                                             try {
@@ -1116,7 +1116,14 @@ const App: React.FC = () => {
                                                 }
                                                 
                                                 if (data?.success) {
-                                                    alert('A confirmation email has been sent to your email address. Please check your inbox to complete the deletion process. The link expires in 24 hours.');
+                                                    if (data.confirmationUrl) {
+                                                        // Show URL directly if email failed
+                                                        alert(`Click OK to copy the confirmation URL, then paste it in your browser to complete deletion.\n\nURL: ${data.confirmationUrl}\n\nThis link expires in 24 hours.`);
+                                                        // Copy to clipboard
+                                                        navigator.clipboard.writeText(data.confirmationUrl);
+                                                    } else {
+                                                        alert('A confirmation email has been sent to your email address. Please check your inbox to complete the deletion process. The link expires in 24 hours.');
+                                                    }
                                                 } else {
                                                     const errorMsg = data?.error || data?.message || 'Unknown error occurred';
                                                     alert(`Failed to request deletion: ${errorMsg}`);
