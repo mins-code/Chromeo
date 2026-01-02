@@ -218,7 +218,12 @@ const App: React.FC = () => {
             const allUniqueTags = new Set<string>();
             tasks.forEach(t => t.tags.forEach(tag => allUniqueTags.add(tag)));
             if (tasks.some(t => t.tags.length === 0)) allUniqueTags.add('Untagged');
-            setSelectedCalendarTags(Array.from(allUniqueTags));
+            const sortedTags = Array.from(allUniqueTags).sort((a, b) => {
+                if (a === 'Untagged') return -1;
+                if (b === 'Untagged') return 1;
+                return a.localeCompare(b);
+            });
+            setSelectedCalendarTags(sortedTags);
         }
     }, [tasks]);
 
@@ -338,14 +343,6 @@ const App: React.FC = () => {
         await toggleStatus(task);
     };
 
-    // Computed Values needed for AI context
-    const allTags = useMemo(() => {
-        const tags = new Set<string>();
-        visibleTasks.forEach(t => t.tags.forEach(tag => tags.add(tag)));
-        if (visibleTasks.some(t => t.tags.length === 0)) tags.add('Untagged');
-        return Array.from(tags).sort();
-    }, [visibleTasks]);
-
     const handleAIAnalysis = async (task: Task) => {
         const enhanced = await enhanceTaskWithAI(task.title, allTags);
         if (enhanced && enhanced.subtasks) {
@@ -414,6 +411,18 @@ const App: React.FC = () => {
                 return tasks.filter(t => t.user_id === session.user.id);
         }
     }, [tasks, viewSourceMode, session?.user?.id]);
+
+    // Computed Values needed for AI context
+    const allTags = useMemo(() => {
+        const tags = new Set<string>();
+        visibleTasks.forEach(t => t.tags.forEach(tag => tags.add(tag)));
+        if (visibleTasks.some(t => t.tags.length === 0)) tags.add('Untagged');
+        return Array.from(tags).sort((a, b) => {
+            if (a === 'Untagged') return -1;
+            if (b === 'Untagged') return 1;
+            return a.localeCompare(b);
+        });
+    }, [visibleTasks]);
 
     const filteredTasks = useMemo(() => {
         return visibleTasks.filter(t => {
