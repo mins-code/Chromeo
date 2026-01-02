@@ -7,6 +7,7 @@ import { useBudget } from '../hooks/useBudget';
 import { parseTransactionScreenshot } from '../services/geminiService';
 import Button from './Button';
 import Input from './Input';
+import TransactionList from './TransactionList';
 import { Wallet, TrendingUp, TrendingDown, Plus, Trash2, IndianRupee, Eye, EyeOff, Repeat, ArrowRight, Settings, Share2, User, X, Loader2, UserPlus, Camera } from 'lucide-react';
 import { t } from '../themeText';
 
@@ -356,6 +357,9 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                     </>
                 )}
             </div>
+
+            {/* Transaction List */}
+            <TransactionList transactions={budget.transactions} />
         </div>
     );
 };
