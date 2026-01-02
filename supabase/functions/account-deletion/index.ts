@@ -95,23 +95,23 @@ serve(async (req) => {
       const confirmationUrl = `${appUrl}/confirm-delete?token=${confirmToken}`;
       console.log(`Deletion confirmation URL for ${user.email}: ${confirmationUrl}`);
 
-      // Send confirmation email using Resend
-      const resendApiKey = Deno.env.get("RESEND_API_KEY");
+      // Send confirmation email using Brevo (formerly Sendinblue)
+      const brevoApiKey = Deno.env.get("BREVO_API_KEY");
       let emailSent = false;
       
-      if (resendApiKey) {
+      if (brevoApiKey) {
         try {
-          const emailResponse = await fetch("https://api.resend.com/emails", {
+          const emailResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${resendApiKey}`,
+              "api-key": brevoApiKey,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              from: "Chromeo <onboarding@resend.dev>",
-              to: [user.email],
+              sender: { name: "Chromeo", email: "noreply@chromeo.app" },
+              to: [{ email: user.email }],
               subject: "Confirm Account Deletion - Chromeo",
-              html: `
+              htmlContent: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                   <h1 style="color: #dc2626;">Account Deletion Request</h1>
                   <p>Hello,</p>
@@ -136,16 +136,16 @@ serve(async (req) => {
 
           if (emailResponse.ok) {
             emailSent = true;
-            console.log("Confirmation email sent successfully via Resend");
+            console.log("Confirmation email sent successfully via Brevo");
           } else {
             const errorData = await emailResponse.text();
-            console.error("Resend email error:", errorData);
+            console.error("Brevo email error:", errorData);
           }
         } catch (emailErr) {
-          console.error("Failed to send email via Resend:", emailErr);
+          console.error("Failed to send email via Brevo:", emailErr);
         }
       } else {
-        console.log("RESEND_API_KEY not configured - email not sent");
+        console.log("BREVO_API_KEY not configured - email not sent");
       }
 
       return new Response(
@@ -189,22 +189,22 @@ serve(async (req) => {
       const confirmationUrl = `${appUrl}/confirm-delete?token=${existingRequest.token}`;
       console.log(`Resending deletion confirmation URL for ${user.email}: ${confirmationUrl}`);
 
-      const resendApiKey = Deno.env.get("RESEND_API_KEY");
+      const brevoApiKey = Deno.env.get("BREVO_API_KEY");
       let emailSent = false;
       
-      if (resendApiKey) {
+      if (brevoApiKey) {
         try {
-          const emailResponse = await fetch("https://api.resend.com/emails", {
+          const emailResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${resendApiKey}`,
+              "api-key": brevoApiKey,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              from: "Chromeo <onboarding@resend.dev>",
-              to: [user.email],
+              sender: { name: "Chromeo", email: "noreply@chromeo.app" },
+              to: [{ email: user.email }],
               subject: "Confirm Account Deletion - Chromeo (Resent)",
-              html: `
+              htmlContent: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                   <h1 style="color: #dc2626;">Account Deletion Request</h1>
                   <p>Hello,</p>
@@ -229,16 +229,33 @@ serve(async (req) => {
 
           if (emailResponse.ok) {
             emailSent = true;
-            console.log("Confirmation email resent successfully via Resend");
+            console.log("Confirmation email resent successfully via Brevo");
           } else {
             const errorData = await emailResponse.text();
-            console.error("Resend email error:", errorData);
+            console.error("Brevo email error:", errorData);
+            // Return the actual error for debugging
+            return new Response(
+              JSON.stringify({ 
+                success: false, 
+                message: `Email service error: ${errorData}`,
+                emailSent: false
+              }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
           }
         } catch (emailErr) {
-          console.error("Failed to resend email via Resend:", emailErr);
+          console.error("Failed to resend email via Brevo:", emailErr);
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              message: `Email error: ${emailErr}`,
+              emailSent: false
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
         }
       } else {
-        console.log("RESEND_API_KEY not configured - email not sent");
+        console.log("BREVO_API_KEY not configured - email not sent");
       }
 
       return new Response(
@@ -246,7 +263,7 @@ serve(async (req) => {
           success: true, 
           message: emailSent 
             ? "Confirmation email has been resent. Please check your inbox."
-            : "Could not send email. Please contact support.",
+            : "Could not send email. RESEND_API_KEY not configured.",
           emailSent,
           expiresAt: existingRequest.expires_at
         }),
