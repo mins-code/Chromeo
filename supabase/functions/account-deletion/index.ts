@@ -44,6 +44,28 @@ serve(async (req) => {
     const { action, token } = await req.json();
     const appUrl = Deno.env.get("APP_URL") || "https://chronodex.vercel.app";
 
+    // Rate Limiting
+    const rateLimitKey = `account-deletion:${user.id}:${action}`
+    const { data: limitData, error: limitError } = await supabase
+        .from('rate_limits')
+        .select('*')
+        .eq('key', rateLimitKey)
+        .gte('window_start', new Date(Date.now() - 60 * 60 * 1000).toISOString()) // 1 hour window for deletion actions
+        .single()
+
+    if (limitData && limitData.count >= 5) { // Strict limit: 5 requests per hour
+        return new Response(
+            JSON.stringify({ success: false, error: 'Too many requests. Please try again later.' }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        )
+    }
+
+    if (limitData) {
+        await supabase.from('rate_limits').update({ count: limitData.count + 1 }).eq('id', limitData.id)
+    } else {
+        await supabase.from('rate_limits').insert({ key: rateLimitKey, count: 1, window_start: new Date().toISOString() })
+    }
+
     // Action: Request deletion - sends confirmation email
     if (action === "request") {
       // Check for existing pending request

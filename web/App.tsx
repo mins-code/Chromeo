@@ -37,6 +37,12 @@ import { NotificationSettings, Routine } from './types';
 import RoutineEditor from './components/RoutineEditor';
 import RoutineList from './components/RoutineList';
 
+// Custom Hooks
+import { useSMSListener } from './hooks/useSMSListener';
+import { useNotificationScheduler } from './hooks/useNotificationScheduler';
+import { useRecurringProcessor } from './hooks/useRecurringProcessor';
+import { useNetworkStatus } from './hooks/useNetworkStatus';
+
 // Import page components
 import DashboardPage from './pages/DashboardPage';
 import ActivitiesPage from './pages/ActivitiesPage';
@@ -92,6 +98,9 @@ const App: React.FC = () => {
         refetch: refetchBudget, 
         processRecurring 
     } = useBudget();
+    
+    // Network Status
+    const isOnline = useNetworkStatus();
 
     // Local UI state
     const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -99,22 +108,15 @@ const App: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<string>('ALL');
 
-    // Username state (still needs session for DB sync)
+    // Username state
     const [username, setUsername] = useState('User');
 
     // State for creating task from calendar or create button
     const [calendarSelectedDate, setCalendarSelectedDate] = useState<Date | undefined>(undefined);
     const [editorInitialType, setEditorInitialType] = useState<TaskType>('TASK');
 
-    // Partner State (kept for compatibility)
+    // Partner State
     const [partner, setPartner] = useState<Partner | null>(null);
-
-    // Recurring transactions modal state
-    const [dueRecurringItems, setDueRecurringItems] = useState<RecurringTransaction[]>([]);
-    const [showRecurringModal, setShowRecurringModal] = useState(false);
-
-    // SMS Notification State
-    const [lastSmsTransaction, setLastSmsTransaction] = useState<SmsService.ParsedSMS | null>(null);
 
     // Tag Filtering State for Calendar
     const [selectedCalendarTags, setSelectedCalendarTags] = useState<string[]>([]);
@@ -125,10 +127,10 @@ const App: React.FC = () => {
     // AI Chat Modal State
     const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
-    // Calendar Navigate Date State (from mini calendar clicks)
+    // Calendar Navigate Date State
     const [calendarNavigateDate, setCalendarNavigateDate] = useState<Date | undefined>(undefined);
 
-    // View Source Mode State (Personal/Partners/Combined)
+    // View Source Mode State
     const [viewSourceMode, setViewSourceMode] = useState<ViewSourceMode>('personal');
     const [hasConnectedPartners, setHasConnectedPartners] = useState(false);
 
@@ -136,11 +138,8 @@ const App: React.FC = () => {
     const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(
         NotificationService.getSettings()
     );
-    const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>(
-        NotificationService.getPermissionStatus()
-    );
 
-    // Routine State - now using useRoutines hook
+    // Routine State
     const { 
         routines, 
         saveRoutine: saveRoutineHook, 
@@ -149,6 +148,28 @@ const App: React.FC = () => {
     } = useRoutines();
     const [isRoutineEditorOpen, setIsRoutineEditorOpen] = useState(false);
     const [editingRoutine, setEditingRoutine] = useState<Routine | undefined>(undefined);
+
+    // --- CUSTOM HOOKS INTEGRATION ---
+
+    // SMS Listener
+    const { lastSmsTransaction, setLastSmsTransaction } = useSMSListener();
+
+    // Notification Scheduler
+    const { 
+        notificationPermission,
+        handleNotificationToggle, 
+        handleNotificationPreferenceChange 
+    } = useNotificationScheduler(tasks, notificationSettings, setNotificationSettings);
+
+    // Recurring Processor
+    const { 
+        dueRecurringItems, 
+        showRecurringModal, 
+        handleProcessRecurring, 
+        handleDismissRecurring 
+    } = useRecurringProcessor();
+
+    // --- END HOOKS ---
 
     // Load username when session changes
     useEffect(() => {
@@ -167,7 +188,7 @@ const App: React.FC = () => {
         loadUsername();
     }, [session]);
 
-    // Check for connected partners to show view toggle
+    // Check for connected partners
     useEffect(() => {
         const checkPartners = async () => {
             if (session?.user) {
@@ -175,7 +196,6 @@ const App: React.FC = () => {
                 const acceptedPartners = partnerships.filter(p => p.status === 'accepted');
                 setHasConnectedPartners(acceptedPartners.length > 0);
                 
-                // Set the partner state with the first connected partner's info
                 if (acceptedPartners.length > 0) {
                     const firstPartner = acceptedPartners[0];
                     setPartner({
@@ -192,7 +212,7 @@ const App: React.FC = () => {
         checkPartners();
     }, [session]);
 
-    // Initialize calendar tags when tasks load
+    // Initialize calendar tags
     useEffect(() => {
         if (tasks.length > 0) {
             const allUniqueTags = new Set<string>();
@@ -202,41 +222,7 @@ const App: React.FC = () => {
         }
     }, [tasks]);
 
-    // Check for due recurring items when budget loads
-    useEffect(() => {
-        if (budget.recurring.length > 0) {
-            const now = new Date();
-            const due = budget.recurring.filter(r => new Date(r.nextDueDate) <= now);
-            if (due.length > 0) {
-                setDueRecurringItems(due);
-                setShowRecurringModal(true);
-            }
-        }
-    }, [budget.recurring]);
-
-    // Setup SMS Listener
-    useEffect(() => {
-        const handleSmsEvent = async (event: CustomEvent) => {
-            const { body, sender } = event.detail;
-            if (body) {
-                // Use processAndSaveSMS to ensure it goes to DB
-                const parsed = await SmsService.processAndSaveSMS(body, sender || 'Unknown');
-                if (parsed) {
-                    // Refresh budget to show new item
-                    refetchBudget();
-
-                    setLastSmsTransaction(parsed);
-                    setTimeout(() => setLastSmsTransaction(null), 5000);
-                }
-            }
-        };
-        window.addEventListener('sms_received', handleSmsEvent as EventListener);
-        return () => {
-            window.removeEventListener('sms_received', handleSmsEvent as EventListener);
-        };
-    }, [refetchBudget]);
-
-    // Global Cmd+K keyboard listener for Command Bar
+    // Global Cmd+K keyboard listener
     useEffect(() => {
         const handleGlobalKeyDown = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -247,93 +233,6 @@ const App: React.FC = () => {
         window.addEventListener('keydown', handleGlobalKeyDown);
         return () => window.removeEventListener('keydown', handleGlobalKeyDown);
     }, []);
-
-    const handleProcessRecurring = async (id: string) => {
-        await processRecurring(id);
-        setDueRecurringItems(prev => prev.filter(item => item.id !== id));
-        if (dueRecurringItems.length <= 1) {
-            setShowRecurringModal(false);
-        }
-    };
-
-    const handleDismissRecurring = () => {
-        setShowRecurringModal(false);
-    };
-
-    // Schedule notifications for tasks with reminder times
-    useEffect(() => {
-        tasks.forEach(task => {
-            const reminderTime = task.reminderTime || task.dueDate;
-            if (!reminderTime || task.status === TaskStatus.DONE) {
-                NotificationService.cancelNotification(`task-${task.id}`);
-                return;
-            }
-
-            // Determine if notification should be enabled for this task
-            const taskNotificationEnabled = task.notificationEnabled !== undefined 
-                ? task.notificationEnabled 
-                : notificationSettings.enabled;
-
-            if (!taskNotificationEnabled) {
-                NotificationService.cancelNotification(`task-${task.id}`);
-                return;
-            }
-
-            // Determine lead time (task-specific or global)
-            const leadTimeMinutes = task.notificationMinutesBefore !== undefined 
-                ? task.notificationMinutesBefore 
-                : notificationSettings.reminderMinutesBefore;
-
-            // Schedule the notification with custom lead time
-            const notifyTime = new Date(new Date(reminderTime).getTime() - leadTimeMinutes * 60 * 1000);
-            
-            const typeLabels: Record<string, string> = {
-                'TASK': '📋 Task Reminder',
-                'EVENT': '🎉 Upcoming Event',
-                'APPOINTMENT': '📅 Appointment Soon',
-                'REMINDER': '⏰ Reminder',
-            };
-
-            NotificationService.scheduleNotification(
-                `task-${task.id}`,
-                typeLabels[task.type] || 'Reminder',
-                notifyTime,
-                {
-                    body: task.title,
-                    taskId: task.id
-                }
-            );
-        });
-
-        return () => {
-            NotificationService.cancelAllNotifications();
-        };
-    }, [tasks, notificationSettings.enabled, notificationSettings.reminderMinutesBefore]);
-
-
-    // Handle notification settings toggle
-    const handleNotificationToggle = async (enabled: boolean) => {
-        if (enabled && notificationPermission !== 'granted') {
-            const granted = await NotificationService.requestPermission();
-            setNotificationPermission(NotificationService.getPermissionStatus());
-            if (!granted) return;
-        }
-
-        const newSettings = { ...notificationSettings, enabled };
-        setNotificationSettings(newSettings);
-        NotificationService.saveSettings(newSettings);
-
-        if (enabled) {
-            NotificationService.sendTestNotification();
-        }
-    };
-
-    // Handle notification preference changes
-    const handleNotificationPreferenceChange = (key: keyof NotificationSettings, value: boolean | number) => {
-        const newSettings = { ...notificationSettings, [key]: value };
-        setNotificationSettings(newSettings);
-        NotificationService.saveSettings(newSettings);
-    };
 
     // Routine Handlers
     const handleSaveRoutine = (routine: Routine) => {
@@ -633,6 +532,13 @@ const App: React.FC = () => {
             onOpenAI={() => setIsAIChatOpen(true)}
             onCalendarDateSelect={(date) => setCalendarNavigateDate(date)}
         >
+            {/* Offline Indicator */}
+            {!isOnline && (
+                 <div className="fixed top-0 left-0 right-0 z-[100] bg-red-500 text-white text-center py-1 text-xs font-bold shadow-md animate-slide-down">
+                     You are offline. Changes will rely on cache and retry when online.
+                 </div>
+            )}
+
             {/* SMS Notification Toast */}
             {lastSmsTransaction && (
                 <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] bg-white dark:bg-slate-800 shadow-2xl rounded-2xl p-4 flex items-center gap-4 border border-brand-500 animate-slide-up max-w-sm w-full">

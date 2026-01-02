@@ -133,6 +133,40 @@ serve(async (req) => {
       image
     } = await req.json()
 
+    // Rate Limiting
+    // Rate Limiting
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    )
+    
+    // Identify user
+    const rateLimitUserId = user ? user.id : 'anonymous'
+    const rateLimitKey = `ai-chat:${rateLimitUserId}`
+
+    const { data: limitData, error: limitError } = await supabaseAdmin
+        .from('rate_limits')
+        .select('*')
+        .eq('key', rateLimitKey)
+        .gte('window_start', new Date(Date.now() - 60 * 1000).toISOString()) // 1 minute window
+        .single()
+
+
+    if (limitData && limitData.count >= 10) { // Limit: 10 requests per minute
+        return new Response(
+            JSON.stringify({ error: 'Too many requests. Please try again later.' }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        )
+    }
+
+    // Update rate limit
+    // Update rate limit
+    if (limitData) {
+        await supabaseAdmin.from('rate_limits').update({ count: limitData.count + 1 }).eq('id', limitData.id)
+    } else {
+        await supabaseAdmin.from('rate_limits').insert({ key: rateLimitKey, count: 1, window_start: new Date().toISOString() })
+    }
+
     // Input validation
     const MAX_MESSAGE_LENGTH = 10000;
     const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in base64 is ~6.7MB
