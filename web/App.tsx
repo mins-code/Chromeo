@@ -448,7 +448,7 @@ const App: React.FC = () => {
             }
             return t.tags.some(tag => selectedCalendarTags.includes(tag));
         });
-    }, [tasks, selectedCalendarTags]);
+    }, [visibleTasks, selectedCalendarTags]);
 
     const sortedTodoTasks = useMemo(() => {
         const getTaskScore = (t: Task) => {
