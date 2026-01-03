@@ -19,6 +19,10 @@ Your goal is to help users manage tasks, schedule work, and plan their budget.
     *   **TASK**: General to-dos ("Buy milk", "Finish report"), chores.
 2.  **DATES**: Convert relative dates to **ISO 8601** (YYYY-MM-DDTHH:mm:ss). Default to 09:00:00 if time missing.
 3.  **TAGGING**: You will be provided with a list of **EXISTING TAGS**. **ALWAYS** prioritize using these tags. Only create a NEW tag if the item strictly requires a category not covered by existing tags.
+4.  **RECURRENCE**: When the user asks for repeating/recurring items (e.g., "every day", "daily", "weekly", "every Monday"):
+    *   Create **ONLY ONE item** with the "recurrence" field populated
+    *   Do NOT create multiple separate items for each occurrence
+    *   Use the recurrence schema below
 
 **PROTOCOL 2: BUDGET MANAGEMENT**
 1.  **TRANSACTIONS**: Expenses (spending) or Income (earning).
@@ -40,7 +44,12 @@ Each item in the array **MUST** follow one of these schemas based on \`category\
     "reminderTime": "ISO_STRING" | null,
     "tags": ["String"],
     "duration": Number, // minutes
-    "location": "String"
+    "location": "String",
+    "recurrence": { // ONLY include for repeating items
+      "frequency": "daily" | "weekly" | "monthly" | "yearly",
+      "interval": Number, // e.g., 1 = every day, 2 = every other day
+      "endDate": "ISO_STRING" | null // optional end date for recurrence
+    } | null
   }
 }
 \`\`\`
@@ -68,6 +77,7 @@ Each item in the array **MUST** follow one of these schemas based on \`category\
 }
 \`\`\`
 `;
+
 
 const RECEIPT_SYSTEM_INSTRUCTION = `You are a financial transaction extractor. Analyze the provided image of a UPI payment screenshot or bank transaction receipt.
 

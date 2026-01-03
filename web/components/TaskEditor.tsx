@@ -4,6 +4,7 @@ import Button from './Button';
 import Input from './Input';
 import { X, Plus, Trash2, Wand2, Bell, Link as LinkIcon, Users, Check, Repeat, Calendar, MapPin, Clock } from 'lucide-react';
 import { enhanceTaskWithAI } from '../services/geminiService';
+import DateTimePicker from './DateTimePicker';
 
 interface TaskEditorProps {
   task?: Task;
@@ -301,7 +302,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
   const isEventOrAppointment = type === 'EVENT' || type === 'APPOINTMENT';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 transition-all duration-300">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6 transition-all duration-300">
       <div className="absolute inset-0 bg-black/60 dark:bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
       <div className="relative glass rounded-2xl w-full max-w-xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl animate-scale-in">
         
@@ -440,15 +441,11 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
             {/* Time & Duration Grid */}
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 dark:bg-black/20 p-4 rounded-2xl border border-slate-200 dark:border-white/5">
                  <div className="sm:col-span-2">
-                    <label className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
-                        <Bell size={16} className="text-brand-500" /> 
-                        {isEventOrAppointment ? 'Start Date & Time' : 'Due Date & Time'}
-                    </label>
-                    <input 
-                        type="datetime-local"
+                    <DateTimePicker
+                        label={isEventOrAppointment ? 'Start Date & Time' : 'Due Date & Time'}
                         value={reminderTime}
-                        onChange={(e) => setReminderTime(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/50 [color-scheme:light] dark:[color-scheme:dark]" 
+                        onChange={setReminderTime}
+                        placeholder="Select date and time"
                     />
                  </div>
                  
@@ -635,11 +632,10 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                             <label className="block text-xs font-semibold text-amber-700 dark:text-amber-300 mb-2">
                                 Notify exactly at
                             </label>
-                            <input 
-                                type="datetime-local"
+                            <DateTimePicker
                                 value={notificationTime}
-                                onChange={(e) => setNotificationTime(e.target.value)}
-                                className="w-full bg-white dark:bg-slate-800 border border-amber-200 dark:border-slate-600 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 [color-scheme:light] dark:[color-scheme:dark]" 
+                                onChange={setNotificationTime}
+                                placeholder="Select notification time"
                             />
                              <p className="mt-2 text-xs text-amber-600/80 dark:text-amber-400/80">
                                 This notification time is fixed and won't change even if you reschedule the task.

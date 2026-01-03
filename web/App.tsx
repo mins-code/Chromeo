@@ -130,8 +130,15 @@ const App: React.FC = () => {
     // Calendar Navigate Date State
     const [calendarNavigateDate, setCalendarNavigateDate] = useState<Date | undefined>(undefined);
 
-    // View Source Mode State
-    const [viewSourceMode, setViewSourceMode] = useState<ViewSourceMode>('personal');
+    // View Source Mode State - persisted to localStorage, defaults to 'combined'
+    const [viewSourceMode, setViewSourceMode] = useState<ViewSourceMode>(() => {
+        const saved = localStorage.getItem('viewSourceMode');
+        return (saved as ViewSourceMode) || 'combined';
+    });
+    const handleViewSourceModeChange = (mode: ViewSourceMode) => {
+        setViewSourceMode(mode);
+        localStorage.setItem('viewSourceMode', mode);
+    };
     const [hasConnectedPartners, setHasConnectedPartners] = useState(false);
 
     // Notification Settings State
@@ -580,7 +587,7 @@ const App: React.FC = () => {
             onToggleTag={handleToggleCalendarTag}
             onRenameTag={handleRenameTag}
             viewSourceMode={viewSourceMode}
-            onViewSourceModeChange={setViewSourceMode}
+            onViewSourceModeChange={handleViewSourceModeChange}
             hasConnectedPartners={hasConnectedPartners}
             onCreateRoutine={handleCreateRoutine}
             onOpenAI={() => setIsAIChatOpen(true)}
