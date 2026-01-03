@@ -337,7 +337,13 @@ export const scheduleNotification = async (
           scheduledTime: scheduledTime.toISOString(),
         },
       },
-    }).catch(() => ({ error: { message: 'Push notification service unavailable' } }));
+    }).catch((err) => {
+      // Suppress 401 errors (user not authenticated) - this is expected
+      if (err?.message?.includes('401') || err?.status === 401) {
+        return { error: null }; // Silently ignore auth errors
+      }
+      return { error: { message: 'Push notification service unavailable' } };
+    });
 
     if (error) {
       // Silently log the error instead of throwing
@@ -371,7 +377,13 @@ export const cancelNotification = async (taskId: string): Promise<boolean> => {
         action: 'cancel',
         taskId,
       },
-    }).catch(() => ({ error: { message: 'Push notification service unavailable' } }));
+    }).catch((err) => {
+      // Suppress 401 errors (user not authenticated) - this is expected
+      if (err?.message?.includes('401') || err?.status === 401) {
+        return { error: null }; // Silently ignore auth errors
+      }
+      return { error: { message: 'Push notification service unavailable' } };
+    });
 
     if (error) {
       console.debug('Push notification cancellation skipped:', error.message);

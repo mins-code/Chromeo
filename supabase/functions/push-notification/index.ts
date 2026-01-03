@@ -127,11 +127,44 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication - Edge Functions require a valid JWT
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ 
+          error: "Unauthorized - No authentication provided",
+          code: "NO_AUTH_HEADER"
+        }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Verify the JWT token
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ 
+          error: "Unauthorized - Invalid or expired token",
+          code: "INVALID_TOKEN" 
+        }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
     const { action, subscription, userId, notification, taskId } = await req.json();
+
 
     // Action: Subscribe - Save push subscription to database
     if (action === "subscribe") {
