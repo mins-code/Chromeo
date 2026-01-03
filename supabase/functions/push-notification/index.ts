@@ -17,6 +17,28 @@ serve(async (req) => {
   }
 
   try {
+    // 🛡️ SECURITY: Verify Authentication
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      throw new Error("Missing Authorization header");
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    // Create client with user's token to verify auth
+    const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: { user }, error: authError } = await userSupabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY");
     const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY");
     const VAPID_EMAIL = Deno.env.get("VAPID_EMAIL") || "mailto:admin@chronodex.app";
@@ -27,16 +49,18 @@ serve(async (req) => {
 
     webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { action, subscription, userId, notification, taskId } = await req.json();
+    const { action, subscription, notification, taskId } = await req.json();
+
+    // Use the authenticated user's ID
+    const userId = user.id;
 
     // Action: Subscribe - Save push subscription to database
     if (action === "subscribe") {
-      if (!subscription || !userId) {
-        throw new Error("Missing subscription or userId");
+      if (!subscription) {
+        throw new Error("Missing subscription");
       }
 
       // Upsert subscription (update if exists, insert if new)
@@ -60,10 +84,6 @@ serve(async (req) => {
 
     // Action: Unsubscribe - Remove push subscription
     if (action === "unsubscribe") {
-      if (!userId) {
-        throw new Error("Missing userId");
-      }
-
       const { error } = await supabase
         .from("push_subscriptions")
         .delete()
@@ -79,7 +99,7 @@ serve(async (req) => {
 
     // Action: Schedule - Schedule a notification for later
     if (action === "schedule") {
-      if (!userId || !notification || !notification.scheduledTime) {
+      if (!notification || !notification.scheduledTime) {
         throw new Error("Missing required fields for scheduling");
       }
 
@@ -113,7 +133,8 @@ serve(async (req) => {
       const { error } = await supabase
         .from("scheduled_notifications")
         .delete()
-        .eq("task_id", taskId);
+        .eq("task_id", taskId)
+        .eq("user_id", userId); // Ensure user can only delete their own
 
       if (error) throw error;
 
@@ -125,8 +146,8 @@ serve(async (req) => {
 
     // Action: Send - Send notification immediately (for testing or from scheduler)
     if (action === "send") {
-      if (!userId || !notification) {
-        throw new Error("Missing userId or notification");
+      if (!notification) {
+        throw new Error("Missing notification");
       }
 
       // Get user's subscription
