@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Calendar, Clock, ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, setHours, setMinutes, getHours, getMinutes } from 'date-fns';
+import { Calendar, Clock, ChevronLeft, ChevronRight, X, Keyboard, ChevronUp, ChevronDown } from 'lucide-react';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, setHours, setMinutes, getHours, getMinutes, parse, isValid } from 'date-fns';
 
 interface DateTimePickerProps {
-  value: string; // ISO string or datetime-local format
+  value: string;
   onChange: (value: string) => void;
   label?: string;
   placeholder?: string;
@@ -20,75 +20,79 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   className = ''
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(() => {
+  const [mode, setMode] = useState<'picker' | 'type'>('picker');
+  const [typeValue, setTypeValue] = useState('');
+  const [currentMonth, setCurrentMonth] = useState(() => value ? new Date(value) : new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(() => value ? new Date(value) : null);
+  
+  // 12-hour format state
+  const [hour12, setHour12] = useState(() => {
     if (value) {
-      return new Date(value);
+      const h = getHours(new Date(value));
+      return h === 0 ? 12 : h > 12 ? h - 12 : h;
     }
-    return new Date();
+    return 9;
   });
-  const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
-    return value ? new Date(value) : null;
-  });
-  const [hours, setHoursState] = useState(() => {
-    return value ? getHours(new Date(value)) : 9;
-  });
-  const [minutes, setMinutesState] = useState(() => {
-    return value ? getMinutes(new Date(value)) : 0;
-  });
+  const [minutes, setMinutesState] = useState(() => value ? getMinutes(new Date(value)) : 0);
+  const [isPM, setIsPM] = useState(() => value ? getHours(new Date(value)) >= 12 : false);
   
   const containerRef = useRef<HTMLDivElement>(null);
+  const typeInputRef = useRef<HTMLInputElement>(null);
 
-  // Update internal state when value prop changes
+  // Convert 12h to 24h
+  const get24Hour = (h12: number, pm: boolean) => {
+    if (h12 === 12) return pm ? 12 : 0;
+    return pm ? h12 + 12 : h12;
+  };
+
   useEffect(() => {
     if (value) {
       const date = new Date(value);
+      const h = getHours(date);
       setSelectedDate(date);
       setCurrentMonth(date);
-      setHoursState(getHours(date));
+      setHour12(h === 0 ? 12 : h > 12 ? h - 12 : h);
       setMinutesState(getMinutes(date));
+      setIsPM(h >= 12);
     }
   }, [value]);
 
-  // Close on click outside
+  useEffect(() => {
+    if (mode === 'type' && typeInputRef.current) typeInputRef.current.focus();
+  }, [mode]);
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setIsOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const getDaysInMonth = () => {
-    const start = startOfMonth(currentMonth);
-    const end = endOfMonth(currentMonth);
-    return eachDayOfInterval({ start, end });
-  };
-
-  const getStartDayOfWeek = () => {
-    return startOfMonth(currentMonth).getDay();
-  };
+  const getDaysInMonth = () => eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) });
+  const getStartDayOfWeek = () => startOfMonth(currentMonth).getDay();
 
   const handleDateSelect = (date: Date) => {
-    const newDate = setMinutes(setHours(date, hours), minutes);
+    const h24 = get24Hour(hour12, isPM);
+    const newDate = setMinutes(setHours(date, h24), minutes);
     setSelectedDate(newDate);
     emitChange(newDate);
   };
 
-  const handleTimeChange = (newHours: number, newMinutes: number) => {
-    setHoursState(newHours);
-    setMinutesState(newMinutes);
+  const handleTimeChange = (newH12: number, newMin: number, newPM: boolean) => {
+    setHour12(newH12);
+    setMinutesState(newMin);
+    setIsPM(newPM);
     
     if (selectedDate) {
-      const newDate = setMinutes(setHours(selectedDate, newHours), newMinutes);
+      const h24 = get24Hour(newH12, newPM);
+      const newDate = setMinutes(setHours(selectedDate, h24), newMin);
       setSelectedDate(newDate);
       emitChange(newDate);
     }
   };
 
   const emitChange = (date: Date) => {
-    // Format as datetime-local compatible string
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -103,6 +107,28 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     onChange('');
   };
 
+  const handleTypeSubmit = () => {
+    if (!typeValue.trim()) return;
+    const formats = ['dd/MM/yyyy HH:mm', 'dd-MM-yyyy HH:mm', 'MM/dd/yyyy HH:mm', 'yyyy-MM-dd HH:mm', 'dd/MM/yyyy h:mm a', 'dd MMM yyyy HH:mm', 'MMM dd, yyyy HH:mm', 'dd/MM/yyyy', 'dd-MM-yyyy', 'MM/dd/yyyy', 'yyyy-MM-dd'];
+    let parsed: Date | null = null;
+    for (const fmt of formats) {
+      const result = parse(typeValue, fmt, new Date());
+      if (isValid(result)) { parsed = result; break; }
+    }
+    if (parsed) {
+      setSelectedDate(parsed);
+      setCurrentMonth(parsed);
+      const h = getHours(parsed);
+      setHour12(h === 0 ? 12 : h > 12 ? h - 12 : h);
+      setMinutesState(getMinutes(parsed));
+      setIsPM(h >= 12);
+      emitChange(parsed);
+      setTypeValue('');
+      setMode('picker');
+      setIsOpen(false);
+    }
+  };
+
   const formatDisplayValue = () => {
     if (!selectedDate) return '';
     return format(selectedDate, showTimeSelect ? 'MMM d, yyyy • h:mm a' : 'MMM d, yyyy');
@@ -110,6 +136,27 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 
   const days = getDaysInMonth();
   const startPadding = getStartDayOfWeek();
+
+  // Spinner component for time
+  const TimeSpinner = ({ value, onChange, min, max, step = 1, display }: { value: number; onChange: (v: number) => void; min: number; max: number; step?: number; display?: (v: number) => string }) => (
+    <div className="flex flex-col items-center gap-0.5">
+      <button
+        onClick={() => onChange(value >= max ? min : value + step)}
+        className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+      >
+        <ChevronUp size={14} />
+      </button>
+      <span className="w-8 h-7 flex items-center justify-center text-sm font-semibold text-white bg-white/10 rounded">
+        {display ? display(value) : String(value).padStart(2, '0')}
+      </span>
+      <button
+        onClick={() => onChange(value <= min ? max : value - step)}
+        className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+      >
+        <ChevronDown size={14} />
+      </button>
+    </div>
+  );
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
@@ -120,153 +167,148 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
         </label>
       )}
       
-      {/* Input Display */}
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-200 cursor-pointer hover:border-brand-500/50 transition-colors flex items-center justify-between group"
+        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-slate-200 cursor-pointer hover:border-brand-500/50 transition-colors flex items-center justify-between group"
       >
-        <div className="flex items-center gap-3">
-          <Calendar size={18} className="text-slate-400 group-hover:text-brand-500 transition-colors" />
+        <div className="flex items-center gap-2">
+          <Calendar size={16} className="text-slate-400 group-hover:text-brand-500 transition-colors" />
           <span className={selectedDate ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400'}>
             {formatDisplayValue() || placeholder}
           </span>
         </div>
         {selectedDate && (
-          <button
-            onClick={handleClear}
-            className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-          >
+          <button onClick={handleClear} className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
             <X size={14} />
           </button>
         )}
       </div>
 
-      {/* Dropdown Picker */}
       {isOpen && (
-        <div className="absolute z-50 top-full left-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden animate-scale-in w-full min-w-[320px]">
-          {/* Calendar Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-            <button
-              onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-              className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 transition-colors"
-            >
-              <ChevronLeft size={18} />
+        <div className="absolute z-50 top-full left-0 mt-2 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden animate-scale-in w-full min-w-[280px]">
+          {/* Mode Toggle */}
+          <div className="flex border-b border-slate-700">
+            <button onClick={() => setMode('picker')} className={`flex-1 py-2 text-xs font-medium transition-colors ${mode === 'picker' ? 'bg-brand-500/20 text-brand-400' : 'text-slate-400 hover:bg-slate-800'}`}>
+              <Calendar size={12} className="inline mr-1" /> Pick
             </button>
-            <span className="font-semibold text-slate-800 dark:text-slate-200">
-              {format(currentMonth, 'MMMM yyyy')}
-            </span>
-            <button
-              onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-              className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 transition-colors"
-            >
-              <ChevronRight size={18} />
+            <button onClick={() => setMode('type')} className={`flex-1 py-2 text-xs font-medium transition-colors ${mode === 'type' ? 'bg-brand-500/20 text-brand-400' : 'text-slate-400 hover:bg-slate-800'}`}>
+              <Keyboard size={12} className="inline mr-1" /> Type
             </button>
           </div>
 
-          <div className="p-4">
-            {/* Weekday Headers */}
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
-                <div key={day} className="text-center text-xs font-semibold text-slate-400 dark:text-slate-500 py-1">
-                  {day}
-                </div>
-              ))}
+          {mode === 'type' ? (
+            <div className="p-3">
+              <input
+                ref={typeInputRef}
+                type="text"
+                value={typeValue}
+                onChange={(e) => setTypeValue(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleTypeSubmit()}
+                placeholder="e.g. 15/01/2026 2:30 PM"
+                className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+              />
+              <p className="mt-2 text-[10px] text-slate-500">Formats: dd/mm/yyyy hh:mm, Jan 15, 2026 14:30</p>
+              <button onClick={handleTypeSubmit} className="w-full mt-2 py-2 text-xs font-medium bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors">
+                Apply
+              </button>
             </div>
-
-            {/* Days Grid */}
-            <div className="grid grid-cols-7 gap-1">
-              {/* Empty cells for padding */}
-              {Array.from({ length: startPadding }).map((_, i) => (
-                <div key={`pad-${i}`} className="aspect-square" />
-              ))}
-              
-              {days.map((day) => {
-                const isSelected = selectedDate && isSameDay(day, selectedDate);
-                const isTodayDate = isToday(day);
-                const isCurrentMonth = isSameMonth(day, currentMonth);
-                
-                return (
-                  <button
-                    key={day.toISOString()}
-                    onClick={() => handleDateSelect(day)}
-                    className={`aspect-square rounded-lg text-sm font-medium transition-all flex items-center justify-center
-                      ${isSelected 
-                        ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/30' 
-                        : isTodayDate 
-                          ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/30' 
-                          : isCurrentMonth 
-                            ? 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800' 
-                            : 'text-slate-400 dark:text-slate-600'
-                      }
-                    `}
-                  >
-                    {format(day, 'd')}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Time Picker */}
-            {showTimeSelect && (
-              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <div className="flex items-center gap-3">
-                  <Clock size={16} className="text-slate-400" />
-                  <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Time</span>
-                </div>
-                <div className="flex items-center gap-2 mt-3">
-                  {/* Hours */}
-                  <select
-                    value={hours}
-                    onChange={(e) => handleTimeChange(parseInt(e.target.value), minutes)}
-                    className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
-                  >
-                    {Array.from({ length: 24 }).map((_, i) => (
-                      <option key={i} value={i}>
-                        {String(i).padStart(2, '0')}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="text-slate-400 font-bold">:</span>
-                  {/* Minutes */}
-                  <select
-                    value={minutes}
-                    onChange={(e) => handleTimeChange(hours, parseInt(e.target.value))}
-                    className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
-                  >
-                    {Array.from({ length: 60 }).map((_, i) => (
-                      <option key={i} value={i}>
-                        {String(i).padStart(2, '0')}
-                      </option>
-                    ))}
-                  </select>
-                  {/* AM/PM display */}
-                  <span className="px-3 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                    {hours >= 12 ? 'PM' : 'AM'}
-                  </span>
-                </div>
+          ) : (
+            <div className="p-3">
+              {/* Calendar Header */}
+              <div className="flex items-center justify-between mb-2">
+                <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 transition-colors">
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="text-sm font-semibold text-white">{format(currentMonth, 'MMM yyyy')}</span>
+                <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 transition-colors">
+                  <ChevronRight size={16} />
+                </button>
               </div>
-            )}
 
-            {/* Quick Actions */}
-            <div className="flex gap-2 mt-4">
-              <button
-                onClick={() => {
-                  const now = new Date();
-                  setCurrentMonth(now);
-                  handleDateSelect(now);
-                }}
-                className="flex-1 py-2 text-sm font-medium text-brand-600 dark:text-brand-400 bg-brand-500/10 hover:bg-brand-500/20 rounded-lg transition-colors"
-              >
-                Now
-              </button>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="flex-1 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
-              >
-                Done
-              </button>
+              {/* Weekday Headers */}
+              <div className="grid grid-cols-7 gap-0.5 mb-1">
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                  <div key={i} className="text-center text-[10px] font-semibold text-slate-500 py-1">{day}</div>
+                ))}
+              </div>
+
+              {/* Days Grid */}
+              <div className="grid grid-cols-7 gap-0.5">
+                {Array.from({ length: startPadding }).map((_, i) => <div key={`pad-${i}`} className="w-8 h-8" />)}
+                {days.map((day) => {
+                  const isSelected = selectedDate && isSameDay(day, selectedDate);
+                  const isTodayDate = isToday(day);
+                  const isCurrentMonth = isSameMonth(day, currentMonth);
+                  return (
+                    <button
+                      key={day.toISOString()}
+                      onClick={() => handleDateSelect(day)}
+                      className={`w-8 h-8 rounded-md text-xs font-medium transition-all flex items-center justify-center
+                        ${isSelected ? 'bg-brand-500 text-white' : isTodayDate ? 'bg-brand-500/20 text-brand-400' : isCurrentMonth ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600'}
+                      `}
+                    >
+                      {format(day, 'd')}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Time Picker - 12h format with AM/PM toggle */}
+              {showTimeSelect && (
+                <div className="mt-3 pt-3 border-t border-slate-700">
+                  <div className="flex items-center justify-center gap-3">
+                    <Clock size={14} className="text-slate-400" />
+                    <TimeSpinner 
+                      value={hour12} 
+                      onChange={(v) => handleTimeChange(v, minutes, isPM)} 
+                      min={1} 
+                      max={12} 
+                    />
+                    <span className="text-white font-bold">:</span>
+                    <TimeSpinner 
+                      value={minutes} 
+                      onChange={(v) => handleTimeChange(hour12, v, isPM)} 
+                      min={0} 
+                      max={55} 
+                      step={5} 
+                    />
+                    {/* AM/PM Toggle */}
+                    <button
+                      onClick={() => handleTimeChange(hour12, minutes, !isPM)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        isPM 
+                          ? 'bg-brand-500 text-white' 
+                          : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                      }`}
+                    >
+                      {isPM ? 'PM' : 'AM'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Quick Actions */}
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={() => {
+                    const now = new Date();
+                    setCurrentMonth(now);
+                    const h = getHours(now);
+                    setHour12(h === 0 ? 12 : h > 12 ? h - 12 : h);
+                    setMinutesState(getMinutes(now));
+                    setIsPM(h >= 12);
+                    handleDateSelect(now);
+                  }}
+                  className="flex-1 py-1.5 text-xs font-medium text-brand-400 bg-brand-500/10 hover:bg-brand-500/20 rounded-md transition-colors"
+                >
+                  Now
+                </button>
+                <button onClick={() => setIsOpen(false)} className="flex-1 py-1.5 text-xs font-medium text-slate-400 bg-slate-800 hover:bg-slate-700 rounded-md transition-colors">
+                  Done
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>
