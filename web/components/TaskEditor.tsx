@@ -337,7 +337,11 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                  </button>
              </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5">
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5"
+            aria-label="Close"
+          >
             <X size={20} />
           </button>
         </div>
@@ -357,14 +361,15 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                     <button 
                         onClick={handleAIEnhance} 
                         className="w-full py-2.5 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 hover:from-purple-500/20 hover:to-indigo-500/20 text-purple-600 dark:text-purple-400 rounded-xl text-sm font-medium transition-all border border-purple-500/20 hover:border-purple-500/30 group"
+                        disabled={isEnhancing}
                     >
                         <Wand2 size={16} className="group-hover:rotate-12 transition-transform" /> 
                         Auto-Enhance with Gemini AI
                     </button>
                 )}
                 {isEnhancing && (
-                    <div className="w-full py-2.5 flex items-center justify-center gap-2 text-slate-400 text-sm">
-                        <Wand2 size={16} className="animate-spin text-purple-400" /> Thinking...
+                    <div className="w-full py-2.5 flex items-center justify-center gap-2 text-slate-400 text-sm" role="status" aria-live="polite">
+                        <Wand2 size={16} className="animate-spin text-purple-400" aria-hidden="true" /> Thinking...
                     </div>
                 )}
             </div>
@@ -379,7 +384,13 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                    {tags.map(tag => (
                        <span key={tag} className="bg-brand-500/10 text-brand-600 dark:text-brand-300 text-xs font-medium px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-brand-500/20">
                            {tag}
-                           <button onClick={() => removeTag(tag)} className="hover:text-slate-800 dark:hover:text-white"><X size={12} /></button>
+                           <button
+                             onClick={() => removeTag(tag)}
+                             className="hover:text-slate-800 dark:hover:text-white"
+                             aria-label={`Remove tag ${tag}`}
+                           >
+                             <X size={12} />
+                           </button>
                        </span>
                    ))}
                </div>
@@ -805,6 +816,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                                 checked={st.isCompleted} 
                                 onChange={() => handleToggleSubtask(st.id)}
                                 className="rounded-md border-slate-400 dark:border-slate-600 bg-transparent text-brand-500 focus:ring-0 focus:ring-offset-0 w-4 h-4"
+                                aria-label={`Mark subtask "${st.title || 'untitled'}" as ${st.isCompleted ? 'incomplete' : 'complete'}`}
                             />
                             <input 
                                 type="text"
@@ -812,8 +824,13 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                                 onChange={(e) => handleUpdateSubtask(st.id, e.target.value)}
                                 className={`flex-1 bg-transparent border-none focus:ring-0 p-0 text-sm ${st.isCompleted ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-slate-200'}`}
                                 placeholder="What needs to be done?"
+                                aria-label="Subtask title"
                             />
-                            <button onClick={() => handleDeleteSubtask(st.id)} className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1">
+                            <button
+                                onClick={() => handleDeleteSubtask(st.id)}
+                                className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                                aria-label="Delete subtask"
+                            >
                                 <Trash2 size={14} />
                             </button>
                         </div>
