@@ -5,6 +5,7 @@ export const APP_NAME = "ChronoDeX";
 
 export const NAVIGATION_ITEMS = [
   { id: 'calendar', label: 'Calendar', icon: CalendarIcon },
+  { id: 'budget', label: 'Budget Plan', icon: Wallet },
   { 
     id: 'activities', 
     label: 'Activities', 
@@ -17,7 +18,6 @@ export const NAVIGATION_ITEMS = [
       { id: 'routines', label: 'Routines', icon: Repeat },
     ]
   },
-  { id: 'budget', label: 'Budget Plan', icon: Wallet },
 ];
 
 export const PRIORITY_COLORS = {

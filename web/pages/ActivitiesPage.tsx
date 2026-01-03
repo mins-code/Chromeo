@@ -219,7 +219,7 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
                   <div className={`p-3 rounded-xl ${cat.bg} ${cat.color} mb-2`}>
                     <Icon size={24} />
                   </div>
-                  <div className="bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full text-xs font-bold text-slate-600 dark:text-slate-300 transition-transform duration-300 group-hover:-translate-x-7">
+                  <div className="bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full text-xs font-bold text-slate-600 dark:text-slate-300">
                     {isRoutines ? `${count} Active` : `${count} Pending`}
                   </div>
                 </div>

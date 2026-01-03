@@ -2,9 +2,11 @@
 
 -- Drop the existing update policy
 DROP POLICY IF EXISTS "Users can update their own tasks" ON public.tasks;
+DROP POLICY IF EXISTS "Users can update their own tasks or shared tasks" ON public.tasks;
 
 -- Drop the existing delete policy
 DROP POLICY IF EXISTS "Users can delete their own tasks" ON public.tasks;
+DROP POLICY IF EXISTS "Users can delete their own tasks or shared tasks" ON public.tasks;
 
 -- Create new update policy that allows:
 -- 1. Task owner to update their own tasks

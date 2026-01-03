@@ -11,6 +11,8 @@ const mapDbTaskToTask = (dbTask: DbTask): Task => ({
   createdAt: new Date(dbTask.created_at).getTime(),
   tags: dbTask.tags || [],
   subtasks: dbTask.subtasks || [],
+  notificationEnabled: dbTask.notification_enabled,
+  notificationMinutesBefore: dbTask.notification_minutes_before,
   notificationTime: dbTask.notification_time
 });
 
@@ -83,6 +85,8 @@ export const createTask = async (task: Omit<Task, 'id' | 'createdAt'>): Promise<
     recurrence: task.recurrence,
     next_recurrence_date: nextRecurrenceDate,
     created_at: new Date().toISOString(),
+    notification_enabled: task.notificationEnabled,
+    notification_minutes_before: task.notificationMinutesBefore,
     notification_time: task.notificationTime || null
   };
 
@@ -124,6 +128,8 @@ export const updateTask = async (updatedTask: Task): Promise<Task | null> => {
     is_shared: updatedTask.isShared,
     recurrence: updatedTask.recurrence,
     next_recurrence_date: nextRecurrenceDate,
+    notification_enabled: updatedTask.notificationEnabled,
+    notification_minutes_before: updatedTask.notificationMinutesBefore,
     notification_time: updatedTask.notificationTime || null
   };
 

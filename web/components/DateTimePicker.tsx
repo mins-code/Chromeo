@@ -244,7 +244,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
                       key={day.toISOString()}
                       onClick={() => handleDateSelect(day)}
                       className={`w-8 h-8 rounded-md text-xs font-medium transition-all flex items-center justify-center
-                        ${isSelected ? 'bg-brand-500 text-white' : isTodayDate ? 'bg-brand-500/20 text-brand-400' : isCurrentMonth ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600'}
+                        ${isSelected ? 'bg-brand-500 text-white font-bold ring-2 ring-brand-400 shadow-lg shadow-brand-500/50' : isTodayDate ? 'bg-brand-500/20 text-brand-400' : isCurrentMonth ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600'}
                       `}
                     >
                       {format(day, 'd')}

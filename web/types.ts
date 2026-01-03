@@ -51,6 +51,7 @@ export interface Task {
   // Per-task notification settings (overrides global settings)
   notificationEnabled?: boolean; // undefined = use global, true/false = override
   notificationMinutesBefore?: number; // Custom lead time for this task
+  notificationTime?: string; // Absolute notification time (ISO date string)
 }
 
 
@@ -218,6 +219,8 @@ export interface DbTask {
   recurrence?: RecurrenceConfig;
   next_recurrence_date?: string;
   created_at: string;
+  notification_enabled?: boolean;
+  notification_minutes_before?: number;
   notification_time?: string;
 }
 
