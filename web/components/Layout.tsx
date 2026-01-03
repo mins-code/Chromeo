@@ -640,23 +640,6 @@ export const Layout: React.FC<LayoutProps> = ({
                                         Personal
                                     </button>
                                     <button
-                                        onClick={() => onViewSourceModeChange('partners')}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                                            viewSourceMode === 'partners'
-                                                ? currentTheme === 'onepiece'
-                                                    ? 'bg-[#8B4513] text-white shadow-sm'
-                                                    : currentTheme === 'cyberpunk'
-                                                    ? 'bg-[#FF00FF] text-white shadow-sm'
-                                                    : currentTheme === 'sunset'
-                                                    ? 'bg-orange-500 text-white shadow-sm'
-                                                    : 'bg-purple-500 text-white shadow-sm'
-                                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                                        }`}
-                                        title="View partner's shared data"
-                                    >
-                                        Partners
-                                    </button>
-                                    <button
                                         onClick={() => onViewSourceModeChange('combined')}
                                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                                             viewSourceMode === 'combined'
@@ -672,6 +655,23 @@ export const Layout: React.FC<LayoutProps> = ({
                                         title="View combined data"
                                     >
                                         Combined
+                                    </button>
+                                    <button
+                                        onClick={() => onViewSourceModeChange('partners')}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                            viewSourceMode === 'partners'
+                                                ? currentTheme === 'onepiece'
+                                                    ? 'bg-[#8B4513] text-white shadow-sm'
+                                                    : currentTheme === 'cyberpunk'
+                                                    ? 'bg-[#FF00FF] text-white shadow-sm'
+                                                    : currentTheme === 'sunset'
+                                                    ? 'bg-orange-500 text-white shadow-sm'
+                                                    : 'bg-purple-500 text-white shadow-sm'
+                                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                                        }`}
+                                        title="View partner's shared data"
+                                    >
+                                        Partners
                                     </button>
                                 </div>
                             )}
