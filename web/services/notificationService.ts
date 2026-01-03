@@ -26,6 +26,10 @@ const PUSH_SUBSCRIPTION_KEY = 'chronodex_push_subscription';
 // Generate with: npx web-push generate-vapid-keys
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
 
+// Feature flag to disable push notification backend calls
+// Set to true when the push-notification Edge Function is properly deployed and working
+const PUSH_NOTIFICATIONS_BACKEND_ENABLED = false;
+
 /**
  * Check if browser supports notifications
  */
@@ -109,6 +113,12 @@ const urlBase64ToUint8Array = (base64String: string): Uint8Array => {
  * Subscribe to Web Push notifications
  */
 export const subscribeToPush = async (): Promise<boolean> => {
+  // Skip if backend is disabled
+  if (!PUSH_NOTIFICATIONS_BACKEND_ENABLED) {
+    console.debug('Push notification backend is disabled');
+    return false;
+  }
+
   if (!isPushSupported()) {
     console.warn('Push notifications not supported in this browser');
     return false;
@@ -167,6 +177,8 @@ export const subscribeToPush = async (): Promise<boolean> => {
  * Unsubscribe from Web Push notifications
  */
 export const unsubscribeFromPush = async (): Promise<boolean> => {
+  // Skip if backend is disabled
+  if (!PUSH_NOTIFICATIONS_BACKEND_ENABLED) return true;
   if (!isPushSupported()) return true;
 
   try {
@@ -284,6 +296,9 @@ export const scheduleNotification = async (
     taskId?: string;
   }
 ): Promise<boolean> => {
+  // Skip if backend is disabled
+  if (!PUSH_NOTIFICATIONS_BACKEND_ENABLED) return false;
+
   const settings = getSettings();
   if (!settings.enabled) return false;
 
@@ -331,6 +346,9 @@ export const scheduleNotification = async (
  * Cancel a scheduled notification
  */
 export const cancelNotification = async (taskId: string): Promise<boolean> => {
+  // Skip if backend is disabled
+  if (!PUSH_NOTIFICATIONS_BACKEND_ENABLED) return false;
+
   try {
     const { error } = await supabase.functions.invoke('push-notification', {
       body: {
