@@ -161,21 +161,12 @@ const App: React.FC = () => {
     // SMS Listener
     const { lastSmsTransaction, setLastSmsTransaction } = useSMSListener();
 
-    // Notification Scheduler - only initialize when user is authenticated
-    // This prevents 401 errors from push notification API calls for anonymous/logged-out users
-    const notificationData = session ? 
-        useNotificationScheduler(tasks, notificationSettings, setNotificationSettings) :
-        {
-            notificationPermission: 'denied' as NotificationPermission,
-            handleNotificationToggle: async () => {},
-            handleNotificationPreferenceChange: () => {}
-        };
-    
+    // Notification Scheduler
     const { 
         notificationPermission,
         handleNotificationToggle, 
         handleNotificationPreferenceChange 
-    } = notificationData;
+    } = useNotificationScheduler(tasks, notificationSettings, setNotificationSettings);
 
     // Recurring Processor
     const { 
