@@ -323,7 +323,7 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
                 <div className="flex-1 max-w-[85%]">
                   <div className={`rounded-2xl px-5 py-3.5 text-sm leading-relaxed shadow-md whitespace-pre-wrap ${
                       msg.role === 'user' 
-                      ? 'bg-brand-500 text-white rounded-tr-none' 
+                      ? 'bg-white/90 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-tr-none border border-slate-200 dark:border-white/10' 
                       : 'bg-white/80 dark:bg-slate-800 border border-slate-200 dark:border-white/5 text-slate-700 dark:text-slate-200 rounded-tl-none'
                   }`}>
                     {renderMessageText(msg.text)}
@@ -344,7 +344,7 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
                   </div>
                   <div className="flex items-center gap-2 mt-1 px-2">
                     <span className="text-xs text-slate-500 dark:text-slate-400">{getRelativeTime(msg.timestamp)}</span>
-                    {msg.role === 'model' && msg.status === 'sent' && (
+                    {msg.status === 'sent' && (
                       <button
                         onClick={() => handleCopyMessage(msg.text, msg.id)}
                         className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 flex items-center gap-1"
