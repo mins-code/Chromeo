@@ -323,12 +323,18 @@ const App: React.FC = () => {
     };
 
     const handleSaveTask = async (taskData: Partial<Task>) => {
+        console.log('[App] handleSaveTask called with:', taskData);
         let savedTask: Task | null = null;
 
-        if (taskData.id) {
-            savedTask = await updateTask(taskData as Task);
-        } else {
-            savedTask = await createTask(taskData as Omit<Task, 'id' | 'createdAt'>);
+        try {
+            if (taskData.id) {
+                savedTask = await updateTask(taskData as Task);
+            } else {
+                savedTask = await createTask(taskData as Omit<Task, 'id' | 'createdAt'>);
+            }
+            console.log('[App] Task saved successfully:', savedTask);
+        } catch (error) {
+            console.error('[App] Error saving task:', error);
         }
 
         if (savedTask && savedTask.tags) {

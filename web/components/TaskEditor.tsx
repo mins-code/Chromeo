@@ -167,7 +167,11 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
   if (!isOpen) return null;
 
   const handleSave = () => {
-    if (!title.trim()) return;
+    console.log('[TaskEditor] Save clicked, title:', title);
+    if (!title.trim()) {
+      console.warn('[TaskEditor] Title is empty, cannot save');
+      return;
+    }
     
     const recurrence: RecurrenceConfig | undefined = recurrenceFreq !== 'none' ? {
       frequency: recurrenceFreq,

@@ -503,7 +503,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                     <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
                                         {selectedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
                                     </h3>
-                                    <p className="text-xs text-slate-500 font-medium">{selectedDayTasks.length} tasks scheduled</p>
+                                    <p className="text-xs text-slate-500 font-medium">{selectedDayTasks.length} activities scheduled</p>
                                 </div>
                                 <button onClick={() => setSelectedDate(null)} className="p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-slate-400 hover:text-slate-800 dark:hover:text-white">
                                     <X size={20} />
@@ -512,7 +512,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
 
                             <div className="flex-1 overflow-y-auto p-4 space-y-3">
                                 {selectedDayTasks.length === 0 && (
-                                    <p className="text-center text-slate-500 py-8 italic">No tasks for this day.</p>
+                                    <p className="text-center text-slate-500 py-8 italic">No activities for this day.</p>
                                 )}
                                 {selectedDayTasks.map(task => {
                                     const colorClass = TYPE_COLORS[task.type] || TYPE_COLORS.TASK;
@@ -575,7 +575,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                         setSelectedDate(null);
                                     }}
                                 >
-                                    <Plus size={16} className="mr-2" /> Add Task for this Day
+                                    <Plus size={16} className="mr-2" /> Add Activity for this Day
                                 </Button>
                             </div>
                         </div>
