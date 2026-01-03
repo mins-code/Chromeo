@@ -61,9 +61,40 @@ const CalendarDayCell = memo(({ day, date, tasks, financialItems = [], isToday, 
             )}
           </div>
           <div className="flex-1 flex flex-col gap-1 overflow-hidden">
-            {tasks.slice(0, 3).map(task => (
-              <DraggableTask key={task.id} task={task} variant="chip" />
-            ))}
+            {tasks.slice(0, 3).map(task => {
+              // Check if this is a recurring task
+              const isRecurring = task.recurrence && task.recurrence.frequency !== 'none';
+              
+              // If recurring, check if this date is the most recent/relevant occurrence
+              let isMostRecentOccurrence = true;
+              if (isRecurring && date && (task.dueDate || task.reminderTime)) {
+                const taskDateStr = task.dueDate || task.reminderTime;
+                const taskDate = new Date(taskDateStr);
+                
+                // Normalize dates to compare only date parts
+                const taskDateOnly = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
+                const currentDateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                const today = new Date();
+                const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                
+                // Calculate days from today for both the task's original date and the current occurrence
+                const daysFromTodayOriginal = Math.abs(todayOnly.getTime() - taskDateOnly.getTime());
+                const daysFromTodayCurrent = Math.abs(todayOnly.getTime() - currentDateOnly.getTime());
+                
+                // The most recent occurrence is the one closest to today
+                // If the current cell's date is farther from today than the original date, dull it
+                isMostRecentOccurrence = daysFromTodayCurrent <= daysFromTodayOriginal;
+              }
+              
+              // Apply opacity if it's a recurring task but not the most recent occurrence
+              const shouldDull = isRecurring && !isMostRecentOccurrence;
+              
+              return (
+                <div key={task.id} className={shouldDull ? 'opacity-50' : ''}>
+                  <DraggableTask task={task} variant="chip" />
+                </div>
+              );
+            })}
             {tasks.length > 3 && (
               <div className="text-[10px] text-slate-500 pl-1">
                 +{tasks.length - 3} more

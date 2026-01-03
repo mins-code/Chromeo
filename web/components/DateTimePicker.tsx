@@ -138,25 +138,42 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   const startPadding = getStartDayOfWeek();
 
   // Spinner component for time
-  const TimeSpinner = ({ value, onChange, min, max, step = 1, display }: { value: number; onChange: (v: number) => void; min: number; max: number; step?: number; display?: (v: number) => string }) => (
-    <div className="flex flex-col items-center gap-0.5">
-      <button
-        onClick={() => onChange(value >= max ? min : value + step)}
-        className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+  const TimeSpinner = ({ value, onChange, min, max, step = 1, display }: { value: number; onChange: (v: number) => void; min: number; max: number; step?: number; display?: (v: number) => string }) => {
+    const handleWheel = (e: React.WheelEvent) => {
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        // Scrolling up - increment
+        onChange(value >= max ? min : value + step);
+      } else {
+        // Scrolling down - decrement
+        onChange(value <= min ? max : value - step);
+      }
+    };
+
+    return (
+      <div 
+        className="flex flex-col items-center gap-0.5 cursor-ns-resize" 
+        onWheel={handleWheel}
+        title="Scroll to change value"
       >
-        <ChevronUp size={14} />
-      </button>
-      <span className="w-8 h-7 flex items-center justify-center text-sm font-semibold text-white bg-white/10 rounded">
-        {display ? display(value) : String(value).padStart(2, '0')}
-      </span>
-      <button
-        onClick={() => onChange(value <= min ? max : value - step)}
-        className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-      >
-        <ChevronDown size={14} />
-      </button>
-    </div>
-  );
+        <button
+          onClick={() => onChange(value >= max ? min : value + step)}
+          className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+        >
+          <ChevronUp size={14} />
+        </button>
+        <span className="w-8 h-7 flex items-center justify-center text-sm font-semibold text-white bg-white/10 rounded">
+          {display ? display(value) : String(value).padStart(2, '0')}
+        </span>
+        <button
+          onClick={() => onChange(value <= min ? max : value - step)}
+          className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+        >
+          <ChevronDown size={14} />
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
