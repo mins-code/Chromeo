@@ -71,12 +71,11 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
     return Array.from(tagSet).sort();
   }, [availableTasks]);
   
-  // Filter tags based on input
+  // Filter tags based on input - case sensitive matching
   const suggestedTags = React.useMemo(() => {
     if (!newTag.trim()) return existingTags;
-    const searchTerm = newTag.toLowerCase();
     return existingTags.filter(tag => 
-      tag.toLowerCase().includes(searchTerm) && !tags.includes(tag)
+      tag.includes(newTag.trim()) && !tags.includes(tag)
     );
   }, [newTag, existingTags, tags]);
 
@@ -373,7 +372,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
             <div className="relative">
                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 ml-1 flex items-center gap-2">
                    Tags
-                   {newTag && <span className="text-[10px] normal-case font-normal text-brand-500 animate-fade-in">Type or select from suggestions</span>}
+                   {newTag && <span className="text-[10px] normal-case font-normal text-brand-500 animate-fade-in">Type tag and press enter</span>}
                </label>
                <div className="flex flex-wrap gap-2 mb-3">
                    {tags.map(tag => (

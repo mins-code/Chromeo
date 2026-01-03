@@ -224,6 +224,8 @@ export const Layout: React.FC<LayoutProps> = ({
 
     const handleEditKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
             submitEditTag();
         } else if (e.key === 'Escape') {
             setEditingTag(null);
