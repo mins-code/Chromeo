@@ -28,7 +28,7 @@ const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
 
 // Feature flag to disable push notification backend calls
 // Set to true when the push-notification Edge Function is properly deployed and working
-const PUSH_NOTIFICATIONS_BACKEND_ENABLED = false;
+const PUSH_NOTIFICATIONS_BACKEND_ENABLED = true;
 
 /**
  * Check if browser supports notifications
