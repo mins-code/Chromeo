@@ -387,26 +387,59 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                        </span>
                    ))}
                </div>
-               <Input 
-                   placeholder="Type tag and press Enter" 
-                   value={newTag} 
-                   onChange={e => {
-                       setNewTag(e.target.value);
-                       setShowTagSuggestions(true);
-                       setSelectedSuggestionIndex(0);
-                   }}
-                   onKeyDown={handleAddTag}
-                   onFocus={() => {
-                       if (suggestedTags.length > 0) {
-                           setShowTagSuggestions(true);
-                       }
-                   }}
-                   onBlur={() => {
-                       // Delay to allow click on suggestion
-                       setTimeout(() => setShowTagSuggestions(false), 150);
-                   }}
-                   className="text-sm py-2"
-               />
+               <div className="flex gap-2">
+                   <div className="flex-1">
+                       <Input 
+                           placeholder="Type tag..." 
+                           value={newTag} 
+                           onChange={e => {
+                               setNewTag(e.target.value);
+                               setShowTagSuggestions(true);
+                               setSelectedSuggestionIndex(0);
+                           }}
+                           onKeyDown={handleAddTag}
+                           onFocus={() => {
+                               if (suggestedTags.length > 0) {
+                                   setShowTagSuggestions(true);
+                               }
+                           }}
+                           onBlur={() => {
+                               // Delay to allow click on suggestion
+                               setTimeout(() => setShowTagSuggestions(false), 150);
+                           }}
+                           className="text-sm py-2"
+                           enterKeyHint="done"
+                       />
+                   </div>
+                   <button
+                       type="button"
+                       onClick={() => {
+                           if (showTagSuggestions && suggestedTags.length > 0 && selectedSuggestionIndex >= 0) {
+                               const selectedTag = suggestedTags[selectedSuggestionIndex];
+                               if (!tags.includes(selectedTag)) {
+                                   setTags([...tags, selectedTag]);
+                               }
+                               setNewTag('');
+                               setShowTagSuggestions(false);
+                               setSelectedSuggestionIndex(0);
+                           } else if (newTag.trim()) {
+                               if (!tags.includes(newTag.trim())) {
+                                   setTags([...tags, newTag.trim()]);
+                               }
+                               setNewTag('');
+                               setShowTagSuggestions(false);
+                           }
+                       }}
+                       disabled={!newTag.trim() && !(showTagSuggestions && suggestedTags.length > 0)}
+                       className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                           newTag.trim() || (showTagSuggestions && suggestedTags.length > 0)
+                               ? 'bg-brand-500 text-white shadow-md hover:bg-brand-600 active:scale-95'
+                               : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                       }`}
+                   >
+                       <Plus size={18} />
+                   </button>
+               </div>
                
                {/* Autocomplete Dropdown */}
                {showTagSuggestions && suggestedTags.length > 0 && (

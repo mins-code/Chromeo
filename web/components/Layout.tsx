@@ -837,7 +837,9 @@ export const Layout: React.FC<LayoutProps> = ({
                     {onOpenAI && (
                         <button
                             onClick={onOpenAI}
-                            className={`hidden md:flex fixed bottom-6 right-6 z-50 items-center gap-2 px-4 py-3 rounded-2xl hover:scale-105 transition-all active:scale-95 group ${
+                            className={`fixed z-50 flex items-center gap-2 rounded-2xl hover:scale-105 transition-all active:scale-95 group ${
+                                /* Mobile: icon only, positioned above FAB */
+                                /* Desktop: full button with text */
                                 currentTheme === 'cyberpunk'
                                     ? 'bg-gradient-to-r from-[#00FFFF] to-[#FF00FF] text-[#0a0014] shadow-[0_8px_30px_rgba(0,255,255,0.4)] hover:shadow-[0_12px_40px_rgba(0,255,255,0.6)]'
                                     : currentTheme === 'sunset'
@@ -847,10 +849,10 @@ export const Layout: React.FC<LayoutProps> = ({
                                     : currentTheme === 'light'
                                     ? 'bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-[0_8px_30px_rgba(30,58,95,0.3)] hover:shadow-[0_12px_40px_rgba(30,58,95,0.4)]'
                                     : 'bg-gradient-to-r from-white to-slate-200 text-slate-900 shadow-[0_8px_30px_rgba(255,255,255,0.2)] hover:shadow-[0_12px_40px_rgba(255,255,255,0.3)]'
-                            }`}
+                            } bottom-40 right-4 p-3 md:bottom-6 md:right-6 md:px-4 md:py-3`}
                         >
                             <Bot size={22} className="group-hover:animate-pulse" />
-                            <span className="font-semibold">AI Assistant</span>
+                            <span className="hidden md:inline font-semibold">AI Assistant</span>
                         </button>
                     )}
                 </div>

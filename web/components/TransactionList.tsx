@@ -98,17 +98,18 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                         const isEditing = editingId === t.id;
 
                         return (
-                            <div key={t.id} className={`flex items-center justify-between p-3 rounded-xl border transition-colors group ${
+                            <div key={t.id} className={`p-3 rounded-xl border transition-colors group ${
                                 isEditing 
                                     ? 'bg-brand-500/5 border-brand-500/30' 
                                     : 'bg-slate-50/50 dark:bg-white/5 border-slate-100 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/10'
                             }`}>
                                 {isEditing ? (
-                                    <>
-                                        <div className="flex items-center gap-3 flex-1">
+                                    /* Edit Mode - Mobile Friendly Vertical Layout */
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-3">
                                             <button
                                                 onClick={() => setEditType(editType === 'expense' ? 'income' : 'expense')}
-                                                className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                                className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${
                                                     editType === 'income' 
                                                         ? 'bg-emerald-500/10 text-emerald-500' 
                                                         : 'bg-red-500/10 text-red-500'
@@ -117,90 +118,89 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                                             >
                                                 {editType === 'income' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
                                             </button>
-                                            <div className="flex-1 flex gap-2">
-                                                <input
-                                                    type="text"
-                                                    value={editDesc}
-                                                    onChange={(e) => setEditDesc(e.target.value)}
-                                                    className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
-                                                    placeholder="Description"
-                                                />
-                                                <input
-                                                    type="number"
-                                                    value={editAmount}
-                                                    onChange={(e) => setEditAmount(e.target.value)}
-                                                    className="w-32 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
-                                                    placeholder="Amount"
-                                                />
-                                            </div>
+                                            <input
+                                                type="text"
+                                                value={editDesc}
+                                                onChange={(e) => setEditDesc(e.target.value)}
+                                                className="flex-1 min-w-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+                                                placeholder="Description"
+                                            />
                                         </div>
                                         <div className="flex items-center gap-2">
+                                            <input
+                                                type="number"
+                                                value={editAmount}
+                                                onChange={(e) => setEditAmount(e.target.value)}
+                                                className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+                                                placeholder="Amount"
+                                            />
                                             <button
                                                 onClick={() => saveEdit(t.id)}
-                                                className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors"
+                                                className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors"
                                                 title="Save"
                                             >
-                                                <Check size={16} />
+                                                <Check size={18} />
                                             </button>
                                             <button
                                                 onClick={cancelEdit}
-                                                className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+                                                className="p-2.5 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
                                                 title="Cancel"
                                             >
-                                                <X size={16} />
+                                                <X size={18} />
                                             </button>
                                         </div>
-                                    </>
+                                    </div>
                                 ) : (
-                                    <>
-                                        <div className="flex items-center gap-3 flex-1">
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                                t.type === 'income' 
-                                                    ? 'bg-emerald-500/10 text-emerald-500' 
-                                                    : 'bg-red-500/10 text-red-500'
-                                            }`}>
-                                                {t.type === 'income' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
+                                    /* Display Mode - Mobile Friendly Layout */
+                                    <div className="flex items-start gap-3">
+                                        <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${
+                                            t.type === 'income' 
+                                                ? 'bg-emerald-500/10 text-emerald-500' 
+                                                : 'bg-red-500/10 text-red-500'
+                                        }`}>
+                                            {t.type === 'income' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-start justify-between gap-2">
                                                 <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm truncate">{t.description}</p>
-                                                <div className="flex items-center gap-2 text-xs text-slate-500">
-                                                    <Calendar size={12} />
+                                                {(onEdit || onDelete) && (
+                                                    <div className="flex gap-1 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                                        {onEdit && (
+                                                            <button
+                                                                onClick={() => startEdit(t)}
+                                                                className="p-1.5 rounded-lg text-slate-400 hover:bg-brand-500/10 hover:text-brand-500 transition-colors"
+                                                                title="Edit"
+                                                            >
+                                                                <Edit2 size={14} />
+                                                            </button>
+                                                        )}
+                                                        {onDelete && (
+                                                            <button
+                                                                onClick={() => handleDelete(t.id)}
+                                                                className="p-1.5 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                                                                title="Delete"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                                                <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                                                    <Calendar size={11} />
                                                     <span>{new Date(t.date).toLocaleDateString()}</span>
                                                     <span>•</span>
                                                     <span>{new Date(t.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                 </div>
+                                                <span className={`font-bold font-mono text-sm ${
+                                                    t.type === 'income' ? 'text-emerald-500' : 'text-red-500'
+                                                }`}>
+                                                    {t.type === 'income' ? '+' : '-'}₹{t.amount.toLocaleString('en-IN')}
+                                                </span>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className={`font-bold font-mono ${
-                                                t.type === 'income' ? 'text-emerald-500' : 'text-slate-700 dark:text-slate-300'
-                                            }`}>
-                                                {t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
-                                            </span>
-                                            {(onEdit || onDelete) && (
-                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    {onEdit && (
-                                                        <button
-                                                            onClick={() => startEdit(t)}
-                                                            className="p-1.5 rounded-lg text-slate-400 hover:bg-brand-500/10 hover:text-brand-500 transition-colors"
-                                                            title="Edit"
-                                                        >
-                                                            <Edit2 size={14} />
-                                                        </button>
-                                                    )}
-                                                    {onDelete && (
-                                                        <button
-                                                            onClick={() => handleDelete(t.id)}
-                                                            className="p-1.5 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
-                                                            title="Delete"
-                                                        >
-                                                            <Trash2 size={14} />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </>
+                                    </div>
                                 )}
                             </div>
                         );

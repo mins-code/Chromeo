@@ -55,25 +55,24 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasks = [], onEdit, onTogg
         </button>
 
         {/* Content Area */}
-        <div className="flex-1 min-w-0 pr-20">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className={`font-semibold text-[15px] truncate flex items-center gap-2 ${isDone ? 'text-slate-400 dark:text-slate-500 line-through decoration-slate-400' : 'text-slate-800 dark:text-slate-100'} ${isBlocked && !isDone ? 'text-slate-500' : ''}`}>
-              {task.title}
-            </h3>
-
-            <div className="flex items-center gap-2">
-              {task.type !== 'TASK' && (
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${task.type === 'EVENT' ? 'bg-brand-500/10 text-brand-600 dark:text-brand-300' : 'bg-purple-500/10 text-purple-600 dark:text-purple-300'
-                  }`}>
-                  {typeLabel}
-                </span>
-              )}
-              {task.isShared && <Users size={14} className="text-blue-500 dark:text-blue-400" />}
-              <div className={`w-2 h-2 rounded-full ${task.priority === TaskPriority.HIGH ? 'bg-red-500 shadow-sm' :
-                  task.priority === TaskPriority.MEDIUM ? 'bg-yellow-500' : 'bg-green-500'
-                }`} />
-            </div>
+        <div className="flex-1 min-w-0 pr-16 sm:pr-20">
+          {/* Shared/Priority Indicators - Absolute positioned */}
+          <div className="absolute top-4 right-4 flex items-center gap-1.5 sm:right-14">
+            {task.type !== 'TASK' && (
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${task.type === 'EVENT' ? 'bg-brand-500/10 text-brand-600 dark:text-brand-300' : 'bg-purple-500/10 text-purple-600 dark:text-purple-300'
+                }`}>
+                {typeLabel}
+              </span>
+            )}
+            {task.isShared && <Users size={14} className="text-blue-500 dark:text-blue-400" />}
+            <div className={`w-2.5 h-2.5 rounded-full ${task.priority === TaskPriority.HIGH ? 'bg-red-500 shadow-sm' :
+                task.priority === TaskPriority.MEDIUM ? 'bg-yellow-500' : 'bg-green-500'
+              }`} />
           </div>
+
+          <h3 className={`font-semibold text-[15px] truncate pr-16 sm:pr-0 ${isDone ? 'text-slate-400 dark:text-slate-500 line-through decoration-slate-400' : 'text-slate-800 dark:text-slate-100'} ${isBlocked && !isDone ? 'text-slate-500' : ''}`}>
+            {task.title}
+          </h3>
 
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 line-clamp-2 leading-relaxed">
             {task.description || "No description"}

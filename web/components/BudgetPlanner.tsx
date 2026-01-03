@@ -138,6 +138,36 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
     
     const remaining = useMemo(() => budget.limit - totalExpenses, [budget.limit, totalExpenses]);
 
+    // Calculate daily safe spend based on remaining budget and days left in period
+    const dailySafeSpend = useMemo(() => {
+        const now = new Date();
+        let daysLeft = 1;
+        
+        switch (budget.duration) {
+            case 'Daily':
+                daysLeft = 1;
+                break;
+            case 'Weekly': {
+                const dayOfWeek = now.getDay(); // 0 = Sunday
+                daysLeft = 7 - dayOfWeek; // Days until end of week (Saturday)
+                break;
+            }
+            case 'Monthly': {
+                const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+                daysLeft = lastDay - now.getDate() + 1; // Days left including today
+                break;
+            }
+            case 'Yearly': {
+                const endOfYear = new Date(now.getFullYear(), 11, 31);
+                const diffTime = endOfYear.getTime() - now.getTime();
+                daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                break;
+            }
+        }
+        
+        return daysLeft > 0 ? remaining / daysLeft : remaining;
+    }, [remaining, budget.duration]);
+
     const formatCurrency = useCallback((val: number) => {
         return val.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
     }, []);
@@ -164,23 +194,23 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                         <IndianRupee size={240} className="text-brand-500" />
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-8 relative z-10">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6 relative z-10">
                         <div>
                             <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-widest font-mono">{t(currentTheme, 'totalBudget')}</p>
-                            <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{formatCurrency(budget.limit)}</p>
+                            <p className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">{formatCurrency(budget.limit)}</p>
                             <p className="text-[10px] text-slate-500 font-mono">/ {budget.duration}</p>
                         </div>
                         <div>
                             <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-widest font-mono">Expenses</p>
-                            <p className="text-2xl font-bold text-red-500">{formatCurrency(totalExpenses)}</p>
+                            <p className="text-xl sm:text-2xl font-bold text-red-500">{formatCurrency(totalExpenses)}</p>
                         </div>
                         <div>
                             <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-widest font-mono">{t(currentTheme, 'remaining')}</p>
-                            <p className="text-2xl font-bold text-brand-500">{formatCurrency(remaining)}</p>
+                            <p className="text-xl sm:text-2xl font-bold text-brand-500">{formatCurrency(remaining)}</p>
                         </div>
                         <div>
                             <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-widest font-mono">{t(currentTheme, 'income')}</p>
-                            <p className="text-2xl font-bold text-emerald-500">{formatCurrency(totalIncome)}</p>
+                            <p className="text-xl sm:text-2xl font-bold text-emerald-500">{formatCurrency(totalIncome)}</p>
                         </div>
                         <div className="relative group">
                             <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-widest font-mono flex items-center gap-2">
@@ -189,9 +219,16 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                                     {showSavings ? <EyeOff size={12} /> : <Eye size={12} />}
                                 </button>
                             </p>
-                            <p className={`text-2xl font-bold ${totalIncome - totalExpenses >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
+                            <p className={`text-xl sm:text-2xl font-bold ${totalIncome - totalExpenses >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
                                 {showSavings ? formatCurrency(totalIncome - totalExpenses) : '••••••'}
                             </p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-widest font-mono">Daily Safe</p>
+                            <p className={`text-xl sm:text-2xl font-bold ${dailySafeSpend >= 0 ? 'text-cyan-500' : 'text-red-500'}`}>
+                                {formatCurrency(Math.max(0, dailySafeSpend))}
+                            </p>
+                            <p className="text-[10px] text-slate-500 font-mono">/ day</p>
                         </div>
                     </div>
 

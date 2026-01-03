@@ -228,16 +228,18 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
             onClick={() => onSelect(user)}
             className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-left"
           >
-            <div className="w-8 h-8 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500">
+            <div className="w-8 h-8 shrink-0 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500">
               <User size={16} />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 overflow-hidden">
               <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
                 {user.fullName || user.email}
               </p>
               <p className="text-xs text-slate-500 truncate">{user.email}</p>
             </div>
-            <Plus size={16} className="text-brand-500" />
+            <span className="shrink-0 text-xs font-medium text-brand-500 bg-brand-500/10 px-2 py-1 rounded-lg">
+              Connect
+            </span>
           </button>
         ))
       )}

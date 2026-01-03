@@ -151,6 +151,13 @@ export const subscribeToPush = async (): Promise<boolean> => {
       return false;
     }
 
+    // Check for valid session to avoid 401 errors
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      console.error('No valid session');
+      return false;
+    }
+
     // Save subscription to backend
     const { error } = await supabase.functions.invoke('push-notification', {
       body: {
@@ -191,7 +198,8 @@ export const unsubscribeFromPush = async (): Promise<boolean> => {
 
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (user && session) {
       await supabase.functions.invoke('push-notification', {
         body: {
           action: 'unsubscribe',
@@ -312,6 +320,10 @@ export const scheduleNotification = async (
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
+    // Also check for a valid session to avoid 401 errors
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return false;
+
     // Silently fail if push notification function is not available
     // This prevents CORS errors when the function isn't deployed or configured
     const { error } = await supabase.functions.invoke('push-notification', {
@@ -350,6 +362,10 @@ export const cancelNotification = async (taskId: string): Promise<boolean> => {
   if (!PUSH_NOTIFICATIONS_BACKEND_ENABLED) return false;
 
   try {
+    // Check for valid session before making API call
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return false;
+
     const { error } = await supabase.functions.invoke('push-notification', {
       body: {
         action: 'cancel',

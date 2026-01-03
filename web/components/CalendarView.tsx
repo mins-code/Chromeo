@@ -323,45 +323,45 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         >
             <div className="h-full flex flex-col animate-fade-in relative">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6 border-b border-slate-200 dark:border-white/5 pb-4">
-                    <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6 border-b border-slate-200 dark:border-white/5 pb-4">
+                    <h2 className="text-xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">
                         {getHeaderTitle()}
                     </h2>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar">
                         {/* View Toggle */}
-                        <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+                        <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 sm:p-1 shrink-0">
                             <button
                                 onClick={() => setViewMode('month')}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                                className={`flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${
                                     viewMode === 'month'
                                         ? 'bg-white dark:bg-slate-700 text-brand-500 shadow-sm'
                                         : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
                             >
-                                <Calendar size={16} />
-                                Month
+                                <Calendar size={14} className="sm:w-4 sm:h-4" />
+                                <span className="hidden sm:inline">Month</span>
                             </button>
                             <button
                                 onClick={() => setViewMode('week')}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                                className={`flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${
                                     viewMode === 'week'
                                         ? 'bg-white dark:bg-slate-700 text-brand-500 shadow-sm'
                                         : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
                             >
-                                <CalendarDays size={16} />
-                                Week
+                                <CalendarDays size={14} className="sm:w-4 sm:h-4" />
+                                <span className="hidden sm:inline">Week</span>
                             </button>
                             <button
                                 onClick={() => setViewMode('day')}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                                className={`flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${
                                     viewMode === 'day'
                                         ? 'bg-white dark:bg-slate-700 text-brand-500 shadow-sm'
                                         : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
                             >
-                                <CalendarClock size={16} />
-                                Day
+                                <CalendarClock size={14} className="sm:w-4 sm:h-4" />
+                                <span className="hidden sm:inline">Day</span>
                             </button>
                             
                             {/* Custom Interval Dropdown */}
@@ -370,14 +370,14 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                     onClick={() => {
                                         setShowIntervalDropdown(!showIntervalDropdown);
                                     }}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                                    className={`flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${
                                         viewMode === 'custom'
                                             ? 'bg-white dark:bg-slate-700 text-brand-500 shadow-sm'
                                             : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                     }`}
                                 >
-                                    <Settings2 size={16} />
-                                    {viewMode === 'custom' ? getCustomIntervalLabel() : 'Custom'}
+                                    <Settings2 size={14} className="sm:w-4 sm:h-4" />
+                                    <span className="hidden sm:inline">{viewMode === 'custom' ? getCustomIntervalLabel() : 'Custom'}</span>
                                 </button>
                                 
                                 {showIntervalDropdown && (
@@ -422,18 +422,18 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                             variant="ghost" 
                             size="sm" 
                             onClick={() => setCurrentDate(new Date())}
-                            className="text-brand-500 hover:text-brand-600"
+                            className="text-brand-500 hover:text-brand-600 text-xs sm:text-sm shrink-0"
                         >
                             Today
                         </Button>
 
                         {/* Navigation */}
-                        <div className="flex gap-2">
-                            <Button variant="secondary" size="icon" onClick={() => navigate(-1)}>
-                                <ChevronLeft size={20} />
+                        <div className="flex gap-1 sm:gap-2 shrink-0">
+                            <Button variant="secondary" size="icon" onClick={() => navigate(-1)} className="w-8 h-8 sm:w-10 sm:h-10">
+                                <ChevronLeft size={18} className="sm:w-5 sm:h-5" />
                             </Button>
-                            <Button variant="secondary" size="icon" onClick={() => navigate(1)}>
-                                <ChevronRight size={20} />
+                            <Button variant="secondary" size="icon" onClick={() => navigate(1)} className="w-8 h-8 sm:w-10 sm:h-10">
+                                <ChevronRight size={18} className="sm:w-5 sm:h-5" />
                             </Button>
                         </div>
                     </div>

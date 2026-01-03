@@ -275,11 +275,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
                     {/* AM/PM Toggle */}
                     <button
                       onClick={() => handleTimeChange(hour12, minutes, !isPM)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                        isPM 
-                          ? 'bg-brand-500 text-white' 
-                          : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                      }`}
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-brand-500 text-slate-900"
                     >
                       {isPM ? 'PM' : 'AM'}
                     </button>
