@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import { Transaction } from '../types';
-import { ArrowUpRight, ArrowDownLeft, Calendar, Search, Edit2, Trash2, Check, X, Repeat } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Calendar, Search, Edit2, Trash2, Check, X, Repeat, ChevronLeft, ChevronRight } from 'lucide-react';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, addWeeks, subWeeks, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 
 interface TransactionListProps {
     transactions: Transaction[];
@@ -17,9 +18,45 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
     const [editAmount, setEditAmount] = useState('');
     const [editType, setEditType] = useState<'income' | 'expense'>('expense');
 
-    const filteredTransactions = transactions.filter(t => 
-        t.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const [viewMode, setViewMode] = useState<'all' | 'month' | 'week'>('month');
+    const [currentDate, setCurrentDate] = useState(new Date());
+
+    const getDateRange = () => {
+        if (viewMode === 'month') {
+            return { start: startOfMonth(currentDate), end: endOfMonth(currentDate) };
+        }
+        if (viewMode === 'week') {
+            return { start: startOfWeek(currentDate, { weekStartsOn: 1 }), end: endOfWeek(currentDate, { weekStartsOn: 1 }) };
+        }
+        return null; // For 'all' view
+    };
+
+    const navigate = (dir: -1 | 1) => {
+        if (viewMode === 'month') setCurrentDate(d => dir === 1 ? addMonths(d, 1) : subMonths(d, 1));
+        if (viewMode === 'week') setCurrentDate(d => dir === 1 ? addWeeks(d, 1) : subWeeks(d, 1));
+    };
+
+    const periodLabel = () => {
+        if (viewMode === 'month') return format(currentDate, 'MMMM yyyy');
+        if (viewMode === 'week') {
+            const range = getDateRange();
+            if (!range) return '';
+            return `${format(range.start, 'd MMM')} - ${format(range.end, 'd MMM')}`;
+        }
+        return 'All Time';
+    };
+
+    const filteredTransactions = transactions.filter(t => {
+        const matchesSearch = t.description.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        if (viewMode === 'all') return matchesSearch;
+
+        const range = getDateRange();
+        if (!range) return matchesSearch;
+
+        const matchesDate = isWithinInterval(new Date(t.date), range);
+        return matchesSearch && matchesDate;
+    });
 
     const startEdit = (transaction: Transaction) => {
         setEditingId(transaction.id);
@@ -72,19 +109,60 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
 
     return (
         <div className={`glass-panel p-6 rounded-3xl space-y-4 ${className}`}>
-            <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 font-mono">
-                    Recent Transactions
-                </h3>
-                <div className="relative">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input 
-                        type="text" 
-                        placeholder="Search..." 
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="bg-slate-100 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-full pl-9 pr-4 py-1.5 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500/50 w-48"
-                    />
+            <div className="space-y-4 mb-4">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 font-mono flex items-center gap-2">
+                        <Calendar size={14} />
+                        Transactions History
+                    </h3>
+                    <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-lg">
+                        {(['all', 'month', 'week'] as const).map((mode) => (
+                            <button
+                                key={mode}
+                                onClick={() => setViewMode(mode)}
+                                className={`px-3 py-1 text-xs rounded-md capitalize transition-colors ${
+                                    viewMode === mode
+                                        ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm'
+                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                }`}
+                            >
+                                {mode}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                    {viewMode !== 'all' && (
+                        <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 rounded-lg p-1">
+                            <button 
+                                onClick={() => navigate(-1)}
+                                className="p-1 hover:bg-white dark:hover:bg-white/10 rounded-md text-slate-500 transition-colors"
+                            >
+                                <ChevronLeft size={16} />
+                            </button>
+                            <span className="text-xs font-mono font-bold text-slate-600 dark:text-slate-300 min-w-[120px] text-center">
+                                {periodLabel()}
+                            </span>
+                            <button 
+                                onClick={() => navigate(1)}
+                                className="p-1 hover:bg-white dark:hover:bg-white/10 rounded-md text-slate-500 transition-colors"
+                            >
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
+                    )}
+                    
+                    <div className={`relative ${viewMode === 'all' ? 'w-full' : 'flex-1 min-w-[150px]'}`}>
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input 
+                            type="text" 
+                            placeholder="Search transactions..." 
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="bg-slate-100 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-full pl-9 pr-4 py-1.5 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500/50 w-full"
+                        />
+                    </div>
                 </div>
             </div>
 
