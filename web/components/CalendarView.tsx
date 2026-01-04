@@ -19,12 +19,13 @@ interface CalendarViewProps {
     onToggleStatus?: (task: Task) => void;
     selectedDate?: Date; // Jump to this date when provided
     onVisibleTagsChange?: (tags: string[]) => void; // Report tags visible in current view
+    unfilteredTasks?: Task[]; // Tasks before filtering by selected tags (for computing available tags)
 }
 
 type ViewMode = 'month' | 'week' | 'day' | 'custom';
 type IntervalUnit = 'day' | 'week' | 'month';
 
-const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransactions = [], onDateClick, onEditTask, onUpdateTask, onToggleStatus, selectedDate: propSelectedDate, onVisibleTagsChange }) => {
+const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransactions = [], onDateClick, onEditTask, onUpdateTask, onToggleStatus, selectedDate: propSelectedDate, onVisibleTagsChange, unfilteredTasks }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('month');
@@ -98,7 +99,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         }
 
         // Check each task to see if it falls within the range
-        tasks.forEach(task => {
+        // Use unfilteredTasks if available to show ALL possible tags for this view, otherwise fall back to tasks
+        (unfilteredTasks || tasks).forEach(task => {
             const taskDateStr = task.dueDate || task.reminderTime;
             if (!taskDateStr) return;
             
@@ -150,7 +152,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
             if (b === 'Untagged') return 1;
             return a.localeCompare(b);
         });
-    }, [tasks, currentDate, viewMode, customIntervalDays]);
+    }, [tasks, unfilteredTasks, currentDate, viewMode, customIntervalDays]);
 
     // Report visible tags to parent component
     useEffect(() => {

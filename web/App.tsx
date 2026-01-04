@@ -740,6 +740,7 @@ const App: React.FC = () => {
                         onToggleStatus={handleToggleStatus}
                         selectedDate={calendarNavigateDate}
                         onVisibleTagsChange={setCalendarVisibleTags}
+                        unfilteredTasks={visibleTasks}
                     />
                 </Suspense>
             )}
