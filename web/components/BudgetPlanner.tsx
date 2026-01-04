@@ -207,7 +207,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                         <IndianRupee size={240} className="text-brand-500" />
                     </div>
 
-                    <div className="hidden lg:grid grid-cols-3 gap-6 relative z-10">
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 relative z-10">
                         <div>
                             <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-widest font-mono">{t(currentTheme, 'totalBudget')}</p>
                             <p className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">{formatCurrency(budget.limit)}</p>
@@ -286,9 +286,9 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
 
             {/* Quick Transaction */}
             <div className="glass-panel p-6 rounded-3xl space-y-4 relative z-10">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                     {/* Action Buttons - Now First */}
-                    <div className="flex gap-2 md:col-span-1">
+                    <div className="flex gap-2 md:col-span-4 lg:col-span-3">
                         <input
                             type="file"
                             accept="image/*"
@@ -322,10 +322,10 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                     </div>
                     
                     {/* Input Fields */}
-                    <div className="md:col-span-2">
+                    <div className="md:col-span-5 lg:col-span-6">
                         <Input label="Description" value={transDesc} onChange={e => setTransDesc(e.target.value)} placeholder="E.g. Coffee" />
                     </div>
-                    <div>
+                    <div className="md:col-span-3">
                         <Input label="Amount" type="number" value={transAmount} onChange={e => setTransAmount(e.target.value)} placeholder="0.00" />
                     </div>
                 </div>
