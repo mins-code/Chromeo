@@ -7,6 +7,7 @@ import { useBudget } from '../hooks/useBudget';
 import { parseTransactionScreenshot } from '../services/geminiService';
 import Button from './Button';
 import Input from './Input';
+import Select from './Select';
 import TransactionList from './TransactionList';
 import { Wallet, TrendingUp, TrendingDown, Plus, Trash2, IndianRupee, Eye, EyeOff, Repeat, ArrowRight, Settings, Share2, User, X, Loader2, UserPlus, Camera } from 'lucide-react';
 import { t } from '../themeText';
@@ -266,16 +267,17 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                         />
                         <div className="space-y-1">
                             <label className="text-[10px] font-bold uppercase text-slate-400 ml-1 font-mono">Duration</label>
-                            <select
+                            <Select
                                 value={durationInput}
-                                onChange={e => setDurationInput(e.target.value)}
-                                className="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-4 h-11 text-sm text-slate-800 dark:text-slate-100 focus:outline-none"
-                            >
-                                <option>Daily</option>
-                                <option>Weekly</option>
-                                <option>Monthly</option>
-                                <option>Yearly</option>
-                            </select>
+                                onChange={(value) => setDurationInput(value)}
+                                options={[
+                                    { value: 'Daily', label: 'Daily' },
+                                    { value: 'Weekly', label: 'Weekly' },
+                                    { value: 'Monthly', label: 'Monthly' },
+                                    { value: 'Yearly', label: 'Yearly' }
+                                ]}
+                                currentTheme={currentTheme}
+                            />
                         </div>
                         <Button variant="primary" className="w-full" onClick={handleUpdateSettings}>Update Budget</Button>
                     </div>
@@ -343,16 +345,18 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                     </button>
                     
                     {isRecurring && (
-                        <select
+                        <Select
                             value={recurringFrequency}
-                            onChange={(e) => setRecurringFrequency(e.target.value as 'daily' | 'weekly' | 'monthly' | 'yearly')}
-                            className="bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
-                        >
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
-                            <option value="yearly">Yearly</option>
-                        </select>
+                            onChange={(value) => setRecurringFrequency(value as 'daily' | 'weekly' | 'monthly' | 'yearly')}
+                            options={[
+                                { value: 'daily', label: 'Daily' },
+                                { value: 'weekly', label: 'Weekly' },
+                                { value: 'monthly', label: 'Monthly' },
+                                { value: 'yearly', label: 'Yearly' }
+                            ]}
+                            currentTheme={currentTheme}
+                            className="min-w-[120px]"
+                        />
                     )}
                     
                     {isRecurring && (
@@ -384,18 +388,19 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                             <div className="flex gap-3 items-end">
                                 <div className="flex-1">
                                     <label className="text-[10px] font-bold uppercase text-slate-400 ml-1 font-mono">Select Partner</label>
-                                    <select
+                                    <Select
                                         value={selectedPartnerId}
-                                        onChange={e => setSelectedPartnerId(e.target.value)}
-                                        className="w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-4 h-11 text-sm text-slate-800 dark:text-slate-100 focus:outline-none"
-                                    >
-                                        <option value="">Choose a partner...</option>
-                                        {availablePartners.map(p => (
-                                            <option key={p.partnerId} value={p.partnerId}>
-                                                {p.partnerName || p.partnerEmail}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        onChange={(value) => setSelectedPartnerId(value)}
+                                        options={[
+                                            { value: '', label: 'Choose a partner...' },
+                                            ...availablePartners.map(p => ({
+                                                value: p.partnerId,
+                                                label: p.partnerName || p.partnerEmail
+                                            }))
+                                        ]}
+                                        placeholder="Choose a partner..."
+                                        currentTheme={currentTheme}
+                                    />
                                 </div>
                                 <Button
                                     variant="primary"

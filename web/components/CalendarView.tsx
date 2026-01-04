@@ -2,13 +2,14 @@ import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { ChevronLeft, ChevronRight, Plus, X, Clock, Repeat, Calendar, CalendarDays, CalendarClock, Settings2, DollarSign, CheckCircle2, Circle } from 'lucide-react';
 import { DndContext, DragEndEvent, DragOverlay, pointerWithin } from '@dnd-kit/core';
 import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, addMonths, subMonths, isSameDay, addDays, subDays, startOfMonth, endOfMonth } from 'date-fns';
-import { Task, TaskPriority, TaskStatus, RecurringTransaction } from '../types';
+import { Task, TaskPriority, TaskStatus, RecurringTransaction, ThemeOption } from '../types';
 import Button from './Button';
 import CalendarDayCell from './CalendarDayCell';
 import WeekView from './WeekView';
 import DayView from './DayView';
 import CustomIntervalView from './CustomIntervalView';
 import DraggableTask, { TYPE_COLORS } from './DraggableTask';
+import Select from './Select';
 
 interface CalendarViewProps {
     tasks: Task[];
@@ -20,12 +21,13 @@ interface CalendarViewProps {
     selectedDate?: Date; // Jump to this date when provided
     onVisibleTagsChange?: (tags: string[]) => void; // Report tags visible in current view
     unfilteredTasks?: Task[]; // Tasks before filtering by selected tags (for computing available tags)
+    currentTheme?: ThemeOption;
 }
 
 type ViewMode = 'month' | 'week' | 'day' | 'custom';
 type IntervalUnit = 'day' | 'week' | 'month';
 
-const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransactions = [], onDateClick, onEditTask, onUpdateTask, onToggleStatus, selectedDate: propSelectedDate, onVisibleTagsChange, unfilteredTasks }) => {
+const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransactions = [], onDateClick, onEditTask, onUpdateTask, onToggleStatus, selectedDate: propSelectedDate, onVisibleTagsChange, unfilteredTasks, currentTheme = 'dark' }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('month');
@@ -480,15 +482,17 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                                 onChange={(e) => handleIntervalValueChange(parseInt(e.target.value) || 1)}
                                                 className="w-16 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-md px-2 py-1.5 text-sm text-center text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
                                             />
-                                            <select
+                                            <Select
                                                 value={customIntervalUnit}
-                                                onChange={(e) => handleIntervalUnitChange(e.target.value as IntervalUnit)}
-                                                className="flex-1 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-md px-2 py-1.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
-                                            >
-                                                <option value="day">Day{customIntervalValue !== 1 ? 's' : ''}</option>
-                                                <option value="week">Week{customIntervalValue !== 1 ? 's' : ''}</option>
-                                                <option value="month">Month{customIntervalValue !== 1 ? 's' : ''}</option>
-                                            </select>
+                                                onChange={(value) => handleIntervalUnitChange(value as IntervalUnit)}
+                                                options={[
+                                                    { value: 'day', label: `Day${customIntervalValue !== 1 ? 's' : ''}` },
+                                                    { value: 'week', label: `Week${customIntervalValue !== 1 ? 's' : ''}` },
+                                                    { value: 'month', label: `Month${customIntervalValue !== 1 ? 's' : ''}` }
+                                                ]}
+                                                currentTheme={currentTheme}
+                                                className="flex-1 min-w-[100px]"
+                                            />
                                         </div>
                                         <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2">Min: 1 day • Max: 12 months</p>
                                         <button

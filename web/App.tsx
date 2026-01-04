@@ -12,6 +12,7 @@ import Stats from './components/Stats';
 import Button from './components/Button';
 import Input from './components/Input';
 import Auth from './components/Auth';
+import Select from './components/Select';
 import CollaborationSettings from './components/CollaborationSettings';
 import { Search, Filter, Users, Link2, Share2, HeartHandshake, CalendarClock, Sparkles, LogOut, Bell, Palette, Check, CheckCircle2, Zap, Anchor, Sun, Moon, CalendarDays, Clock, CheckSquare, Activity, ArrowRight, Repeat, AlertCircle, User, MessageSquare, Loader2, X, AlertTriangle, Trash2 } from 'lucide-react';
 import { enhanceTaskWithAI } from './services/geminiService';
@@ -133,10 +134,9 @@ const App: React.FC = () => {
     const [calendarVisibleTags, setCalendarVisibleTags] = useState<string[]>([]);
 
     // View Source Mode State - persisted to localStorage, defaults to 'combined'
-    const [viewSourceMode, setViewSourceMode] = useState<ViewSourceMode>(() => {
-        const saved = localStorage.getItem('viewSourceMode');
-        return (saved as ViewSourceMode) || 'combined';
-    });
+    const [viewSourceMode, setViewSourceMode] = useState<ViewSourceMode>('personal');
+    const [customReminderUnit, setCustomReminderUnit] = useState<'minutes' | 'hours' | 'days'>('minutes');
+
     const handleViewSourceModeChange = (mode: ViewSourceMode) => {
         setViewSourceMode(mode);
         localStorage.setItem('viewSourceMode', mode);
@@ -693,16 +693,18 @@ const App: React.FC = () => {
                                     className="w-full bg-slate-100 dark:bg-dark-surface border border-slate-200 dark:border-dark-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-all placeholder-slate-400 dark:placeholder-slate-500 shadow-sm"
                                 />
                             </div>
-                            <select
+                            <Select
                                 value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
-                                className="bg-slate-100 dark:bg-dark-surface border border-slate-200 dark:border-dark-border rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50 shadow-sm"
-                            >
-                                <option value="ALL">All Status</option>
-                                <option value={TaskStatus.TODO}>To Do</option>
-                                <option value={TaskStatus.IN_PROGRESS}>In Progress</option>
-                                <option value={TaskStatus.DONE}>Done</option>
-                            </select>
+                                onChange={(value) => setFilterStatus(value)}
+                                options={[
+                                    { value: 'ALL', label: 'All Status' },
+                                    { value: TaskStatus.TODO, label: 'To Do' },
+                                    { value: TaskStatus.IN_PROGRESS, label: 'In Progress' },
+                                    { value: TaskStatus.DONE, label: 'Done' }
+                                ]}
+                                currentTheme={theme}
+                                className="w-40"
+                            />
                         </div>
                     </header>
 
@@ -741,6 +743,7 @@ const App: React.FC = () => {
                         selectedDate={calendarNavigateDate}
                         onVisibleTagsChange={setCalendarVisibleTags}
                         unfilteredTasks={visibleTasks}
+                        currentTheme={theme}
                     />
                 </Suspense>
             )}
@@ -1001,32 +1004,42 @@ const App: React.FC = () => {
                                                         }
                                                         onChange={(e) => {
                                                             const num = parseInt(e.target.value) || 1;
-                                                            const unitSelect = document.getElementById('reminder-unit') as HTMLSelectElement;
-                                                            const unit = unitSelect?.value || 'minutes';
-                                                            const multiplier = unit === 'days' ? 1440 : unit === 'hours' ? 60 : 1;
+                                                            const multiplier = customReminderUnit === 'days' ? 1440 : customReminderUnit === 'hours' ? 60 : 1;
                                                             handleNotificationPreferenceChange('reminderMinutesBefore', num * multiplier);
                                                         }}
                                                         className="w-20 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-center text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
                                                     />
-                                                    <select
-                                                        id="reminder-unit"
-                                                        defaultValue={
-                                                            notificationSettings.reminderMinutesBefore >= 1440 ? 'days' :
-                                                            notificationSettings.reminderMinutesBefore >= 60 ? 'hours' : 'minutes'
-                                                        }
-                                                        onChange={(e) => {
-                                                            const numInput = e.target.previousElementSibling as HTMLInputElement;
-                                                            const num = parseInt(numInput?.value) || 1;
-                                                            const unit = e.target.value;
-                                                            const multiplier = unit === 'days' ? 1440 : unit === 'hours' ? 60 : 1;
-                                                            handleNotificationPreferenceChange('reminderMinutesBefore', num * multiplier);
+                                                    <Select
+                                                        value={customReminderUnit}
+                                                        onChange={(value) => {
+                                                            const unit = value as 'minutes' | 'hours' | 'days';
+                                                            setCustomReminderUnit(unit);
+                                                            // Recalculate current value with new unit
+                                                            // If I have 30 minutes and switch to hours, 30/60 = 0.5. Input is type number (int usually).
+                                                            // Let's just set the state and let the user type the number they want.
+                                                            // Wait, if I change unit, I should probably update the underlying value to match the currently visible number * new unit?
+                                                            // The existing code re-calculates on INPUT change.
+                                                            // If I change unit, I should also trigger an update.
+                                                            // Let's grab the current visible number from the input? No, that's imperative.
+                                                            // Let's calculate from current total minutes.
+                                                            // actually, standard UX is: I type 5, then I select "hours". Result = 300 minutes.
+                                                            
+                                                            const currentTotal = notificationSettings.reminderMinutesBefore;
+                                                            // Reverse calculate valid "number" from current total and OLD unit (which we don't track perfectly but can infer or just use the current derived value)
+                                                            const currentMultiplier = customReminderUnit === 'days' ? 1440 : customReminderUnit === 'hours' ? 60 : 1;
+                                                            const currentNum = Math.floor(currentTotal / currentMultiplier) || 1;
+                                                            
+                                                            const newMultiplier = unit === 'days' ? 1440 : unit === 'hours' ? 60 : 1;
+                                                            handleNotificationPreferenceChange('reminderMinutesBefore', currentNum * newMultiplier);
                                                         }}
-                                                        className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
-                                                    >
-                                                        <option value="minutes">minutes</option>
-                                                        <option value="hours">hours</option>
-                                                        <option value="days">days</option>
-                                                    </select>
+                                                        options={[
+                                                            { value: 'minutes', label: 'minutes' },
+                                                            { value: 'hours', label: 'hours' },
+                                                            { value: 'days', label: 'days' }
+                                                        ]}
+                                                        currentTheme={theme}
+                                                        className="w-32"
+                                                    />
                                                     <span className="text-sm text-slate-500 dark:text-slate-400">before</span>
                                                 </div>
                                             )}
