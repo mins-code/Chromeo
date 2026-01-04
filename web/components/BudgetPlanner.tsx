@@ -180,12 +180,12 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
 
     return (
         <div className="space-y-8 animate-fade-in h-full flex flex-col">
-            <header className="border-b border-slate-200 dark:border-white/5 pb-6">
+            <div className="border-b border-slate-200 dark:border-white/5 pb-6">
                 <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2 flex items-center gap-3">
                     <Wallet className="text-brand-500" /> {t(currentTheme, 'budgetPlanner')}
                 </h2>
                 <p className="text-slate-500 dark:text-slate-400">Track your {t(currentTheme, 'income').toLowerCase()}, expenses, and savings goals.</p>
-            </header>
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Summary Card */}
