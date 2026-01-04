@@ -44,7 +44,6 @@ import { useRecurringProcessor } from './hooks/useRecurringProcessor';
 import { useNetworkStatus } from './hooks/useNetworkStatus';
 
 // Import page components
-import DashboardPage from './pages/DashboardPage';
 import ActivitiesPage from './pages/ActivitiesPage';
 
 // Map URL paths to ViewMode for Layout compatibility
