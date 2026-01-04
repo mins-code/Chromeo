@@ -51,6 +51,7 @@ import ActivitiesPage from './pages/ActivitiesPage';
 const pathToViewMode: Record<string, ViewMode> = {
     '/': 'activities',
     '/activities': 'activities',
+    '/all-activities': 'all-activities',
     '/tasks': 'tasks',
     '/reminders': 'reminders',
     '/events': 'events',
@@ -65,6 +66,7 @@ const pathToViewMode: Record<string, ViewMode> = {
 const viewModeToPath: Record<ViewMode, string> = {
     'dashboard': '/',
     'activities': '/activities',
+    'all-activities': '/all-activities',
     'tasks': '/tasks',
     'reminders': '/reminders',
     'events': '/events',
@@ -452,6 +454,34 @@ const App: React.FC = () => {
     }, [visibleTasks]);
 
     const filteredTasks = useMemo(() => {
+        // Urgency scoring function (higher = more urgent)
+        const getUrgencyScore = (t: Task) => {
+            let score = 0;
+            
+            // Priority scoring
+            if (t.priority === TaskPriority.HIGH) score += 100;
+            else if (t.priority === TaskPriority.MEDIUM) score += 50;
+            else score += 10;
+            
+            // Deadline proximity scoring
+            const dateStr = t.dueDate || t.reminderTime;
+            if (dateStr) {
+                const due = new Date(dateStr).getTime();
+                const now = Date.now();
+                const diffHours = (due - now) / (1000 * 60 * 60);
+                
+                if (diffHours < 0) score += 200; // Overdue
+                else if (diffHours < 24) score += 150; // Due within 24h
+                else if (diffHours < 72) score += 80; // Due within 3 days
+                else if (diffHours < 168) score += 40; // Due within a week
+            }
+            
+            // In-progress bonus
+            if (t.status === TaskStatus.IN_PROGRESS) score += 20;
+            
+            return score;
+        };
+        
         return visibleTasks
             .filter(t => {
                 if (currentView === 'tasks' && t.type !== 'TASK') return false;
@@ -464,18 +494,7 @@ const App: React.FC = () => {
                 const matchesStatus = filterStatus === 'ALL' || t.status === filterStatus;
                 return matchesSearch && matchesStatus;
             })
-            .sort((a, b) => {
-                // Sort by closest deadline (earliest due date first)
-                const dateA = a.dueDate || a.reminderTime;
-                const dateB = b.dueDate || b.reminderTime;
-
-                // Tasks with no deadline go to the end
-                if (!dateA && !dateB) return 0;
-                if (!dateA) return 1;
-                if (!dateB) return -1;
-
-                return new Date(dateA).getTime() - new Date(dateB).getTime();
-            });
+            .sort((a, b) => getUrgencyScore(b) - getUrgencyScore(a)); // Higher urgency first
     }, [visibleTasks, searchQuery, filterStatus, currentView]);
 
     const calendarFilteredTasks = useMemo(() => {
@@ -565,6 +584,7 @@ const App: React.FC = () => {
             case 'events': return { title: t(theme, 'events'), subtitle: 'Upcoming social and work gatherings', icon: CalendarDays };
             case 'appointments': return { title: t(theme, 'appointments'), subtitle: 'Scheduled meetings and visits', icon: Clock };
             case 'tasks': return { title: t(theme, 'tasks'), subtitle: 'Manage and track your daily activities', icon: CheckSquare };
+            case 'all-activities': return { title: 'All Activities', subtitle: 'Tasks, Reminders, Events & Appointments', icon: Activity };
             default: return { title: 'Items', subtitle: 'List View', icon: CheckSquare };
         }
     };
@@ -682,7 +702,7 @@ const App: React.FC = () => {
             )}
 
             {/* VIEW: LISTS */}
-            {(currentView === 'tasks' || currentView === 'reminders' || currentView === 'events' || currentView === 'appointments') && (
+            {(currentView === 'tasks' || currentView === 'reminders' || currentView === 'events' || currentView === 'appointments' || currentView === 'all-activities') && (
                 <div className="space-y-6 h-full flex flex-col animate-fade-in">
                     <div className="flex flex-col md:flex-row gap-5 justify-between items-start md:items-center border-b border-slate-200 dark:border-white/5 pb-6">
                         <div>

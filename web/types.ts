@@ -144,7 +144,7 @@ export interface Budget {
   savings: number;
 }
 
-export type ViewMode = 'dashboard' | 'activities' | 'tasks' | 'reminders' | 'events' | 'appointments' | 'budget' | 'ai-chat' | 'settings' | 'calendar' | 'routines';
+export type ViewMode = 'dashboard' | 'activities' | 'all-activities' | 'tasks' | 'reminders' | 'events' | 'appointments' | 'budget' | 'ai-chat' | 'settings' | 'calendar' | 'routines';
 
 export type ViewSourceMode = 'personal' | 'partners' | 'combined';
 

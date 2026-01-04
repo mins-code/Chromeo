@@ -15,6 +15,7 @@ import { enhanceTaskWithAI } from '../services/geminiService';
 const viewModeToPath: Record<ViewMode, string> = {
   'dashboard': '/',
   'activities': '/activities',
+  'all-activities': '/all-activities',
   'tasks': '/tasks',
   'reminders': '/reminders',
   'events': '/events',
@@ -142,7 +143,7 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
           </p>
         </div>
         <div className="hidden md:block">
-          <Button variant="secondary" onClick={() => navigate('/tasks')}>
+          <Button variant="secondary" onClick={() => navigate('/all-activities')}>
             View All Activities
           </Button>
         </div>

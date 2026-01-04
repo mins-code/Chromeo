@@ -23,7 +23,7 @@ const RoutineList: React.FC<RoutineListProps> = ({ routines, onEdit, onDelete, o
             Manage your recurring activities and habits
           </p>
         </div>
-        <Button variant="primary" onClick={onCreate} className="!bg-emerald-500 hover:!bg-emerald-600 !text-white shadow-lg shadow-emerald-500/25">
+        <Button variant="primary" onClick={onCreate}>
           <Plus size={18} className="mr-2" />
           Add Routine
         </Button>
@@ -37,17 +37,17 @@ const RoutineList: React.FC<RoutineListProps> = ({ routines, onEdit, onDelete, o
               key={routine.id}
               className={`group relative glass-panel rounded-2xl p-5 transition-all hover:shadow-lg ${
                 routine.isActive 
-                  ? 'border-emerald-200 dark:border-emerald-500/30' 
+                  ? 'border-brand-200 dark:border-brand-500/30' 
                   : 'border-slate-200 dark:border-white/5 opacity-60'
               }`}
             >
               {/* Status indicator */}
-              <div className={`absolute top-4 right-4 w-2 h-2 rounded-full ${routine.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+              <div className={`absolute top-4 right-4 w-2 h-2 rounded-full ${routine.isActive ? 'bg-brand-500' : 'bg-slate-400'}`} />
               
               {/* Content */}
               <div className="flex items-start gap-3 mb-3">
-                <div className={`p-2 rounded-xl ${routine.isActive ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-slate-100 dark:bg-slate-800'}`}>
-                  <Repeat size={20} className={routine.isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'} />
+                <div className={`p-2 rounded-xl ${routine.isActive ? 'bg-brand-100 dark:bg-brand-900/30' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                  <Repeat size={20} className={routine.isActive ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500'} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-slate-800 dark:text-slate-100 truncate">{routine.name}</h3>
@@ -92,7 +92,7 @@ const RoutineList: React.FC<RoutineListProps> = ({ routines, onEdit, onDelete, o
                   onClick={() => onToggle(routine.id)}
                   className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
                     routine.isActive 
-                      ? 'text-emerald-600 dark:text-emerald-400 hover:text-emerald-700' 
+                      ? 'text-brand-600 dark:text-brand-400 hover:text-brand-700' 
                       : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                   }`}
                 >
@@ -122,8 +122,8 @@ const RoutineList: React.FC<RoutineListProps> = ({ routines, onEdit, onDelete, o
       ) : (
         /* Empty State */
         <div className="text-center py-16 glass-panel rounded-2xl border border-dashed border-slate-200 dark:border-white/10">
-          <div className="w-16 h-16 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Repeat size={32} className="text-emerald-500" />
+          <div className="w-16 h-16 bg-brand-500/10 dark:bg-brand-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Repeat size={32} className="text-brand-500" />
           </div>
           <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">No Routines Yet</h3>
           <p className="text-slate-600 dark:text-slate-300 mb-6 max-w-sm mx-auto">
@@ -131,8 +131,7 @@ const RoutineList: React.FC<RoutineListProps> = ({ routines, onEdit, onDelete, o
           </p>
           <Button 
             variant="primary" 
-            onClick={onCreate} 
-            className="!bg-emerald-500 hover:!bg-emerald-600 !text-white shadow-lg shadow-emerald-500/25"
+            onClick={onCreate}
           >
             <Plus size={18} className="mr-2" />
             Create Your First Routine
