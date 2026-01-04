@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Plus, X, Clock, Repeat, Calendar, CalendarDays, CalendarClock, Settings2, DollarSign, CheckCircle2, Circle } from 'lucide-react';
 import { DndContext, DragEndEvent, DragOverlay, pointerWithin } from '@dnd-kit/core';
-import { format, addWeeks, subWeeks, startOfWeek, addMonths, subMonths, isSameDay, addDays, subDays } from 'date-fns';
+import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, addMonths, subMonths, isSameDay, addDays, subDays, startOfMonth, endOfMonth } from 'date-fns';
 import { Task, TaskPriority, TaskStatus, RecurringTransaction } from '../types';
 import Button from './Button';
 import CalendarDayCell from './CalendarDayCell';
@@ -18,12 +18,13 @@ interface CalendarViewProps {
     onUpdateTask?: (task: Task) => void;
     onToggleStatus?: (task: Task) => void;
     selectedDate?: Date; // Jump to this date when provided
+    onVisibleTagsChange?: (tags: string[]) => void; // Report tags visible in current view
 }
 
 type ViewMode = 'month' | 'week' | 'day' | 'custom';
 type IntervalUnit = 'day' | 'week' | 'month';
 
-const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransactions = [], onDateClick, onEditTask, onUpdateTask, onToggleStatus, selectedDate: propSelectedDate }) => {
+const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransactions = [], onDateClick, onEditTask, onUpdateTask, onToggleStatus, selectedDate: propSelectedDate, onVisibleTagsChange }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('month');
@@ -72,6 +73,91 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         }
     }, [customIntervalValue, customIntervalUnit]);
 
+    // Compute tags visible in the current view period
+    const visibleTags = useMemo(() => {
+        const tags = new Set<string>();
+        
+        // Determine date range based on view mode
+        let rangeStart: Date;
+        let rangeEnd: Date;
+        
+        if (viewMode === 'month') {
+            rangeStart = startOfMonth(currentDate);
+            rangeEnd = endOfMonth(currentDate);
+        } else if (viewMode === 'week') {
+            rangeStart = startOfWeek(currentDate, { weekStartsOn: 0 });
+            rangeEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
+        } else if (viewMode === 'day') {
+            rangeStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+            rangeEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 23, 59, 59);
+        } else {
+            // Custom interval
+            rangeStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+            rangeEnd = addDays(rangeStart, customIntervalDays - 1);
+            rangeEnd.setHours(23, 59, 59);
+        }
+
+        // Check each task to see if it falls within the range
+        tasks.forEach(task => {
+            const taskDateStr = task.dueDate || task.reminderTime;
+            if (!taskDateStr) return;
+            
+            const taskDate = new Date(taskDateStr);
+            
+            // Check if task is within range (including recurrence)
+            const isInRange = taskDate >= rangeStart && taskDate <= rangeEnd;
+            
+            // For recurring tasks, we need to check if any occurrence is in range
+            let hasOccurrenceInRange = isInRange;
+            if (!isInRange && task.recurrence && task.recurrence.frequency !== 'none') {
+                // Simple check: iterate through the range days to see if task recurs
+                let checkDate = new Date(rangeStart);
+                while (checkDate <= rangeEnd && !hasOccurrenceInRange) {
+                    if (taskDate <= checkDate) {
+                        const diffTime = checkDate.getTime() - taskDate.getTime();
+                        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        if (task.recurrence.frequency === 'daily' && diffDays % task.recurrence.interval === 0) {
+                            hasOccurrenceInRange = true;
+                        } else if (task.recurrence.frequency === 'weekly' && 
+                                   checkDate.getDay() === taskDate.getDay() && 
+                                   Math.floor(diffDays / 7) % task.recurrence.interval === 0) {
+                            hasOccurrenceInRange = true;
+                        } else if (task.recurrence.frequency === 'monthly' && 
+                                   checkDate.getDate() === taskDate.getDate()) {
+                            hasOccurrenceInRange = true;
+                        } else if (task.recurrence.frequency === 'yearly' && 
+                                   checkDate.getMonth() === taskDate.getMonth() && 
+                                   checkDate.getDate() === taskDate.getDate()) {
+                            hasOccurrenceInRange = true;
+                        }
+                    }
+                    checkDate = addDays(checkDate, 1);
+                }
+            }
+            
+            if (hasOccurrenceInRange) {
+                if (task.tags.length === 0) {
+                    tags.add('Untagged');
+                } else {
+                    task.tags.forEach(tag => tags.add(tag));
+                }
+            }
+        });
+
+        return Array.from(tags).sort((a, b) => {
+            if (a === 'Untagged') return -1;
+            if (b === 'Untagged') return 1;
+            return a.localeCompare(b);
+        });
+    }, [tasks, currentDate, viewMode, customIntervalDays]);
+
+    // Report visible tags to parent component
+    useEffect(() => {
+        if (onVisibleTagsChange) {
+            onVisibleTagsChange(visibleTags);
+        }
+    }, [visibleTags, onVisibleTagsChange]);
     // Get display label for custom interval
     const getCustomIntervalLabel = () => {
         const unitLabels: Record<IntervalUnit, string> = { day: 'D', week: 'W', month: 'M' };

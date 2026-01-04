@@ -129,6 +129,9 @@ const App: React.FC = () => {
     // Calendar Navigate Date State
     const [calendarNavigateDate, setCalendarNavigateDate] = useState<Date | undefined>(undefined);
 
+    // Calendar Visible Tags State - tags from tasks in the current calendar period
+    const [calendarVisibleTags, setCalendarVisibleTags] = useState<string[]>([]);
+
     // View Source Mode State - persisted to localStorage, defaults to 'combined'
     const [viewSourceMode, setViewSourceMode] = useState<ViewSourceMode>(() => {
         const saved = localStorage.getItem('viewSourceMode');
@@ -587,7 +590,7 @@ const App: React.FC = () => {
             userStats={userStats}
             currentTheme={theme}
             onThemeChange={(t) => setTheme(t, true)}
-            calendarTags={allTags}
+            calendarTags={currentView === 'calendar' && calendarVisibleTags.length > 0 ? calendarVisibleTags : allTags}
             selectedTags={selectedCalendarTags}
             onToggleTag={handleToggleCalendarTag}
             onRenameTag={handleRenameTag}
@@ -736,6 +739,7 @@ const App: React.FC = () => {
                         onUpdateTask={(task) => updateTask(task)}
                         onToggleStatus={handleToggleStatus}
                         selectedDate={calendarNavigateDate}
+                        onVisibleTagsChange={setCalendarVisibleTags}
                     />
                 </Suspense>
             )}
