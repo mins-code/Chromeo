@@ -367,28 +367,28 @@
   /* Rose Gold - Primary Accent */
   --brand-600: #c9a080;
   --brand-700: #a88b6a;
-  --bg-primary: #0a0a0a;
-  /* Deep black background */
-  --bg-secondary: #141414;
-  /* Slightly lighter black for cards */
+  --bg-primary: #1a1612;
+  /* Warm dark brown background */
+  --bg-secondary: #221e1a;
+  /* Slightly lighter warm brown for cards */
   --text-primary: #e8dcd0;
   /* Warm off-white for primary text */
   --text-secondary: #d0c4b8; /* Improved: brighter for better contrast */
   /* Muted rose for secondary text */
   --border-color: rgba(212, 165, 116, 0.3);
   /* Rose gold borders */
-  --glass-bg: rgba(20, 20, 20, 0.95);
+  --glass-bg: rgba(34, 30, 26, 0.95);
   --glass-border: rgba(212, 165, 116, 0.2);
 }
 
 .theme-onepiece body {
   font-family: 'Inter', sans-serif;
-  background-color: #0a0a0a;
+  background-color: #1a1612;
 }
 
 /* Dark gradient background */
 .theme-onepiece .bg-gradient-main {
-  background: linear-gradient(135deg, #0a0a0a 0%, #141414 50%, #0a0a0a 100%);
+  background: linear-gradient(135deg, #1a1612 0%, #221e1a 50%, #1a1612 100%);
 }
 
 /* Rose gold accent for interactive elements */
@@ -412,17 +412,17 @@
 
 /* Dark sidebar with rose gold accents */
 .theme-onepiece aside {
-  background: linear-gradient(180deg, rgba(20, 20, 20, 0.98) 0%, rgba(10, 10, 10, 0.98) 100%);
+  background: linear-gradient(180deg, rgba(34, 30, 26, 0.98) 0%, rgba(26, 22, 18, 0.98) 100%);
   border-color: rgba(212, 165, 116, 0.15);
 }
 
 .theme-onepiece .glass {
-  background: rgba(20, 20, 20, 0.95);
+  background: rgba(34, 30, 26, 0.95);
   border-color: rgba(212, 165, 116, 0.15);
 }
 
 .theme-onepiece header {
-  background: rgba(10, 10, 10, 0.98);
+  background: rgba(26, 22, 18, 0.98);
   border-bottom: 1px solid rgba(212, 165, 116, 0.2);
 }
 
@@ -434,7 +434,7 @@
 
 /* Dark cards with rose gold accents */
 .theme-onepiece .glass-panel {
-  background: rgba(20, 20, 20, 0.9);
+  background: rgba(34, 30, 26, 0.9);
   border: 1px solid rgba(212, 165, 116, 0.15);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
@@ -449,7 +449,7 @@
   background: linear-gradient(135deg, #d4a574 0%, #c9a080 100%);
   border: none;
   box-shadow: 0 4px 15px rgba(212, 165, 116, 0.3);
-  color: #0a0a0a;
+  color: #1a1612;
 }
 
 /* Rose gold icon accents */
@@ -488,7 +488,7 @@
 .theme-onepiece input,
 .theme-onepiece select,
 .theme-onepiece textarea {
-  background-color: rgba(20, 20, 20, 0.95) !important;
+  background-color: rgba(34, 30, 26, 0.95) !important;
   border-color: rgba(212, 165, 116, 0.3) !important;
   color: #e8dcd0 !important;
 }
@@ -499,7 +499,7 @@
 }
 
 .theme-onepiece option {
-  background-color: #141414;
+  background-color: #221e1a;
   color: #e8dcd0;
 }
 
