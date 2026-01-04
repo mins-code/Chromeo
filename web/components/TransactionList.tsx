@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Transaction } from '../types';
-import { ArrowUpRight, ArrowDownLeft, Calendar, Search, Edit2, Trash2, Check, X } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Calendar, Search, Edit2, Trash2, Check, X, Repeat } from 'lucide-react';
 
 interface TransactionListProps {
     transactions: Transaction[];
@@ -162,7 +162,14 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-start justify-between gap-2">
-                                                <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm truncate">{t.description}</p>
+                                                <div className="flex items-center gap-1.5 min-w-0">
+                                                    <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm truncate">
+                                                        {t.description.replace(/\s*\(Recurring\)\s*/i, '')}
+                                                    </p>
+                                                    {t.description.toLowerCase().includes('(recurring)') && (
+                                                        <Repeat size={12} className="text-slate-400 shrink-0" title="Recurring Transaction" />
+                                                    )}
+                                                </div>
                                                 {(onEdit || onDelete) && (
                                                     <div className="flex gap-1 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                                         {onEdit && (

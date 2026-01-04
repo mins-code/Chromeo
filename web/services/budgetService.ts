@@ -149,10 +149,10 @@ export const addRecurringTransaction = async (
 ): Promise<Budget> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-        // 1. Insert the Immediate Realized Transaction (so it shows in logs and budget)
+        // 1. Insert the Immediate Realized Transaction (with Recurring tag for UI)
         await supabase.from('transactions').insert({
             user_id: user.id,
-            description,
+            description: `${description} (Recurring)`,
             amount,
             type,
             date: new Date().toISOString(),
@@ -160,7 +160,7 @@ export const addRecurringTransaction = async (
             next_due_date: null
         });
 
-        // 2. Insert the Recurring Rule (Template for future)
+        // 2. Insert the Recurring Rule (Template for future - keep description clean)
         // Calculate first due date based on frequency
         const nextDueDate = new Date();
         switch (frequency) {
@@ -172,7 +172,7 @@ export const addRecurringTransaction = async (
 
         await supabase.from('transactions').insert({
             user_id: user.id,
-            description: `${description} (Recurring Rule)`,
+            description: description,
             amount,
             type,
             date: new Date().toISOString(),
