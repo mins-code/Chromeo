@@ -753,10 +753,12 @@ const App: React.FC = () => {
                             />
                         ))}
                         {filteredTasks.length === 0 && (
-                            <div className="flex flex-col items-center justify-center py-24 text-slate-500 bg-white/40 dark:bg-dark-surface/30 rounded-2xl border border-slate-200 dark:border-white/5 border-dashed">
-                                <Filter size={48} className="mb-4 opacity-20" />
-                                <p className="font-medium">No {currentView} found matching your filters.</p>
-                                <Button variant="ghost" onClick={() => { setSearchQuery(''); setFilterStatus('ALL') }} className="mt-2 text-brand-500">Clear Filters</Button>
+                            <div className="flex flex-col items-center justify-center py-24 text-slate-500 dark:text-slate-400 glass-panel rounded-2xl border border-dashed border-slate-200 dark:border-white/10">
+                                <div className="w-16 h-16 bg-brand-500/10 rounded-2xl flex items-center justify-center mb-4">
+                                    <Filter size={32} className="text-brand-500" />
+                                </div>
+                                <p className="font-medium text-slate-600 dark:text-slate-300">No {currentView} found matching your filters.</p>
+                                <Button variant="ghost" onClick={() => { setSearchQuery(''); setFilterStatus('ALL') }} className="mt-3 text-brand-500">Clear Filters</Button>
                             </div>
                         )}
                     </div>
