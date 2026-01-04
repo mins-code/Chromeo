@@ -163,13 +163,19 @@ serve(async (req) => {
       );
     }
 
-    const { action, subscription, userId, notification, taskId } = await req.json();
+    const { action, subscription, notification, taskId, userId: requestedUserId } = await req.json();
+
+    // Default to authenticated user, but allow service_role to override
+    let userId = user.id;
+    if (user.role === 'service_role' && requestedUserId) {
+      userId = requestedUserId;
+    }
 
 
     // Action: Subscribe - Save push subscription to database
     if (action === "subscribe") {
-      if (!subscription || !userId) {
-        throw new Error("Missing subscription or userId");
+      if (!subscription) {
+        throw new Error("Missing subscription");
       }
 
       // Upsert subscription (update if exists, insert if new)
@@ -193,10 +199,6 @@ serve(async (req) => {
 
     // Action: Unsubscribe - Remove push subscription
     if (action === "unsubscribe") {
-      if (!userId) {
-        throw new Error("Missing userId");
-      }
-
       const { error } = await supabase
         .from("push_subscriptions")
         .delete()
@@ -212,7 +214,7 @@ serve(async (req) => {
 
     // Action: Schedule - Schedule a notification for later
     if (action === "schedule") {
-      if (!userId || !notification || !notification.scheduledTime) {
+      if (!notification || !notification.scheduledTime) {
         throw new Error("Missing required fields for scheduling");
       }
 
@@ -259,8 +261,8 @@ serve(async (req) => {
     // Action: Send - Send notification immediately
     // Note: This requires proper VAPID setup and is called by the scheduler
     if (action === "send") {
-      if (!userId || !notification) {
-        throw new Error("Missing userId or notification");
+      if (!notification) {
+        throw new Error("Missing notification");
       }
 
       const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY");
