@@ -200,7 +200,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                 <p className="text-slate-500 dark:text-slate-400">Track your {t(currentTheme, 'income').toLowerCase()}, expenses, and savings goals.</p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-20">
                 {/* Summary Card */}
                 <div className="lg:col-span-2 glass-panel p-8 rounded-3xl relative overflow-hidden flex flex-col justify-center min-h-[220px]">
                     <div className="absolute right-0 bottom-0 opacity-10 translate-x-1/4 translate-y-1/4">
@@ -285,7 +285,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
             </div>
 
             {/* Quick Transaction */}
-            <div className="glass-panel p-6 rounded-3xl space-y-4">
+            <div className="glass-panel p-6 rounded-3xl space-y-4 relative z-10">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                     {/* Action Buttons - Now First */}
                     <div className="flex gap-2 md:col-span-1">
@@ -368,7 +368,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
             </div>
 
             {/* Share Budget Section */}
-            <div className="glass-panel p-6 rounded-3xl space-y-4">
+            <div className="glass-panel p-6 rounded-3xl space-y-4 relative z-0">
                 <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2 font-mono">
                     <Share2 size={14} /> Share Budget
                 </h3>
