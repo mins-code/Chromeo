@@ -50,6 +50,23 @@ export function useBudget() {
     },
   });
 
+  const addRecurringTransactionMutation = useMutation({
+    mutationFn: ({
+      description,
+      amount,
+      type,
+      frequency,
+    }: {
+      description: string;
+      amount: number;
+      type: 'income' | 'expense';
+      frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+    }) => BudgetService.addRecurringTransaction(description, amount, type, frequency),
+    onSuccess: (updatedBudget) => {
+      queryClient.setQueryData(['budget'], updatedBudget);
+    },
+  });
+
   const updateTransactionMutation = useMutation({
     mutationFn: ({
       id,
@@ -84,8 +101,10 @@ export function useBudget() {
     updateTransaction: updateTransactionMutation.mutateAsync,
     deleteTransaction: deleteTransactionMutation.mutateAsync,
     processRecurring: processRecurringMutation.mutateAsync,
+    addRecurringTransaction: addRecurringTransactionMutation.mutateAsync,
     isUpdating: updateSettingsMutation.isPending,
     isAddingTransaction: addTransactionMutation.isPending,
+    isAddingRecurringTransaction: addRecurringTransactionMutation.isPending,
     isUpdatingTransaction: updateTransactionMutation.isPending,
     isDeletingTransaction: deleteTransactionMutation.isPending,
     isProcessingRecurring: processRecurringMutation.isPending,

@@ -17,13 +17,15 @@ interface BudgetPlannerProps {
 
 const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
     // Use the budget hook for state management
-    const { budget, updateSettings, addTransaction, updateTransaction, deleteTransaction } = useBudget();
+    const { budget, updateSettings, addTransaction, addRecurringTransaction, updateTransaction, deleteTransaction } = useBudget();
 
     const [limitInput, setLimitInput] = useState('');
     const [durationInput, setDurationInput] = useState('Monthly');
     const [transDesc, setTransDesc] = useState('');
     const [transAmount, setTransAmount] = useState('');
     const [transType, setTransType] = useState<'income' | 'expense'>('expense');
+    const [isRecurring, setIsRecurring] = useState(false);
+    const [recurringFrequency, setRecurringFrequency] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
 
     // Budget sharing state
     const [budgetShares, setBudgetShares] = useState<BudgetShare[]>([]);
@@ -67,9 +69,19 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
     const handleAddTransaction = async () => {
         const amount = parseFloat(transAmount);
         if (transDesc && !isNaN(amount) && amount > 0) {
-            await addTransaction({ description: transDesc, amount, type: transType });
+            if (isRecurring) {
+                await addRecurringTransaction({ 
+                    description: transDesc, 
+                    amount, 
+                    type: transType, 
+                    frequency: recurringFrequency 
+                });
+            } else {
+                await addTransaction({ description: transDesc, amount, type: transType });
+            }
             setTransDesc('');
             setTransAmount('');
+            setIsRecurring(false);
         }
     };
 
@@ -271,47 +283,83 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
             </div>
 
             {/* Quick Transaction */}
-            <div className="glass-panel p-6 rounded-3xl grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                {/* Action Buttons - Now First */}
-                <div className="flex gap-2 md:col-span-1">
-                    <input
-                        type="file"
-                        accept="image/*"
-                        ref={fileInputRef}
-                        onChange={handleFileUpload}
-                        className="hidden"
-                        id="upi-screenshot-input"
-                    />
-                    <Button
-                        variant="secondary"
-                        className={`flex-1 h-11 ${transType === 'income' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}
-                        onClick={() => setTransType(prev => prev === 'expense' ? 'income' : 'expense')}
-                        title={transType === 'expense' ? 'Switch to Income' : 'Switch to Expense'}
-                    >
-                        <span className="text-xl font-bold">{transType === 'expense' ? '-' : '+'}</span>
-                        <span className="ml-2 text-xs uppercase font-semibold">{transType === 'expense' ? 'Exp' : 'Inc'}</span>
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        className="flex-1 h-11"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isScanning}
-                        title="Scan UPI Screenshot"
-                    >
-                        {isScanning ? <Loader2 className="animate-spin" size={20} /> : <Camera size={20} />}
-                    </Button>
-                    <Button variant="primary" className="flex-1 h-11 font-semibold" onClick={handleAddTransaction}>
-                        <Plus size={18} className="mr-1" />
-                        Log
-                    </Button>
+            <div className="glass-panel p-6 rounded-3xl space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    {/* Action Buttons - Now First */}
+                    <div className="flex gap-2 md:col-span-1">
+                        <input
+                            type="file"
+                            accept="image/*"
+                            ref={fileInputRef}
+                            onChange={handleFileUpload}
+                            className="hidden"
+                            id="upi-screenshot-input"
+                        />
+                        <Button
+                            variant="secondary"
+                            className={`flex-1 h-11 ${transType === 'income' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}
+                            onClick={() => setTransType(prev => prev === 'expense' ? 'income' : 'expense')}
+                            title={transType === 'expense' ? 'Switch to Income' : 'Switch to Expense'}
+                        >
+                            <span className="text-xl font-bold">{transType === 'expense' ? '-' : '+'}</span>
+                            <span className="ml-2 text-xs uppercase font-semibold">{transType === 'expense' ? 'Exp' : 'Inc'}</span>
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            className="flex-1 h-11"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isScanning}
+                            title="Scan UPI Screenshot"
+                        >
+                            {isScanning ? <Loader2 className="animate-spin" size={20} /> : <Camera size={20} />}
+                        </Button>
+                        <Button variant="primary" className="flex-1 h-11 font-semibold" onClick={handleAddTransaction}>
+                            <Plus size={18} className="mr-1" />
+                            Log
+                        </Button>
+                    </div>
+                    
+                    {/* Input Fields */}
+                    <div className="md:col-span-2">
+                        <Input label="Description" value={transDesc} onChange={e => setTransDesc(e.target.value)} placeholder="E.g. Coffee" />
+                    </div>
+                    <div>
+                        <Input label="Amount" type="number" value={transAmount} onChange={e => setTransAmount(e.target.value)} placeholder="0.00" />
+                    </div>
                 </div>
-                
-                {/* Input Fields */}
-                <div className="md:col-span-2">
-                    <Input label="Description" value={transDesc} onChange={e => setTransDesc(e.target.value)} placeholder="E.g. Coffee" />
-                </div>
-                <div>
-                    <Input label="Amount" type="number" value={transAmount} onChange={e => setTransAmount(e.target.value)} placeholder="0.00" />
+
+                {/* Recurring Transaction Toggle */}
+                <div className="flex items-center gap-4 pt-2 border-t border-slate-200 dark:border-white/5">
+                    <button
+                        onClick={() => setIsRecurring(!isRecurring)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                            isRecurring 
+                                ? 'bg-brand-500/10 text-brand-500 border border-brand-500/30' 
+                                : 'bg-slate-100 dark:bg-white/5 text-slate-500 border border-transparent hover:bg-slate-200 dark:hover:bg-white/10'
+                        }`}
+                    >
+                        <Repeat size={16} />
+                        Recurring
+                    </button>
+                    
+                    {isRecurring && (
+                        <select
+                            value={recurringFrequency}
+                            onChange={(e) => setRecurringFrequency(e.target.value as 'daily' | 'weekly' | 'monthly' | 'yearly')}
+                            className="bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+                        >
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    )}
+                    
+                    {isRecurring && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
+                            This transaction will repeat {recurringFrequency}
+                        </p>
+                    )}
                 </div>
             </div>
 

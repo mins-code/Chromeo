@@ -141,6 +141,36 @@ export const processRecurringTransaction = async (recurringId: string): Promise<
     return getBudget();
 };
 
+export const addRecurringTransaction = async (
+    description: string,
+    amount: number,
+    type: 'income' | 'expense',
+    frequency: 'daily' | 'weekly' | 'monthly' | 'yearly'
+): Promise<Budget> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+        // Calculate first due date based on frequency
+        const nextDueDate = new Date();
+        switch (frequency) {
+            case 'daily': nextDueDate.setDate(nextDueDate.getDate() + 1); break;
+            case 'weekly': nextDueDate.setDate(nextDueDate.getDate() + 7); break;
+            case 'monthly': nextDueDate.setMonth(nextDueDate.getMonth() + 1); break;
+            case 'yearly': nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); break;
+        }
+
+        await supabase.from('transactions').insert({
+            user_id: user.id,
+            description,
+            amount,
+            type,
+            date: new Date().toISOString(),
+            frequency,
+            next_due_date: nextDueDate.toISOString()
+        });
+    }
+    return getBudget();
+};
+
 // ============ BUDGET SHARING ============
 
 import type { BudgetShare } from '../types';
