@@ -140,7 +140,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasks = [], onEdit, onTogg
         </div>
 
         {/* Hover Actions - Visible on group hover */}
-        <div className="absolute top-4 right-4 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0">
+        <div className="absolute top-4 right-4 flex flex-col gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0 focus-within:translate-x-0">
           <Button
             variant="secondary"
             size="icon"
