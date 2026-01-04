@@ -37,6 +37,7 @@ import * as NotificationService from './services/notificationService';
 import { NotificationSettings, Routine } from './types';
 import RoutineEditor from './components/RoutineEditor';
 import RoutineList from './components/RoutineList';
+import DeleteAccountModal from './components/DeleteAccountModal';
 
 // Custom Hooks
 import { useSMSListener } from './hooks/useSMSListener';
@@ -159,6 +160,7 @@ const App: React.FC = () => {
     } = useRoutines();
     const [isRoutineEditorOpen, setIsRoutineEditorOpen] = useState(false);
     const [editingRoutine, setEditingRoutine] = useState<Routine | undefined>(undefined);
+    const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
 
     // --- CUSTOM HOOKS INTEGRATION ---
 
@@ -1118,97 +1120,15 @@ const App: React.FC = () => {
                                 <h4 className="font-semibold text-red-700 dark:text-red-400 mb-2">Delete Account</h4>
                                 <p className="text-sm text-red-600/80 dark:text-red-300/80 mb-4">
                                     Once you delete your account, all your data will be permanently erased. This action cannot be undone.
-                                    You will receive a confirmation email before the deletion is processed.
                                 </p>
-                                <div className="flex flex-wrap gap-3">
-                                    <Button
-                                        variant="danger"
-                                        onClick={async () => {
-                                            if (!confirm('Are you sure you want to request account deletion? You will receive a confirmation link.')) {
-                                                return;
-                                            }
-                                            try {
-                                                const { data, error } = await supabase.functions.invoke('account-deletion', {
-                                                    body: { action: 'request' }
-                                                });
-                                                
-                                                console.log('Account deletion response:', { data, error });
-                                                
-                                                if (error) {
-                                                    console.error('Supabase function error:', error);
-                                                    alert(`Failed to request account deletion: ${error.message || JSON.stringify(error)}`);
-                                                    return;
-                                                }
-                                                
-                                                if (data?.success) {
-                                                    if (data.confirmationUrl) {
-                                                        // Show URL directly
-                                                        alert(`Click OK to copy the confirmation URL, then paste it in your browser to complete deletion.\n\nURL: ${data.confirmationUrl}\n\nThis link expires in 24 hours.`);
-                                                        // Copy to clipboard
-                                                        navigator.clipboard.writeText(data.confirmationUrl);
-                                                    } else {
-                                                        alert('A confirmation email has been sent to your email address. Please check your inbox to complete the deletion process. The link expires in 24 hours.');
-                                                    }
-                                                } else {
-                                                    // Handle pending request case where URL is returned despite success: false
-                                                    if (data?.confirmationUrl) {
-                                                        alert(`Click OK to copy the confirmation URL, then paste it in your browser to complete deletion.\n\nURL: ${data.confirmationUrl}\n\nThis link expires in 24 hours.`);
-                                                        navigator.clipboard.writeText(data.confirmationUrl);
-                                                    } else {
-                                                        const errorMsg = data?.error || data?.message || 'Unknown error occurred';
-                                                        alert(`Failed to request deletion: ${errorMsg}`);
-                                                    }
-                                                }
-                                            } catch (err: any) {
-                                                console.error('Deletion request error:', err);
-                                                alert(`Failed to request account deletion: ${err.message || 'Please try again.'}`);
-                                            }
-                                        }}
-                                        className="flex items-center gap-2"
-                                    >
-                                        <Trash2 size={16} />
-                                        Request Account Deletion
-                                    </Button>
-                                    <Button
-                                        variant="secondary"
-                                        onClick={async () => {
-                                            try {
-                                                const { data, error } = await supabase.functions.invoke('account-deletion', {
-                                                    body: { action: 'resend' }
-                                                });
-                                                
-                                                console.log('Resend email response:', { data, error });
-                                                
-                                                if (error) {
-                                                    console.error('Resend error:', error);
-                                                    alert(`Failed to resend email: ${error.message || JSON.stringify(error)}`);
-                                                    return;
-                                                }
-                                                
-                                                if (data?.success) {
-                                                    if (data.confirmationUrl) {
-                                                        // Show URL directly
-                                                        alert(`Click OK to copy the confirmation URL, then paste it in your browser to complete deletion.\n\nURL: ${data.confirmationUrl}`);
-                                                        // Copy to clipboard
-                                                        navigator.clipboard.writeText(data.confirmationUrl);
-                                                    } else {
-                                                        alert(data.message || 'Confirmation email has been resent. Please check your inbox.');
-                                                    }
-                                                } else {
-                                                    const errorMsg = data?.error || data?.message || 'Unknown error occurred';
-                                                    alert(`Failed to resend email: ${errorMsg}`);
-                                                }
-                                            } catch (err: any) {
-                                                console.error('Resend error:', err);
-                                                alert(`Failed to resend email: ${err.message || 'Please try again.'}`);
-                                            }
-                                        }}
-                                        className="flex items-center gap-2 border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
-                                    >
-                                        <Bell size={16} />
-                                        Resend Confirmation Email
-                                    </Button>
-                                </div>
+                                <Button
+                                    variant="danger"
+                                    onClick={() => setIsDeleteAccountModalOpen(true)}
+                                    className="flex items-center gap-2"
+                                >
+                                    <Trash2 size={16} />
+                                    Delete Account
+                                </Button>
                             </div>
                         </div>
 
@@ -1241,6 +1161,14 @@ const App: React.FC = () => {
                 isOpen={isCommandBarOpen}
                 onClose={() => setIsCommandBarOpen(false)}
                 onTaskParsed={handleCommandBarTask}
+            />
+
+            {/* Delete Account Modal */}
+            <DeleteAccountModal
+                isOpen={isDeleteAccountModalOpen}
+                onClose={() => setIsDeleteAccountModalOpen(false)}
+                onDeleted={() => navigate('/')}
+                userEmail={session?.user?.email || ''}
             />
 
         </Layout>

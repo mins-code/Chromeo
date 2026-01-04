@@ -41,7 +41,7 @@ serve(async (req) => {
       throw new Error("Unauthorized");
     }
 
-    const { action, token } = await req.json();
+    const { action, token, password } = await req.json();
     const appUrl = Deno.env.get("APP_URL") || "https://chronodex.vercel.app";
 
     // Rate Limiting
@@ -64,6 +64,79 @@ serve(async (req) => {
         await supabase.from('rate_limits').update({ count: limitData.count + 1 }).eq('id', limitData.id)
     } else {
         await supabase.from('rate_limits').insert({ key: rateLimitKey, count: 1, window_start: new Date().toISOString() })
+    }
+
+    // Action: Delete with password verification - immediate deletion
+    if (action === "delete-with-password") {
+      if (!password) {
+        throw new Error("Password is required for verification");
+      }
+
+      // Verify password by attempting to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email!,
+        password: password,
+      });
+
+      if (signInError) {
+        throw new Error("Invalid password. Please try again.");
+      }
+
+      const userId = user.id;
+
+      // Delete all user data from each table
+      console.log(`Password verified. Deleting all data for user ${userId}`);
+
+      // Delete in order of foreign key dependencies
+      const tablesToDelete = [
+        "account_deletion_requests",
+        "scheduled_notifications",
+        "push_subscriptions",
+        "team_members",
+        "teams",
+        "partnerships",
+        "budget_shares",
+        "transactions",
+        "routines",
+        "tasks",
+        "user_settings",
+        "profiles",
+      ];
+
+      for (const table of tablesToDelete) {
+        try {
+          await supabase.from(table).delete().eq("user_id", userId);
+          console.log(`Deleted from ${table}`);
+        } catch (e) {
+          console.log(`Table ${table} might not exist or have user_id: ${e}`);
+        }
+      }
+
+      // Also try owner_id for some tables
+      try {
+        await supabase.from("teams").delete().eq("owner_id", userId);
+        await supabase.from("budget_shares").delete().eq("owner_id", userId);
+      } catch (e) {
+        console.log(`Owner cleanup: ${e}`);
+      }
+
+      // Finally, delete the auth user
+      const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userId);
+      
+      if (deleteUserError) {
+        console.error("Error deleting auth user:", deleteUserError);
+        throw new Error("Failed to delete account. Please contact support.");
+      }
+
+      console.log(`Successfully deleted user ${userId} via password verification`);
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: "Your account and all associated data have been permanently deleted." 
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Action: Request deletion - sends confirmation email

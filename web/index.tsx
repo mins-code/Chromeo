@@ -8,8 +8,9 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 
-// Lazy load the confirmation page
+// Lazy load pages
 const ConfirmDeletePage = lazy(() => import('./pages/ConfirmDeletePage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -36,6 +37,14 @@ root.render(
                   element={
                     <Suspense fallback={<LoadingFallback />}>
                       <ConfirmDeletePage />
+                    </Suspense>
+                  } 
+                />
+                <Route 
+                  path="/reset-password" 
+                  element={
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ResetPasswordPage />
                     </Suspense>
                   } 
                 />
