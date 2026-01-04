@@ -32,7 +32,12 @@ interface DroppableHourCellProps {
   children?: React.ReactNode;
 }
 
-const DroppableHourCell: React.FC<DroppableHourCellProps> = ({ dayDate, hour, height, intervalHours, children }) => {
+/**
+ * ⚡ Performance Optimization:
+ * Wrapped in React.memo to prevent grid re-renders when `currentTime` updates every minute.
+ * Props `dayDate` (from memoized `weekDays`) and `children` (undefined in loop) are stable.
+ */
+const DroppableHourCell = React.memo(({ dayDate, hour, height, intervalHours, children }: DroppableHourCellProps) => {
   const id = `${format(dayDate, 'yyyy-MM-dd')}-${hour.toString().padStart(2, '0')}`;
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -62,7 +67,7 @@ const DroppableHourCell: React.FC<DroppableHourCellProps> = ({ dayDate, hour, he
       {children}
     </div>
   );
-};
+});
 
 const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
