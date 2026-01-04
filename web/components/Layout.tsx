@@ -563,57 +563,101 @@ export const Layout: React.FC<LayoutProps> = ({
 
                             {/* Create Button moved to Header */}
                             <div className="relative hidden md:block" ref={createMenuRef}>
-                                <button
-                                    onClick={() => setShowCreateMenu(!showCreateMenu)}
-                                    className="flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all active:scale-95"
-                                >
-                                    <Plus size={18} strokeWidth={2.5} />
-                                    <span>Create</span>
-                                    <ChevronDown size={14} className={`opacity-60 transition-transform ${showCreateMenu ? 'rotate-180' : ''}`} />
-                                </button>
+                                {(() => {
+                                    const getCreateThemeStyles = () => {
+                                        switch (currentTheme) {
+                                            case 'cyberpunk':
+                                                return {
+                                                    btn: 'bg-black border border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:shadow-[0_0_20px_rgba(6,182,212,0.6)] hover:bg-cyan-950/30',
+                                                    menu: 'bg-[#0a0014] border border-[#00FFFF]/30 shadow-[0_0_20px_rgba(0,255,255,0.2)]',
+                                                    item: 'text-cyan-100 hover:bg-[#00FFFF]/10 hover:text-[#00FFFF]',
+                                                    icon: 'text-cyan-400' // Override icon colors for cyberpunk consistency? varying colors is good though.
+                                                };
+                                            case 'onepiece':
+                                                return {
+                                                    btn: 'bg-[#8B4513] border border-[#D4A574] text-[#E8DCD0] shadow-md hover:bg-[#A0522D]',
+                                                    menu: 'bg-[#14100c] border border-[#D4A574]/40 shadow-xl',
+                                                    item: 'text-[#E8DCD0] hover:bg-[#D4A574]/10 hover:text-[#D4A574]'
+                                                };
+                                            case 'sunset':
+                                                return {
+                                                    btn: 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40',
+                                                    menu: 'bg-[#2a1b20] border border-rose-400/30 shadow-xl',
+                                                    item: 'text-rose-100 hover:bg-rose-500/10 hover:text-rose-50'
+                                                };
+                                            case 'light':
+                                                return {
+                                                    btn: 'bg-slate-900 text-white shadow-lg hover:bg-slate-800',
+                                                    menu: 'bg-white border border-slate-200 shadow-xl',
+                                                    item: 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                                                };
+                                            default: // dark
+                                                return {
+                                                    btn: 'bg-white text-slate-900 shadow-lg hover:bg-slate-100',
+                                                    menu: 'bg-slate-900 border border-slate-700 shadow-xl',
+                                                    item: 'text-slate-300 hover:bg-white/5 hover:text-white'
+                                                };
+                                        }
+                                    };
+                                    
+                                    const themeStyles = getCreateThemeStyles();
 
-                                {/* Create Dropdown */}
-                                {showCreateMenu && (
-                                    <div className="absolute top-full left-0 mt-2 w-48 glass-panel rounded-xl overflow-hidden animate-scale-in z-50 flex flex-col p-1.5 shadow-xl bg-white dark:bg-slate-900/95">
-                                        <button
-                                            onClick={() => { onAddTask('EVENT'); setShowCreateMenu(false); }}
-                                            className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-left transition-colors group"
-                                        >
-                                            <Calendar size={16} className="text-brand-500 group-hover:scale-110 transition-transform" />
-                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t(currentTheme, 'eventType')}</span>
-                                        </button>
-                                        <button
-                                            onClick={() => { onAddTask('TASK'); setShowCreateMenu(false); }}
-                                            className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-left transition-colors group"
-                                        >
-                                            <CheckSquare size={16} className="text-blue-500 group-hover:scale-110 transition-transform" />
-                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t(currentTheme, 'taskType')}</span>
-                                        </button>
-                                        <button
-                                            onClick={() => { onAddTask('APPOINTMENT'); setShowCreateMenu(false); }}
-                                            className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-left transition-colors group"
-                                        >
-                                            <Clock size={16} className="text-purple-500 group-hover:scale-110 transition-transform" />
-                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t(currentTheme, 'appointmentType')}</span>
-                                        </button>
-                                        <button
-                                            onClick={() => { onAddTask('REMINDER'); setShowCreateMenu(false); }}
-                                            className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-left transition-colors group"
-                                        >
-                                            <Bell size={16} className="text-yellow-500 group-hover:scale-110 transition-transform" />
-                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t(currentTheme, 'reminderType')}</span>
-                                        </button>
-                                        {onCreateRoutine && (
+                                    return (
+                                        <>
                                             <button
-                                                onClick={() => { onCreateRoutine(); setShowCreateMenu(false); }}
-                                                className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-left transition-colors group"
+                                                onClick={() => setShowCreateMenu(!showCreateMenu)}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all active:scale-95 ${themeStyles.btn}`}
                                             >
-                                                <Repeat size={16} className="text-emerald-500 group-hover:scale-110 transition-transform" />
-                                                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Routine</span>
+                                                <Plus size={18} strokeWidth={2.5} />
+                                                <span>Create</span>
+                                                <ChevronDown size={14} className={`opacity-60 transition-transform ${showCreateMenu ? 'rotate-180' : ''}`} />
                                             </button>
-                                        )}
-                                    </div>
-                                )}
+
+                                            {/* Create Dropdown */}
+                                            {showCreateMenu && (
+                                                <div className={`absolute top-full left-0 mt-2 w-52 rounded-xl overflow-hidden animate-scale-in z-50 flex flex-col p-1.5 ${themeStyles.menu}`}>
+                                                    <button
+                                                        onClick={() => { onAddTask('EVENT'); setShowCreateMenu(false); }}
+                                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group ${themeStyles.item}`}
+                                                    >
+                                                        <Calendar size={16} className={currentTheme === 'cyberpunk' ? 'text-cyan-400' : 'text-brand-500 group-hover:scale-110 transition-transform'} />
+                                                        <span className="text-sm font-semibold">{t(currentTheme, 'eventType')}</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => { onAddTask('TASK'); setShowCreateMenu(false); }}
+                                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group ${themeStyles.item}`}
+                                                    >
+                                                        <CheckSquare size={16} className={currentTheme === 'cyberpunk' ? 'text-blue-400' : 'text-blue-500 group-hover:scale-110 transition-transform'} />
+                                                        <span className="text-sm font-semibold">{t(currentTheme, 'taskType')}</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => { onAddTask('APPOINTMENT'); setShowCreateMenu(false); }}
+                                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group ${themeStyles.item}`}
+                                                    >
+                                                        <Clock size={16} className={currentTheme === 'cyberpunk' ? 'text-purple-400' : 'text-purple-500 group-hover:scale-110 transition-transform'} />
+                                                        <span className="text-sm font-semibold">{t(currentTheme, 'appointmentType')}</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => { onAddTask('REMINDER'); setShowCreateMenu(false); }}
+                                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group ${themeStyles.item}`}
+                                                    >
+                                                        <Bell size={16} className={currentTheme === 'cyberpunk' ? 'text-yellow-400' : 'text-yellow-500 group-hover:scale-110 transition-transform'} />
+                                                        <span className="text-sm font-semibold">{t(currentTheme, 'reminderType')}</span>
+                                                    </button>
+                                                    {onCreateRoutine && (
+                                                        <button
+                                                            onClick={() => { onCreateRoutine(); setShowCreateMenu(false); }}
+                                                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group ${themeStyles.item}`}
+                                                        >
+                                                            <Repeat size={16} className={currentTheme === 'cyberpunk' ? 'text-green-400' : 'text-emerald-500 group-hover:scale-110 transition-transform'} />
+                                                            <span className="text-sm font-semibold">Routine</span>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </>
+                                    );
+                                })()}
                             </div>
                         </div>
 
