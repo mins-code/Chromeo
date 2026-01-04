@@ -341,7 +341,11 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                  </button>
              </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5">
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5"
+            aria-label="Close modal"
+          >
             <X size={20} />
           </button>
         </div>
@@ -845,7 +849,11 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                                 className={`flex-1 bg-transparent border-none focus:ring-0 p-0 text-sm ${st.isCompleted ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-slate-200'}`}
                                 placeholder="What needs to be done?"
                             />
-                            <button onClick={() => handleDeleteSubtask(st.id)} className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1">
+                            <button
+                                onClick={() => handleDeleteSubtask(st.id)}
+                                className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1"
+                                aria-label="Delete subtask"
+                            >
                                 <Trash2 size={14} />
                             </button>
                         </div>
