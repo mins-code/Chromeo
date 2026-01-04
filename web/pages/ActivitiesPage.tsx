@@ -129,7 +129,7 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Dashboard Header Section */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 dark:border-white/5 pb-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 dark:border-white/5 pb-6">
         <div>
           <p className="text-brand-500 font-medium text-sm mb-1 uppercase tracking-wide flex items-center gap-2">
             <CalendarClock size={16} /> {today}
@@ -146,7 +146,7 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
             View All Tasks
           </Button>
         </div>
-      </header>
+      </div>
 
       {/* Stats Section */}
       <Stats 
