@@ -21,7 +21,12 @@ export const TYPE_COLORS: Record<TaskType, string> = {
 // Muted colors for completed tasks
 const COMPLETED_COLORS = 'bg-slate-200/50 dark:bg-slate-700/30 border-slate-400 dark:border-slate-500 text-slate-500 dark:text-slate-400';
 
-const DraggableTask: React.FC<DraggableTaskProps> = ({ task, children, variant = 'chip' }) => {
+/**
+ * ⚡ Performance Optimization:
+ * Wrapped in React.memo to prevent unnecessary re-renders when parent components update
+ * (e.g. `currentTime` tick in WeekView).
+ */
+const DraggableTask = React.memo(({ task, children, variant = 'chip' }: DraggableTaskProps) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
     data: { task },
@@ -82,7 +87,7 @@ const DraggableTask: React.FC<DraggableTaskProps> = ({ task, children, variant =
       )}
     </div>
   );
-};
+});
 
 export default DraggableTask;
 
