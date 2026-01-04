@@ -452,17 +452,30 @@ const App: React.FC = () => {
     }, [visibleTasks]);
 
     const filteredTasks = useMemo(() => {
-        return visibleTasks.filter(t => {
-            if (currentView === 'tasks' && t.type !== 'TASK') return false;
-            if (currentView === 'events' && t.type !== 'EVENT') return false;
-            if (currentView === 'appointments' && t.type !== 'APPOINTMENT') return false;
-            if (currentView === 'reminders' && t.type !== 'REMINDER') return false;
+        return visibleTasks
+            .filter(t => {
+                if (currentView === 'tasks' && t.type !== 'TASK') return false;
+                if (currentView === 'events' && t.type !== 'EVENT') return false;
+                if (currentView === 'appointments' && t.type !== 'APPOINTMENT') return false;
+                if (currentView === 'reminders' && t.type !== 'REMINDER') return false;
 
-            const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                t.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-            const matchesStatus = filterStatus === 'ALL' || t.status === filterStatus;
-            return matchesSearch && matchesStatus;
-        });
+                const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    t.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+                const matchesStatus = filterStatus === 'ALL' || t.status === filterStatus;
+                return matchesSearch && matchesStatus;
+            })
+            .sort((a, b) => {
+                // Sort by closest deadline (earliest due date first)
+                const dateA = a.dueDate || a.reminderTime;
+                const dateB = b.dueDate || b.reminderTime;
+
+                // Tasks with no deadline go to the end
+                if (!dateA && !dateB) return 0;
+                if (!dateA) return 1;
+                if (!dateB) return -1;
+
+                return new Date(dateA).getTime() - new Date(dateB).getTime();
+            });
     }, [visibleTasks, searchQuery, filterStatus, currentView]);
 
     const calendarFilteredTasks = useMemo(() => {
@@ -671,7 +684,7 @@ const App: React.FC = () => {
             {/* VIEW: LISTS */}
             {(currentView === 'tasks' || currentView === 'reminders' || currentView === 'events' || currentView === 'appointments') && (
                 <div className="space-y-6 h-full flex flex-col animate-fade-in">
-                    <header className="flex flex-col md:flex-row gap-5 justify-between items-start md:items-center border-b border-slate-200 dark:border-white/5 pb-6">
+                    <div className="flex flex-col md:flex-row gap-5 justify-between items-start md:items-center border-b border-slate-200 dark:border-white/5 pb-6">
                         <div>
                             <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-3">
                                 <HeaderIcon className="text-brand-500" size={32} />
@@ -706,7 +719,7 @@ const App: React.FC = () => {
                                 className="w-40"
                             />
                         </div>
-                    </header>
+                    </div>
 
                     <div className="grid grid-cols-1 gap-4 pb-20">
                         {filteredTasks.map(task => (

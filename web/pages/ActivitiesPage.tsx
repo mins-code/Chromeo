@@ -143,7 +143,7 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
         </div>
         <div className="hidden md:block">
           <Button variant="secondary" onClick={() => navigate('/tasks')}>
-            View All Tasks
+            View All Activities
           </Button>
         </div>
       </div>
