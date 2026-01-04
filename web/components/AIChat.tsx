@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Sparkles, PlusCircle, XCircle, Calendar, Bell, Edit2, Check, Clock, DollarSign, Wallet, TrendingDown, TrendingUp, Pencil, Trash2, RefreshCw, Copy, CheckCheck } from 'lucide-react';
-import { chatWithAI } from '../services/geminiService';
+import { Send, Bot, User, Sparkles, PlusCircle, XCircle, Calendar, Bell, Edit2, Check, Clock, DollarSign, Wallet, TrendingDown, TrendingUp, Pencil, Trash2, RefreshCw, Copy, CheckCheck, ImagePlus, X, Image } from 'lucide-react';
+import { chatWithAI, parseTransactionScreenshot } from '../services/geminiService';
 import { ChatMessage, Task, TaskPriority, TaskStatus, TaskType, SuggestedPrompt } from '../types';
 import * as BudgetService from '../services/budgetService';
 import { saveChatHistory, loadChatHistory, clearChatHistory } from '../utils/aiChatStorage';
@@ -42,8 +42,11 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
   const [isLoading, setIsLoading] = useState(false);
   const [draftGroups, setDraftGroups] = useState<Record<string, AIDraftItem[]>>({});
   const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -85,6 +88,58 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsLoading(true);
+
+    // If there's an attached image, process it for transaction extraction
+    if (selectedImage) {
+      try {
+        const transactions = await parseTransactionScreenshot(selectedImage);
+        
+        // Update user message status
+        setMessages(prev => prev.map(m => m.id === userMsg.id ? { ...m, status: 'sent' as const } : m));
+        
+        // Create AI response with extracted transactions
+        const aiMsg: ChatMessage = {
+          id: crypto.randomUUID(),
+          role: 'model',
+          text: `I found ${transactions.length} transaction(s) in your image. Please review and confirm:`,
+          timestamp: Date.now(),
+          status: 'sent'
+        };
+        
+        setMessages(prev => [...prev, aiMsg]);
+        
+        // Create drafts for each transaction
+        const drafts: AIDraftItem[] = transactions.map(t => ({
+          category: 'TRANSACTION' as const,
+          data: {
+            description: t.description,
+            amount: t.amount,
+            type: t.type,
+            date: t.date
+          }
+        }));
+        
+        if (drafts.length > 0) {
+          setDraftGroups(prev => ({ ...prev, [aiMsg.id]: drafts }));
+        }
+      } catch (error) {
+        // Update user message status to error
+        setMessages(prev => prev.map(m => m.id === userMsg.id ? { ...m, status: 'error' as const } : m));
+        
+        const errorMsg: ChatMessage = {
+          id: crypto.randomUUID(),
+          role: 'model',
+          text: error instanceof Error ? error.message : 'Failed to process image. Please try again.',
+          timestamp: Date.now(),
+          status: 'error'
+        };
+        setMessages(prev => [...prev, errorMsg]);
+      } finally {
+        setIsLoading(false);
+        handleRemoveImage();
+      }
+      return;
+    }
 
     try {
         const history = messages
@@ -184,6 +239,35 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
   const handleSuggestedPrompt = (prompt: string) => {
     setInput(prompt);
     inputRef.current?.focus();
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image must be less than 5MB');
+        return;
+      }
+      setSelectedImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   // Helper to ensure AI dates are treated as local time if they lack time component
@@ -431,9 +515,26 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
                 aria-label="Chat message input"
                 maxLength={500}
             />
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="hidden"
+                aria-label="Upload image"
+            />
+            <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading}
+                className="p-3 text-slate-500 hover:text-brand-500 hover:bg-brand-500/10 rounded-xl transition-colors disabled:opacity-50"
+                title="Attach image for transaction scanning"
+                aria-label="Attach image"
+            >
+                <ImagePlus size={20} />
+            </button>
             <Button 
               onClick={handleSend} 
-              disabled={isLoading || !input.trim()} 
+              disabled={isLoading || (!input.trim() && !selectedImage)} 
               variant="primary" 
               className="rounded-xl w-14 px-0"
               aria-label="Send message"
@@ -441,6 +542,28 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
                 <Send size={20} />
             </Button>
         </div>
+        
+        {/* Image Preview */}
+        {imagePreview && (
+          <div className="mt-3 relative inline-block">
+            <img 
+              src={imagePreview} 
+              alt="Selected" 
+              className="max-h-32 rounded-lg border border-slate-200 dark:border-white/10"
+            />
+            <button
+              onClick={handleRemoveImage}
+              className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
+              aria-label="Remove image"
+            >
+              <X size={14} />
+            </button>
+            <div className="absolute bottom-1 left-1 px-2 py-0.5 bg-black/60 rounded text-xs text-white flex items-center gap-1">
+              <Image size={12} />
+              <span>Transaction Image</span>
+            </div>
+          </div>
+        )}
         {input.length > 400 && (
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-right">
             {500 - input.length} characters remaining
