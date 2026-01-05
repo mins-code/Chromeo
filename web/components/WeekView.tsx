@@ -69,6 +69,52 @@ const DroppableHourCell = React.memo(({ dayDate, hour, height, intervalHours, ch
   );
 });
 
+// Helper functions moved outside to be stable
+const getTaskTime = (task: Task): { hour: number; minutes: number } | null => {
+  const timeStr = task.reminderTime || task.dueDate;
+  if (!timeStr) return null;
+
+  try {
+    const date = parseISO(timeStr);
+    return { hour: getHours(date), minutes: getMinutes(date) };
+  } catch {
+    return null;
+  }
+};
+
+const getTaskDate = (task: Task): Date | null => {
+  const timeStr = task.reminderTime || task.dueDate;
+  if (!timeStr) return null;
+  try {
+    return parseISO(timeStr);
+  } catch {
+    return null;
+  }
+};
+
+interface TaskBlockProps {
+    task: Task;
+    style: React.CSSProperties;
+    onEditTask: (task: Task) => void;
+}
+
+/**
+ * ⚡ Performance Optimization:
+ * Memoized component to prevent re-renders of task blocks when parent re-renders (e.g. time updates).
+ * Uses stable `style` object from `taskStyles` map.
+ */
+const TaskBlock = React.memo(({ task, style, onEditTask }: TaskBlockProps) => {
+    return (
+        <div
+            style={style}
+            className="absolute left-0 right-0 z-10"
+            onClick={() => onEditTask(task)}
+        >
+            <DraggableTask task={task} variant="block" />
+        </div>
+    );
+});
+
 const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isExpanded, setIsExpanded] = useState(false); // Default to compact (4hr)
@@ -89,30 +135,6 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
     const end = endOfWeek(currentDate, { weekStartsOn: 0 });
     return eachDayOfInterval({ start, end });
   }, [currentDate]);
-
-  // Parse task time and get hour/minutes
-  const getTaskTime = (task: Task): { hour: number; minutes: number } | null => {
-    const timeStr = task.reminderTime || task.dueDate;
-    if (!timeStr) return null;
-    
-    try {
-      const date = parseISO(timeStr);
-      return { hour: getHours(date), minutes: getMinutes(date) };
-    } catch {
-      return null;
-    }
-  };
-
-  // Get task date for comparison
-  const getTaskDate = (task: Task): Date | null => {
-    const timeStr = task.reminderTime || task.dueDate;
-    if (!timeStr) return null;
-    try {
-      return parseISO(timeStr);
-    } catch {
-      return null;
-    }
-  };
 
   // Group tasks by day
   // Optimized: O(N) single pass instead of O(7N) nested loop
@@ -143,22 +165,30 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
     return grouped;
   }, [tasks, weekDays]);
 
-  // Calculate task block position and height
-  const getTaskStyle = (task: Task): React.CSSProperties => {
-    const time = getTaskTime(task);
-    if (!time) return { display: 'none' };
+  // Pre-calculate task styles to prevent object recreation on every render
+  const taskStyles = useMemo(() => {
+      const styles = new Map<string, React.CSSProperties>();
 
-    // Calculate position based on interval
-    const cellHeight = HOUR_HEIGHT * INTERVAL_HOURS;
-    const top = (time.hour / INTERVAL_HOURS) * cellHeight + (time.minutes / 60) * HOUR_HEIGHT;
-    const duration = task.duration || 60; // Default 60 minutes
-    const height = Math.max((duration / 60) * HOUR_HEIGHT, 24); // Minimum 24px
+      tasks.forEach(task => {
+          const time = getTaskTime(task);
+          if (!time) {
+              styles.set(task.id, { display: 'none' });
+              return;
+          }
 
-    return {
-      top: `${top}px`,
-      height: `${height}px`,
-    };
-  };
+          // Calculate position based on interval
+          const cellHeight = HOUR_HEIGHT * INTERVAL_HOURS;
+          const top = (time.hour / INTERVAL_HOURS) * cellHeight + (time.minutes / 60) * HOUR_HEIGHT;
+          const duration = task.duration || 60; // Default 60 minutes
+          const height = Math.max((duration / 60) * HOUR_HEIGHT, 24); // Minimum 24px
+
+          styles.set(task.id, {
+              top: `${top}px`,
+              height: `${height}px`,
+          });
+      });
+      return styles;
+  }, [tasks, HOUR_HEIGHT, INTERVAL_HOURS]);
 
   // Current time indicator position
   const currentTimePosition = useMemo(() => {
@@ -240,14 +270,12 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
 
                 {/* Task blocks */}
                 {dayTasks.map(task => (
-                  <div
+                  <TaskBlock
                     key={task.id}
-                    style={getTaskStyle(task)}
-                    className="absolute left-0 right-0 z-10"
-                    onClick={() => onEditTask(task)}
-                  >
-                    <DraggableTask task={task} variant="block" />
-                  </div>
+                    task={task}
+                    style={taskStyles.get(task.id) || { display: 'none' }}
+                    onEditTask={onEditTask}
+                  />
                 ))}
 
                 {/* Current time indicator */}
@@ -272,4 +300,3 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
 };
 
 export default WeekView;
-
