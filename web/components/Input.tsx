@@ -39,6 +39,7 @@ const Input: React.FC<InputProps> = ({ label, error, className = '', id, ...prop
           {error}
         </p>
       )}
+      {error && <p id={errorId} role="alert" className="mt-1 text-xs text-red-500 dark:text-red-400 ml-1 animate-slide-up font-mono">{error}</p>}
     </div>
   );
 };
