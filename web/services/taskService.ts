@@ -1,23 +1,29 @@
-import { Task, TaskStatus, TaskPriority, Partner, RecurrenceConfig, DbTask } from "../types";
+/**
+ * Task Service
+ * 
+ * Handles all task-related database operations.
+ * Uses the transformation layer for type-safe DB interactions.
+ */
+
+import { Task, Partner, RecurrenceConfig } from "../types";
+import { 
+  DbTask, 
+  mapTaskFromDb, 
+  mapTaskToDbInsert, 
+  mapTaskToDbUpdate 
+} from "../types/supabase-custom";
 import { supabase } from "./supabaseClient";
 
-// Helper function to map DB snake_case columns to TypeScript camelCase interface
-const mapDbTaskToTask = (dbTask: DbTask): Task => ({
-  ...dbTask,
-  dueDate: dbTask.due_date,
-  reminderTime: dbTask.reminder_time,
-  dependencyIds: dbTask.dependency_ids || [],
-  isShared: dbTask.is_shared,
-  createdAt: new Date(dbTask.created_at).getTime(),
-  tags: dbTask.tags || [],
-  subtasks: dbTask.subtasks || [],
-  notificationEnabled: dbTask.notification_enabled,
-  notificationMinutesBefore: dbTask.notification_minutes_before,
-  notificationTime: dbTask.notification_time
-});
+// ============================================================================
+// Helper Functions
+// ============================================================================
 
-// Helper function to calculate next recurrence date
-const calculateNextRecurrence = (recurrence: RecurrenceConfig, startDate: string): string => {
+/**
+ * Calculates the next recurrence date based on the recurrence configuration.
+ */
+const calculateNextRecurrence = (recurrence: RecurrenceConfig, startDate: string): string | null => {
+  if (recurrence.frequency === 'none') return null;
+
   const next = new Date(startDate);
   const interval = recurrence.interval || 1;
 
@@ -34,13 +40,21 @@ const calculateNextRecurrence = (recurrence: RecurrenceConfig, startDate: string
     case 'yearly':
       next.setFullYear(next.getFullYear() + interval);
       break;
-    case 'none':
-      return null as any; // No recurrence
+    default:
+      return null;
   }
 
   return next.toISOString();
 };
 
+// ============================================================================
+// Task CRUD Operations
+// ============================================================================
+
+/**
+ * Fetches all tasks for the current user.
+ * RLS policies ensure users only see their own tasks and shared tasks from partners.
+ */
 export const getTasks = async (): Promise<Task[]> => {
   const { data, error } = await supabase
     .from('tasks')
@@ -52,47 +66,33 @@ export const getTasks = async (): Promise<Task[]> => {
     return [];
   }
 
-  return data.map(mapDbTaskToTask);
+  // Map each database row to frontend Task type
+  return (data as DbTask[]).map(mapTaskFromDb);
 };
 
+/**
+ * Creates a new task.
+ */
 export const createTask = async (task: Omit<Task, 'id' | 'createdAt'>): Promise<Task | null> => {
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) throw new Error("User not authenticated");
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
 
   // Calculate next_recurrence_date if task has recurrence
-  let nextRecurrenceDate = null;
+  let nextRecurrenceDate: string | null = null;
   if (task.recurrence && task.recurrence.frequency !== 'none') {
     const baseDate = task.dueDate || task.reminderTime || new Date().toISOString();
     nextRecurrenceDate = calculateNextRecurrence(task.recurrence, baseDate);
   }
 
-  const dbTask = {
-    user_id: user.id,
-    title: task.title,
-    description: task.description,
-    status: task.status,
-    priority: task.priority,
-    due_date: task.dueDate || null,
-    reminder_time: task.reminderTime || null,
-    subtasks: task.subtasks || [],
-    tags: task.tags || [],
-    type: task.type,
-    duration: task.duration,
-    location: task.location,
-    dependency_ids: task.dependencyIds || [],
-    is_shared: task.isShared || false,
-    recurrence: task.recurrence,
-    next_recurrence_date: nextRecurrenceDate,
-    created_at: new Date().toISOString(),
-    notification_enabled: task.notificationEnabled,
-    notification_minutes_before: task.notificationMinutesBefore,
-    notification_time: task.notificationTime || null
-  };
+  // Map frontend task to database insert payload
+  const dbPayload = mapTaskToDbInsert(task, user.id, nextRecurrenceDate);
 
   const { data, error } = await supabase
     .from('tasks')
-    .insert(dbTask)
+    .insert(dbPayload)
     .select()
     .single();
 
@@ -101,41 +101,27 @@ export const createTask = async (task: Omit<Task, 'id' | 'createdAt'>): Promise<
     return null;
   }
 
-  return mapDbTaskToTask(data);
+  // Map database response back to frontend Task type
+  return mapTaskFromDb(data as DbTask);
 };
 
+/**
+ * Updates an existing task.
+ */
 export const updateTask = async (updatedTask: Task): Promise<Task | null> => {
   // Calculate next_recurrence_date if task has recurrence
-  let nextRecurrenceDate = null;
+  let nextRecurrenceDate: string | null = null;
   if (updatedTask.recurrence && updatedTask.recurrence.frequency !== 'none') {
     const baseDate = updatedTask.dueDate || updatedTask.reminderTime || new Date().toISOString();
     nextRecurrenceDate = calculateNextRecurrence(updatedTask.recurrence, baseDate);
   }
 
-  const dbTask = {
-    title: updatedTask.title,
-    description: updatedTask.description,
-    status: updatedTask.status,
-    priority: updatedTask.priority,
-    due_date: updatedTask.dueDate || null,
-    reminder_time: updatedTask.reminderTime || null,
-    subtasks: updatedTask.subtasks,
-    tags: updatedTask.tags,
-    type: updatedTask.type,
-    duration: updatedTask.duration,
-    location: updatedTask.location,
-    dependency_ids: updatedTask.dependencyIds,
-    is_shared: updatedTask.isShared,
-    recurrence: updatedTask.recurrence,
-    next_recurrence_date: nextRecurrenceDate,
-    notification_enabled: updatedTask.notificationEnabled,
-    notification_minutes_before: updatedTask.notificationMinutesBefore,
-    notification_time: updatedTask.notificationTime || null
-  };
+  // Map frontend task to database update payload
+  const dbPayload = mapTaskToDbUpdate(updatedTask, nextRecurrenceDate);
 
   const { data, error } = await supabase
     .from('tasks')
-    .update(dbTask)
+    .update(dbPayload)
     .eq('id', updatedTask.id)
     .select()
     .single();
@@ -145,26 +131,44 @@ export const updateTask = async (updatedTask: Task): Promise<Task | null> => {
     return null;
   }
 
-  return mapDbTaskToTask(data);
+  // Map database response back to frontend Task type
+  return mapTaskFromDb(data as DbTask);
 };
 
+/**
+ * Deletes a task by ID.
+ */
 export const deleteTask = async (id: string): Promise<boolean> => {
-  const { error } = await supabase.from('tasks').delete().eq('id', id);
+  const { error } = await supabase
+    .from('tasks')
+    .delete()
+    .eq('id', id);
+
   if (error) {
     console.error("Error deleting task:", error);
     throw new Error(`Failed to delete task: ${error.message}`);
   }
+
   return true;
 };
 
-// --- Partner Service (Mock implementation for now, but ready for DB) ---
-// In a real production app, this would query a 'profiles' table.
+// ============================================================================
+// Partner Operations (Legacy - kept for backward compatibility)
+// ============================================================================
 
+/**
+ * Gets the stored partner from localStorage.
+ * @deprecated Use partnerService instead for database-backed partnerships.
+ */
 export const getPartner = (): Partner | null => {
   const stored = localStorage.getItem('chronodex_partner');
   return stored ? JSON.parse(stored) : null;
 };
 
+/**
+ * Connects a partner and stores in localStorage.
+ * @deprecated Use partnerService instead for database-backed partnerships.
+ */
 export const connectPartner = (email: string): Partner => {
   const partner: Partner = {
     id: 'p1',
@@ -176,6 +180,10 @@ export const connectPartner = (email: string): Partner => {
   return partner;
 };
 
-export const disconnectPartner = () => {
+/**
+ * Disconnects the current partner.
+ * @deprecated Use partnerService instead for database-backed partnerships.
+ */
+export const disconnectPartner = (): void => {
   localStorage.removeItem('chronodex_partner');
 };
