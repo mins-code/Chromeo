@@ -1,0 +1,151 @@
+/**
+ * Financial Forecasting Utility
+ * 
+ * Projects budget balance over time based on recurring transactions.
+ */
+
+import { RecurringTransaction } from '../types';
+
+/**
+ * Represents a single data point in the forecast projection.
+ */
+export interface ForecastDataPoint {
+  /** ISO date string (YYYY-MM-DD) */
+  date: string;
+  /** Projected balance on this date */
+  balance: number;
+  /** Comma-separated list of transactions occurring on this date */
+  label: string;
+}
+
+/**
+ * Checks if a recurring transaction falls on a specific date based on its frequency.
+ * 
+ * @param transaction - The recurring transaction to check
+ * @param checkDate - The date to check against
+ * @returns true if the transaction occurs on checkDate
+ */
+function isTransactionDue(transaction: RecurringTransaction, checkDate: Date): boolean {
+  const nextDue = new Date(transaction.nextDueDate);
+  const nextDueDay = nextDue.getDate();
+  const nextDueDayOfWeek = nextDue.getDay();
+  const nextDueMonth = nextDue.getMonth();
+  
+  const checkDay = checkDate.getDate();
+  const checkDayOfWeek = checkDate.getDay();
+  const checkMonth = checkDate.getMonth();
+  
+  // The transaction must be active (nextDueDate should be on or before the checkDate for daily/weekly/monthly)
+  // But we need to calculate if the recurrence pattern falls on checkDate
+  
+  switch (transaction.frequency) {
+    case 'daily':
+      // Daily transactions occur every day, starting from nextDueDate
+      return checkDate >= nextDue;
+      
+    case 'weekly':
+      // Weekly transactions occur on the same day of week as nextDueDate
+      if (checkDate < nextDue) return false;
+      return checkDayOfWeek === nextDueDayOfWeek;
+      
+    case 'monthly':
+      // Monthly transactions occur on the same day of month
+      if (checkDate < nextDue) return false;
+      // Handle month-end edge case (e.g., 31st doesn't exist in all months)
+      const lastDayOfMonth = new Date(checkDate.getFullYear(), checkDate.getMonth() + 1, 0).getDate();
+      const targetDay = Math.min(nextDueDay, lastDayOfMonth);
+      return checkDay === targetDay;
+      
+    case 'yearly':
+      // Yearly transactions occur on the same month and day
+      if (checkDate < nextDue) return false;
+      // Handle Feb 29 edge case
+      if (nextDueMonth === 1 && nextDueDay === 29) {
+        // Leap year check for Feb 29
+        const isLeapYear = (year: number) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+        if (!isLeapYear(checkDate.getFullYear())) {
+          // On non-leap years, treat Feb 29 as Feb 28
+          return checkMonth === 1 && checkDay === 28;
+        }
+      }
+      return checkMonth === nextDueMonth && checkDay === nextDueDay;
+      
+    default:
+      return false;
+  }
+}
+
+/**
+ * Calculates a 30-day (or custom) forecast of budget balance based on recurring transactions.
+ * 
+ * @param currentBalance - The starting balance (usually remaining budget)
+ * @param recurring - Array of recurring transactions
+ * @param startDate - The date to start the projection from
+ * @param daysToProject - Number of days to project (default: 30)
+ * @returns Array of ForecastDataPoint representing daily balance projections
+ * 
+ * @example
+ * ```typescript
+ * const forecast = calculateForecast(5000, recurringTransactions, new Date(), 30);
+ * // Returns 30 data points showing projected balance each day
+ * ```
+ */
+export function calculateForecast(
+  currentBalance: number,
+  recurring: RecurringTransaction[],
+  startDate: Date,
+  daysToProject: number = 30
+): ForecastDataPoint[] {
+  const results: ForecastDataPoint[] = [];
+  let runningBalance = currentBalance;
+  
+  // Normalize startDate to midnight to avoid time-related issues
+  const normalizedStart = new Date(startDate);
+  normalizedStart.setHours(0, 0, 0, 0);
+  
+  for (let i = 0; i < daysToProject; i++) {
+    const checkDate = new Date(normalizedStart);
+    checkDate.setDate(normalizedStart.getDate() + i);
+    
+    // Find all recurring transactions due on this date
+    const dueTransactions: RecurringTransaction[] = [];
+    
+    for (const transaction of recurring) {
+      if (isTransactionDue(transaction, checkDate)) {
+        dueTransactions.push(transaction);
+        
+        // Update running balance
+        if (transaction.type === 'income') {
+          runningBalance += transaction.amount;
+        } else {
+          runningBalance -= transaction.amount;
+        }
+      }
+    }
+    
+    // Create label from transaction descriptions
+    const label = dueTransactions.map(t => t.description).join(', ');
+    
+    // Format date as YYYY-MM-DD
+    const dateString = checkDate.toISOString().split('T')[0];
+    
+    results.push({
+      date: dateString,
+      balance: Math.round(runningBalance * 100) / 100, // Round to 2 decimal places
+      label
+    });
+  }
+  
+  return results;
+}
+
+/**
+ * Formats a forecast date for display.
+ * 
+ * @param dateString - ISO date string (YYYY-MM-DD)
+ * @returns Formatted date string (e.g., "Jan 15")
+ */
+export function formatForecastDate(dateString: string): string {
+  const date = new Date(dateString + 'T00:00:00');
+  return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+}

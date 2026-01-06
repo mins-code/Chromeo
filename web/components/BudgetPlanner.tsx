@@ -9,7 +9,9 @@ import Button from './Button';
 import Input from './Input';
 import Select from './Select';
 import TransactionList from './TransactionList';
-import { Wallet, TrendingUp, TrendingDown, Plus, Trash2, IndianRupee, Eye, EyeOff, Repeat, ArrowRight, Settings, Share2, User, X, Loader2, UserPlus, Camera } from 'lucide-react';
+import BudgetForecastChart from './BudgetForecastChart';
+import { calculateForecast, formatForecastDate } from '../utils/financialForecasting';
+import { Wallet, TrendingUp, TrendingDown, Plus, Trash2, IndianRupee, Eye, EyeOff, Repeat, ArrowRight, Settings, Share2, User, X, Loader2, UserPlus, Camera, LineChart } from 'lucide-react';
 import { t } from '../themeText';
 
 interface BudgetPlannerProps {
@@ -204,6 +206,24 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
         return daysLeft > 0 ? remaining / daysLeft : remaining;
     }, [remaining, budget.duration]);
 
+    // Calculate 30-day forecast based on recurring transactions
+    const forecastData = useMemo(() => 
+        calculateForecast(remaining, budget.recurring, new Date(), 30),
+        [remaining, budget.recurring]
+    );
+
+    // Get projected end balance for summary
+    const projectedEndBalance = useMemo(() => {
+        if (forecastData.length === 0) return remaining;
+        return forecastData[forecastData.length - 1].balance;
+    }, [forecastData, remaining]);
+
+    // Get projected end date
+    const projectedEndDate = useMemo(() => {
+        if (forecastData.length === 0) return '';
+        return formatForecastDate(forecastData[forecastData.length - 1].date);
+    }, [forecastData]);
+
     const formatCurrency = useCallback((val: number) => {
         return val.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
     }, []);
@@ -305,6 +325,36 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                         <Button variant="primary" className="w-full" onClick={handleUpdateSettings}>Update Budget</Button>
                     </div>
                 </div>
+            </div>
+
+            {/* 30-Day Cash Flow Projection */}
+            <div className="glass-panel p-6 rounded-3xl space-y-4">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2 font-mono">
+                        <LineChart size={14} /> 30-Day Cash Flow Projection
+                    </h3>
+                    {budget.recurring.length > 0 && (
+                        <div className={`text-xs font-medium px-3 py-1 rounded-full ${
+                            projectedEndBalance >= 0 
+                                ? 'bg-emerald-500/10 text-emerald-500' 
+                                : 'bg-red-500/10 text-red-500'
+                        }`}>
+                            {projectedEndBalance >= 0 ? 'On Track' : 'At Risk'}
+                        </div>
+                    )}
+                </div>
+                
+                <BudgetForecastChart data={forecastData} formatCurrency={formatCurrency} />
+                
+                {budget.recurring.length > 0 && (
+                    <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
+                        Based on your recurring bills, you are projected to have{' '}
+                        <span className={`font-bold ${projectedEndBalance >= 0 ? 'text-brand-500' : 'text-red-500'}`}>
+                            {formatCurrency(projectedEndBalance)}
+                        </span>{' '}
+                        remaining on <span className="font-medium">{projectedEndDate}</span>.
+                    </p>
+                )}
             </div>
 
             {/* Quick Transaction */}
