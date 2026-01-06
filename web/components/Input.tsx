@@ -9,6 +9,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 const Input: React.FC<InputProps> = ({ label, error, className = '', id, ...props }) => {
   const generatedId = useId();
   const inputId = id || generatedId;
+  const errorId = `${inputId}-error`;
 
   return (
     <div className="w-full">
@@ -23,11 +24,22 @@ const Input: React.FC<InputProps> = ({ label, error, className = '', id, ...prop
       <div className="relative">
         <input
           id={inputId}
+          aria-invalid={!!error}
+          aria-describedby={error ? errorId : undefined}
           className={`w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-4 py-2.5 h-11 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 focus:border-brand-500 transition-all shadow-sm flex items-center ${error ? 'border-red-500/50 focus:ring-red-500' : 'hover:border-slate-400 dark:hover:border-slate-500'} ${className}`}
           {...props}
         />
       </div>
-      {error && <p className="mt-1 text-xs text-red-500 dark:text-red-400 ml-1 animate-slide-up font-mono">{error}</p>}
+      {error && (
+        <p
+          id={errorId}
+          role="alert"
+          className="mt-1 text-xs text-red-500 dark:text-red-400 ml-1 animate-slide-up font-mono"
+        >
+          {error}
+        </p>
+      )}
+      {error && <p id={errorId} role="alert" className="mt-1 text-xs text-red-500 dark:text-red-400 ml-1 animate-slide-up font-mono">{error}</p>}
     </div>
   );
 };

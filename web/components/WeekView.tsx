@@ -70,6 +70,7 @@ const DroppableHourCell = React.memo(({ dayDate, hour, height, intervalHours, ch
 });
 
 // Helper to parse task time
+// Helper functions moved outside to be stable
 const getTaskTime = (task: Task): { hour: number; minutes: number } | null => {
   const timeStr = task.reminderTime || task.dueDate;
   if (!timeStr) return null;
@@ -87,6 +88,20 @@ interface TaskBlockProps {
   hourHeight: number;
   intervalHours: number;
   onEditTask: (task: Task) => void;
+const getTaskDate = (task: Task): Date | null => {
+  const timeStr = task.reminderTime || task.dueDate;
+  if (!timeStr) return null;
+  try {
+    return parseISO(timeStr);
+  } catch {
+    return null;
+  }
+};
+
+interface TaskBlockProps {
+    task: Task;
+    style: React.CSSProperties;
+    onEditTask: (task: Task) => void;
 }
 
 /**
@@ -120,6 +135,19 @@ const TaskBlock = React.memo(({ task, hourHeight, intervalHours, onEditTask }: T
       <DraggableTask task={task} variant="block" />
     </div>
   );
+ * Memoized component to prevent re-renders of task blocks when parent re-renders (e.g. time updates).
+ * Uses stable `style` object from `taskStyles` map.
+ */
+const TaskBlock = React.memo(({ task, style, onEditTask }: TaskBlockProps) => {
+    return (
+        <div
+            style={style}
+            className="absolute left-0 right-0 z-10"
+            onClick={() => onEditTask(task)}
+        >
+            <DraggableTask task={task} variant="block" />
+        </div>
+    );
 });
 
 const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) => {
@@ -182,6 +210,31 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
 
     return grouped;
   }, [tasks, weekDays]);
+
+  // Pre-calculate task styles to prevent object recreation on every render
+  const taskStyles = useMemo(() => {
+      const styles = new Map<string, React.CSSProperties>();
+
+      tasks.forEach(task => {
+          const time = getTaskTime(task);
+          if (!time) {
+              styles.set(task.id, { display: 'none' });
+              return;
+          }
+
+          // Calculate position based on interval
+          const cellHeight = HOUR_HEIGHT * INTERVAL_HOURS;
+          const top = (time.hour / INTERVAL_HOURS) * cellHeight + (time.minutes / 60) * HOUR_HEIGHT;
+          const duration = task.duration || 60; // Default 60 minutes
+          const height = Math.max((duration / 60) * HOUR_HEIGHT, 24); // Minimum 24px
+
+          styles.set(task.id, {
+              top: `${top}px`,
+              height: `${height}px`,
+          });
+      });
+      return styles;
+  }, [tasks, HOUR_HEIGHT, INTERVAL_HOURS]);
 
   // Current time indicator position
   const currentTimePosition = useMemo(() => {
@@ -268,6 +321,7 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
                     task={task}
                     hourHeight={HOUR_HEIGHT}
                     intervalHours={INTERVAL_HOURS}
+                    style={taskStyles.get(task.id) || { display: 'none' }}
                     onEditTask={onEditTask}
                   />
                 ))}
