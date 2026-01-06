@@ -69,6 +69,59 @@ const DroppableHourCell = React.memo(({ dayDate, hour, height, intervalHours, ch
   );
 });
 
+// Helper to parse task time
+const getTaskTime = (task: Task): { hour: number; minutes: number } | null => {
+  const timeStr = task.reminderTime || task.dueDate;
+  if (!timeStr) return null;
+
+  try {
+    const date = parseISO(timeStr);
+    return { hour: getHours(date), minutes: getMinutes(date) };
+  } catch {
+    return null;
+  }
+};
+
+interface TaskBlockProps {
+  task: Task;
+  hourHeight: number;
+  intervalHours: number;
+  onEditTask: (task: Task) => void;
+}
+
+/**
+ * ⚡ Performance Optimization:
+ * Extracted and memoized to prevent re-rendering all tasks when `currentTime` updates.
+ * This avoids recalculating styles and DOM reconciliation for every task every minute.
+ */
+const TaskBlock = React.memo(({ task, hourHeight, intervalHours, onEditTask }: TaskBlockProps) => {
+  const style = useMemo((): React.CSSProperties => {
+    const time = getTaskTime(task);
+    if (!time) return { display: 'none' };
+
+    // Calculate position based on interval
+    const cellHeight = hourHeight * intervalHours;
+    const top = (time.hour / intervalHours) * cellHeight + (time.minutes / 60) * hourHeight;
+    const duration = task.duration || 60; // Default 60 minutes
+    const height = Math.max((duration / 60) * hourHeight, 24); // Minimum 24px
+
+    return {
+      top: `${top}px`,
+      height: `${height}px`,
+    };
+  }, [task, hourHeight, intervalHours]);
+
+  return (
+    <div
+      style={style}
+      className="absolute left-0 right-0 z-10"
+      onClick={() => onEditTask(task)}
+    >
+      <DraggableTask task={task} variant="block" />
+    </div>
+  );
+});
+
 const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isExpanded, setIsExpanded] = useState(false); // Default to compact (4hr)
@@ -89,19 +142,6 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
     const end = endOfWeek(currentDate, { weekStartsOn: 0 });
     return eachDayOfInterval({ start, end });
   }, [currentDate]);
-
-  // Parse task time and get hour/minutes
-  const getTaskTime = (task: Task): { hour: number; minutes: number } | null => {
-    const timeStr = task.reminderTime || task.dueDate;
-    if (!timeStr) return null;
-    
-    try {
-      const date = parseISO(timeStr);
-      return { hour: getHours(date), minutes: getMinutes(date) };
-    } catch {
-      return null;
-    }
-  };
 
   // Get task date for comparison
   const getTaskDate = (task: Task): Date | null => {
@@ -142,23 +182,6 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
 
     return grouped;
   }, [tasks, weekDays]);
-
-  // Calculate task block position and height
-  const getTaskStyle = (task: Task): React.CSSProperties => {
-    const time = getTaskTime(task);
-    if (!time) return { display: 'none' };
-
-    // Calculate position based on interval
-    const cellHeight = HOUR_HEIGHT * INTERVAL_HOURS;
-    const top = (time.hour / INTERVAL_HOURS) * cellHeight + (time.minutes / 60) * HOUR_HEIGHT;
-    const duration = task.duration || 60; // Default 60 minutes
-    const height = Math.max((duration / 60) * HOUR_HEIGHT, 24); // Minimum 24px
-
-    return {
-      top: `${top}px`,
-      height: `${height}px`,
-    };
-  };
 
   // Current time indicator position
   const currentTimePosition = useMemo(() => {
@@ -240,14 +263,13 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
 
                 {/* Task blocks */}
                 {dayTasks.map(task => (
-                  <div
+                  <TaskBlock
                     key={task.id}
-                    style={getTaskStyle(task)}
-                    className="absolute left-0 right-0 z-10"
-                    onClick={() => onEditTask(task)}
-                  >
-                    <DraggableTask task={task} variant="block" />
-                  </div>
+                    task={task}
+                    hourHeight={HOUR_HEIGHT}
+                    intervalHours={INTERVAL_HOURS}
+                    onEditTask={onEditTask}
+                  />
                 ))}
 
                 {/* Current time indicator */}
@@ -272,4 +294,3 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
 };
 
 export default WeekView;
-
