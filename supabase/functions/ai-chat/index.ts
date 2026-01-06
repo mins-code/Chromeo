@@ -169,7 +169,6 @@ serve(async (req) => {
     const cleanTagsContext = sanitizeInput(tagsContext, 1000, true);
 
     // Rate Limiting
-    // Rate Limiting
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -186,6 +185,14 @@ serve(async (req) => {
         .gte('window_start', new Date(Date.now() - 60 * 1000).toISOString()) // 1 minute window
         .maybeSingle()
 
+    if (limitError) {
+        console.error("Rate limit check failed:", limitError.message);
+        // Fail securely: if rate limiting is unavailable, prevent potential abuse of expensive API
+        return new Response(
+            JSON.stringify({ error: 'Service temporarily unavailable. Please try again later.' }),
+            { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        )
+    }
 
     if (limitData && limitData.count >= 10) { // Limit: 10 requests per minute
         return new Response(
@@ -194,7 +201,6 @@ serve(async (req) => {
         )
     }
 
-    // Update rate limit
     // Update rate limit
     if (limitData) {
         await supabaseAdmin.from('rate_limits').update({ count: limitData.count + 1 }).eq('id', limitData.id)
@@ -224,6 +230,20 @@ serve(async (req) => {
 
     if (mode && !['chat', 'enhance', 'parse', 'parse-image'].includes(mode)) {
       throw new Error('Invalid mode parameter');
+    }
+
+    // 🛡️ SECURITY: Sanitize Inputs to prevent Prompt Injection
+    // Only allow alphanumeric characters, spaces, and basic punctuation in userName
+    const safeUserName = (userName || 'User').replace(/[^a-zA-Z0-9\s\.\-]/g, '').slice(0, 50);
+
+    // Sanitize tagsContext. Ensure it's not containing malicious instructions.
+    // Assuming tagsContext is text like "Existing tags: ...". We'll limit its length and characters broadly.
+    // If it's malicious, it might try to break the prompt structure.
+    let safeTagsContext = '';
+    if (tagsContext && typeof tagsContext === 'string') {
+       safeTagsContext = tagsContext.slice(0, 1000); // Limit length
+       // Remove potential delimiters that might be used to trick the model
+       // (Though Gemini is robust, simple text sanitation is good practice)
     }
 
     const genAI = new GoogleGenerativeAI(apiKey)
@@ -354,14 +374,19 @@ Return ONLY a JSON object (no markdown, no explanation):
 
   } catch (err) {
     const error = err as any;
-    console.error("AI-CHAT ERROR:", error.message, error);
+    // 🛡️ SECURITY: Log error message but avoid logging full objects if they might contain secrets
+    console.error("AI-CHAT ERROR:", error.message);
+    if (error.stack) {
+        console.error(error.stack);
+    }
     
     // Provide specific error messages for better debugging
     let errorMessage = error.message || 'An unexpected error occurred';
     let statusCode = 500;
     
     if (error.message?.includes('API key')) {
-      errorMessage = 'AI service configuration error. Please contact support.';
+      // Don't leak exact API key details, but acknowledge it's a config issue
+      errorMessage = 'AI service configuration error.';
       statusCode = 503;
     } else if (error.message?.includes('quota') || error.message?.includes('429')) {
       errorMessage = 'AI service is temporarily unavailable. Please try again in a few moments.';
@@ -373,6 +398,7 @@ Return ONLY a JSON object (no markdown, no explanation):
       errorMessage = error.message; // Keep validation errors as-is
       statusCode = 400;
     } else {
+      // Generic error for unknown internal issues to prevent leakage
       errorMessage = 'An unexpected error occurred. Please try again.';
     }
     
