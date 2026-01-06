@@ -92,13 +92,10 @@ export default defineConfig(({ mode }) => {
     build: {
       // Optimize bundle size
       target: 'es2015',
-      minify: 'terser',
-      terserOptions: {
-        compress: {
-          drop_console: mode === 'production', // Remove console.log in production
-          drop_debugger: true,
-        },
-      },
+      // Minification default is esbuild, which is faster and doesn't require extra deps
+      // minify: 'terser', 
+      // terserOptions: { ... } removed to fix build error
+
       // Source maps for production debugging
       sourcemap: mode === 'production' ? 'hidden' : true,
       // Chunk splitting for better caching

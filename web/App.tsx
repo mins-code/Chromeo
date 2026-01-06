@@ -887,6 +887,7 @@ const App: React.FC = () => {
                     tasks={visibleTasks}
                     onCreateTask={handleCreateTask}
                     onEditTask={handleEditTask}
+                    createTask={createTask}
                 />
             )}
 

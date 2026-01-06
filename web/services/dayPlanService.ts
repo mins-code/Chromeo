@@ -250,6 +250,7 @@ export const getTemplates = (): DayPlanTemplate[] => {
  */
 export const saveAsTemplate = (
   plan: DayPlan,
+  tasks: Omit<Task, 'id' | 'user_id' | 'createdAt'>[],
   name: string,
   description?: string
 ): DayPlanTemplate => {
@@ -259,7 +260,7 @@ export const saveAsTemplate = (
     id: crypto.randomUUID(),
     name,
     description,
-    tasks: [], // Will be populated from actual tasks
+    tasks: tasks,
     links: plan.links.map(({ fromTaskId, toTaskId, linkType }) => ({
       fromTaskId,
       toTaskId,

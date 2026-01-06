@@ -4,48 +4,60 @@ import { Task, DayPlan, TaskLink, TaskLayout } from '../types';
 import { ChevronLeft, ChevronRight, Calendar, Plus, Copy, Trash2, Save, Layout as LayoutIcon, Download } from 'lucide-react';
 import Button from '../components/Button';
 import FlowchartCanvas from '../components/FlowchartCanvas';
+import CloneDayModal from '../components/CloneDayModal';
+import SaveTemplateModal from '../components/SaveTemplateModal';
+import TemplatesModal from '../components/TemplatesModal';
 import * as DayPlanService from '../services/dayPlanService';
 import { ReactFlowProvider } from 'reactflow';
+import { DayPlanTemplate } from '../types';
 
 interface DayPlannerPageProps {
   tasks: Task[];
   onCreateTask: (initialDate?: Date, type?: any) => void;
   onEditTask: (task: Task) => void;
+  createTask: (task: any) => Promise<any>;
 }
 
 const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
   tasks,
   onCreateTask,
   onEditTask,
+  createTask,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [dayPlan, setDayPlan] = useState<DayPlan | null>(null);
-  const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+  const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
+  const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
+  const [isSaveTemplateModalOpen, setIsSaveTemplateModalOpen] = useState(false);
+  const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false);
 
   // Format current date as YYYY-MM-DD
   const dateKey = useMemo(() => format(currentDate, 'yyyy-MM-dd'), [currentDate]);
 
   // Load day plan for current date
   useEffect(() => {
-    const plan = DayPlanService.getDayPlan(dateKey);
-    if (plan) {
-      setDayPlan(plan);
-    } else {
-      // Create empty day plan
-      const newPlan: DayPlan = {
-        id: crypto.randomUUID(),
-        userId: 'current-user', // TODO: Get from auth context
-        date: dateKey,
-        taskIds: [],
-        links: [],
-        layout: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setDayPlan(newPlan);
-      DayPlanService.saveDayPlan(newPlan);
-    }
+    const loadPlan = async () => {
+      const plan = await DayPlanService.getDayPlan(dateKey);
+      if (plan) {
+        setDayPlan(plan);
+      } else {
+        // Create empty day plan
+        const newPlan: DayPlan = {
+          id: crypto.randomUUID(),
+          userId: 'current-user', // TODO: Get from auth context
+          date: dateKey,
+          taskIds: [],
+          links: [],
+          layout: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        setDayPlan(newPlan);
+        await DayPlanService.saveDayPlan(newPlan);
+      }
+    };
+    loadPlan();
   }, [dateKey]);
 
   // Get tasks for current day plan
@@ -65,15 +77,8 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
   const goToNextDay = () => setCurrentDate(prev => addDays(prev, 1));
   const goToToday = () => setCurrentDate(new Date());
 
-  // Save plan
-  const handleSavePlan = useCallback(() => {
-    if (dayPlan) {
-      DayPlanService.saveDayPlan(dayPlan);
-    }
-  }, [dayPlan]);
-
   // Clear day plan
-  const handleClearPlan = useCallback(() => {
+  const handleClearPlan = useCallback(async () => {
     if (dayPlan && confirm('Clear all tasks from this day plan?')) {
       const clearedPlan: DayPlan = {
         ...dayPlan,
@@ -83,7 +88,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
         updatedAt: new Date().toISOString(),
       };
       setDayPlan(clearedPlan);
-      DayPlanService.saveDayPlan(clearedPlan);
+      await DayPlanService.saveDayPlan(clearedPlan);
     }
   }, [dayPlan]);
 
@@ -93,7 +98,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
   }, []);
 
   // Handle drop on canvas
-  const handleCanvasDrop = useCallback((event: React.DragEvent) => {
+  const handleCanvasDrop = useCallback(async (event: React.DragEvent) => {
     event.preventDefault();
     if (!draggedTask || !dayPlan) return;
 
@@ -102,11 +107,8 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
     const y = event.clientY - canvasBounds.top;
 
     // Add task to plan
-    const updatedPlan = DayPlanService.addTaskToPlan(dayPlan.id, draggedTask.id, { x, y });
-    if (updatedPlan) {
-      setDayPlan(updatedPlan);
-    }
-
+    const updatedPlan = await DayPlanService.addTaskToPlan(dayPlan.id, draggedTask.id, { x, y });
+    setDayPlan(updatedPlan);
     setDraggedTask(null);
   }, [draggedTask, dayPlan]);
 
@@ -200,6 +202,89 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
     DayPlanService.saveDayPlan(updatedPlan);
   }, [dayPlan, planTasks]);
 
+  // Handle clone day
+  const handleCloneDay = useCallback(async (targetDate: Date, adjustTime: boolean, timeOffsetMinutes: number) => {
+    if (!dayPlan) return;
+    
+    const targetDateStr = format(targetDate, 'yyyy-MM-dd');
+    
+    // Call service to clone plan structure first
+    const clonedPlans = await DayPlanService.cloneDayPlan(dayPlan.id, [targetDateStr]);
+    const clonedPlan = clonedPlans[0];
+    
+    if (clonedPlan) {
+      // Clone tasks
+      const idMap = new Map<string, string>(); // Old Task ID -> New Task ID
+
+      // Determine which tasks to clone (all or selected)
+      const tasksToClone = selectedTasks.length > 0 
+        ? planTasks.filter(t => selectedTasks.includes(t.id))
+        : planTasks;
+
+      // Create new tasks for the target day
+      for (const task of tasksToClone) {
+        // Calculate new due date (keep time if exists)
+        let newDueDate = targetDate;
+        if (task.dueDate) {
+          const oldDate = new Date(task.dueDate);
+          newDueDate = new Date(targetDate);
+          newDueDate.setHours(oldDate.getHours(), oldDate.getMinutes(), 0, 0);
+          
+          if (adjustTime && timeOffsetMinutes !== 0) {
+            newDueDate = new Date(newDueDate.getTime() + timeOffsetMinutes * 60000);
+          }
+        }
+
+        // Prepare new task payload
+        const newTaskPayload: any = {
+          ...task,
+          id: undefined, // Let service generate
+          createdAt: undefined,
+          updatedAt: undefined,
+          dueDate: newDueDate.toISOString(),
+          status: 'TODO', // Reset status
+          // Ensure we don't carry over specific completion data if any
+        };
+
+        try {
+          const createdTask = await createTask(newTaskPayload);
+          if (createdTask) {
+            idMap.set(task.id, createdTask.id);
+          }
+        } catch (error) {
+          console.error("Failed to clone task", task.id, error);
+        }
+      }
+
+      // Update cloned plan with new Task IDs
+      clonedPlan.taskIds = Array.from(idMap.values());
+      
+      // Remap link IDs
+      clonedPlan.links = clonedPlan.links
+        .filter(link => idMap.has(link.fromTaskId) && idMap.has(link.toTaskId))
+        .map(link => ({
+          ...link,
+          id: crypto.randomUUID(),
+          fromTaskId: idMap.get(link.fromTaskId)!,
+          toTaskId: idMap.get(link.toTaskId)!,
+        }));
+
+      // Remap layout IDs
+      clonedPlan.layout = clonedPlan.layout
+        .filter(item => idMap.has(item.taskId))
+        .map(item => ({
+          ...item,
+          taskId: idMap.get(item.taskId)!,
+        }));
+      
+      // Save updated plan
+      await DayPlanService.saveDayPlan(clonedPlan);
+
+      alert(`Day plan cloned to ${targetDateStr} with ${clonedPlan.taskIds.length} tasks!`);
+      setCurrentDate(targetDate);
+    }
+  }, [dayPlan]);
+
   return (
     <div className="h-full flex flex-col animate-fade-in">
       {/* Header */}
@@ -244,12 +329,17 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
             Add Task
           </Button>
           
-          <Button variant="secondary" size="sm">
+          <Button variant="secondary" size="sm" onClick={() => setIsCloneModalOpen(true)}>
             <Copy size={16} />
             Clone Day
           </Button>
 
-          <Button variant="secondary" size="sm">
+          <Button variant="secondary" size="sm" onClick={() => setIsTemplatesModalOpen(true)}>
+            <Download size={16} />
+            Templates
+          </Button>
+
+          <Button variant="secondary" size="sm" onClick={() => setIsSaveTemplateModalOpen(true)}>
             <Save size={16} />
             Save as Template
           </Button>
@@ -298,6 +388,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
                 onLinkDelete={handleLinkDelete}
                 onTaskClick={handleTaskClick}
                 onAutoArrange={handleAutoArrange}
+                onSelectionChange={setSelectedTasks}
               />
             </ReactFlowProvider>
           </div>
@@ -352,6 +443,15 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
           </div>
         </div>
       </div>
+
+      <CloneDayModal 
+        isOpen={isCloneModalOpen}
+        onClose={() => setIsCloneModalOpen(false)}
+        onClone={handleCloneDay}
+        sourceDate={currentDate}
+        taskCount={planTasks.length}
+        selectedTaskCount={selectedTasks.length}
+      />
     </div>
   );
 };

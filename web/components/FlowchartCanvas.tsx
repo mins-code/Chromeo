@@ -26,6 +26,7 @@ interface FlowchartCanvasProps {
   onLinkDelete: (linkId: string) => void;
   onTaskClick: (task: Task) => void;
   onAutoArrange?: () => void;
+  onSelectionChange?: (selectedTaskIds: string[]) => void;
 }
 
 const nodeTypes = {
@@ -41,7 +42,14 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
   onLinkDelete,
   onTaskClick,
   onAutoArrange,
+  onSelectionChange,
 }) => {
+  // Handle selection change
+  const handleSelectionChange = useCallback(({ nodes }: { nodes: Node[] }) => {
+    if (onSelectionChange) {
+      onSelectionChange(nodes.map(node => node.id));
+    }
+  }, [onSelectionChange]);
   // Convert tasks to React Flow nodes
   const initialNodes: Node[] = useMemo(() => {
     return tasks.map(task => {
@@ -123,6 +131,7 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onSelectionChange={handleSelectionChange}
         onNodeDragStop={onNodeDragStop}
         onEdgesDelete={onEdgesDelete}
         nodeTypes={nodeTypes}
