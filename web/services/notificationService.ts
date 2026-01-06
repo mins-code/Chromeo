@@ -263,7 +263,7 @@ export const sendNotification = async (
         data: options?.data,
         requireInteraction: false,
         vibrate: [100, 50, 100],
-      });
+      } as any);
       return true;
     } else {
       // Fallback to regular Notification

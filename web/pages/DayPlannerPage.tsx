@@ -1,0 +1,359 @@
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { format, addDays, subDays } from 'date-fns';
+import { Task, DayPlan, TaskLink, TaskLayout } from '../types';
+import { ChevronLeft, ChevronRight, Calendar, Plus, Copy, Trash2, Save, Layout as LayoutIcon, Download } from 'lucide-react';
+import Button from '../components/Button';
+import FlowchartCanvas from '../components/FlowchartCanvas';
+import * as DayPlanService from '../services/dayPlanService';
+import { ReactFlowProvider } from 'reactflow';
+
+interface DayPlannerPageProps {
+  tasks: Task[];
+  onCreateTask: (initialDate?: Date, type?: any) => void;
+  onEditTask: (task: Task) => void;
+}
+
+const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
+  tasks,
+  onCreateTask,
+  onEditTask,
+}) => {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [dayPlan, setDayPlan] = useState<DayPlan | null>(null);
+  const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
+  const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+
+  // Format current date as YYYY-MM-DD
+  const dateKey = useMemo(() => format(currentDate, 'yyyy-MM-dd'), [currentDate]);
+
+  // Load day plan for current date
+  useEffect(() => {
+    const plan = DayPlanService.getDayPlan(dateKey);
+    if (plan) {
+      setDayPlan(plan);
+    } else {
+      // Create empty day plan
+      const newPlan: DayPlan = {
+        id: crypto.randomUUID(),
+        userId: 'current-user', // TODO: Get from auth context
+        date: dateKey,
+        taskIds: [],
+        links: [],
+        layout: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setDayPlan(newPlan);
+      DayPlanService.saveDayPlan(newPlan);
+    }
+  }, [dateKey]);
+
+  // Get tasks for current day plan
+  const planTasks = useMemo(() => {
+    if (!dayPlan) return [];
+    return tasks.filter(t => dayPlan.taskIds.includes(t.id));
+  }, [tasks, dayPlan]);
+
+  // Get unused tasks (tasks not in current plan)
+  const unusedTasks = useMemo(() => {
+    if (!dayPlan) return tasks;
+    return tasks.filter(t => !dayPlan.taskIds.includes(t.id));
+  }, [tasks, dayPlan]);
+
+  // Navigation handlers
+  const goToPreviousDay = () => setCurrentDate(prev => subDays(prev, 1));
+  const goToNextDay = () => setCurrentDate(prev => addDays(prev, 1));
+  const goToToday = () => setCurrentDate(new Date());
+
+  // Save plan
+  const handleSavePlan = useCallback(() => {
+    if (dayPlan) {
+      DayPlanService.saveDayPlan(dayPlan);
+    }
+  }, [dayPlan]);
+
+  // Clear day plan
+  const handleClearPlan = useCallback(() => {
+    if (dayPlan && confirm('Clear all tasks from this day plan?')) {
+      const clearedPlan: DayPlan = {
+        ...dayPlan,
+        taskIds: [],
+        links: [],
+        layout: [],
+        updatedAt: new Date().toISOString(),
+      };
+      setDayPlan(clearedPlan);
+      DayPlanService.saveDayPlan(clearedPlan);
+    }
+  }, [dayPlan]);
+
+  // Handle task drag from sidebar
+  const handleDragStart = useCallback((task: Task) => {
+    setDraggedTask(task);
+  }, []);
+
+  // Handle drop on canvas
+  const handleCanvasDrop = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    if (!draggedTask || !dayPlan) return;
+
+    const canvasBounds = event.currentTarget.getBoundingClientRect();
+    const x = event.clientX - canvasBounds.left;
+    const y = event.clientY - canvasBounds.top;
+
+    // Add task to plan
+    const updatedPlan = DayPlanService.addTaskToPlan(dayPlan.id, draggedTask.id, { x, y });
+    if (updatedPlan) {
+      setDayPlan(updatedPlan);
+    }
+
+    setDraggedTask(null);
+  }, [draggedTask, dayPlan]);
+
+  const handleCanvasDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+  }, []);
+
+  // Handle task move
+  const handleTaskMove = useCallback((taskId: string, x: number, y: number) => {
+    if (!dayPlan) return;
+
+    const updatedLayout = [...dayPlan.layout];
+    const layoutIndex = updatedLayout.findIndex(l => l.taskId === taskId);
+    
+    if (layoutIndex >= 0) {
+      updatedLayout[layoutIndex] = { taskId, x, y };
+    } else {
+      updatedLayout.push({ taskId, x, y });
+    }
+
+    const updatedPlan = {
+      ...dayPlan,
+      layout: updatedLayout,
+      updatedAt: new Date().toISOString(),
+    };
+
+    setDayPlan(updatedPlan);
+    DayPlanService.saveDayPlan(updatedPlan);
+  }, [dayPlan]);
+
+  // Handle link creation
+  const handleLinkCreate = useCallback((fromTaskId: string, toTaskId: string) => {
+    if (!dayPlan) return;
+
+    const newLink: TaskLink = {
+      id: crypto.randomUUID(),
+      fromTaskId,
+      toTaskId,
+      linkType: 'flow',
+    };
+
+    const updatedPlan = {
+      ...dayPlan,
+      links: [...dayPlan.links, newLink],
+      updatedAt: new Date().toISOString(),
+    };
+
+    setDayPlan(updatedPlan);
+    DayPlanService.saveDayPlan(updatedPlan);
+  }, [dayPlan]);
+
+  // Handle link deletion
+  const handleLinkDelete = useCallback((linkId: string) => {
+    if (!dayPlan) return;
+
+    const updatedPlan = {
+      ...dayPlan,
+      links: dayPlan.links.filter(l => l.id !== linkId),
+      updatedAt: new Date().toISOString(),
+    };
+
+    setDayPlan(updatedPlan);
+    DayPlanService.saveDayPlan(updatedPlan);
+  }, [dayPlan]);
+
+  // Handle task click
+  const handleTaskClick = useCallback((task: Task) => {
+    onEditTask(task);
+  }, [onEditTask]);
+
+  // Auto-arrange algorithm (simple grid layout)
+  const handleAutoArrange = useCallback(() => {
+    if (!dayPlan || planTasks.length === 0) return;
+
+    const GRID_SIZE = 320;
+    const COLUMNS = 3;
+
+    const newLayout: TaskLayout[] = planTasks.map((task, index) => ({
+      taskId: task.id,
+      x: (index % COLUMNS) * GRID_SIZE + 50,
+      y: Math.floor(index / COLUMNS) * 200 + 50,
+    }));
+
+    const updatedPlan = {
+      ...dayPlan,
+      layout: newLayout,
+      updatedAt: new Date().toISOString(),
+    };
+
+    setDayPlan(updatedPlan);
+    DayPlanService.saveDayPlan(updatedPlan);
+  }, [dayPlan, planTasks]);
+
+  return (
+    <div className="h-full flex flex-col animate-fade-in">
+      {/* Header */}
+      <div className="border-b border-slate-200 dark:border-white/5 pb-6">
+        {/* Date Navigation */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={goToPreviousDay}
+              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400 transition-colors"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                {format(currentDate, 'EEEE, MMMM d, yyyy')}
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {planTasks.length} tasks in plan
+              </p>
+            </div>
+
+            <button
+              onClick={goToNextDay}
+              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400 transition-colors"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+
+          <Button variant="secondary" size="sm" onClick={goToToday}>
+            <Calendar size={16} />
+            Today
+          </Button>
+        </div>
+
+        {/* Toolbar */}
+        <div className="flex items-center gap-2">
+          <Button variant="primary" size="sm" onClick={() => onCreateTask(currentDate)}>
+            <Plus size={16} />
+            Add Task
+          </Button>
+          
+          <Button variant="secondary" size="sm">
+            <Copy size={16} />
+            Clone Day
+          </Button>
+
+          <Button variant="secondary" size="sm">
+            <Save size={16} />
+            Save as Template
+          </Button>
+
+          <Button variant="secondary" size="sm" onClick={handleAutoArrange}>
+            <LayoutIcon size={16} />
+            Auto-Arrange
+          </Button>
+
+          <div className="flex-1" />
+
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleClearPlan}
+            className="text-red-500 hover:text-red-600"
+          >
+            <Trash2 size={16} />
+            Clear
+          </Button>
+        </div>
+      </div>
+
+      {/* Content Area */}
+      <div className="flex-1 flex gap-6 pt-6 overflow-hidden">
+        {/* Flowchart Canvas */}
+        <div 
+          className="flex-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden"
+          onDrop={handleCanvasDrop}
+          onDragOver={handleCanvasDragOver}
+        >
+          <div className="p-4 border-b border-slate-200 dark:border-white/5">
+            <h3 className="font-semibold text-slate-800 dark:text-slate-100">Day Flowchart</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Drag tasks to create your daily flow • Connect tasks to show dependencies
+            </p>
+          </div>
+          <div className="h-[calc(100%-4rem)]">
+            <ReactFlowProvider>
+              <FlowchartCanvas
+                tasks={planTasks}
+                links={dayPlan?.links || []}
+                layout={dayPlan?.layout || []}
+                onTaskMove={handleTaskMove}
+                onLinkCreate={handleLinkCreate}
+                onLinkDelete={handleLinkDelete}
+                onTaskClick={handleTaskClick}
+                onAutoArrange={handleAutoArrange}
+              />
+            </ReactFlowProvider>
+          </div>
+        </div>
+
+        {/* Unused Tasks Sidebar */}
+        <div className="w-80 flex flex-col bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/5">
+          <div className="p-4 border-b border-slate-200 dark:border-white/5">
+            <h3 className="font-semibold text-slate-800 dark:text-slate-100">Available Tasks</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {unusedTasks.length} tasks not in plan
+            </p>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            {unusedTasks.length === 0 ? (
+              <div className="text-center py-8 text-slate-400 text-sm">
+                All tasks are in the plan
+              </div>
+            ) : (
+              unusedTasks.map(task => (
+                <div
+                  key={task.id}
+                  draggable
+                  onDragStart={() => handleDragStart(task)}
+                  className="p-3 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-200 dark:border-white/5 hover:border-brand-500/30 cursor-move transition-all hover:shadow-md"
+                >
+                  <div className="font-medium text-sm text-slate-800 dark:text-slate-100">
+                    {task.title}
+                  </div>
+                  {task.dueDate && (
+                    <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                      <Calendar size={10} />
+                      {format(new Date(task.dueDate), 'h:mm a')}
+                    </div>
+                  )}
+                  {task.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {task.tags.slice(0, 2).map((tag, idx) => (
+                        <span 
+                          key={idx}
+                          className="px-2 py-0.5 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-xs"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default DayPlannerPage;

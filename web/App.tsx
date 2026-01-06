@@ -24,6 +24,7 @@ import CommandBar from './components/CommandBar';
 const AIChat = lazy(() => import('./components/AIChat'));
 const CalendarView = lazy(() => import('./components/CalendarView'));
 const BudgetPlanner = lazy(() => import('./components/BudgetPlanner'));
+const NotesManager = lazy(() => import('./components/NotesManager'));
 
 // Import new hooks and contexts
 import { useAuth } from './context/AuthContext';
@@ -47,6 +48,7 @@ import { useNetworkStatus } from './hooks/useNetworkStatus';
 
 // Import page components
 import ActivitiesPage from './pages/ActivitiesPage';
+import DayPlannerPage from './pages/DayPlannerPage';
 
 // Map URL paths to ViewMode for Layout compatibility
 const pathToViewMode: Record<string, ViewMode> = {
@@ -62,6 +64,8 @@ const pathToViewMode: Record<string, ViewMode> = {
     '/ai-chat': 'ai-chat',
     '/settings': 'settings',
     '/routines': 'routines',
+    '/notes': 'notes',
+    '/day-planner': 'day-planner',
 };
 
 const viewModeToPath: Record<ViewMode, string> = {
@@ -77,6 +81,8 @@ const viewModeToPath: Record<ViewMode, string> = {
     'ai-chat': '/ai-chat',
     'settings': '/settings',
     'routines': '/routines',
+    'notes': '/notes',
+    'day-planner': '/day-planner',
 };
 
 const App: React.FC = () => {
@@ -251,6 +257,44 @@ const App: React.FC = () => {
         window.addEventListener('keydown', handleGlobalKeyDown);
         return () => window.removeEventListener('keydown', handleGlobalKeyDown);
     }, []);
+
+    // Register Service Worker and Initialize Push Notifications
+    useEffect(() => {
+        const registerServiceWorker = async () => {
+            if ('serviceWorker' in navigator) {
+                try {
+                    // Register the custom service worker
+                    const registration = await navigator.serviceWorker.register(
+                        '/sw-custom.js',
+                        { scope: '/' }
+                    );
+                    
+                    console.log('[App] Service Worker registered:', registration);
+
+                    // Wait for service worker to be ready
+                    await navigator.serviceWorker.ready;
+
+                    // Send VAPID public key to service worker for push subscription
+                    const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+                    if (vapidKey && registration.active) {
+                        registration.active.postMessage({
+                            type: 'SET_VAPID_KEY',
+                            key: vapidKey
+                        });
+                    }
+
+                    // Initialize push notifications if enabled and user is authenticated
+                    if (session?.user && notificationSettings.enabled) {
+                        await NotificationService.initializePushNotifications();
+                    }
+                } catch (error) {
+                    console.error('[App] Service Worker registration failed:', error);
+                }
+            }
+        };
+
+        registerServiceWorker();
+    }, [session, notificationSettings.enabled]);
 
     // Routine Handlers
     const handleSaveRoutine = (routine: Routine) => {
@@ -792,6 +836,13 @@ const App: React.FC = () => {
                 </Suspense>
             )}
 
+            {/* VIEW: NOTES */}
+            {currentView === 'notes' && (
+                <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="animate-spin text-brand-500" size={32} /></div>}>
+                    <NotesManager currentTheme={theme} />
+                </Suspense>
+            )}
+
             {/* AI CHAT MODAL */}
             {(currentView === 'ai-chat' || isAIChatOpen) && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
@@ -827,6 +878,15 @@ const App: React.FC = () => {
                     onDelete={handleDeleteRoutine}
                     onToggle={handleToggleRoutine}
                     onCreate={handleCreateRoutine}
+                />
+            )}
+
+            {/* VIEW: DAY PLANNER */}
+            {currentView === 'day-planner' && (
+                <DayPlannerPage
+                    tasks={visibleTasks}
+                    onCreateTask={handleCreateTask}
+                    onEditTask={handleEditTask}
                 />
             )}
 

@@ -144,7 +144,35 @@ export interface Budget {
   savings: number;
 }
 
-export type ViewMode = 'dashboard' | 'activities' | 'all-activities' | 'tasks' | 'reminders' | 'events' | 'appointments' | 'budget' | 'ai-chat' | 'settings' | 'calendar' | 'routines';
+export interface ChecklistItem {
+  id: string;
+  text: string;
+  isCompleted: boolean;
+}
+
+export interface Note {
+  id: string;
+  user_id: string;
+  title: string;
+  content: string;
+  isChecklist: boolean;
+  checklistItems: ChecklistItem[];
+  isShared: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NoteShare {
+  id: string;
+  noteId: string;
+  ownerId: string;
+  sharedWithId: string;
+  sharedWithEmail: string;
+  sharedWithName?: string;
+  createdAt: string;
+}
+
+export type ViewMode = 'dashboard' | 'activities' | 'all-activities' | 'tasks' | 'reminders' | 'events' | 'appointments' | 'budget' | 'ai-chat' | 'settings' | 'calendar' | 'routines' | 'day-planner' | 'notes';
 
 export type ViewSourceMode = 'personal' | 'partners' | 'combined';
 
@@ -195,6 +223,53 @@ export interface Routine {
   notificationMinutesBefore?: number;
   notificationTime?: string; // Absolute ISO date string for notification
   createdAt: string;
+}
+
+// ============ Day Planner Types ============
+
+// Task link definition (soft or hard dependency)
+export interface TaskLink {
+  id: string;
+  fromTaskId: string;
+  toTaskId: string;
+  linkType: 'flow' | 'dependency'; // 'flow' = soft suggestion, 'dependency' = hard blocker
+}
+
+// Visual layout position for task in flowchart
+export interface TaskLayout {
+  taskId: string;
+  x: number; // X position in canvas
+  y: number; // Y position in canvas
+}
+
+// Day plan template (reusable)
+export interface DayPlanTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  tasks: Omit<Task, 'id' | 'user_id' | 'createdAt'>[]; // Task data without IDs
+  links: Omit<TaskLink, 'id'>[]; // Links without IDs
+  layout: Omit<TaskLayout, 'taskId'>[]; // Relative positions
+  createdAt: string;
+}
+
+// Day plan for a specific date
+export interface DayPlan {
+  id: string;
+  userId: string;
+  date: string; // YYYY-MM-DD
+  taskIds: string[]; // References to actual Task IDs
+  links: TaskLink[]; // Connections between tasks  
+  layout: TaskLayout[]; // Visual positions
+  templateId?: string; // If created from template
+  isRecurring?: boolean; // If part of recurring plan
+  recurringConfig?: {
+    frequency: 'daily' | 'weekly' | 'monthly';
+    interval: number; // e.g., 1 = every day, 2 = every other day
+    endDate?: string; // Optional end date
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ============ Database Response Types (snake_case from Supabase) ============
@@ -253,6 +328,37 @@ export interface DbBudgetShare {
   partner_id: string;
   created_at: string;
   partner?: {
+    id: string;
+    email: string;
+    full_name?: string;
+  } | Array<{
+    id: string;
+    email: string;
+    full_name?: string;
+  }>;
+}
+
+/** Database response for notes table */
+export interface DbNote {
+  id: string;
+  user_id: string;
+  title: string;
+  content: string;
+  is_checklist: boolean;
+  checklist_items: ChecklistItem[];
+  is_shared: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Database response for note_shares with joined profile */
+export interface DbNoteShare {
+  id: string;
+  note_id: string;
+  owner_id: string;
+  shared_with_id: string;
+  created_at: string;
+  shared_with?: {
     id: string;
     email: string;
     full_name?: string;

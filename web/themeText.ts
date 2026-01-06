@@ -52,6 +52,12 @@ export interface ThemeText {
     eventType: string;
     appointmentType: string;
     reminderType: string;
+
+    // Notes
+    notes: string;
+    myNotes: string;
+    addNote: string;
+    noteContent: string;
 }
 
 const defaultText: ThemeText = {
@@ -105,6 +111,12 @@ const defaultText: ThemeText = {
     eventType: 'Event',
     appointmentType: 'Appointment',
     reminderType: 'Reminder',
+
+    // Notes
+    notes: 'Notes',
+    myNotes: 'My Notes',
+    addNote: 'Add Note',
+    noteContent: 'Write your note here...',
 };
 
 const onepieceText: ThemeText = {
@@ -158,6 +170,12 @@ const onepieceText: ThemeText = {
     eventType: 'Event',
     appointmentType: 'Alliance Meeting',
     reminderType: 'Reminder',
+
+    // Notes
+    notes: 'Log',
+    myNotes: "Captain's Log",
+    addNote: 'New Entry',
+    noteContent: "Record your thoughts, Captain...",
 };
 
 const themeTexts: Record<ThemeOption, ThemeText> = {

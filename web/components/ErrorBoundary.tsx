@@ -1,16 +1,16 @@
-import React from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import Button from './Button';
 
 interface ErrorBoundaryProps {
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
+  children: ReactNode;
+  fallback?: ReactNode;
 }
 
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
-  errorInfo: React.ErrorInfo | null;
+  errorInfo: ErrorInfo | null;
 }
 
 /**
@@ -18,7 +18,7 @@ interface ErrorBoundaryState {
  * Catches JavaScript errors in child component tree and displays
  * a fallback UI instead of crashing the whole app.
  */
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = {
     hasError: false,
     error: null,
@@ -29,9 +29,9 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-    this.setState({ errorInfo });
+    (this as any).setState({ errorInfo });
   }
 
   private handleReload = (): void => {
@@ -39,18 +39,18 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   };
 
   private handleReset = (): void => {
-    this.setState({
+    (this as any).setState({
       hasError: false,
       error: null,
       errorInfo: null,
     });
   };
 
-  public render(): React.ReactNode {
-    if (this.state.hasError) {
+  public render(): ReactNode {
+    if ((this as any).state.hasError) {
       // Custom fallback UI
-      if (this.props.fallback) {
-        return this.props.fallback;
+      if ((this as any).props.fallback) {
+        return (this as any).props.fallback;
       }
 
       // Default error UI
@@ -69,14 +69,14 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
               We're sorry, but something unexpected happened. Please try refreshing the page.
             </p>
 
-            {import.meta.env.DEV && this.state.error && (
+            {import.meta.env.DEV && (this as any).state.error && (
               <details className="mb-6 text-left bg-slate-100 dark:bg-slate-800 rounded-xl p-4 text-sm">
                 <summary className="cursor-pointer font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Error Details (Development Only)
                 </summary>
                 <pre className="whitespace-pre-wrap text-red-600 dark:text-red-400 overflow-auto max-h-40 font-mono text-xs">
-                  {this.state.error.toString()}
-                  {this.state.errorInfo?.componentStack}
+                  {(this as any).state.error.toString()}
+                  {(this as any).state.errorInfo?.componentStack}
                 </pre>
               </details>
             )}
@@ -95,7 +95,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       );
     }
 
-    return this.props.children;
+    return (this as any).props.children;
   }
 }
 

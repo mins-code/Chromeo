@@ -25,6 +25,8 @@ const viewModeToPath: Record<ViewMode, string> = {
   'ai-chat': '/ai-chat',
   'settings': '/settings',
   'routines': '/routines',
+  'day-planner': '/day-planner',
+  'notes': '/notes',
 };
 
 // Function to get activity categories with themed labels

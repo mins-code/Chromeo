@@ -24,6 +24,7 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-router-dom": "^7.11.0",
+    "reactflow": "^11.11.4",
     "recharts": "^3.6.0",
     "vite-plugin-pwa": "^1.2.0"
   },

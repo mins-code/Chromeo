@@ -13,7 +13,10 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       VitePWA({
-        registerType: 'autoUpdate',
+        strategies: 'injectManifest',
+        srcDir: 'public',
+        filename: 'sw-custom.js',
+        injectRegister: false, // We'll register manually to send VAPID key
         includeAssets: ['favicon.ico', 'logo-light.jpg', 'logo-dark.jpg', 'logo-cyberpunk.jpg', 'logo-onepiece.png'],
         manifest: {
           name: 'ChronoDeX',

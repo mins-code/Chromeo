@@ -322,11 +322,11 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                     </div>
                     
                     {/* Input Fields */}
-                    <div className="md:col-span-5 lg:col-span-6">
-                        <Input label="Description" value={transDesc} onChange={e => setTransDesc(e.target.value)} placeholder="E.g. Coffee" />
-                    </div>
                     <div className="md:col-span-3">
                         <Input label="Amount" type="number" value={transAmount} onChange={e => setTransAmount(e.target.value)} placeholder="0.00" />
+                    </div>
+                    <div className="md:col-span-5 lg:col-span-6">
+                        <Input label="Description" value={transDesc} onChange={e => setTransDesc(e.target.value)} placeholder="E.g. Coffee" />
                     </div>
                 </div>
 
