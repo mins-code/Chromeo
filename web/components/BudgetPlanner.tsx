@@ -27,6 +27,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
     const [transType, setTransType] = useState<'income' | 'expense'>('expense');
     const [isRecurring, setIsRecurring] = useState(false);
     const [recurringFrequency, setRecurringFrequency] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
+    const [recurringStartDate, setRecurringStartDate] = useState(new Date().toISOString().split('T')[0]);
 
     // Budget sharing state
     const [budgetShares, setBudgetShares] = useState<BudgetShare[]>([]);
@@ -75,7 +76,9 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                     description: transDesc, 
                     amount, 
                     type: transType, 
-                    frequency: recurringFrequency 
+                    frequency: recurringFrequency,
+                    startDate: recurringStartDate
+                });
                 });
             } else {
                 await addTransaction({ description: transDesc, amount, type: transType });
@@ -357,6 +360,18 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                             currentTheme={currentTheme}
                             className="min-w-[120px]"
                         />
+                    )}
+
+                    {isRecurring && (
+                        <div className="flex flex-col">
+                           <label className="text-[10px] font-bold uppercase text-slate-400 font-mono mb-1">Start Date</label>
+                           <input 
+                               type="date"
+                               value={recurringStartDate}
+                               onChange={(e) => setRecurringStartDate(e.target.value)}
+                               className="bg-slate-100 dark:bg-white/5 border border-transparent focus:border-brand-500 rounded-xl px-3 py-2 text-sm text-slate-700 dark:text-slate-200 outline-none transition-all"
+                           />
+                        </div>
                     )}
                     
                     {isRecurring && (

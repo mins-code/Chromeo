@@ -145,40 +145,63 @@ export const addRecurringTransaction = async (
     description: string,
     amount: number,
     type: 'income' | 'expense',
-    frequency: 'daily' | 'weekly' | 'monthly' | 'yearly'
+    frequency: 'daily' | 'weekly' | 'monthly' | 'yearly',
+    startDate: string // ISO Date string for when the recurring logic should start
 ): Promise<Budget> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-        // 1. Insert the Immediate Realized Transaction (with Recurring tag for UI)
-        await supabase.from('transactions').insert({
-            user_id: user.id,
-            description: `${description} (Recurring)`,
-            amount,
-            type,
-            date: new Date().toISOString(),
-            frequency: null,
-            next_due_date: null
-        });
+        const start = new Date(startDate);
+        const today = new Date();
+        // Reset time parts for date comparison
+        const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+        const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-        // 2. Insert the Recurring Rule (Template for future - keep description clean)
-        // Calculate first due date based on frequency
-        const nextDueDate = new Date();
-        switch (frequency) {
-            case 'daily': nextDueDate.setDate(nextDueDate.getDate() + 1); break;
-            case 'weekly': nextDueDate.setDate(nextDueDate.getDate() + 7); break;
-            case 'monthly': nextDueDate.setMonth(nextDueDate.getMonth() + 1); break;
-            case 'yearly': nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); break;
+        // Condition 1: Start Date is Today (or in past) -> behave like legacy
+        if (startDay <= todayDay) {
+            // 1. Insert the Immediate Realized Transaction
+            await supabase.from('transactions').insert({
+                user_id: user.id,
+                description: `${description} (Recurring)`,
+                amount,
+                type,
+                date: new Date().toISOString(),
+                frequency: null,
+                next_due_date: null
+            });
+
+            // 2. Insert the Recurring Rule (next run is in future)
+            const nextDueDate = new Date(); // Start from today for calculation
+            switch (frequency) {
+                case 'daily': nextDueDate.setDate(nextDueDate.getDate() + 1); break;
+                case 'weekly': nextDueDate.setDate(nextDueDate.getDate() + 7); break;
+                case 'monthly': nextDueDate.setMonth(nextDueDate.getMonth() + 1); break;
+                case 'yearly': nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); break;
+            }
+
+            await supabase.from('transactions').insert({
+                user_id: user.id,
+                description: description,
+                amount,
+                type,
+                date: new Date().toISOString(),
+                frequency,
+                next_due_date: nextDueDate.toISOString()
+            });
         }
-
-        await supabase.from('transactions').insert({
-            user_id: user.id,
-            description: description,
-            amount,
-            type,
-            date: new Date().toISOString(),
-            frequency,
-            next_due_date: nextDueDate.toISOString()
-        });
+        else {
+            // Condition 2: Start Date is in Future -> Schedule only loop
+            // Do NOT insert immediate transaction.
+            // Insert Recurring Rule with next_due_date = startDate
+            await supabase.from('transactions').insert({
+                user_id: user.id,
+                description: description,
+                amount,
+                type,
+                date: new Date().toISOString(),
+                frequency,
+                next_due_date: start.toISOString() // First run is on the selected start date
+            });
+        }
     }
     return getBudget();
 };

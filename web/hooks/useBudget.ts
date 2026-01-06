@@ -56,12 +56,14 @@ export function useBudget() {
       amount,
       type,
       frequency,
+      startDate,
     }: {
       description: string;
       amount: number;
       type: 'income' | 'expense';
       frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
-    }) => BudgetService.addRecurringTransaction(description, amount, type, frequency),
+      startDate: string;
+    }) => BudgetService.addRecurringTransaction(description, amount, type, frequency, startDate),
     onSuccess: (updatedBudget) => {
       queryClient.setQueryData(['budget'], updatedBudget);
     },
