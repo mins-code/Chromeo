@@ -1206,6 +1206,7 @@ const App: React.FC = () => {
                 availableTasks={tasks}
                 initialDate={calendarSelectedDate}
                 initialType={editorInitialType}
+                globalNotificationSettings={notificationSettings}
             />
 
             {/* Routine Editor Modal */}

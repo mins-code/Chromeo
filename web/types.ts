@@ -24,6 +24,7 @@ export interface SubTask {
 export interface RecurrenceConfig {
   frequency: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
   interval: number; // e.g. every 2 weeks
+  days?: number[]; // [0-6] for weekly specific days (0=Sun)
   endDate?: string; // ISO date string for when recurrence stops
 }
 
@@ -263,11 +264,7 @@ export interface DayPlan {
   layout: TaskLayout[]; // Visual positions
   templateId?: string; // If created from template
   isRecurring?: boolean; // If part of recurring plan
-  recurringConfig?: {
-    frequency: 'daily' | 'weekly' | 'monthly';
-    interval: number; // e.g., 1 = every day, 2 = every other day
-    endDate?: string; // Optional end date
-  };
+  recurringConfig?: RecurrenceConfig;
   createdAt: string;
   updatedAt: string;
 }

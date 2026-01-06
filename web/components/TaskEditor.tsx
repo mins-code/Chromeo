@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Task, TaskPriority, TaskStatus, SubTask, RecurrenceConfig, TaskType } from '../types';
+import { Task, TaskPriority, TaskStatus, SubTask, RecurrenceConfig, TaskType, NotificationSettings } from '../types';
 import Button from './Button';
 import Input from './Input';
 import { X, Plus, Trash2, Wand2, Bell, Link as LinkIcon, Users, Check, Repeat, Calendar, MapPin, Clock } from 'lucide-react';
@@ -17,10 +17,24 @@ interface TaskEditorProps {
   onDelete?: (id: string) => void;
   initialDate?: Date; // For opening from Calendar
   initialType?: TaskType;
+  globalNotificationSettings?: NotificationSettings;
 }
 
-const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, onClose, onSave, onDelete, initialDate, initialType = 'TASK' }) => {
+const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, onClose, onSave, onDelete, initialDate, initialType = 'TASK', globalNotificationSettings }) => {
   const { theme } = useTheme();
+
+  // Helper function to format minutes into a readable string
+  const formatMinutesLabel = (minutes: number): string => {
+    if (minutes >= 1440) {
+      const days = Math.floor(minutes / 1440);
+      return days === 1 ? '1 day before' : `${days} days before`;
+    } else if (minutes >= 60) {
+      const hours = Math.floor(minutes / 60);
+      return hours === 1 ? '1 hr before' : `${hours} hrs before`;
+    } else {
+      return `${minutes} min before`;
+    }
+  };
 
   // Helper function to format date for datetime-local input (without timezone conversion)
   const formatDateTimeLocal = (date: Date | string): string => {
@@ -557,7 +571,11 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                 </div>
                 
                 <p className="text-xs text-amber-600 dark:text-amber-400 mb-3">
-                  {notificationEnabled === undefined && '• Using global notification settings'}
+                  {notificationEnabled === undefined && (
+                    globalNotificationSettings?.enabled 
+                      ? `• Using global notification settings (${formatMinutesLabel(globalNotificationSettings.reminderMinutesBefore)})`
+                      : '• Using global notification settings (off)'
+                  )}
                   {notificationEnabled === true && '• Notification enabled for this item'}
                   {notificationEnabled === false && '• Notification disabled for this item'}
                 </p>
@@ -567,7 +585,11 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                     {/* Notification Mode Toggle */}
                     <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg w-fit">
                         <button
-                            onClick={() => setNotificationMode('relative')}
+                            onClick={() => {
+                              setNotificationMode('relative');
+                              // Auto-switch to custom if in default mode
+                              if (notificationEnabled === undefined) setNotificationEnabled(true);
+                            }}
                             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                                 notificationMode === 'relative' 
                                 ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' 
@@ -579,7 +601,9 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                         <button
                             onClick={() => {
                                 setNotificationMode('absolute');
-                                // Default absolute time to reminder time if available, or now. Wait, use reminder time only if it's there
+                                // Auto-switch to custom if in default mode
+                                if (notificationEnabled === undefined) setNotificationEnabled(true);
+                                // Default absolute time to reminder time if available, or now
                                 if (!notificationTime) {
                                   setNotificationTime(reminderTime || new Date().toISOString().slice(0, 16));
                                 }
@@ -611,6 +635,10 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                                 <button
                                   key={option.label}
                                   onClick={() => {
+                                    // Auto-switch to custom if in default mode and selecting non-default option
+                                    if (notificationEnabled === undefined && option.value !== undefined) {
+                                      setNotificationEnabled(true);
+                                    }
                                     setNotificationMinutesBefore(option.value);
                                     setShowCustomNotification(false);
                                   }}
@@ -625,6 +653,8 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                               ))}
                               <button
                                 onClick={() => {
+                                  // Auto-switch to custom if in default mode
+                                  if (notificationEnabled === undefined) setNotificationEnabled(true);
                                   setShowCustomNotification(true);
                                   const multiplier = customNotificationUnit === 'days' ? 1440 : customNotificationUnit === 'hours' ? 60 : 1;
                                   setNotificationMinutesBefore(customNotificationValue * multiplier);

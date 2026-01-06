@@ -3,6 +3,7 @@ import { ThemeOption, Note, ChecklistItem, NoteShare, Partnership } from '../typ
 import { useNotes } from '../hooks/useNotes';
 import * as NotesService from '../services/notesService';
 import * as PartnerService from '../services/partnerService';
+import { supabase } from '../services/supabaseClient'; 
 import Button from './Button';
 import Input from './Input';
 import Select from './Select';
@@ -38,9 +39,13 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
   const [isLoadingShares, setIsLoadingShares] = useState(false);
   const [sharingNoteId, setSharingNoteId] = useState<string | null>(null);
   const [selectedPartnerId, setSelectedPartnerId] = useState('');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // Load partnerships on mount
+  // Load user data on mount
   useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setCurrentUserId(data.user.id);
+    });
     loadPartnerships();
   }, []);
 
@@ -157,6 +162,7 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
     }
   };
 
+
   const handleUnshareNote = async (shareId: string) => {
     if (!editingNote) return;
     
@@ -166,6 +172,26 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
     } catch (error) {
       console.error('Failed to unshare note:', error);
       alert('Failed to unshare note. Please try again.');
+    }
+  };
+
+  const handleToggleQuickChecklist = async (e: React.MouseEvent, note: Note, itemId: string) => {
+    e.stopPropagation(); // Prevent opening the modal
+    
+    // Optimistic update locally? 
+    // Actually relying on React Query optimistic update in useNotes is better, 
+    // but we need to pass the FULL new items list to updateNote.
+    
+    const updatedItems = note.checklistItems.map(item => 
+        item.id === itemId ? { ...item, isCompleted: !item.isCompleted } : item
+    );
+
+    try {
+        await updateNote(note.id, {
+            checklistItems: updatedItems
+        });
+    } catch (error) {
+        console.error('Failed to toggle item:', error);
     }
   };
 
@@ -266,6 +292,14 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
                       <Share2 size={14} />
                     </div>
                   )}
+                  {note.isShared && (
+                    <div 
+                        className={`p-1.5 rounded-lg ${note.user_id === currentUserId ? 'bg-blue-500/10 text-blue-500' : 'bg-purple-500/10 text-purple-500'}`}
+                        title={note.user_id === currentUserId ? 'Shared by you' : 'Shared with you'}
+                    >
+                      {note.user_id === currentUserId ? <Share2 size={14} /> : <User size={14} />}
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -273,10 +307,12 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
                 <div className="space-y-1.5">
                   {note.checklistItems.slice(0, 3).map((item) => (
                     <div key={item.id} className="flex items-center gap-2 text-sm">
-                      <div className={`w-3 h-3 rounded border flex-shrink-0 ${
+                      <div 
+                        onClick={(e) => handleToggleQuickChecklist(e, note, item.id)}
+                        className={`w-3.5 h-3.5 rounded border flex-shrink-0 cursor-pointer transition-colors flex items-center justify-center ${
                         item.isCompleted 
                           ? 'bg-brand-500 border-brand-500' 
-                          : 'border-slate-300 dark:border-slate-600'
+                          : 'border-slate-300 dark:border-slate-600 hover:border-brand-500'
                       }`}>
                         {item.isCompleted && <Check size={10} className="text-white" />}
                       </div>
@@ -307,6 +343,11 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
                   month: 'short',
                   day: 'numeric',
                 })}
+                {note.isShared && currentUserId && note.user_id !== currentUserId && (
+                    <span className="ml-2 px-1.5 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-semibold uppercase tracking-wider">
+                        Shared
+                    </span>
+                )}
               </div>
             </div>
           ))

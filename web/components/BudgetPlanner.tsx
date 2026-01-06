@@ -79,7 +79,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                     frequency: recurringFrequency,
                     startDate: recurringStartDate
                 });
-                });
+
             } else {
                 await addTransaction({ description: transDesc, amount, type: transType });
             }
