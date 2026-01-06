@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { ThemeOption, BudgetShare, Partnership } from '../types';
+import { ThemeOption, BudgetShare, Partnership, SharedBudgetInfo, Budget } from '../types';
 import * as BudgetService from '../services/budgetService';
 import * as PartnerService from '../services/partnerService';
 import { useBudget } from '../hooks/useBudget';
@@ -32,6 +32,9 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
     // Budget sharing state
     const [budgetShares, setBudgetShares] = useState<BudgetShare[]>([]);
     const [partnerships, setPartnerships] = useState<Partnership[]>([]);
+    const [budgetsSharedWithMe, setBudgetsSharedWithMe] = useState<SharedBudgetInfo[]>([]);
+    const [expandedPartnerBudget, setExpandedPartnerBudget] = useState<{ ownerId: string; budget: Budget } | null>(null);
+    const [isLoadingPartnerBudget, setIsLoadingPartnerBudget] = useState(false);
     const [isLoadingShares, setIsLoadingShares] = useState(true);
     const [selectedPartnerId, setSelectedPartnerId] = useState('');
     const [isSharing, setIsSharing] = useState(false);
@@ -51,14 +54,31 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
 
     const loadSharingData = async () => {
         setIsLoadingShares(true);
-        const [shares, partners] = await Promise.all([
+        const [shares, partners, sharedWithMe] = await Promise.all([
             BudgetService.getBudgetShares(),
-            PartnerService.getPartnerships()
+            PartnerService.getPartnerships(),
+            BudgetService.getBudgetsSharedWithMe()
         ]);
         setBudgetShares(shares);
         // Only show accepted partnerships
         setPartnerships(partners.filter(p => p.status === 'accepted'));
+        setBudgetsSharedWithMe(sharedWithMe);
         setIsLoadingShares(false);
+    };
+
+    const handleViewPartnerBudget = async (ownerId: string) => {
+        // Toggle off if already expanded
+        if (expandedPartnerBudget?.ownerId === ownerId) {
+            setExpandedPartnerBudget(null);
+            return;
+        }
+
+        setIsLoadingPartnerBudget(true);
+        const partnerBudget = await BudgetService.getSharedBudgetFromPartner(ownerId);
+        if (partnerBudget) {
+            setExpandedPartnerBudget({ ownerId, budget: partnerBudget });
+        }
+        setIsLoadingPartnerBudget(false);
     };
 
     const handleUpdateSettings = async () => {
@@ -290,46 +310,58 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
             {/* Quick Transaction */}
             <div className="glass-panel p-6 rounded-3xl space-y-4 relative z-10">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                    {/* Action Buttons - Now First */}
-                    <div className="flex gap-2 md:col-span-4 lg:col-span-3">
-                        <input
-                            type="file"
-                            accept="image/*"
-                            ref={fileInputRef}
-                            onChange={handleFileUpload}
-                            className="hidden"
-                            id="upi-screenshot-input"
-                        />
+                    {/* Hidden file input */}
+                    <input
+                        type="file"
+                        accept="image/*"
+                        ref={fileInputRef}
+                        onChange={handleFileUpload}
+                        className="hidden"
+                        id="upi-screenshot-input"
+                    />
+                    
+                    {/* Camera Button */}
+                    <div className="md:col-span-1">
                         <Button
                             variant="secondary"
-                            className={`flex-1 h-11 ${transType === 'income' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}
-                            onClick={() => setTransType(prev => prev === 'expense' ? 'income' : 'expense')}
-                            title={transType === 'expense' ? 'Switch to Income' : 'Switch to Expense'}
-                        >
-                            <span className="text-xl font-bold">{transType === 'expense' ? '-' : '+'}</span>
-                            <span className="ml-2 text-xs uppercase font-semibold">{transType === 'expense' ? 'Exp' : 'Inc'}</span>
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            className="flex-1 h-11"
+                            className="w-full h-11"
                             onClick={() => fileInputRef.current?.click()}
                             disabled={isScanning}
                             title="Scan UPI Screenshot"
                         >
                             {isScanning ? <Loader2 className="animate-spin" size={20} /> : <Camera size={20} />}
                         </Button>
-                        <Button variant="primary" className="flex-1 h-11 font-semibold" onClick={handleAddTransaction}>
-                            <Plus size={18} className="mr-1" />
-                            Log
+                    </div>
+
+                    {/* Income/Expense Toggle */}
+                    <div className="md:col-span-2">
+                        <Button
+                            variant="secondary"
+                            className={`w-full h-11 ${transType === 'income' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}
+                            onClick={() => setTransType(prev => prev === 'expense' ? 'income' : 'expense')}
+                            title={transType === 'expense' ? 'Switch to Income' : 'Switch to Expense'}
+                        >
+                            <span className="text-xl font-bold">{transType === 'expense' ? '-' : '+'}</span>
+                            <span className="ml-2 text-xs uppercase font-semibold">{transType === 'expense' ? 'Exp' : 'Inc'}</span>
                         </Button>
                     </div>
                     
-                    {/* Input Fields */}
-                    <div className="md:col-span-3">
+                    {/* Amount Input */}
+                    <div className="md:col-span-2">
                         <Input label="Amount" type="number" value={transAmount} onChange={e => setTransAmount(e.target.value)} placeholder="0.00" />
                     </div>
-                    <div className="md:col-span-5 lg:col-span-6">
+
+                    {/* Description Input */}
+                    <div className="md:col-span-5">
                         <Input label="Description" value={transDesc} onChange={e => setTransDesc(e.target.value)} placeholder="E.g. Coffee" />
+                    </div>
+
+                    {/* Log Button */}
+                    <div className="md:col-span-2">
+                        <Button variant="primary" className="w-full h-11 font-semibold" onClick={handleAddTransaction}>
+                            <Plus size={18} className="mr-1" />
+                            Log
+                        </Button>
                     </div>
                 </div>
 
@@ -472,6 +504,119 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                             </div>
                         )}
                     </>
+                )}
+            </div>
+
+            {/* Budgets Shared With Me */}
+            <div className="glass-panel p-6 rounded-3xl space-y-4 relative z-0">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2 font-mono">
+                    <User size={14} /> Budgets Shared With Me
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                    View budgets that your partners have shared with you.
+                </p>
+
+                {isLoadingShares ? (
+                    <div className="py-4 flex items-center justify-center text-slate-400">
+                        <Loader2 className="animate-spin mr-2" size={18} />
+                        Loading...
+                    </div>
+                ) : budgetsSharedWithMe.length === 0 ? (
+                    <div className="py-4 text-center text-slate-400 text-sm bg-slate-50 dark:bg-black/20 rounded-xl">
+                        <Share2 className="mx-auto mb-2 text-slate-300" size={24} />
+                        No partners have shared their budgets with you yet.
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {budgetsSharedWithMe.map(sharedBudget => (
+                            <div key={sharedBudget.shareId} className="space-y-2">
+                                <div 
+                                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 cursor-pointer hover:bg-slate-100 dark:hover:bg-black/30 transition-colors"
+                                    onClick={() => handleViewPartnerBudget(sharedBudget.ownerId)}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                                            <User size={16} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                                {sharedBudget.ownerName || sharedBudget.ownerEmail}
+                                            </p>
+                                            {sharedBudget.ownerName && (
+                                                <p className="text-xs text-slate-500">{sharedBudget.ownerEmail}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-brand-500">
+                                        {isLoadingPartnerBudget && expandedPartnerBudget?.ownerId !== sharedBudget.ownerId ? null : (
+                                            <>
+                                                <span className="text-xs font-medium">
+                                                    {expandedPartnerBudget?.ownerId === sharedBudget.ownerId ? 'Hide' : 'View'}
+                                                </span>
+                                                <ArrowRight size={14} className={`transition-transform ${expandedPartnerBudget?.ownerId === sharedBudget.ownerId ? 'rotate-90' : ''}`} />
+                                            </>
+                                        )}
+                                        {isLoadingPartnerBudget && expandedPartnerBudget?.ownerId !== sharedBudget.ownerId && (
+                                            <Loader2 className="animate-spin" size={14} />
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Expanded Budget Details */}
+                                {expandedPartnerBudget?.ownerId === sharedBudget.ownerId && (
+                                    <div className="ml-11 p-4 rounded-xl bg-gradient-to-br from-emerald-500/5 to-brand-500/5 border border-emerald-500/10 space-y-3">
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                            <div>
+                                                <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Budget</p>
+                                                <p className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                                                    {expandedPartnerBudget.budget.limit.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                </p>
+                                                <p className="text-[10px] text-slate-500 font-mono">/ {expandedPartnerBudget.budget.duration}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Expenses</p>
+                                                <p className="text-lg font-bold text-red-500">
+                                                    {expandedPartnerBudget.budget.transactions
+                                                        .filter(t => t.type === 'expense')
+                                                        .reduce((acc, t) => acc + t.amount, 0)
+                                                        .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Remaining</p>
+                                                <p className={`text-lg font-bold ${(expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0)) >= 0 ? 'text-brand-500' : 'text-red-500'}`}>
+                                                    {(expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0))
+                                                        .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Income</p>
+                                                <p className="text-lg font-bold text-emerald-500">
+                                                    {expandedPartnerBudget.budget.transactions
+                                                        .filter(t => t.type === 'income')
+                                                        .reduce((acc, t) => acc + t.amount, 0)
+                                                        .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {/* Progress bar */}
+                                        <div className="h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full transition-all duration-500 ${
+                                                    (expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0)) < 0 
+                                                        ? 'bg-red-500' 
+                                                        : 'bg-brand-500'
+                                                }`}
+                                                style={{ 
+                                                    width: `${Math.min(100, (expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0) / (expandedPartnerBudget.budget.limit || 1)) * 100)}%` 
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 )}
             </div>
 

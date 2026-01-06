@@ -137,6 +137,14 @@ export interface BudgetShare {
   createdAt: string;
 }
 
+export interface SharedBudgetInfo {
+  ownerId: string;
+  ownerEmail: string;
+  ownerName?: string;
+  shareId: string;
+  createdAt: string;
+}
+
 export interface Budget {
   limit: number;
   duration: string; // e.g. "Monthly", "Weekly"

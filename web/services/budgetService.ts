@@ -208,7 +208,7 @@ export const addRecurringTransaction = async (
 
 // ============ BUDGET SHARING ============
 
-import type { BudgetShare } from '../types';
+import type { BudgetShare, SharedBudgetInfo } from '../types';
 
 export const getBudgetShares = async (): Promise<BudgetShare[]> => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -333,4 +333,35 @@ export const getSharedBudgetFromPartner = async (ownerId: string): Promise<Budge
         })),
         recurring: [] // Don't share recurring details
     };
+};
+
+export const getBudgetsSharedWithMe = async (): Promise<SharedBudgetInfo[]> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+        .from('budget_shares')
+        .select(`
+            id,
+            owner_id,
+            created_at,
+            owner:profiles!budget_shares_owner_id_fkey(id, email, full_name)
+        `)
+        .eq('partner_id', user.id);
+
+    if (error) {
+        console.error('Error fetching budgets shared with me:', error);
+        return [];
+    }
+
+    return (data || []).map((s: any) => {
+        const owner = Array.isArray(s.owner) ? s.owner[0] : s.owner;
+        return {
+            ownerId: s.owner_id,
+            ownerEmail: owner?.email || '',
+            ownerName: owner?.full_name || undefined,
+            shareId: s.id,
+            createdAt: s.created_at
+        };
+    });
 };
