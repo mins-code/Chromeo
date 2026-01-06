@@ -8,6 +8,7 @@ import { supabase, getProviderToken, signInWithGoogleCalendar } from './services
 import { CalendarEvent, listGoogleEvents, GoogleCalendarError } from './services/googleCalendarService';
 import TaskCard from './components/TaskCard';
 import TaskEditor from './components/TaskEditor';
+import FocusSession from './components/FocusSession';
 import Button from './components/Button';
 import Auth from './components/Auth';
 import Select from './components/Select';
@@ -114,6 +115,10 @@ const App: React.FC = () => {
     const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<string>('ALL');
+
+    // Focus Mode State
+    const [isFocusModeOpen, setIsFocusModeOpen] = useState(false);
+    const [focusedTask, setFocusedTask] = useState<Task | undefined>(undefined);
 
     // Username state
     const [username, setUsername] = useState('User');
@@ -500,6 +505,18 @@ const App: React.FC = () => {
         }
     };
 
+    // Focus Mode Handlers
+    const handleStartFocus = useCallback((task: Task) => {
+        setFocusedTask(task);
+        setIsFocusModeOpen(true);
+    }, []);
+
+    const handleCompleteFocus = useCallback(async (task: Task) => {
+        await toggleStatus(task);
+        setIsFocusModeOpen(false);
+        setFocusedTask(undefined);
+    }, [toggleStatus]);
+
     const handleAutoCreatedTask = async (taskData: Partial<Task>) => {
         const newTask = await createTask(taskData as Omit<Task, 'id' | 'createdAt'>);
         if (newTask && newTask.tags && Array.isArray(newTask.tags)) {
@@ -829,6 +846,7 @@ const App: React.FC = () => {
                                 onEdit={handleEditTask}
                                 onToggleStatus={handleToggleStatus}
                                 onAIAnalysis={handleAIAnalysis}
+                                onFocus={handleStartFocus}
                             />
                         ))}
                         {filteredTasks.length === 0 && (
@@ -953,6 +971,7 @@ const App: React.FC = () => {
                 initialDate={calendarSelectedDate}
                 initialType={editorInitialType}
                 globalNotificationSettings={notificationSettings}
+                onStartFocus={editingTask ? () => handleStartFocus(editingTask) : undefined}
             />
 
             {/* Routine Editor Modal */}
@@ -970,6 +989,19 @@ const App: React.FC = () => {
                 onClose={() => setIsCommandBarOpen(false)}
                 onTaskParsed={handleCommandBarTask}
             />
+
+            {/* Focus Mode Overlay */}
+            {focusedTask && (
+                <FocusSession
+                    task={focusedTask}
+                    isOpen={isFocusModeOpen}
+                    onClose={() => {
+                        setIsFocusModeOpen(false);
+                        setFocusedTask(undefined);
+                    }}
+                    onComplete={handleCompleteFocus}
+                />
+            )}
 
 
         </Layout>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Task, TaskPriority, TaskStatus, SubTask, RecurrenceConfig, TaskType, NotificationSettings } from '../types';
 import Button from './Button';
 import Input from './Input';
-import { X, Plus, Trash2, Wand2, Bell, Link as LinkIcon, Users, Check, Repeat, Calendar, MapPin, Clock } from 'lucide-react';
+import { X, Plus, Trash2, Wand2, Bell, Link as LinkIcon, Users, Check, Repeat, Calendar, MapPin, Clock, Play } from 'lucide-react';
 import { enhanceTaskWithAI } from '../services/geminiService';
 import DateTimePicker from './DateTimePicker';
 import Select from './Select';
@@ -18,9 +18,10 @@ interface TaskEditorProps {
   initialDate?: Date; // For opening from Calendar
   initialType?: TaskType;
   globalNotificationSettings?: NotificationSettings;
+  onStartFocus?: () => void;
 }
 
-const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, onClose, onSave, onDelete, initialDate, initialType = 'TASK', globalNotificationSettings }) => {
+const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, onClose, onSave, onDelete, initialDate, initialType = 'TASK', globalNotificationSettings, onStartFocus }) => {
   const { theme } = useTheme();
 
   // Helper function to format minutes into a readable string
@@ -898,6 +899,15 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
             
             <div className="flex gap-3">
                 <Button variant="ghost" onClick={onClose} className="hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400">Cancel</Button>
+                {task && onStartFocus && (
+                    <Button 
+                        variant="secondary" 
+                        onClick={() => { onClose(); onStartFocus(); }}
+                        className="bg-brand-500/10 hover:bg-brand-500/20 text-brand-600 dark:text-brand-400 border border-brand-500/20"
+                    >
+                        <Play size={16} className="mr-2" /> Focus
+                    </Button>
+                )}
                 <Button variant="primary" onClick={handleSave} className="shadow-lg shadow-brand-500/25">Save</Button>
             </div>
         </div>

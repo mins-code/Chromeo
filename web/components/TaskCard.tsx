@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Task, TaskPriority, TaskStatus } from '../types';
-import { Calendar, CheckCircle2, Circle, MoreVertical, Sparkles, Bell, Users, Lock, Clock, MapPin } from 'lucide-react';
+import { Calendar, CheckCircle2, Circle, MoreVertical, Sparkles, Bell, Users, Lock, Clock, MapPin, Play } from 'lucide-react';
 import Button from './Button';
 import { formatDateShort, formatTime, isPast, parseDate } from '../utils/date';
 
@@ -11,9 +11,10 @@ interface TaskCardProps {
   onEdit: (task: Task) => void;
   onToggleStatus: (task: Task) => void;
   onAIAnalysis?: (task: Task) => void;
+  onFocus?: (task: Task) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, allTasks = [], onEdit, onToggleStatus, onAIAnalysis }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, allTasks = [], onEdit, onToggleStatus, onAIAnalysis, onFocus }) => {
   const isDone = task.status === TaskStatus.DONE;
 
   // Check dependencies - early exit if no dependencies
@@ -161,6 +162,18 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasks = [], onEdit, onTogg
               aria-label="AI Breakdown"
             >
               <Sparkles size={14} />
+            </Button>
+          )}
+          {onFocus && !isDone && (
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-8 w-8 text-brand-500 dark:text-brand-400 border-brand-200 dark:border-brand-500/20 hover:bg-brand-50 dark:hover:bg-brand-500/10"
+              onClick={(e) => { e.stopPropagation(); onFocus(task); }}
+              title="Start Focus Session"
+              aria-label="Start Focus Session"
+            >
+              <Play size={14} />
             </Button>
           )}
         </div>
