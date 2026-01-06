@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Routine, RoutinePattern, WeekdayPattern, IntervalPattern, CyclePattern, CycleItem } from '../types';
 import Button from './Button';
 import Input from './Input';
+import TimePickerDropdown from './TimePickerDropdown';
 import { X, Plus, Trash2, GripVertical, Clock, Bell, Calendar, Repeat, CheckCircle2 } from 'lucide-react';
 import * as RoutineService from '../services/routineService';
 
@@ -417,17 +418,11 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
 
           {/* Time & Duration */}
           <div className="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-black/20 p-4 rounded-2xl border border-slate-200 dark:border-white/5">
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
-                <Clock size={16} className="text-blue-500" /> Time
-              </label>
-              <input
-                type="time"
-                value={time}
-                onChange={e => setTime(e.target.value)}
-                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 [color-scheme:light] dark:[color-scheme:dark]"
-              />
-            </div>
+            <TimePickerDropdown
+              label="Time"
+              value={time}
+              onChange={setTime}
+            />
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 Duration (min)
@@ -461,34 +456,56 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
           </div>
 
           {/* Notification */}
-          <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-black/20 rounded-2xl border border-slate-200 dark:border-white/5">
-            <div className="flex items-center gap-3">
-              <Bell size={20} className={notificationEnabled ? 'text-amber-500' : 'text-slate-400'} />
-              <div>
-                <p className="font-medium text-slate-800 dark:text-slate-200">Notification</p>
-                <p className="text-xs text-slate-500">
-                  {notificationEnabled === undefined ? 'Use global settings' :
-                   notificationEnabled ? 'Enabled' : 'Disabled'}
-                </p>
+          <div className="bg-slate-50 dark:bg-black/20 rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden">
+            <div className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-3">
+                <Bell size={20} className={notificationEnabled ? 'text-amber-500' : 'text-slate-400'} />
+                <div>
+                  <p className="font-medium text-slate-800 dark:text-slate-200">Notification</p>
+                  <p className="text-xs text-slate-500">
+                    {notificationEnabled === undefined ? 'Use global settings' :
+                     notificationEnabled ? 'Enabled' : 'Disabled'}
+                  </p>
+                </div>
               </div>
+              <button
+                onClick={() => {
+                  const newValue = notificationEnabled === undefined ? true : notificationEnabled === true ? false : undefined;
+                  setNotificationEnabled(newValue);
+                }}
+                className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${
+                  notificationEnabled === true ? 'bg-amber-500' : 
+                  notificationEnabled === false ? 'bg-slate-300 dark:bg-slate-600' :
+                  'bg-gradient-to-r from-slate-300 to-amber-400 dark:from-slate-600 dark:to-amber-500'
+                }`}
+              >
+                <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${
+                  notificationEnabled === true ? 'translate-x-6' : 
+                  notificationEnabled === false ? 'translate-x-0' :
+                  'translate-x-3'
+                }`} />
+              </button>
             </div>
-            <button
-              onClick={() => {
-                const newValue = notificationEnabled === undefined ? true : notificationEnabled === true ? false : undefined;
-                setNotificationEnabled(newValue);
-              }}
-              className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${
-                notificationEnabled === true ? 'bg-amber-500' : 
-                notificationEnabled === false ? 'bg-slate-300 dark:bg-slate-600' :
-                'bg-gradient-to-r from-slate-300 to-amber-400 dark:from-slate-600 dark:to-amber-500'
-              }`}
-            >
-              <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${
-                notificationEnabled === true ? 'translate-x-6' : 
-                notificationEnabled === false ? 'translate-x-0' :
-                'translate-x-3'
-              }`} />
-            </button>
+
+            {/* Notification Timing - Show when enabled or using global settings */}
+            {notificationEnabled !== false && (
+              <div className="px-4 pb-4 pt-2 border-t border-slate-200 dark:border-white/10">
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
+                  Notify me before routine starts
+                </label>
+                <select
+                  value={notificationMinutesBefore ?? 15}
+                  onChange={(e) => setNotificationMinutesBefore(parseInt(e.target.value))}
+                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50 cursor-pointer"
+                >
+                  <option value={5}>5 minutes</option>
+                  <option value={10}>10 minutes</option>
+                  <option value={15}>15 minutes</option>
+                  <option value={30}>30 minutes</option>
+                  <option value={60}>1 hour</option>
+                </select>
+              </div>
+            )}
           </div>
 
         </div>
