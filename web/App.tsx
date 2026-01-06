@@ -273,7 +273,7 @@ const App: React.FC = () => {
                 try {
                     // Register the custom service worker
                     const registration = await navigator.serviceWorker.register(
-                        '/sw-custom.js',
+                        '/sw.js',
                         { scope: '/' }
                     );
                     
