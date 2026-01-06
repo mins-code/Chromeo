@@ -16,6 +16,7 @@ const navIdToTextKey: Record<string, keyof Omit<ThemeText, 'greeting'>> = {
     'appointments': 'appointments',
     'calendar': 'calendar',
     'budget': 'budgetPlan',
+    'notes': 'notes',
     'ai-chat': 'aiAssistant',
     'settings': 'settings',
 };
