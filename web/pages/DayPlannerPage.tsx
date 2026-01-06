@@ -744,4 +744,4 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
   );
 };
 
-export default DayPlannerPage;
+export default React.memo(DayPlannerPage);

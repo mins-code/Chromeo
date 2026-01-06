@@ -11,6 +11,7 @@ import Button from '../components/Button';
 import { Activity, CheckSquare, Bell, CalendarDays, Clock, ArrowRight, Repeat, CalendarClock, Sparkles } from 'lucide-react';
 import { getGreeting, t } from '../themeText';
 import { enhanceTaskWithAI } from '../services/geminiService';
+import { getUrgencyScore } from '../utils/taskScoring';
 
 const viewModeToPath: Record<ViewMode, string> = {
   'dashboard': '/',
@@ -56,32 +57,11 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
     day: 'numeric' 
   });
 
-  // Compute sorted tasks by urgency (from dashboard)
+  // Compute sorted tasks by urgency (using centralized utility)
   const sortedTodoTasks = React.useMemo(() => {
-    const getTaskScore = (t: Task) => {
-      let score = 0;
-      if (t.priority === TaskPriority.HIGH) score += 100;
-      else if (t.priority === TaskPriority.MEDIUM) score += 50;
-      else score += 10;
-
-      const dateStr = t.dueDate || t.reminderTime;
-      if (dateStr) {
-        const due = new Date(dateStr).getTime();
-        const now = Date.now();
-        const diffHours = (due - now) / (1000 * 60 * 60);
-
-        if (diffHours < 0) score += 200;
-        else if (diffHours < 24) score += 150;
-        else if (diffHours < 72) score += 80;
-        else if (diffHours < 168) score += 40;
-      }
-      if (t.status === TaskStatus.IN_PROGRESS) score += 20;
-      return score;
-    };
-
     return tasks
       .filter(t => t.status !== TaskStatus.DONE)
-      .sort((a, b) => getTaskScore(b) - getTaskScore(a));
+      .sort((a, b) => getUrgencyScore(b) - getUrgencyScore(a));
   }, [tasks]);
 
   // Get all tags for AI analysis
@@ -281,4 +261,4 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
   );
 };
 
-export default ActivitiesPage;
+export default React.memo(ActivitiesPage);

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, User, Sparkles, PlusCircle, XCircle, Calendar, Bell, Edit2, Check, Clock, DollarSign, Wallet, TrendingDown, TrendingUp, Pencil, Trash2, RefreshCw, Copy, CheckCheck, ImagePlus, X, Image } from 'lucide-react';
 import { chatWithAI, parseTransactionScreenshot } from '../services/geminiService';
 import { ChatMessage, Task, TaskPriority, TaskStatus, TaskType, SuggestedPrompt } from '../types';
@@ -48,9 +48,9 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
   // Save conversation to localStorage whenever messages change
   useEffect(() => {
@@ -228,18 +228,18 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
     }
   };
 
-  const handleClearChat = () => {
+  const handleClearChat = useCallback(() => {
     if (confirm('Are you sure you want to clear the chat history? This cannot be undone.')) {
       setMessages([WELCOME_MESSAGE]);
       setDraftGroups({});
       clearChatHistory();
     }
-  };
+  }, [WELCOME_MESSAGE]);
 
-  const handleSuggestedPrompt = (prompt: string) => {
+  const handleSuggestedPrompt = useCallback((prompt: string) => {
     setInput(prompt);
     inputRef.current?.focus();
-  };
+  }, []);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -259,7 +259,7 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
     }
   };
 
-  const handleRemoveImage = () => {
+  const handleRemoveImage = useCallback(() => {
     setSelectedImage(null);
     if (imagePreview) {
       URL.revokeObjectURL(imagePreview);
@@ -268,7 +268,7 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  };
+  }, [imagePreview]);
 
   // Helper to ensure AI dates are treated as local time if they lack time component
   const normalizeDraftData = (data: any) => {
@@ -574,4 +574,4 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
   );
 };
 
-export default AIChat;
+export default React.memo(AIChat);

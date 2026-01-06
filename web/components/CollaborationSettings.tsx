@@ -603,4 +603,4 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
   );
 };
 
-export default CollaborationSettings;
+export default React.memo(CollaborationSettings);

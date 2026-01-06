@@ -907,4 +907,4 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
   );
 };
 
-export default TaskEditor;
+export default React.memo(TaskEditor);

@@ -529,4 +529,4 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
   );
 };
 
-export default RoutineEditor;
+export default React.memo(RoutineEditor);

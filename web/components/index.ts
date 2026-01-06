@@ -38,10 +38,16 @@ export { default as AIChat } from './AIChat';
 export { default as CommandBar } from './CommandBar';
 export { default as DeleteAccountModal } from './DeleteAccountModal';
 export { default as CollaborationSettings } from './CollaborationSettings';
+export { default as CloneDayModal } from './CloneDayModal';
+export { default as RecurringPlanModal } from './RecurringPlanModal';
 
 // Auth & Error
 export { default as Auth } from './Auth';
 export { default as ErrorBoundary } from './ErrorBoundary';
 
+// Stats
+export { default as Stats } from './Stats';
+
 // Layout (named export)
 export { Layout } from './Layout';
+
