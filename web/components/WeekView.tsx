@@ -69,6 +69,7 @@ const DroppableHourCell = React.memo(({ dayDate, hour, height, intervalHours, ch
   );
 });
 
+// Helper to parse task time
 // Helper functions moved outside to be stable
 const getTaskTime = (task: Task): { hour: number; minutes: number } | null => {
   const timeStr = task.reminderTime || task.dueDate;
@@ -82,6 +83,11 @@ const getTaskTime = (task: Task): { hour: number; minutes: number } | null => {
   }
 };
 
+interface TaskBlockProps {
+  task: Task;
+  hourHeight: number;
+  intervalHours: number;
+  onEditTask: (task: Task) => void;
 const getTaskDate = (task: Task): Date | null => {
   const timeStr = task.reminderTime || task.dueDate;
   if (!timeStr) return null;
@@ -100,6 +106,35 @@ interface TaskBlockProps {
 
 /**
  * ⚡ Performance Optimization:
+ * Extracted and memoized to prevent re-rendering all tasks when `currentTime` updates.
+ * This avoids recalculating styles and DOM reconciliation for every task every minute.
+ */
+const TaskBlock = React.memo(({ task, hourHeight, intervalHours, onEditTask }: TaskBlockProps) => {
+  const style = useMemo((): React.CSSProperties => {
+    const time = getTaskTime(task);
+    if (!time) return { display: 'none' };
+
+    // Calculate position based on interval
+    const cellHeight = hourHeight * intervalHours;
+    const top = (time.hour / intervalHours) * cellHeight + (time.minutes / 60) * hourHeight;
+    const duration = task.duration || 60; // Default 60 minutes
+    const height = Math.max((duration / 60) * hourHeight, 24); // Minimum 24px
+
+    return {
+      top: `${top}px`,
+      height: `${height}px`,
+    };
+  }, [task, hourHeight, intervalHours]);
+
+  return (
+    <div
+      style={style}
+      className="absolute left-0 right-0 z-10"
+      onClick={() => onEditTask(task)}
+    >
+      <DraggableTask task={task} variant="block" />
+    </div>
+  );
  * Memoized component to prevent re-renders of task blocks when parent re-renders (e.g. time updates).
  * Uses stable `style` object from `taskStyles` map.
  */
@@ -135,6 +170,17 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
     const end = endOfWeek(currentDate, { weekStartsOn: 0 });
     return eachDayOfInterval({ start, end });
   }, [currentDate]);
+
+  // Get task date for comparison
+  const getTaskDate = (task: Task): Date | null => {
+    const timeStr = task.reminderTime || task.dueDate;
+    if (!timeStr) return null;
+    try {
+      return parseISO(timeStr);
+    } catch {
+      return null;
+    }
+  };
 
   // Group tasks by day
   // Optimized: O(N) single pass instead of O(7N) nested loop
@@ -273,6 +319,8 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
                   <TaskBlock
                     key={task.id}
                     task={task}
+                    hourHeight={HOUR_HEIGHT}
+                    intervalHours={INTERVAL_HOURS}
                     style={taskStyles.get(task.id) || { display: 'none' }}
                     onEditTask={onEditTask}
                   />
