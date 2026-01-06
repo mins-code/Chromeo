@@ -485,9 +485,9 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
         }));
 
       const newLayout = template.layout
-        .filter((item) => idMap.has(item.taskId))
+        .filter((item) => idMap.has((item as any).taskId))
         .map((item) => ({
-          taskId: idMap.get(item.taskId)!,
+          taskId: idMap.get((item as any).taskId)!,
           x: item.x,
           y: item.y,
         }));
@@ -588,35 +588,35 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
         </div>
 
         {/* Toolbar */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="primary" size="sm" onClick={() => onCreateTask(currentDate)}>
             <Plus size={16} />
-            Add Task
+            <span className="hidden sm:inline">Add Task</span>
           </Button>
 
           <Button variant="secondary" size="sm" onClick={() => setIsCloneModalOpen(true)}>
             <Copy size={16} />
-            Clone Day
+            <span className="hidden sm:inline">Clone</span>
           </Button>
 
           <Button variant="secondary" size="sm" onClick={() => setIsTemplatesModalOpen(true)}>
             <Download size={16} />
-            Templates
+            <span className="hidden md:inline">Templates</span>
           </Button>
 
           <Button variant="secondary" size="sm" onClick={() => setIsSaveTemplateModalOpen(true)}>
             <Save size={16} />
-            Save as Template
+            <span className="hidden md:inline">Save</span>
           </Button>
 
       <Button variant="secondary" size="sm" onClick={() => setIsRecurringModalOpen(true)}>
             <RefreshCw size={16} />
-            Recurring
+            <span className="hidden md:inline">Recurring</span>
           </Button>
 
           <Button variant="secondary" size="sm" onClick={handleAutoArrange}>
             <LayoutIcon size={16} />
-            Auto-Arrange
+            <span className="hidden lg:inline">Arrange</span>
           </Button>
 
           <div className="flex-1" />
@@ -628,7 +628,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
             className="text-red-500 hover:text-red-600"
           >
             <Trash2 size={16} />
-            Clear
+            <span className="hidden sm:inline">Clear</span>
           </Button>
         </div>
       </div>

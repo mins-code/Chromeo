@@ -136,6 +136,9 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
         onEdgesDelete={onEdgesDelete}
         nodeTypes={nodeTypes}
         connectionMode={ConnectionMode.Loose}
+        deleteKeyCode="Delete"
+        selectionKeyCode="Shift"
+        multiSelectionKeyCode="Control"
         fitView
         fitViewOptions={{
           padding: 0.2,
