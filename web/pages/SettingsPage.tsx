@@ -1,0 +1,419 @@
+import React, { useState } from 'react';
+import { Session } from '@supabase/supabase-js';
+import { ThemeOption, NotificationSettings } from '../types';
+import { useTheme } from '../context/ThemeContext';
+import Input from '../components/Input';
+import Button from '../components/Button';
+import Select from '../components/Select';
+import CollaborationSettings from '../components/CollaborationSettings';
+import DeleteAccountModal from '../components/DeleteAccountModal';
+import * as NotificationService from '../services/notificationService';
+import {
+  User,
+  Palette,
+  Bell,
+  LogOut,
+  Moon,
+  Sun,
+  Zap,
+  Anchor,
+  CheckCircle2,
+  CheckSquare,
+  CalendarDays,
+  AlertCircle,
+  AlertTriangle,
+  Trash2,
+} from 'lucide-react';
+
+interface SettingsPageProps {
+  session: Session | null;
+  username: string;
+  onUsernameChange: (name: string) => void;
+  onSignOut: () => void;
+  notificationSettings: NotificationSettings;
+  notificationPermission: NotificationPermission | 'unsupported';
+  onNotificationToggle: (enabled: boolean) => void;
+  onNotificationPreferenceChange: (key: keyof NotificationSettings, value: boolean | number) => void;
+  onNavigate: (path: string) => void;
+}
+
+/**
+ * Settings Page Component
+ * Handles user profile, appearance, notifications, and account management
+ */
+const SettingsPage: React.FC<SettingsPageProps> = ({
+  session,
+  username,
+  onUsernameChange,
+  onSignOut,
+  notificationSettings,
+  notificationPermission,
+  onNotificationToggle,
+  onNotificationPreferenceChange,
+  onNavigate,
+}) => {
+  const { theme, setTheme } = useTheme();
+  const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
+  const [customReminderUnit, setCustomReminderUnit] = useState<'minutes' | 'hours' | 'days'>('minutes');
+
+  const themes: ThemeOption[] = ['dark', 'light', 'cyberpunk', 'sunset', 'onepiece'];
+
+  const getThemeIcon = (t: ThemeOption) => {
+    switch (t) {
+      case 'dark':
+        return <Moon className="text-[#E0E0E0]" />;
+      case 'light':
+        return <Sun className="text-orange-400" />;
+      case 'cyberpunk':
+        return <Zap className="text-[#00FFFF]" />;
+      case 'sunset':
+        return <Sun className="text-rose-400" />;
+      case 'onepiece':
+        return <Anchor className="text-[#D4A574]" />;
+    }
+  };
+
+  const getThemeBackground = (t: ThemeOption) => {
+    switch (t) {
+      case 'dark':
+        return 'bg-[#000000] border-white/15';
+      case 'light':
+        return 'bg-slate-50 border-slate-200';
+      case 'cyberpunk':
+        return 'bg-[#0a0014] border-[#00FFFF]/30';
+      case 'sunset':
+        return 'bg-[#4c0519] border-rose-500/30';
+      case 'onepiece':
+        return 'bg-[#0A0A0A] border-[#D4A574]/30';
+    }
+  };
+
+  return (
+    <div className="space-y-8 animate-fade-in h-full flex flex-col">
+      <header className="border-b border-slate-200 dark:border-white/5 pb-6">
+        <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2">Settings</h2>
+        <p className="text-slate-500 dark:text-slate-400">Manage your preferences, account, and team.</p>
+      </header>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 overflow-y-auto pb-20">
+        {/* Profile Settings */}
+        <div className="col-span-1 lg:col-span-2 space-y-4">
+          <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
+            <User className="text-brand-500" />
+            <h3>Profile</h3>
+          </div>
+          <div className="bg-white/40 dark:bg-dark-surface/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 backdrop-blur-sm">
+            <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">Profile Settings</h4>
+            <Input
+              label="Display Name / Nickname"
+              value={username}
+              onChange={(e) => onUsernameChange(e.target.value)}
+              placeholder="How should we call you?"
+            />
+            <div className="mt-4">
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2 ml-1 font-mono">
+                Account
+              </label>
+              <p className="text-slate-700 dark:text-slate-300 text-sm mb-4">
+                Logged in as {session?.user?.email}
+              </p>
+              <Button
+                variant="secondary"
+                onClick={onSignOut}
+                className="w-auto border-red-500/20 text-red-500 hover:bg-red-500/10"
+              >
+                <LogOut size={16} className="mr-2" /> Sign Out
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Appearance Settings */}
+        <div className="col-span-1 lg:col-span-2 space-y-4">
+          <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
+            <Palette className="text-brand-500" />
+            <h3>Appearance</h3>
+          </div>
+          <div className="bg-white/40 dark:bg-dark-surface/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 backdrop-blur-sm">
+            <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">Select Theme</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+              {themes.map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTheme(t)}
+                  className={`relative p-4 rounded-xl border-2 transition-all group overflow-hidden ${
+                    theme === t
+                      ? 'border-brand-500 bg-brand-500/5'
+                      : 'border-slate-200 dark:border-white/10 hover:border-brand-500/50'
+                  }`}
+                >
+                  <div
+                    className={`h-20 rounded-lg mb-3 border shadow-inner flex items-center justify-center ${getThemeBackground(t)}`}
+                  >
+                    {getThemeIcon(t)}
+                  </div>
+                  <p className="text-sm font-bold text-slate-700 dark:text-slate-200 capitalize">{t}</p>
+                  {theme === t && (
+                    <div className="absolute top-2 right-2 text-brand-500">
+                      <CheckCircle2 size={16} />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Notifications Section */}
+        <div className="col-span-1 lg:col-span-2 space-y-4">
+          <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
+            <Bell className="text-brand-500" />
+            <h3>Notifications</h3>
+          </div>
+          <div className="bg-white/40 dark:bg-dark-surface/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+            {/* Main Toggle */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                  Enable Notifications
+                </h4>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  Get notified about tasks, events, and budget alerts
+                </p>
+              </div>
+              <button
+                onClick={() => onNotificationToggle(!notificationSettings.enabled)}
+                className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${
+                  notificationSettings.enabled ? 'bg-brand-500' : 'bg-slate-300 dark:bg-slate-600'
+                }`}
+                disabled={notificationPermission === 'denied'}
+              >
+                <div
+                  className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
+                    notificationSettings.enabled ? 'translate-x-7' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Permission Status */}
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-100 dark:bg-black/20">
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  notificationPermission === 'granted'
+                    ? 'bg-emerald-500'
+                    : notificationPermission === 'denied'
+                      ? 'bg-red-500'
+                      : 'bg-yellow-500'
+                }`}
+              />
+              <span className="text-sm text-slate-600 dark:text-slate-300">
+                Permission:{' '}
+                {notificationPermission === 'granted'
+                  ? 'Granted'
+                  : notificationPermission === 'denied'
+                    ? 'Denied (Enable in browser settings)'
+                    : notificationPermission === 'unsupported'
+                      ? 'Not supported in this browser'
+                      : 'Not requested'}
+              </span>
+            </div>
+
+            {/* Notification Preferences */}
+            {notificationSettings.enabled && (
+              <div className="space-y-4 pt-2 border-t border-slate-200 dark:border-white/10">
+                <h5 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
+                  Notification Types
+                </h5>
+
+                <label className="flex items-center justify-between cursor-pointer group">
+                  <div className="flex items-center gap-3">
+                    <CheckSquare size={18} className="text-blue-500" />
+                    <span className="text-slate-800 dark:text-slate-100 font-medium">Task Reminders</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={notificationSettings.taskReminders}
+                    onChange={(e) => onNotificationPreferenceChange('taskReminders', e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between cursor-pointer group">
+                  <div className="flex items-center gap-3">
+                    <CalendarDays size={18} className="text-purple-500" />
+                    <span className="text-slate-800 dark:text-slate-100 font-medium">
+                      Event & Appointment Reminders
+                    </span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={notificationSettings.eventReminders}
+                    onChange={(e) => onNotificationPreferenceChange('eventReminders', e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between cursor-pointer group">
+                  <div className="flex items-center gap-3">
+                    <AlertCircle size={18} className="text-amber-500" />
+                    <span className="text-slate-800 dark:text-slate-100 font-medium">Budget Alerts</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={notificationSettings.budgetAlerts}
+                    onChange={(e) => onNotificationPreferenceChange('budgetAlerts', e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500"
+                  />
+                </label>
+
+                {/* Lead Time Selector */}
+                <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
+                  <label className="block text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    Remind me before event starts
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { value: 5, label: '5 min' },
+                      { value: 15, label: '15 min' },
+                      { value: 60, label: '1 hour' },
+                      { value: 720, label: '12 hours' },
+                      { value: 1440, label: '1 day' },
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => onNotificationPreferenceChange('reminderMinutesBefore', option.value)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                          notificationSettings.reminderMinutesBefore === option.value
+                            ? 'bg-brand-500 text-slate-900 shadow-md'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => onNotificationPreferenceChange('reminderMinutesBefore', -1)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        ![5, 15, 60, 720, 1440].includes(notificationSettings.reminderMinutesBefore)
+                          ? 'bg-brand-500 text-slate-900 shadow-md'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      Custom
+                    </button>
+                  </div>
+
+                  {/* Custom Input */}
+                  {![5, 15, 60, 720, 1440].includes(notificationSettings.reminderMinutesBefore) && (
+                    <div className="flex items-center gap-3 mt-3 animate-fade-in">
+                      <input
+                        type="number"
+                        min="1"
+                        max="999"
+                        defaultValue={
+                          notificationSettings.reminderMinutesBefore >= 1440
+                            ? Math.floor(notificationSettings.reminderMinutesBefore / 1440)
+                            : notificationSettings.reminderMinutesBefore >= 60
+                              ? Math.floor(notificationSettings.reminderMinutesBefore / 60)
+                              : notificationSettings.reminderMinutesBefore > 0
+                                ? notificationSettings.reminderMinutesBefore
+                                : 30
+                        }
+                        onChange={(e) => {
+                          const num = parseInt(e.target.value) || 1;
+                          const multiplier =
+                            customReminderUnit === 'days' ? 1440 : customReminderUnit === 'hours' ? 60 : 1;
+                          onNotificationPreferenceChange('reminderMinutesBefore', num * multiplier);
+                        }}
+                        className="w-20 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-center text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+                      />
+                      <Select
+                        value={customReminderUnit}
+                        onChange={(value) => {
+                          const unit = value as 'minutes' | 'hours' | 'days';
+                          setCustomReminderUnit(unit);
+                          const currentTotal = notificationSettings.reminderMinutesBefore;
+                          const currentMultiplier =
+                            customReminderUnit === 'days' ? 1440 : customReminderUnit === 'hours' ? 60 : 1;
+                          const currentNum = Math.floor(currentTotal / currentMultiplier) || 1;
+                          const newMultiplier = unit === 'days' ? 1440 : unit === 'hours' ? 60 : 1;
+                          onNotificationPreferenceChange('reminderMinutesBefore', currentNum * newMultiplier);
+                        }}
+                        options={[
+                          { value: 'minutes', label: 'minutes' },
+                          { value: 'hours', label: 'hours' },
+                          { value: 'days', label: 'days' },
+                        ]}
+                        currentTheme={theme}
+                        className="w-32"
+                      />
+                      <span className="text-sm text-slate-500 dark:text-slate-400">before</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Test Notification Button */}
+                <div className="pt-4">
+                  <Button
+                    variant="secondary"
+                    onClick={() => NotificationService.sendTestNotification()}
+                    className="flex items-center gap-2"
+                  >
+                    <Bell size={16} />
+                    Send Test Notification
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Collaboration Section */}
+        <CollaborationSettings
+          currentUserId={session?.user?.id}
+          currentUserEmail={session?.user?.email}
+        />
+
+        {/* Danger Zone - Account Deletion */}
+        <div className="glass rounded-2xl p-6 lg:col-span-2 border-2 border-red-500/20">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center">
+              <AlertTriangle size={20} className="text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-red-600 dark:text-red-400">Danger Zone</h3>
+              <p className="text-sm text-slate-500">Irreversible actions</p>
+            </div>
+          </div>
+
+          <div className="bg-red-50 dark:bg-red-500/10 rounded-xl p-4 border border-red-200 dark:border-red-500/20">
+            <h4 className="font-semibold text-red-700 dark:text-red-400 mb-2">Delete Account</h4>
+            <p className="text-sm text-red-600/80 dark:text-red-300/80 mb-4">
+              Once you delete your account, all your data will be permanently erased. This action cannot be
+              undone.
+            </p>
+            <Button
+              variant="danger"
+              onClick={() => setIsDeleteAccountModalOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Trash2 size={16} />
+              Delete Account
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Delete Account Modal */}
+      <DeleteAccountModal
+        isOpen={isDeleteAccountModalOpen}
+        onClose={() => setIsDeleteAccountModalOpen(false)}
+        onDeleted={() => onNavigate('/')}
+        userEmail={session?.user?.email || ''}
+      />
+    </div>
+  );
+};
+
+export default React.memo(SettingsPage);
