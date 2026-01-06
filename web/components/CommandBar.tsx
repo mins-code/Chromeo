@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Command, Loader2, Sparkles, X } from 'lucide-react';
+import { Command, Loader2, Sparkles, X, Mic, MicOff } from 'lucide-react';
 import { parseNaturalLanguageTask, ParsedTaskData } from '../services/geminiService';
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 
 interface CommandBarProps {
     isOpen: boolean;
@@ -13,6 +14,16 @@ const CommandBar: React.FC<CommandBarProps> = ({ isOpen, onClose, onTaskParsed }
     const [isLoading, setIsLoading] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
+    const {
+        isListening,
+        transcript,
+        error: speechError,
+        isSupported: isSpeechSupported,
+        startListening,
+        stopListening,
+        resetTranscript,
+    } = useSpeechRecognition();
+
     useEffect(() => {
         if (isOpen && inputRef.current) {
             inputRef.current.focus();
@@ -20,22 +31,41 @@ const CommandBar: React.FC<CommandBarProps> = ({ isOpen, onClose, onTaskParsed }
         if (!isOpen) {
             setInput('');
             setIsLoading(false);
+            resetTranscript();
+            if (isListening) {
+                stopListening();
+            }
         }
-    }, [isOpen]);
+    }, [isOpen, resetTranscript, isListening, stopListening]);
+
+    // Update input when transcript changes
+    useEffect(() => {
+        if (transcript) {
+            setInput(transcript);
+        }
+    }, [transcript]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape' && isOpen) {
+                if (isListening) {
+                    stopListening();
+                }
                 onClose();
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, onClose]);
+    }, [isOpen, onClose, isListening, stopListening]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!input.trim() || isLoading) return;
+
+        // Stop listening if active
+        if (isListening) {
+            stopListening();
+        }
 
         setIsLoading(true);
         try {
@@ -48,6 +78,14 @@ const CommandBar: React.FC<CommandBarProps> = ({ isOpen, onClose, onTaskParsed }
             console.error('Failed to parse task:', error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleMicClick = () => {
+        if (isListening) {
+            stopListening();
+        } else {
+            startListening();
         }
     };
 
@@ -71,7 +109,9 @@ const CommandBar: React.FC<CommandBarProps> = ({ isOpen, onClose, onTaskParsed }
                         </div>
                         <div className="flex-1">
                             <h3 className="font-semibold text-slate-800 dark:text-slate-100">Quick Add</h3>
-                            <p className="text-xs text-slate-500">Describe a task in natural language</p>
+                            <p className="text-xs text-slate-500">
+                                {isListening ? 'Listening... Speak your task' : 'Describe a task in natural language'}
+                            </p>
                         </div>
                         <button 
                             onClick={onClose}
@@ -83,21 +123,46 @@ const CommandBar: React.FC<CommandBarProps> = ({ isOpen, onClose, onTaskParsed }
 
                     {/* Input Form */}
                     <form onSubmit={handleSubmit}>
-                        <div className="relative">
+                        <div className="relative flex items-center">
                             <input
                                 ref={inputRef}
                                 type="text"
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                placeholder="e.g., Meeting with Sam tomorrow at 2pm at the coffee shop"
+                                placeholder={isListening ? "Listening..." : "e.g., Meeting with Sam tomorrow at 2pm at the coffee shop"}
                                 disabled={isLoading}
-                                className="w-full px-5 py-4 text-lg bg-transparent text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none disabled:opacity-50"
+                                className="w-full px-5 py-4 pr-20 text-lg bg-transparent text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none disabled:opacity-50"
                             />
-                            {isLoading && (
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                {/* Speech Error Indicator */}
+                                {speechError && (
+                                    <span className="text-xs text-red-500 max-w-[120px] truncate" title={speechError}>
+                                        {speechError}
+                                    </span>
+                                )}
+                                
+                                {/* Microphone Button */}
+                                {isSpeechSupported && (
+                                    <button
+                                        type="button"
+                                        onClick={handleMicClick}
+                                        disabled={isLoading}
+                                        className={`p-2 rounded-lg transition-all ${
+                                            isListening
+                                                ? 'bg-red-500/10 text-red-500 animate-pulse'
+                                                : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+                                        } disabled:opacity-50`}
+                                        title={isListening ? 'Stop listening' : 'Start voice input'}
+                                    >
+                                        {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+                                    </button>
+                                )}
+                                
+                                {/* Loading Indicator */}
+                                {isLoading && (
                                     <Loader2 size={20} className="animate-spin text-brand-500" />
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     </form>
 
@@ -113,6 +178,12 @@ const CommandBar: React.FC<CommandBarProps> = ({ isOpen, onClose, onTaskParsed }
                                     <kbd className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 font-mono text-[10px]">Esc</kbd>
                                     to close
                                 </span>
+                                {isSpeechSupported && (
+                                    <span className="flex items-center gap-1.5">
+                                        <Mic size={12} />
+                                        voice input
+                                    </span>
+                                )}
                             </div>
                             <div className="flex items-center gap-1 text-brand-500">
                                 <Sparkles size={12} />
