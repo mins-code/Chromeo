@@ -11,4 +11,5 @@ export * from './routineService';
 export * from './geminiService';
 export * from './notesService';
 export * from './dayPlanService';
-export { supabase } from './supabaseClient';
+export * from './googleCalendarService';
+export { supabase, getProviderToken, signInWithGoogleCalendar } from './supabaseClient';

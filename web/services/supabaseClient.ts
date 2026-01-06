@@ -44,3 +44,44 @@ export async function checkSupabaseConnection(): Promise<{ success: boolean; err
     return { success: false, error: errorMessage };
   }
 }
+
+/**
+ * Retrieve the OAuth provider token (e.g., Google access token) from the current session.
+ * Note: Supabase only exposes provider_token immediately after OAuth sign-in.
+ * If the token is missing, the user may need to re-authenticate with the OAuth provider.
+ * 
+ * @returns The provider access token, or null if not available
+ */
+export async function getProviderToken(): Promise<string | null> {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.error('Error getting session for provider token:', error.message);
+      return null;
+    }
+    
+    return session?.provider_token || null;
+  } catch (err) {
+    console.error('Error retrieving provider token:', err);
+    return null;
+  }
+}
+
+/**
+ * Trigger Google OAuth sign-in with required scopes for Calendar access.
+ * Call this when Google Calendar sync is enabled but no token is available.
+ */
+export async function signInWithGoogleCalendar(): Promise<void> {
+  await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      scopes: 'https://www.googleapis.com/auth/calendar.events.readonly',
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
+      redirectTo: window.location.origin,
+    },
+  });
+}

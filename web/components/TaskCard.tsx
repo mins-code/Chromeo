@@ -3,6 +3,7 @@ import React from 'react';
 import { Task, TaskPriority, TaskStatus } from '../types';
 import { Calendar, CheckCircle2, Circle, MoreVertical, Sparkles, Bell, Users, Lock, Clock, MapPin } from 'lucide-react';
 import Button from './Button';
+import { formatDateShort, formatTime, isPast, parseDate } from '../utils/date';
 
 interface TaskCardProps {
   task: Task;
@@ -106,16 +107,16 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasks = [], onEdit, onTogg
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
             {task.reminderTime && (
-              <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${new Date(task.reminderTime) < new Date() ? 'bg-red-500/5 border-red-500/20 text-red-500 dark:text-red-400' : 'bg-yellow-500/5 border-yellow-500/20 text-yellow-600 dark:text-yellow-500'}`}>
+              <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${isPast(task.reminderTime) ? 'bg-red-500/5 border-red-500/20 text-red-500 dark:text-red-400' : 'bg-yellow-500/5 border-yellow-500/20 text-yellow-600 dark:text-yellow-500'}`}>
                 <Bell size={12} />
-                <span>{new Date(task.reminderTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} {new Date(task.reminderTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                <span>{formatDateShort(task.reminderTime)} {formatTime(task.reminderTime)}</span>
               </div>
             )}
 
             {!task.reminderTime && task.dueDate && (
               <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
                 <Calendar size={12} />
-                <span>{new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                <span>{formatDateShort(task.dueDate)}</span>
               </div>
             )}
 

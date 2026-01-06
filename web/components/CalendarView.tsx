@@ -1,8 +1,10 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Plus, X, Clock, Repeat, Calendar, CalendarDays, CalendarClock, Settings2, DollarSign, CheckCircle2, Circle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Clock, Repeat, Calendar, CalendarDays, CalendarClock, Settings2, DollarSign, CheckCircle2, Circle, ExternalLink, MapPin } from 'lucide-react';
 import { DndContext, DragEndEvent, DragOverlay, pointerWithin } from '@dnd-kit/core';
 import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, addMonths, subMonths, isSameDay, addDays, subDays, startOfMonth, endOfMonth } from 'date-fns';
+import { formatDateWithWeekday } from '../utils/date';
 import { Task, TaskPriority, TaskStatus, RecurringTransaction, ThemeOption } from '../types';
+import { CalendarEvent, formatEventTime, doesEventOccurOnDate } from '../services/googleCalendarService';
 import Button from './Button';
 import CalendarDayCell from './CalendarDayCell';
 import WeekView from './WeekView';
@@ -14,6 +16,7 @@ import Select from './Select';
 interface CalendarViewProps {
     tasks: Task[];
     recurringTransactions?: RecurringTransaction[];
+    externalEvents?: CalendarEvent[]; // Google Calendar events
     onDateClick: (date: Date) => void;
     onEditTask: (task: Task) => void;
     onUpdateTask?: (task: Task) => void;
@@ -27,7 +30,7 @@ interface CalendarViewProps {
 type ViewMode = 'month' | 'week' | 'day' | 'custom';
 type IntervalUnit = 'day' | 'week' | 'month';
 
-const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransactions = [], onDateClick, onEditTask, onUpdateTask, onToggleStatus, selectedDate: propSelectedDate, onVisibleTagsChange, unfilteredTasks, currentTheme = 'dark' }) => {
+const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransactions = [], externalEvents = [], onDateClick, onEditTask, onUpdateTask, onToggleStatus, selectedDate: propSelectedDate, onVisibleTagsChange, unfilteredTasks, currentTheme = 'dark' }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('month');
@@ -36,6 +39,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
     const [customIntervalUnit, setCustomIntervalUnit] = useState<IntervalUnit>('day'); // Unit
     const [showIntervalDropdown, setShowIntervalDropdown] = useState(false);
     const intervalDropdownRef = useRef<HTMLDivElement>(null);
+    const [selectedGoogleEvent, setSelectedGoogleEvent] = useState<CalendarEvent | null>(null); // Google event detail modal
 
     // Handle selectedDate prop - jump to that date when it changes
     useEffect(() => {
@@ -337,6 +341,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         ? tasks.filter(task => doesTaskOccurOnDate(task, selectedDate))
         : [];
 
+    // Filter Google Calendar events for the selected date
+    const selectedDayGoogleEvents = selectedDate
+        ? externalEvents.filter(event => doesEventOccurOnDate(event, selectedDate))
+        : [];
+
     // Drag and Drop handlers
     const handleDragStart = (event: any) => {
         const { active } = event;
@@ -593,9 +602,16 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                             <div className="p-4 border-b border-slate-200 dark:border-white/5 flex items-center justify-between bg-white/50 dark:bg-slate-900/50">
                                 <div>
                                     <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-                                        {selectedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                                        {formatDateWithWeekday(selectedDate)}
                                     </h3>
-                                    <p className="text-xs text-slate-500 font-medium">{selectedDayTasks.length} activities scheduled</p>
+                                    <p className="text-xs text-slate-500 font-medium">
+                                        {selectedDayTasks.length + selectedDayGoogleEvents.length} activities scheduled
+                                        {selectedDayGoogleEvents.length > 0 && (
+                                            <span className="ml-1 text-blue-500">
+                                                ({selectedDayGoogleEvents.length} from Google)
+                                            </span>
+                                        )}
+                                    </p>
                                 </div>
                                 <button onClick={() => setSelectedDate(null)} className="p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-slate-400 hover:text-slate-800 dark:hover:text-white">
                                     <X size={20} />
@@ -603,9 +619,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                             </div>
 
                             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                                {selectedDayTasks.length === 0 && (
+                                {selectedDayTasks.length === 0 && selectedDayGoogleEvents.length === 0 && (
                                     <p className="text-center text-slate-500 py-8 italic">No activities for this day.</p>
                                 )}
+                                
+                                {/* App Tasks */}
                                 {selectedDayTasks.map(task => {
                                     const colorClass = TYPE_COLORS[task.type] || TYPE_COLORS.TASK;
                                     const isDone = task.status === TaskStatus.DONE;
@@ -657,6 +675,41 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                         </div>
                                     );
                                 })}
+
+                                {/* Google Calendar Events */}
+                                {selectedDayGoogleEvents.map(event => (
+                                    <div
+                                        key={event.id}
+                                        onClick={() => setSelectedGoogleEvent(event)}
+                                        className="group p-3 rounded-xl border-l-4 border-l-blue-500 cursor-pointer transition-all bg-blue-50 dark:bg-blue-500/10 hover:shadow-md hover:bg-blue-100 dark:hover:bg-blue-500/20"
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            {/* Google Icon */}
+                                            <div className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                                                <span className="text-white text-[10px] font-bold">G</span>
+                                            </div>
+                                            
+                                            {/* Event Content */}
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-semibold text-sm text-slate-800 dark:text-slate-100">{event.title}</h4>
+                                                <div className="flex items-center gap-3 text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                                    <span className="flex items-center gap-1">
+                                                        <Clock size={10} />
+                                                        {formatEventTime(event)}
+                                                    </span>
+                                                    {event.location && (
+                                                        <span className="flex items-center gap-1 truncate">
+                                                            <MapPin size={10} />
+                                                            {event.location}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            
+                                            <ExternalLink size={14} className="text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
 
                             <div className="p-4 border-t border-slate-200 dark:border-white/5 bg-white/50 dark:bg-slate-900/50">
@@ -669,6 +722,82 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                 >
                                     <Plus size={16} className="mr-2" /> Add Activity for this Day
                                 </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Google Event Detail Modal */}
+                {selectedGoogleEvent && (
+                    <div className="absolute inset-0 z-30 flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-black/60 dark:bg-black/60 backdrop-blur-sm" onClick={() => setSelectedGoogleEvent(null)} />
+                        <div className="relative w-full max-w-md glass rounded-2xl shadow-2xl overflow-hidden animate-scale-in flex flex-col max-h-[70vh]">
+                            {/* Header */}
+                            <div className="p-4 border-b border-blue-200 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/10 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+                                        <span className="text-white text-lg font-bold">G</span>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider">Google Calendar</p>
+                                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{selectedGoogleEvent.title}</h3>
+                                    </div>
+                                </div>
+                                <button onClick={() => setSelectedGoogleEvent(null)} className="p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-slate-400 hover:text-slate-800 dark:hover:text-white">
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            {/* Content */}
+                            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                                {/* Time */}
+                                <div className="flex items-start gap-3">
+                                    <Clock size={18} className="text-blue-500 mt-0.5" />
+                                    <div>
+                                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Time</p>
+                                        <p className="text-sm text-slate-800 dark:text-slate-100">{formatEventTime(selectedGoogleEvent)}</p>
+                                        <p className="text-xs text-slate-500">
+                                            {new Date(selectedGoogleEvent.start).toLocaleDateString(undefined, { 
+                                                weekday: 'long', 
+                                                year: 'numeric', 
+                                                month: 'long', 
+                                                day: 'numeric' 
+                                            })}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Location */}
+                                {selectedGoogleEvent.location && (
+                                    <div className="flex items-start gap-3">
+                                        <MapPin size={18} className="text-blue-500 mt-0.5" />
+                                        <div>
+                                            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Location</p>
+                                            <p className="text-sm text-slate-800 dark:text-slate-100">{selectedGoogleEvent.location}</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Description */}
+                                {selectedGoogleEvent.description && (
+                                    <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-xl">
+                                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Description</p>
+                                        <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{selectedGoogleEvent.description}</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Footer */}
+                            <div className="p-4 border-t border-slate-200 dark:border-white/5 bg-white/50 dark:bg-slate-900/50">
+                                <a
+                                    href={selectedGoogleEvent.htmlLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition-colors"
+                                >
+                                    <ExternalLink size={16} />
+                                    View in Google Calendar
+                                </a>
                             </div>
                         </div>
                     </div>

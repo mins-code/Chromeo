@@ -23,6 +23,8 @@ import {
   AlertCircle,
   AlertTriangle,
   Trash2,
+  Link2,
+  ExternalLink,
 } from 'lucide-react';
 
 interface SettingsPageProps {
@@ -35,6 +37,10 @@ interface SettingsPageProps {
   onNotificationToggle: (enabled: boolean) => void;
   onNotificationPreferenceChange: (key: keyof NotificationSettings, value: boolean | number) => void;
   onNavigate: (path: string) => void;
+  // Google Calendar Integration
+  googleCalendarEnabled?: boolean;
+  hasGoogleToken?: boolean;
+  onGoogleCalendarToggle?: (enabled: boolean) => void;
 }
 
 /**
@@ -51,6 +57,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
   onNotificationToggle,
   onNotificationPreferenceChange,
   onNavigate,
+  googleCalendarEnabled = false,
+  hasGoogleToken = false,
+  onGoogleCalendarToggle,
 }) => {
   const { theme, setTheme } = useTheme();
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
@@ -364,6 +373,78 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                     Send Test Notification
                   </Button>
                 </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Integrations Section */}
+        <div className="col-span-1 lg:col-span-2 space-y-4">
+          <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
+            <Link2 className="text-brand-500" />
+            <h3>Integrations</h3>
+          </div>
+          <div className="bg-white/40 dark:bg-dark-surface/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 backdrop-blur-sm">
+            {/* Google Calendar Integration */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center shadow-sm">
+                  <span className="text-2xl font-bold text-blue-500">G</span>
+                </div>
+                <div>
+                  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                    Google Calendar
+                  </h4>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Sync your Google Calendar events
+                  </p>
+                </div>
+              </div>
+              {onGoogleCalendarToggle && (
+                <button
+                  onClick={() => onGoogleCalendarToggle(!googleCalendarEnabled)}
+                  className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${
+                    googleCalendarEnabled ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'
+                  }`}
+                >
+                  <div
+                    className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
+                      googleCalendarEnabled ? 'translate-x-7' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              )}
+            </div>
+
+            {/* Connection Status */}
+            {googleCalendarEnabled && (
+              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-100 dark:bg-black/20">
+                  <div
+                    className={`w-2 h-2 rounded-full ${
+                      hasGoogleToken ? 'bg-emerald-500' : 'bg-yellow-500'
+                    }`}
+                  />
+                  <span className="text-sm text-slate-600 dark:text-slate-300 flex-1">
+                    {hasGoogleToken
+                      ? 'Connected to Google Calendar'
+                      : 'Re-authentication required'}
+                  </span>
+                  {!hasGoogleToken && (
+                    <button
+                      onClick={() => onGoogleCalendarToggle && onGoogleCalendarToggle(true)}
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors"
+                    >
+                      <ExternalLink size={14} />
+                      Connect
+                    </button>
+                  )}
+                </div>
+                {hasGoogleToken && (
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    Events from your primary Google Calendar will appear in your calendar view.
+                  </p>
+                )}
               </div>
             )}
           </div>

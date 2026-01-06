@@ -4,7 +4,8 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Task, ViewMode, TaskStatus, Partner, TaskPriority, TaskType, ThemeOption, ViewSourceMode } from './types';
 import { getUrgencyScore } from './utils/taskScoring';
-import { supabase } from './services/supabaseClient';
+import { supabase, getProviderToken, signInWithGoogleCalendar } from './services/supabaseClient';
+import { CalendarEvent, listGoogleEvents, GoogleCalendarError } from './services/googleCalendarService';
 import TaskCard from './components/TaskCard';
 import TaskEditor from './components/TaskEditor';
 import Button from './components/Button';
@@ -162,6 +163,14 @@ const App: React.FC = () => {
     const [isRoutineEditorOpen, setIsRoutineEditorOpen] = useState(false);
     const [editingRoutine, setEditingRoutine] = useState<Routine | undefined>(undefined);
 
+    // Google Calendar Integration State
+    const [googleCalendarEnabled, setGoogleCalendarEnabled] = useState<boolean>(() => {
+        return localStorage.getItem('googleCalendarEnabled') === 'true';
+    });
+    const [hasGoogleToken, setHasGoogleToken] = useState<boolean>(false);
+    const [externalEvents, setExternalEvents] = useState<CalendarEvent[]>([]);
+    const [isLoadingGoogleEvents, setIsLoadingGoogleEvents] = useState(false);
+
     // --- CUSTOM HOOKS INTEGRATION ---
 
     // SMS Listener
@@ -289,6 +298,85 @@ const App: React.FC = () => {
 
         registerServiceWorker();
     }, [session, notificationSettings.enabled]);
+
+    // Google Calendar: Check token availability
+    useEffect(() => {
+        const checkGoogleToken = async () => {
+            if (session?.user && googleCalendarEnabled) {
+                const token = await getProviderToken();
+                setHasGoogleToken(!!token);
+            } else {
+                setHasGoogleToken(false);
+            }
+        };
+        checkGoogleToken();
+    }, [session, googleCalendarEnabled]);
+
+    // Google Calendar: Fetch events when enabled and token available
+    useEffect(() => {
+        const fetchGoogleEvents = async () => {
+            if (!googleCalendarEnabled || !hasGoogleToken) {
+                setExternalEvents([]);
+                return;
+            }
+
+            setIsLoadingGoogleEvents(true);
+            try {
+                const token = await getProviderToken();
+                if (!token) {
+                    setHasGoogleToken(false);
+                    return;
+                }
+
+                // Fetch events for next 3 months
+                const now = new Date();
+                const threeMonthsLater = new Date();
+                threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+
+                const events = await listGoogleEvents(
+                    token,
+                    now.toISOString(),
+                    threeMonthsLater.toISOString()
+                );
+                setExternalEvents(events);
+                console.log(`[App] Fetched ${events.length} Google Calendar events`);
+            } catch (error) {
+                if (error instanceof GoogleCalendarError) {
+                    console.error('[App] Google Calendar error:', error.code, error.message);
+                    if (error.code === 'UNAUTHORIZED') {
+                        setHasGoogleToken(false);
+                    }
+                } else {
+                    console.error('[App] Failed to fetch Google Calendar events:', error);
+                }
+                setExternalEvents([]);
+            } finally {
+                setIsLoadingGoogleEvents(false);
+            }
+        };
+
+        fetchGoogleEvents();
+    }, [googleCalendarEnabled, hasGoogleToken]);
+
+    // Google Calendar: Toggle handler
+    const handleGoogleCalendarToggle = useCallback(async (enabled: boolean) => {
+        setGoogleCalendarEnabled(enabled);
+        localStorage.setItem('googleCalendarEnabled', String(enabled));
+
+        if (enabled) {
+            // Check if we have a token
+            const token = await getProviderToken();
+            if (!token) {
+                // Trigger OAuth flow
+                console.log('[App] No Google token, triggering OAuth flow...');
+                await signInWithGoogleCalendar();
+            } else {
+                setHasGoogleToken(true);
+            }
+        } else {
+            setExternalEvents([]);
+        }
+    }, []);
 
     // Routine Handlers
     const handleSaveRoutine = (routine: Routine) => {
@@ -762,6 +850,7 @@ const App: React.FC = () => {
                     <CalendarView
                         tasks={calendarFilteredTasks}
                         recurringTransactions={budget.recurring}
+                        externalEvents={externalEvents}
                         onDateClick={(date) => handleCreateTask(date)}
                         onEditTask={handleEditTask}
                         onUpdateTask={(task) => updateTask(task)}
@@ -848,6 +937,9 @@ const App: React.FC = () => {
                     onNotificationToggle={handleNotificationToggle}
                     onNotificationPreferenceChange={handleNotificationPreferenceChange}
                     onNavigate={(path) => navigate(path)}
+                    googleCalendarEnabled={googleCalendarEnabled}
+                    hasGoogleToken={hasGoogleToken}
+                    onGoogleCalendarToggle={handleGoogleCalendarToggle}
                 />
             )}
 
