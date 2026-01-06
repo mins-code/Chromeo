@@ -20,7 +20,7 @@ import SaveTemplateModal from '../components/SaveTemplateModal';
 import TemplatesModal from '../components/TemplatesModal';
 import RecurringPlanModal from '../components/RecurringPlanModal';
 import * as DayPlanService from '../services/dayPlanService';
-import { ReactFlowProvider } from 'reactflow';
+import { ReactFlowProvider } from '@xyflow/react';
 import { DayPlanTemplate, RecurrenceConfig } from '../types';
 
 interface DayPlannerPageProps {

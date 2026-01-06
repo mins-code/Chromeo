@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
-import ReactFlow, {
+import {
+  ReactFlow,
   Node,
   Edge,
   Background,
@@ -8,12 +9,11 @@ import ReactFlow, {
   ConnectionMode,
   useNodesState,
   useEdgesState,
-  addEdge,
   Connection,
   BackgroundVariant,
   Panel,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 import { Task, TaskLink } from '../types';
 import TaskNode from './TaskNode';
 
@@ -50,6 +50,7 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
       onSelectionChange(nodes.map(node => node.id));
     }
   }, [onSelectionChange]);
+  
   // Convert tasks to React Flow nodes
   const initialNodes: Node[] = useMemo(() => {
     return tasks.map(task => {

@@ -91,7 +91,7 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       // Optimize bundle size
-      target: 'es2015',
+      target: 'es2022',
       // Minification default is esbuild, which is faster and doesn't require extra deps
       // minify: 'terser', 
       // terserOptions: { ... } removed to fix build error

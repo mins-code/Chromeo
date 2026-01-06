@@ -1,5 +1,5 @@
 import React from 'react';
-import { Handle, Position } from 'reactflow';
+import { Handle, Position } from '@xyflow/react';
 import { Task } from '../types';
 import { Clock, CheckCircle2, AlertCircle, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
