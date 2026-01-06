@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { NAVIGATION_ITEMS, APP_NAME } from '../constants';
 import { ViewMode, TaskType, ThemeOption, ViewSourceMode } from '../types';
 import { Plus, Settings, X, Wallet, CheckCircle2, User, ChevronDown, Calendar, CheckSquare, Clock, Moon, Sun, ChevronLeft, ChevronRight, Menu, PanelLeft, PanelLeftClose, Bell, ChevronUp, Check, Pencil, Repeat, Bot, ArrowRight } from 'lucide-react';
@@ -130,15 +130,15 @@ export const Layout: React.FC<LayoutProps> = ({
         }
     }, [editingTag]);
 
-    const toggleTheme = () => {
+    const toggleTheme = useCallback(() => {
         if (currentTheme === 'light') {
             onThemeChange('dark');
         } else {
             onThemeChange('light');
         }
-    };
+    }, [currentTheme, onThemeChange]);
 
-    const handleParentClick = (itemId: string, hasChildren: boolean) => {
+    const handleParentClick = useCallback((itemId: string, hasChildren: boolean) => {
         onNavigate(itemId as ViewMode);
 
         if (hasChildren) {
@@ -148,9 +148,9 @@ export const Layout: React.FC<LayoutProps> = ({
             // Close all dropdowns if clicking a non-expandable item
             setExpandedMenus({});
         }
-    };
+    }, [onNavigate]);
 
-    const handleArrowClick = (e: React.MouseEvent, itemId: string) => {
+    const handleArrowClick = useCallback((e: React.MouseEvent, itemId: string) => {
         e.stopPropagation();
 
         if (itemId === 'calendar') {
@@ -166,7 +166,7 @@ export const Layout: React.FC<LayoutProps> = ({
             // Standard behavior for others (like Activities): Toggle only
             setExpandedMenus(prev => ({ ...prev, [itemId]: !prev[itemId] }));
         }
-    };
+    }, [currentView, onNavigate]);
 
     const handleWrapperEnter = (itemId: string) => {
         // Calendar: Click only (per previous request)
@@ -184,21 +184,21 @@ export const Layout: React.FC<LayoutProps> = ({
         setExpandedMenus(prev => ({ ...prev, [itemId]: false }));
     };
 
-    const handleChildClick = (parentId: string, childId: string) => {
+    const handleChildClick = useCallback((parentId: string, childId: string) => {
         onNavigate(childId as ViewMode);
         // Keep parent open when clicking a child, close others
         setExpandedMenus({ [parentId]: true });
-    };
+    }, [onNavigate]);
 
     // Logic to allow immediate collapse even if hovered
-    const handleToggleSidebar = () => {
+    const handleToggleSidebar = useCallback(() => {
         if (isSidebarCollapsed) {
             setIsSidebarCollapsed(false);
         } else {
             setIsSidebarCollapsed(true);
             setIgnoreHover(true);
         }
-    };
+    }, [isSidebarCollapsed]);
 
     const handleSidebarEnter = () => {
         setIsSidebarHovered(true);

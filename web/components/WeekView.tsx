@@ -299,4 +299,4 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
   );
 };
 
-export default WeekView;
+export default React.memo(WeekView);

@@ -241,4 +241,4 @@ const CustomIntervalView: React.FC<CustomIntervalViewProps> = ({
   );
 };
 
-export default CustomIntervalView;
+export default React.memo(CustomIntervalView);

@@ -319,4 +319,4 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
   );
 };
 
-export default MiniCalendar;
+export default React.memo(MiniCalendar);

@@ -687,4 +687,4 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
     );
 };
 
-export default CalendarView;
+export default React.memo(CalendarView);

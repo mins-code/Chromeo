@@ -224,5 +224,5 @@ const DayView: React.FC<DayViewProps> = ({ tasks, currentDate, onEditTask }) => 
   );
 };
 
-export default DayView;
+export default React.memo(DayView);
 

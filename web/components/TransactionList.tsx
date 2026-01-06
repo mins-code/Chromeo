@@ -296,4 +296,4 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
     );
 };
 
-export default TransactionList;
+export default React.memo(TransactionList);

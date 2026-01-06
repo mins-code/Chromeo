@@ -179,4 +179,4 @@ const TodayRoutinesPreview: React.FC = () => {
   );
 };
 
-export default RoutineList;
+export default React.memo(RoutineList);
