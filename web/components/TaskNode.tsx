@@ -37,12 +37,14 @@ const TaskNode: React.FC<TaskNodeProps> = ({ data }) => {
       <Handle 
         type="target" 
         position={Position.Top} 
-        className="w-3 h-3 !bg-indigo-500 !border-2 !border-white dark:!border-slate-900"
+        isConnectable={true}
+        className="!w-4 !h-4 !bg-indigo-500 !border-2 !border-white dark:!border-slate-900 hover:!bg-indigo-400 hover:!scale-125 transition-transform"
       />
       <Handle 
         type="source" 
         position={Position.Bottom} 
-        className="w-3 h-3 !bg-indigo-500 !border-2 !border-white dark:!border-slate-900"
+        isConnectable={true}
+        className="!w-4 !h-4 !bg-indigo-500 !border-2 !border-white dark:!border-slate-900 hover:!bg-indigo-400 hover:!scale-125 transition-transform"
       />
 
       {/* Header */}

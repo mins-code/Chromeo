@@ -604,7 +604,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
         </div>
 
         {/* Unused Tasks Sidebar */}
-        <div className="w-80 flex flex-col bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/5">
+        <div className="w-72 xl:w-64 flex-shrink-0 flex flex-col bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/5">
           <div className="p-4 border-b border-slate-200 dark:border-white/5">
             <h3 className="font-semibold text-slate-800 dark:text-slate-100">Available Tasks</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
