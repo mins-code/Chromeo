@@ -13,6 +13,10 @@ import {
   Download,
   RefreshCw,
   Link2,
+  Maximize2,
+  X,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import Button from '../components/Button';
 import FlowchartCanvas from '../components/FlowchartCanvas';
@@ -45,6 +49,8 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
   const [isSaveTemplateModalOpen, setIsSaveTemplateModalOpen] = useState(false);
   const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false);
   const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isTaskPanelOpen, setIsTaskPanelOpen] = useState(true);
 
   // Format current date as YYYY-MM-DD
   const dateKey = useMemo(() => format(currentDate, 'yyyy-MM-dd'), [currentDate]);
@@ -628,6 +634,11 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
             <span className="hidden lg:inline">Auto-Link</span>
           </Button>
 
+          <Button variant="secondary" size="sm" onClick={() => setIsFullscreen(true)} title="Fullscreen mode">
+            <Maximize2 size={16} />
+            <span className="hidden lg:inline">Fullscreen</span>
+          </Button>
+
           <div className="flex-1" />
 
           <Button
@@ -722,6 +733,114 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Fullscreen Mode Overlay */}
+      {isFullscreen && (
+        <div className="fixed inset-0 z-50 bg-slate-900 flex flex-col">
+          {/* Fullscreen Header */}
+          <div className="flex items-center justify-between p-4 border-b border-white/10">
+            <div className="flex items-center gap-4">
+              <h2 className="text-xl font-bold text-white">
+                {format(currentDate, 'EEEE, MMMM d, yyyy')}
+              </h2>
+              <span className="text-sm text-slate-400">
+                {planTasks.length} tasks in plan
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" size="sm" onClick={handleAutoArrange}>
+                <LayoutIcon size={16} />
+                Arrange
+              </Button>
+              <Button variant="secondary" size="sm" onClick={handleAutoLink}>
+                <Link2 size={16} />
+                Auto-Link
+              </Button>
+              <button
+                onClick={() => setIsFullscreen(false)}
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </div>
+          
+          {/* Fullscreen Content */}
+          <div className="flex-1 flex overflow-hidden">
+            {/* Flowchart Area */}
+            <div 
+              className="flex-1 min-w-0"
+              onDrop={handleCanvasDrop}
+              onDragOver={handleCanvasDragOver}
+            >
+              <ReactFlowProvider>
+                <FlowchartCanvas
+                  tasks={planTasks}
+                  links={dayPlan?.links || []}
+                  layout={dayPlan?.layout || []}
+                  onTaskMove={handleTaskMove}
+                  onLinkCreate={handleLinkCreate}
+                  onLinkDelete={handleLinkDelete}
+                  onTaskClick={handleTaskClick}
+                  onAutoArrange={handleAutoArrange}
+                  onSelectionChange={setSelectedTasks}
+                />
+              </ReactFlowProvider>
+            </div>
+            
+            {/* Collapsible Task Panel */}
+            <div className={`flex flex-col transition-all duration-300 ${isTaskPanelOpen ? 'w-80' : 'w-12'}`}>
+              {/* Panel Toggle */}
+              <button
+                onClick={() => setIsTaskPanelOpen(!isTaskPanelOpen)}
+                className="flex items-center justify-center gap-2 p-3 bg-slate-800 border-b border-white/10 text-white hover:bg-slate-700 transition-colors"
+              >
+                {isTaskPanelOpen ? (
+                  <>
+                    <ChevronRight size={16} />
+                    <span className="text-sm font-medium">Hide Tasks</span>
+                  </>
+                ) : (
+                  <ChevronLeft size={16} />
+                )}
+              </button>
+              
+              {/* Task List */}
+              {isTaskPanelOpen && (
+                <div className="flex-1 overflow-y-auto bg-slate-800/50 p-4 space-y-2">
+                  <h3 className="text-sm font-semibold text-white mb-3">
+                    Available Tasks ({unusedTasks.length})
+                  </h3>
+                  {unusedTasks.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400 text-sm">
+                      All tasks are in the plan
+                    </div>
+                  ) : (
+                    unusedTasks.map((task) => (
+                      <div
+                        key={task.id}
+                        draggable
+                        onDragStart={() => handleDragStart(task)}
+                        className="p-3 bg-slate-700/50 rounded-xl border border-white/10 hover:border-indigo-500/50 cursor-move transition-all hover:shadow-md"
+                      >
+                        <div className="font-medium text-sm text-white">
+                          {task.title}
+                        </div>
+                        {task.dueDate && (
+                          <div className="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                            <Calendar size={10} />
+                            {format(new Date(task.dueDate), 'h:mm a')}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <CloneDayModal
         isOpen={isCloneModalOpen}
