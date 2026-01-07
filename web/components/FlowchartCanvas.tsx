@@ -199,11 +199,11 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
           className="bg-slate-50 dark:bg-black/20"
         />
         <Controls 
-          className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg shadow-lg"
+          className="!bg-white/80 dark:!bg-slate-800/90 !border !border-slate-200/50 dark:!border-white/10 !rounded-xl !shadow-xl backdrop-blur-sm [&>button]:!bg-transparent [&>button]:!border-none [&>button]:!text-slate-600 dark:[&>button]:!text-slate-300 [&>button:hover]:!bg-slate-100 dark:[&>button:hover]:!bg-slate-700 [&>button]:!rounded-lg [&>button]:!m-1 [&>button>svg]:!fill-current"
           showInteractive={false}
         />
         <MiniMap 
-          className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg shadow-lg"
+          className="!bg-white/80 dark:!bg-slate-800/90 !border !border-slate-200/50 dark:!border-white/10 !rounded-xl !shadow-xl backdrop-blur-sm"
           nodeColor={(node) => {
             const task = tasks.find(t => t.id === node.id);
             if (!task) return '#94a3b8';
@@ -214,7 +214,8 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
               default: return '#94a3b8';
             }
           }}
-          maskColor="rgba(0, 0, 0, 0.1)"
+          maskColor="rgba(0, 0, 0, 0.2)"
+          nodeBorderRadius={8}
         />
         
         {/* Instructions Panel */}

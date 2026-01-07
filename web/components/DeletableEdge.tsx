@@ -96,19 +96,19 @@ const DeletableEdge: React.FC<EdgeProps<DeletableEdgeData>> = ({
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
             pointerEvents: 'all',
           }}
-          className="flex flex-col items-center gap-1"
+          className="flex flex-col items-center gap-1.5"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
           {/* Time gap badge - always visible if data exists */}
           {hasTimeGap && (
             <div 
-              className={`px-2 py-0.5 rounded-full text-xs font-medium shadow-md ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold shadow-lg backdrop-blur-sm border ${
                 isOverlap 
-                  ? 'bg-red-500/90 text-white' 
+                  ? 'bg-red-500/80 text-white border-red-400/50' 
                   : isShortGap 
-                    ? 'bg-amber-500/90 text-white'
-                    : 'bg-slate-700/90 text-slate-200'
+                    ? 'bg-amber-500/80 text-white border-amber-400/50'
+                    : 'bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 border-slate-200/50 dark:border-white/10'
               }`}
             >
               {formatTimeGap(timeGap)}
@@ -118,7 +118,7 @@ const DeletableEdge: React.FC<EdgeProps<DeletableEdgeData>> = ({
           {isHovered && (
             <button
               onClick={handleDelete}
-              className="flex items-center justify-center w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-all hover:scale-110"
+              className="flex items-center justify-center w-7 h-7 bg-red-500/90 hover:bg-red-600 text-white rounded-lg shadow-lg backdrop-blur-sm border border-red-400/50 transition-all hover:scale-110"
               title="Delete link"
             >
               <X size={14} />
