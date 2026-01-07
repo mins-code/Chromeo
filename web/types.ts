@@ -259,6 +259,8 @@ export interface TaskLink {
   fromTaskId: string;
   toTaskId: string;
   linkType: 'flow' | 'dependency'; // 'flow' = soft suggestion, 'dependency' = hard blocker
+  sourceHandle?: string; // 'top' | 'bottom' | 'left' | 'right'
+  targetHandle?: string; // 'top' | 'bottom' | 'left' | 'right'
 }
 
 // Visual layout position for task in flowchart

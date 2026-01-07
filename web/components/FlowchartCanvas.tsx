@@ -22,7 +22,7 @@ interface FlowchartCanvasProps {
   links: TaskLink[];
   layout: { taskId: string; x: number; y: number }[];
   onTaskMove: (taskId: string, x: number, y: number) => void;
-  onLinkCreate: (fromTaskId: string, toTaskId: string) => void;
+  onLinkCreate: (fromTaskId: string, toTaskId: string, sourceHandle?: string, targetHandle?: string) => void;
   onLinkDelete: (linkId: string) => void;
   onTaskClick: (task: Task) => void;
   onAutoArrange?: () => void;
@@ -70,6 +70,8 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
       id: link.id,
       source: link.fromTaskId,
       target: link.toTaskId,
+      sourceHandle: link.sourceHandle || 'bottom',
+      targetHandle: link.targetHandle || 'top',
       animated: link.linkType === 'flow',
       deletable: true,
       selectable: true,
@@ -107,7 +109,12 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
   const onConnect = useCallback(
     (connection: Connection) => {
       if (connection.source && connection.target) {
-        onLinkCreate(connection.source, connection.target);
+        onLinkCreate(
+          connection.source, 
+          connection.target,
+          connection.sourceHandle || undefined,
+          connection.targetHandle || undefined
+        );
       }
     },
     [onLinkCreate]

@@ -188,7 +188,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
 
   // Handle link creation
   const handleLinkCreate = useCallback(
-    (fromTaskId: string, toTaskId: string) => {
+    (fromTaskId: string, toTaskId: string, sourceHandle?: string, targetHandle?: string) => {
       if (!dayPlan) return;
 
       const newLink: TaskLink = {
@@ -196,6 +196,8 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
         fromTaskId,
         toTaskId,
         linkType: 'flow',
+        sourceHandle,
+        targetHandle,
       };
 
       const updatedPlan = {
