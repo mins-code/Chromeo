@@ -17,6 +17,7 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  Unlink,
 } from 'lucide-react';
 import Button from '../components/Button';
 import FlowchartCanvas from '../components/FlowchartCanvas';
@@ -129,6 +130,19 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
     }
   }, [dayPlan]);
 
+  // Clear all links only
+  const handleClearLinks = useCallback(async () => {
+    if (dayPlan && dayPlan.links.length > 0 && confirm('Clear all links between tasks?')) {
+      const updatedPlan: DayPlan = {
+        ...dayPlan,
+        links: [],
+        updatedAt: new Date().toISOString(),
+      };
+      setDayPlan(updatedPlan);
+      await DayPlanService.saveDayPlan(updatedPlan);
+    }
+  }, [dayPlan]);
+
   // Handle task drag from sidebar
   const handleDragStart = useCallback((task: Task) => {
     setDraggedTask(task);
@@ -237,14 +251,22 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
     [onEditTask]
   );
 
-  // Auto-arrange algorithm (simple grid layout)
+  // Auto-arrange algorithm - arrange by start time
   const handleAutoArrange = useCallback(() => {
     if (!dayPlan || planTasks.length === 0) return;
 
     const GRID_SIZE = 320;
     const COLUMNS = 3;
 
-    const newLayout: TaskLayout[] = planTasks.map((task, index) => ({
+    // Sort tasks by due time (start time)
+    const sortedTasks = [...planTasks].sort((a, b) => {
+      if (!a.dueDate && !b.dueDate) return 0;
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    });
+
+    const newLayout: TaskLayout[] = sortedTasks.map((task, index) => ({
       taskId: task.id,
       x: (index % COLUMNS) * GRID_SIZE + 50,
       y: Math.floor(index / COLUMNS) * 200 + 50,
@@ -646,6 +668,17 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
           <Button
             variant="ghost"
             size="sm"
+            onClick={handleClearLinks}
+            className="text-amber-500 hover:text-amber-600"
+            title="Clear all links"
+          >
+            <Unlink size={16} />
+            <span className="hidden sm:inline">Clear Links</span>
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleClearPlan}
             className="text-red-500 hover:text-red-600"
           >
@@ -666,7 +699,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
           <div className="p-4 border-b border-slate-200 dark:border-white/5 flex-shrink-0">
             <h3 className="font-semibold text-slate-800 dark:text-slate-100">Day Flowchart</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Drag tasks to create your daily flow • Connect tasks to show dependencies
+              Drag tasks to create your daily flow • Click a link and press Delete to remove it
             </p>
           </div>
           <div className="flex-1 min-h-0">
