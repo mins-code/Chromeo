@@ -137,8 +137,15 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   const days = getDaysInMonth();
   const startPadding = getStartDayOfWeek();
 
-  // Spinner component for time
+  // Spinner component for time - now with direct input
   const TimeSpinner = ({ value, onChange, min, max, step = 1, display }: { value: number; onChange: (v: number) => void; min: number; max: number; step?: number; display?: (v: number) => string }) => {
+    const [inputValue, setInputValue] = useState(display ? display(value) : String(value).padStart(2, '0'));
+    
+    // Sync inputValue when value prop changes
+    useEffect(() => {
+      setInputValue(display ? display(value) : String(value).padStart(2, '0'));
+    }, [value, display]);
+
     const handleWheel = (e: React.WheelEvent) => {
       e.preventDefault();
       if (e.deltaY < 0) {
@@ -150,24 +157,65 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
       }
     };
 
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value;
+      // Allow only numeric input (and empty string while typing)
+      if (/^\d*$/.test(val)) {
+        setInputValue(val);
+      }
+    };
+
+    const handleInputBlur = () => {
+      const parsed = parseInt(inputValue, 10);
+      if (!isNaN(parsed)) {
+        // Clamp value within bounds
+        const clamped = Math.max(min, Math.min(max, parsed));
+        onChange(clamped);
+      } else {
+        // Reset to current value if invalid
+        setInputValue(display ? display(value) : String(value).padStart(2, '0'));
+      }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        (e.target as HTMLInputElement).blur();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        onChange(value >= max ? min : value + step);
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        onChange(value <= min ? max : value - step);
+      }
+    };
+
     return (
       <div 
-        className="flex flex-col items-center gap-0.5 cursor-ns-resize" 
+        className="flex flex-col items-center gap-0.5" 
         onWheel={handleWheel}
-        title="Scroll to change value"
+        title="Scroll or type to change value"
       >
         <button
           onClick={() => onChange(value >= max ? min : value + step)}
           className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+          type="button"
         >
           <ChevronUp size={14} />
         </button>
-        <span className="w-8 h-7 flex items-center justify-center text-sm font-semibold text-white bg-white/10 rounded">
-          {display ? display(value) : String(value).padStart(2, '0')}
-        </span>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={inputValue}
+          onChange={handleInputChange}
+          onBlur={handleInputBlur}
+          onKeyDown={handleKeyDown}
+          onFocus={(e) => e.target.select()}
+          className="w-10 h-7 text-center text-sm font-semibold text-white bg-white/10 rounded border-none focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+        />
         <button
           onClick={() => onChange(value <= min ? max : value - step)}
           className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+          type="button"
         >
           <ChevronDown size={14} />
         </button>
