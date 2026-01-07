@@ -1,6 +1,7 @@
 
 import { Transaction } from "../types";
 import { supabase } from "./supabaseClient";
+import { categorizeTransaction } from "./geminiService";
 
 // Regex patterns for Indian Bank SMS
 const REGEX_PATTERNS = {
@@ -20,6 +21,7 @@ export interface ParsedSMS {
     type: 'income' | 'expense';
     description: string;
     originalText: string;
+    category?: string;
 }
 
 export const parseSMS = (text: string, sender: string): ParsedSMS | null => {
@@ -72,13 +74,18 @@ export const processAndSaveSMS = async (text: string, sender: string): Promise<P
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return parsed; // Just return parsed data if not auth, for UI display
 
-    // Save to DB
+    // Auto-categorize the transaction using AI
+    const category = await categorizeTransaction(parsed.description);
+    parsed.category = category;
+
+    // Save to DB with category
     const { error } = await supabase.from('transactions').insert({
         user_id: user.id,
         description: parsed.description,
         amount: parsed.amount,
         type: parsed.type,
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
+        category: category
     });
 
     if (error) {

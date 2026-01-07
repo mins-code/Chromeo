@@ -1,9 +1,105 @@
 
 import { supabase } from "./supabaseClient";
-import { Task, TaskPriority } from "../types";
+import { Task, TaskPriority, TRANSACTION_CATEGORIES, TransactionCategory } from "../types";
 import { validateFile, validateAIMessage, sanitizeJSON } from "../utils/validation";
 import { logger } from "../utils/logger";
 import { aiCache, generateCacheKey } from "../utils/aiChatCache";
+
+// ============ TRANSACTION CATEGORIZATION ============
+
+// Regex patterns for local categorization fallback (saves API calls)
+const CATEGORY_PATTERNS: { pattern: RegExp; category: TransactionCategory }[] = [
+    // Food & Dining
+    { pattern: /starbucks|mcdonald|burger|pizza|zomato|swiggy|domino|kfc|subway|cafe|restaurant|food|dining|eat|meal/i, category: 'Food & Dining' },
+    // Transportation
+    { pattern: /uber|ola|rapido|metro|bus|cab|taxi|fuel|petrol|diesel|parking|toll|lyft/i, category: 'Transportation' },
+    // Shopping
+    { pattern: /amazon|flipkart|myntra|ajio|shop|mall|store|retail|purchase|buy|order/i, category: 'Shopping' },
+    // Utilities
+    { pattern: /electric|water|gas|bill|recharge|mobile|airtel|jio|vodafone|wifi|internet|broadband/i, category: 'Utilities' },
+    // Entertainment
+    { pattern: /netflix|spotify|prime|hotstar|movie|cinema|theatre|game|play|concert|event|disney/i, category: 'Entertainment' },
+    // Health
+    { pattern: /hospital|doctor|medicine|pharmacy|medical|health|clinic|dental|eye|gym|fitness/i, category: 'Health' },
+    // Travel
+    { pattern: /flight|hotel|booking|makemytrip|goibibo|airbnb|train|irctc|trip|vacation|travel/i, category: 'Travel' },
+    // Income
+    { pattern: /salary|payment received|credited|deposit|refund|cashback|bonus|income/i, category: 'Income' },
+];
+
+/**
+ * Categorize a transaction description using local regex fallback first,
+ * then AI if no match is found.
+ * 
+ * @param description - The transaction description to categorize
+ * @returns Promise<string> - The category name
+ */
+export const categorizeTransaction = async (description: string): Promise<TransactionCategory> => {
+    if (!description || description.trim().length === 0) {
+        return 'Uncategorized';
+    }
+
+    // 1. Try local regex patterns first (fast, no API cost)
+    for (const { pattern, category } of CATEGORY_PATTERNS) {
+        if (pattern.test(description)) {
+            logger.info('Transaction categorized locally', { description, category });
+            return category;
+        }
+    }
+
+    // 2. If no local match, use AI categorization
+    try {
+        const cacheKey = generateCacheKey('categorize', description);
+        const cached = aiCache.get<TransactionCategory>(cacheKey);
+        if (cached) {
+            logger.info('Transaction category cache hit', { description, category: cached });
+            return cached;
+        }
+
+        const categoriesStr = TRANSACTION_CATEGORIES.filter(c => c !== 'Uncategorized').join(', ');
+        const prompt = `Categorize the following transaction description into exactly one of these categories: ${categoriesStr}. Return ONLY the category name string, nothing else.
+
+Transaction: "${description}"`;
+
+        const { data, error } = await retryWithBackoff(() =>
+            supabase.functions.invoke('ai-chat', {
+                body: {
+                    mode: 'chat',
+                    message: prompt,
+                    history: []
+                }
+            }),
+            2 // Only 2 retries to keep it snappy
+        );
+
+        if (error) {
+            logger.error('AI categorization error', error as Error, { description });
+            return 'Other';
+        }
+
+        const responseText = data?.text?.trim() || '';
+        
+        // Validate the response is a valid category
+        const validCategory = TRANSACTION_CATEGORIES.find(
+            cat => cat.toLowerCase() === responseText.toLowerCase()
+        );
+
+        const finalCategory: TransactionCategory = validCategory || 'Other';
+        
+        // Cache for 24 hours
+        aiCache.set(cacheKey, finalCategory, 86400000);
+        
+        logger.info('Transaction categorized by AI', { description, category: finalCategory });
+        return finalCategory;
+
+    } catch (error) {
+        logger.error('Failed to categorize transaction', error as Error, { description });
+        return 'Other';
+    }
+};
+
+// ============ END TRANSACTION CATEGORIZATION ============
+
 
 interface AIEnrichedTask {
     description: string;

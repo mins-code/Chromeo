@@ -46,7 +46,8 @@ export const getBudget = async (): Promise<Budget> => {
             description: t.description,
             amount: t.amount,
             type: t.type,
-            date: new Date(t.date).getTime()
+            date: new Date(t.date).getTime(),
+            category: t.category || 'Uncategorized'
         })),
         recurring: (recurring || []).map((r: DbTransaction) => ({
             id: r.id,
@@ -69,7 +70,7 @@ export const updateBudgetSettings = async (limit: number, duration: string): Pro
     return getBudget();
 };
 
-export const addTransaction = async (description: string, amount: number, type: 'income' | 'expense'): Promise<Budget> => {
+export const addTransaction = async (description: string, amount: number, type: 'income' | 'expense', category?: string): Promise<Budget> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
         await supabase.from('transactions').insert({
@@ -77,18 +78,23 @@ export const addTransaction = async (description: string, amount: number, type: 
             description,
             amount,
             type,
-            date: new Date().toISOString()
+            date: new Date().toISOString(),
+            category: category || 'Uncategorized'
         });
     }
     return getBudget();
 };
 
-export const updateTransaction = async (id: string, description: string, amount: number, type: 'income' | 'expense'): Promise<Budget> => {
+export const updateTransaction = async (id: string, description: string, amount: number, type: 'income' | 'expense', category?: string): Promise<Budget> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+        const updateData: any = { description, amount, type };
+        if (category !== undefined) {
+            updateData.category = category;
+        }
         await supabase
             .from('transactions')
-            .update({ description, amount, type })
+            .update(updateData)
             .eq('id', id)
             .eq('user_id', user.id); // Security: only update own transactions
     }

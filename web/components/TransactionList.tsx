@@ -1,13 +1,13 @@
 
 import React, { useState } from 'react';
-import { Transaction } from '../types';
-import { ArrowUpRight, ArrowDownLeft, Calendar, Search, Edit2, Trash2, Check, X, Repeat, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Transaction, TRANSACTION_CATEGORIES } from '../types';
+import { ArrowUpRight, ArrowDownLeft, Calendar, Search, Edit2, Trash2, Check, X, Repeat, ChevronLeft, ChevronRight, Tag } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, addWeeks, subWeeks, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 
 interface TransactionListProps {
     transactions: Transaction[];
     className?: string;
-    onEdit?: (params: { id: string; description: string; amount: number; type: 'income' | 'expense' }) => Promise<any>;
+    onEdit?: (params: { id: string; description: string; amount: number; type: 'income' | 'expense'; category?: string }) => Promise<any>;
     onDelete?: (id: string) => Promise<any>;
 }
 
@@ -17,6 +17,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
     const [editDesc, setEditDesc] = useState('');
     const [editAmount, setEditAmount] = useState('');
     const [editType, setEditType] = useState<'income' | 'expense'>('expense');
+    const [editCategory, setEditCategory] = useState<string>('Uncategorized');
 
     const [viewMode, setViewMode] = useState<'all' | 'month' | 'week'>('month');
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -63,6 +64,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
         setEditDesc(transaction.description);
         setEditAmount(transaction.amount.toString());
         setEditType(transaction.type);
+        setEditCategory(transaction.category || 'Uncategorized');
     };
 
     const cancelEdit = () => {
@@ -70,6 +72,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
         setEditDesc('');
         setEditAmount('');
         setEditType('expense');
+        setEditCategory('Uncategorized');
     };
 
     const saveEdit = async (id: string) => {
@@ -82,7 +85,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
         }
 
         try {
-            await onEdit({ id, description: editDesc, amount, type: editType });
+            await onEdit({ id, description: editDesc, amount, type: editType, category: editCategory });
             cancelEdit();
         } catch (error) {
             console.error('Failed to update transaction:', error);
@@ -205,6 +208,17 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                                             />
                                         </div>
                                         <div className="flex items-center gap-2">
+                                            <select
+                                                value={editCategory}
+                                                onChange={(e) => setEditCategory(e.target.value)}
+                                                className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+                                            >
+                                                {TRANSACTION_CATEGORIES.map((cat) => (
+                                                    <option key={cat} value={cat}>{cat}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="flex items-center gap-2">
                                             <input
                                                 type="number"
                                                 value={editAmount}
@@ -283,6 +297,12 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                                                 }`}>
                                                     {t.type === 'income' ? '+' : '-'}₹{t.amount.toLocaleString('en-IN')}
                                                 </span>
+                                                {t.category && t.category !== 'Uncategorized' && (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[10px] font-semibold">
+                                                        <Tag size={9} />
+                                                        {t.category}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

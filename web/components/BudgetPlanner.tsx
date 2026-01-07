@@ -10,8 +10,9 @@ import Input from './Input';
 import Select from './Select';
 import TransactionList from './TransactionList';
 import BudgetForecastChart from './BudgetForecastChart';
+import BudgetCategoryChart from './BudgetCategoryChart';
 import { calculateForecast, formatForecastDate } from '../utils/financialForecasting';
-import { Wallet, TrendingUp, TrendingDown, Plus, Trash2, IndianRupee, Eye, EyeOff, Repeat, ArrowRight, Settings, Share2, User, X, Loader2, UserPlus, Camera, LineChart } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Plus, Trash2, IndianRupee, Eye, EyeOff, Repeat, ArrowRight, Settings, Share2, User, X, Loader2, UserPlus, Camera, LineChart, PieChart } from 'lucide-react';
 import { t } from '../themeText';
 
 interface BudgetPlannerProps {
@@ -355,6 +356,14 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                         remaining on <span className="font-medium">{projectedEndDate}</span>.
                     </p>
                 )}
+            </div>
+
+            {/* Spending by Category Chart */}
+            <div className="glass-panel p-6 rounded-3xl space-y-4">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2 font-mono">
+                    <PieChart size={14} /> Spending by Category
+                </h3>
+                <BudgetCategoryChart transactions={budget.transactions} formatCurrency={formatCurrency} />
             </div>
 
             {/* Quick Transaction */}

@@ -134,6 +134,7 @@ export interface Transaction {
   amount: number;
   type: 'income' | 'expense';
   date: number;
+  category?: string;
 }
 
 export interface RecurringTransaction {
@@ -330,6 +331,7 @@ export interface DbTransaction {
   date: string;
   frequency?: 'daily' | 'weekly' | 'monthly' | 'yearly';
   next_due_date?: string;
+  category?: string;
 }
 
 /** Database response for user_settings table */
