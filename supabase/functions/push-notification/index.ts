@@ -248,7 +248,8 @@ serve(async (req) => {
       const { error } = await supabase
         .from("scheduled_notifications")
         .delete()
-        .eq("task_id", taskId);
+        .eq("task_id", taskId)
+        .eq("user_id", userId); // 🛡️ SECURITY: Prevent IDOR - only allow cancelling own notifications
 
       if (error) throw error;
 
