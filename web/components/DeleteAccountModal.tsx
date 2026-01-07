@@ -101,6 +101,7 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
               <button
                 onClick={handleClose}
                 className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                aria-label="Close modal"
               >
                 <X size={20} />
               </button>
@@ -153,8 +154,8 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-[35px] text-slate-400 hover:text-slate-600 transition-colors"
-                  tabIndex={-1}
+                  className="absolute right-3 top-[35px] text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -177,7 +178,11 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
 
               {/* Error Message */}
               {error && (
-                <div className="p-3 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm">
+                <div
+                  role="alert"
+                  aria-live="assertive"
+                  className="p-3 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm"
+                >
                   {error}
                 </div>
               )}
