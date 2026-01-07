@@ -505,8 +505,8 @@ const App: React.FC = () => {
         await toggleStatus(task);
     }, [toggleStatus]);
 
-    // ⚡ Performance Optimization: Memoized handler to prevent re-renders of TaskCard
-    const handleAIAnalysis = useCallback(async (task: Task) => {
+    // AI Analysis handler (not memoized due to allTags dependency order)
+    const handleAIAnalysis = async (task: Task) => {
         const enhanced = await enhanceTaskWithAI(task.title, allTags);
         if (enhanced && enhanced.subtasks) {
             const subtasks = enhanced.subtasks.map(s => ({
@@ -516,7 +516,7 @@ const App: React.FC = () => {
             }));
             await updateTask({ ...task, subtasks: [...task.subtasks, ...subtasks] });
         }
-    }, [allTags, updateTask]);
+    };
 
     // Focus Mode Handlers
     const handleStartFocus = useCallback((task: Task) => {
