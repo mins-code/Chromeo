@@ -16,6 +16,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Task, TaskLink } from '../types';
 import TaskNode from './TaskNode';
+import DeletableEdge from './DeletableEdge';
 
 interface FlowchartCanvasProps {
   tasks: Task[];
@@ -31,6 +32,10 @@ interface FlowchartCanvasProps {
 
 const nodeTypes = {
   taskNode: TaskNode,
+};
+
+const edgeTypes = {
+  deletable: DeletableEdge,
 };
 
 const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
@@ -75,22 +80,21 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
       animated: link.linkType === 'flow',
       deletable: true,
       selectable: true,
+      type: 'deletable',
+      data: {
+        onDelete: onLinkDelete,
+      },
       style: {
         stroke: link.linkType === 'flow' ? '#6366f1' : '#ef4444',
         strokeWidth: 3,
         cursor: 'pointer',
       },
-      // Make edges easier to click
-      interactionWidth: 20,
-      type: 'smoothstep',
       markerEnd: {
         type: 'arrowclosed' as const,
         color: link.linkType === 'flow' ? '#6366f1' : '#ef4444',
       },
-      // Visual feedback when selected
-      selected: false,
     }));
-  }, [links]);
+  }, [links, onLinkDelete]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -150,8 +154,8 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
         onNodeDragStop={onNodeDragStop}
         onEdgesDelete={onEdgesDelete}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         connectionMode={ConnectionMode.Loose}
-        deleteKeyCode={['Delete', 'Backspace']}
         selectionKeyCode="Shift"
         multiSelectionKeyCode="Control"
         edgesUpdatable={true}

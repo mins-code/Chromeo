@@ -791,6 +791,15 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
                 <Link2 size={16} />
                 Auto-Link
               </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleClearLinks}
+                className="text-amber-500 hover:text-amber-600"
+              >
+                <Unlink size={16} />
+                Clear Links
+              </Button>
               <button
                 onClick={() => setIsFullscreen(false)}
                 className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
