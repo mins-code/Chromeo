@@ -89,11 +89,19 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
     return tasks.filter((t) => dayPlan.taskIds.includes(t.id));
   }, [tasks, dayPlan]);
 
-  // Get unused tasks (tasks not in current plan)
+  // Get tasks for the current date that are not in the plan
   const unusedTasks = useMemo(() => {
-    if (!dayPlan) return tasks;
-    return tasks.filter((t) => !dayPlan.taskIds.includes(t.id));
-  }, [tasks, dayPlan]);
+    // Filter tasks that have a due date matching the current date
+    const tasksForDate = tasks.filter((t) => {
+      if (!t.dueDate) return false;
+      const taskDate = format(new Date(t.dueDate), 'yyyy-MM-dd');
+      return taskDate === dateKey;
+    });
+    
+    // Exclude tasks already in the plan
+    if (!dayPlan) return tasksForDate;
+    return tasksForDate.filter((t) => !dayPlan.taskIds.includes(t.id));
+  }, [tasks, dayPlan, dateKey]);
 
   // Navigation handlers
   const goToPreviousDay = () => setCurrentDate((prev) => subDays(prev, 1));
