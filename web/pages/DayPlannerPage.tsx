@@ -12,6 +12,7 @@ import {
   Layout as LayoutIcon,
   Download,
   RefreshCw,
+  Link2,
 } from 'lucide-react';
 import Button from '../components/Button';
 import FlowchartCanvas from '../components/FlowchartCanvas';
@@ -241,6 +242,62 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
 
     setDayPlan(updatedPlan);
     DayPlanService.saveDayPlan(updatedPlan);
+  }, [dayPlan, planTasks]);
+
+  // Auto-link tasks based on their due times
+  const handleAutoLink = useCallback(() => {
+    if (!dayPlan || planTasks.length < 2) return;
+
+    // Filter tasks with due dates and sort by due time
+    const tasksWithTime = planTasks
+      .filter(t => t.dueDate)
+      .map(t => ({
+        task: t,
+        dueTime: new Date(t.dueDate!).getTime(),
+        endTime: new Date(t.dueDate!).getTime() + (t.duration || 30) * 60 * 1000,
+      }))
+      .sort((a, b) => a.dueTime - b.dueTime);
+
+    if (tasksWithTime.length < 2) {
+      alert('Need at least 2 tasks with due times to auto-link.');
+      return;
+    }
+
+    // Create links from each task to the next one in chronological order
+    const newLinks: TaskLink[] = [];
+    for (let i = 0; i < tasksWithTime.length - 1; i++) {
+      const currentTask = tasksWithTime[i];
+      const nextTask = tasksWithTime[i + 1];
+
+      // Check if link already exists
+      const linkExists = dayPlan.links.some(
+        l => l.fromTaskId === currentTask.task.id && l.toTaskId === nextTask.task.id
+      );
+
+      if (!linkExists) {
+        newLinks.push({
+          id: crypto.randomUUID(),
+          fromTaskId: currentTask.task.id,
+          toTaskId: nextTask.task.id,
+          linkType: 'flow',
+        });
+      }
+    }
+
+    if (newLinks.length === 0) {
+      alert('All tasks are already linked in order!');
+      return;
+    }
+
+    const updatedPlan = {
+      ...dayPlan,
+      links: [...dayPlan.links, ...newLinks],
+      updatedAt: new Date().toISOString(),
+    };
+
+    setDayPlan(updatedPlan);
+    DayPlanService.saveDayPlan(updatedPlan);
+    alert(`Created ${newLinks.length} automatic link(s) based on task times!`);
   }, [dayPlan, planTasks]);
 
   // Handle clone day
@@ -556,6 +613,11 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
           <Button variant="secondary" size="sm" onClick={handleAutoArrange}>
             <LayoutIcon size={16} />
             <span className="hidden lg:inline">Arrange</span>
+          </Button>
+
+          <Button variant="secondary" size="sm" onClick={handleAutoLink} title="Auto-link tasks by time">
+            <Link2 size={16} />
+            <span className="hidden lg:inline">Auto-Link</span>
           </Button>
 
           <div className="flex-1" />

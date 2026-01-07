@@ -33,16 +33,32 @@ const TaskNode: React.FC<TaskNodeProps> = ({ data }) => {
       onClick={onClick}
       className={`relative bg-white dark:bg-slate-800 rounded-xl border-2 ${config.border} shadow-lg hover:shadow-xl transition-all cursor-pointer min-w-[240px] max-w-[280px]`}
     >
-      {/* Connection Handles */}
+      {/* Connection Handles - All 4 sides */}
       <Handle 
+        id="top"
         type="target" 
         position={Position.Top} 
         isConnectable={true}
         className="!w-4 !h-4 !bg-indigo-500 !border-2 !border-white dark:!border-slate-900 hover:!bg-indigo-400 hover:!scale-125 transition-transform"
       />
       <Handle 
+        id="bottom"
         type="source" 
         position={Position.Bottom} 
+        isConnectable={true}
+        className="!w-4 !h-4 !bg-indigo-500 !border-2 !border-white dark:!border-slate-900 hover:!bg-indigo-400 hover:!scale-125 transition-transform"
+      />
+      <Handle 
+        id="left"
+        type="target" 
+        position={Position.Left} 
+        isConnectable={true}
+        className="!w-4 !h-4 !bg-indigo-500 !border-2 !border-white dark:!border-slate-900 hover:!bg-indigo-400 hover:!scale-125 transition-transform"
+      />
+      <Handle 
+        id="right"
+        type="source" 
+        position={Position.Right} 
         isConnectable={true}
         className="!w-4 !h-4 !bg-indigo-500 !border-2 !border-white dark:!border-slate-900 hover:!bg-indigo-400 hover:!scale-125 transition-transform"
       />
