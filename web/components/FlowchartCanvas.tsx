@@ -71,15 +71,22 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
       source: link.fromTaskId,
       target: link.toTaskId,
       animated: link.linkType === 'flow',
+      deletable: true,
+      selectable: true,
       style: {
         stroke: link.linkType === 'flow' ? '#6366f1' : '#ef4444',
-        strokeWidth: 2,
+        strokeWidth: 3,
+        cursor: 'pointer',
       },
+      // Make edges easier to click
+      interactionWidth: 20,
       type: 'smoothstep',
       markerEnd: {
         type: 'arrowclosed' as const,
         color: link.linkType === 'flow' ? '#6366f1' : '#ef4444',
       },
+      // Visual feedback when selected
+      selected: false,
     }));
   }, [links]);
 
@@ -137,14 +144,21 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
         onEdgesDelete={onEdgesDelete}
         nodeTypes={nodeTypes}
         connectionMode={ConnectionMode.Loose}
-        deleteKeyCode="Delete"
+        deleteKeyCode={['Delete', 'Backspace']}
         selectionKeyCode="Shift"
         multiSelectionKeyCode="Control"
+        edgesUpdatable={true}
+        edgesFocusable={true}
+        defaultEdgeOptions={{
+          deletable: true,
+          selectable: true,
+        }}
         fitView
         fitViewOptions={{
           padding: 0.2,
           maxZoom: 1,
         }}
+        proOptions={{ hideAttribution: true }}
         attributionPosition="bottom-left"
         className="bg-slate-50 dark:bg-black/20"
       >
