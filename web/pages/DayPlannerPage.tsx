@@ -285,6 +285,37 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
     [onEditTask]
   );
 
+  // Handle adding a task between two linked tasks
+  const handleAddTaskBetween = useCallback(
+    (sourceTaskId: string, targetTaskId: string) => {
+      const sourceTask = tasks.find(t => t.id === sourceTaskId);
+      const targetTask = tasks.find(t => t.id === targetTaskId);
+      
+      if (!sourceTask || !targetTask) return;
+      
+      // Calculate the midpoint time between source end and target start
+      let newTaskDate: Date | undefined;
+      
+      if (sourceTask.dueDate && targetTask.dueDate) {
+        const sourceStart = new Date(sourceTask.dueDate).getTime();
+        const sourceDuration = (sourceTask.duration || 30) * 60 * 1000;
+        const sourceEnd = sourceStart + sourceDuration;
+        const targetStart = new Date(targetTask.dueDate).getTime();
+        
+        // Put new task at the midpoint between source end and target start
+        const midpoint = sourceEnd + (targetStart - sourceEnd) / 2;
+        newTaskDate = new Date(midpoint);
+      } else {
+        // Default to current date if no times available
+        newTaskDate = currentDate;
+      }
+      
+      // Open the create task modal with the calculated date
+      onCreateTask(newTaskDate);
+    },
+    [tasks, currentDate, onCreateTask]
+  );
+
   // Auto-arrange algorithm - arrange by start time
   const handleAutoArrange = useCallback(() => {
     if (!dayPlan || planTasks.length === 0) return;
@@ -748,6 +779,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
                 onTaskClick={handleTaskClick}
                 onAutoArrange={handleAutoArrange}
                 onSelectionChange={setSelectedTasks}
+                onAddTaskBetween={handleAddTaskBetween}
               />
             </ReactFlowProvider>
           </div>
@@ -862,6 +894,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
                   onTaskClick={handleTaskClick}
                   onAutoArrange={handleAutoArrange}
                   onSelectionChange={setSelectedTasks}
+                  onAddTaskBetween={handleAddTaskBetween}
                 />
               </ReactFlowProvider>
             </div>

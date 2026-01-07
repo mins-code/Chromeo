@@ -5,11 +5,14 @@ import {
   getSmoothStepPath,
   EdgeProps,
 } from '@xyflow/react';
-import { X } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 
 interface DeletableEdgeData {
   onDelete?: (id: string) => void;
-  timeGap?: number | null; // Time gap in minutes between tasks
+  onAddTask?: (sourceId: string, targetId: string) => void;
+  timeGap?: number | null;
+  sourceTaskId?: string;
+  targetTaskId?: string;
 }
 
 // Format time gap for display
@@ -28,6 +31,8 @@ const formatTimeGap = (minutes: number): string => {
 
 const DeletableEdge: React.FC<EdgeProps<DeletableEdgeData>> = ({
   id,
+  source,
+  target,
   sourceX,
   sourceY,
   targetX,
@@ -59,6 +64,13 @@ const DeletableEdge: React.FC<EdgeProps<DeletableEdgeData>> = ({
     }
   };
 
+  const handleAddTask = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (data?.onAddTask) {
+      data.onAddTask(source, target);
+    }
+  };
+
   // Determine label color based on time gap
   const timeGap = data?.timeGap;
   const hasTimeGap = timeGap !== null && timeGap !== undefined;
@@ -67,12 +79,12 @@ const DeletableEdge: React.FC<EdgeProps<DeletableEdgeData>> = ({
 
   return (
     <>
-      {/* Invisible wider path for easier hover detection */}
+      {/* Invisible wider path for easier hover detection - covers entire edge */}
       <path
         d={edgePath}
         fill="none"
         stroke="transparent"
-        strokeWidth={20}
+        strokeWidth={40}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         style={{ cursor: 'pointer' }}
@@ -88,7 +100,7 @@ const DeletableEdge: React.FC<EdgeProps<DeletableEdgeData>> = ({
           transition: 'stroke-width 0.2s, stroke 0.2s',
         }}
       />
-      {/* Time gap label and delete button */}
+      {/* Controls and time gap label */}
       <EdgeLabelRenderer>
         <div
           style={{
@@ -100,6 +112,27 @@ const DeletableEdge: React.FC<EdgeProps<DeletableEdgeData>> = ({
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
+          {/* Action buttons - visible on hover */}
+          {isHovered && (
+            <div className="flex items-center gap-1 mb-1">
+              {/* Add task button */}
+              <button
+                onClick={handleAddTask}
+                className="flex items-center justify-center w-7 h-7 bg-emerald-500/90 hover:bg-emerald-600 text-white rounded-lg shadow-lg backdrop-blur-sm border border-emerald-400/50 transition-all hover:scale-110"
+                title="Add task between"
+              >
+                <Plus size={14} />
+              </button>
+              {/* Delete button */}
+              <button
+                onClick={handleDelete}
+                className="flex items-center justify-center w-7 h-7 bg-red-500/90 hover:bg-red-600 text-white rounded-lg shadow-lg backdrop-blur-sm border border-red-400/50 transition-all hover:scale-110"
+                title="Delete link"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
           {/* Time gap badge - always visible if data exists */}
           {hasTimeGap && (
             <div 
@@ -113,16 +146,6 @@ const DeletableEdge: React.FC<EdgeProps<DeletableEdgeData>> = ({
             >
               {formatTimeGap(timeGap)}
             </div>
-          )}
-          {/* Delete button - visible on hover */}
-          {isHovered && (
-            <button
-              onClick={handleDelete}
-              className="flex items-center justify-center w-7 h-7 bg-red-500/90 hover:bg-red-600 text-white rounded-lg shadow-lg backdrop-blur-sm border border-red-400/50 transition-all hover:scale-110"
-              title="Delete link"
-            >
-              <X size={14} />
-            </button>
           )}
         </div>
       </EdgeLabelRenderer>

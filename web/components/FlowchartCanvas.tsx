@@ -28,6 +28,7 @@ interface FlowchartCanvasProps {
   onTaskClick: (task: Task) => void;
   onAutoArrange?: () => void;
   onSelectionChange?: (selectedTaskIds: string[]) => void;
+  onAddTaskBetween?: (sourceTaskId: string, targetTaskId: string) => void;
 }
 
 const nodeTypes = {
@@ -48,6 +49,7 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
   onTaskClick,
   onAutoArrange,
   onSelectionChange,
+  onAddTaskBetween,
 }) => {
   // Handle selection change
   const handleSelectionChange = useCallback(({ nodes }: { nodes: Node[] }) => {
@@ -100,6 +102,7 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
         type: 'deletable',
         data: {
           onDelete: onLinkDelete,
+          onAddTask: onAddTaskBetween,
           timeGap,
         },
         style: {
@@ -113,7 +116,7 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
         },
       };
     });
-  }, [links, onLinkDelete, tasks]);
+  }, [links, onLinkDelete, onAddTaskBetween, tasks]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -179,6 +182,8 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
         multiSelectionKeyCode="Control"
         edgesUpdatable={true}
         edgesFocusable={true}
+        snapToGrid={true}
+        snapGrid={[20, 20]}
         defaultEdgeOptions={{
           deletable: true,
           selectable: true,
