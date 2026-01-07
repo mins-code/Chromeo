@@ -1,4 +1,20 @@
 
+// Transaction Categories for Budget Planner AI Auto-Categorization
+export const TRANSACTION_CATEGORIES = [
+  'Food & Dining',
+  'Transportation',
+  'Shopping',
+  'Utilities',
+  'Entertainment',
+  'Health',
+  'Travel',
+  'Income',
+  'Other',
+  'Uncategorized'
+] as const;
+
+export type TransactionCategory = typeof TRANSACTION_CATEGORIES[number];
+
 export enum TaskStatus {
   TODO = 'TODO',
   IN_PROGRESS = 'IN_PROGRESS',
