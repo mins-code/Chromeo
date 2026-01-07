@@ -9,6 +9,7 @@ import { CalendarEvent, listGoogleEvents, GoogleCalendarError } from './services
 import TaskCard from './components/TaskCard';
 import TaskEditor from './components/TaskEditor';
 import FocusSession from './components/FocusSession';
+import MorningBriefingModal from './components/MorningBriefingModal';
 import Button from './components/Button';
 import Auth from './components/Auth';
 import Select from './components/Select';
@@ -43,6 +44,7 @@ import SettingsPage from './pages/SettingsPage';
 import { useSMSListener } from './hooks/useSMSListener';
 import { useNotificationScheduler } from './hooks/useNotificationScheduler';
 import { useRecurringProcessor } from './hooks/useRecurringProcessor';
+import { useMorningBriefing } from './hooks/useMorningBriefing';
 import { useNetworkStatus } from './hooks/useNetworkStatus';
 
 // Import page components
@@ -195,6 +197,13 @@ const App: React.FC = () => {
         handleProcessRecurring, 
         handleDismissRecurring 
     } = useRecurringProcessor();
+
+    // Morning Briefing
+    const {
+        showBriefing,
+        overdueTasks,
+        dismissBriefing
+    } = useMorningBriefing({ tasks });
 
     // --- END HOOKS ---
 
@@ -1002,6 +1011,30 @@ const App: React.FC = () => {
                     onComplete={handleCompleteFocus}
                 />
             )}
+
+            {/* Morning Briefing Modal */}
+            <MorningBriefingModal
+                isOpen={showBriefing}
+                onClose={dismissBriefing}
+                tasks={overdueTasks}
+                username={username}
+                onMoveToToday={async (taskIds) => {
+                    const today = new Date().toISOString();
+                    for (const id of taskIds) {
+                        const task = tasks.find(t => t.id === id);
+                        if (task) {
+                            await updateTask({ ...task, dueDate: today });
+                        }
+                    }
+                    dismissBriefing();
+                }}
+                onDelete={async (taskIds) => {
+                    for (const id of taskIds) {
+                        await deleteTask(id);
+                    }
+                    dismissBriefing();
+                }}
+            />
 
 
         </Layout>

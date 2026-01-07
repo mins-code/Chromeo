@@ -12,3 +12,5 @@ export { useNetworkStatus } from './useNetworkStatus';
 export { useSMSListener } from './useSMSListener';
 export { useNotificationScheduler } from './useNotificationScheduler';
 export { useRecurringProcessor } from './useRecurringProcessor';
+export { useMorningBriefing } from './useMorningBriefing';
+
