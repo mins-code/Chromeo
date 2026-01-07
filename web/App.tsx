@@ -147,7 +147,7 @@ const App: React.FC = () => {
     // Calendar Visible Tags State - tags from tasks in the current calendar period
     const [calendarVisibleTags, setCalendarVisibleTags] = useState<string[]>([]);
 
-    const [viewSourceMode, setViewSourceMode] = useState<ViewSourceMode>('personal');
+    const [viewSourceMode, setViewSourceMode] = useState<ViewSourceMode>('combined');
 
     const handleViewSourceModeChange = useCallback((mode: ViewSourceMode) => {
         setViewSourceMode(mode);
