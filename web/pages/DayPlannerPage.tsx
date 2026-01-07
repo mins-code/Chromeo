@@ -576,17 +576,17 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
       <div className="flex-1 flex gap-6 pt-6 overflow-hidden">
         {/* Flowchart Canvas */}
         <div
-          className="flex-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden"
+          className="flex-1 flex flex-col bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden"
           onDrop={handleCanvasDrop}
           onDragOver={handleCanvasDragOver}
         >
-          <div className="p-4 border-b border-slate-200 dark:border-white/5">
+          <div className="p-4 border-b border-slate-200 dark:border-white/5 flex-shrink-0">
             <h3 className="font-semibold text-slate-800 dark:text-slate-100">Day Flowchart</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Drag tasks to create your daily flow • Connect tasks to show dependencies
             </p>
           </div>
-          <div className="h-[calc(100%-4rem)]">
+          <div className="flex-1 min-h-0">
             <ReactFlowProvider>
               <FlowchartCanvas
                 tasks={planTasks}
