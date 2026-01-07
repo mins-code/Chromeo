@@ -191,9 +191,10 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
       if (!draggedTask || !dayPlan) return;
 
       const canvasBounds = event.currentTarget.getBoundingClientRect();
-      // Calculate position relative to canvas with a minimum offset to ensure visibility
+      // Calculate position relative to canvas, accounting for header height (64px = 4rem)
+      const HEADER_HEIGHT = 64;
       const x = Math.max(50, event.clientX - canvasBounds.left);
-      const y = Math.max(50, event.clientY - canvasBounds.top);
+      const y = Math.max(50, event.clientY - canvasBounds.top - HEADER_HEIGHT);
 
       // Add task to plan
       const updatedPlan = await DayPlanService.addTaskToPlan(dayPlan.id, draggedTask.id, { x, y });
@@ -641,6 +642,8 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
         {/* Flowchart Canvas */}
         <div
           className="flex-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden"
+          onDrop={handleCanvasDrop}
+          onDragOver={handleCanvasDragOver}
         >
           <div className="p-4 border-b border-slate-200 dark:border-white/5">
             <h3 className="font-semibold text-slate-800 dark:text-slate-100">Day Flowchart</h3>
@@ -648,11 +651,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
               Drag tasks to create your daily flow • Connect tasks to show dependencies
             </p>
           </div>
-          <div 
-            className="h-[calc(100%-4rem)]"
-            onDrop={handleCanvasDrop}
-            onDragOver={handleCanvasDragOver}
-          >
+          <div className="h-[calc(100%-4rem)]">
             <ReactFlowProvider>
               <FlowchartCanvas
                 tasks={planTasks}
