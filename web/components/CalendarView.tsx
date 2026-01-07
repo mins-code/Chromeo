@@ -436,6 +436,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                         ? 'bg-white dark:bg-slate-700 text-brand-500 shadow-sm'
                                         : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
+                                aria-label="Month view"
                             >
                                 <Calendar size={14} className="sm:w-4 sm:h-4" />
                                 <span className="hidden sm:inline">Month</span>
@@ -447,6 +448,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                         ? 'bg-white dark:bg-slate-700 text-brand-500 shadow-sm'
                                         : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
+                                aria-label="Week view"
                             >
                                 <CalendarDays size={14} className="sm:w-4 sm:h-4" />
                                 <span className="hidden sm:inline">Week</span>
@@ -458,6 +460,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                         ? 'bg-white dark:bg-slate-700 text-brand-500 shadow-sm'
                                         : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
+                                aria-label="Day view"
                             >
                                 <CalendarClock size={14} className="sm:w-4 sm:h-4" />
                                 <span className="hidden sm:inline">Day</span>
@@ -474,6 +477,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                             ? 'bg-white dark:bg-slate-700 text-brand-500 shadow-sm'
                                             : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                     }`}
+                                    aria-label="Custom interval view"
                                 >
                                     <Settings2 size={14} className="sm:w-4 sm:h-4" />
                                     <span className="hidden sm:inline">{viewMode === 'custom' ? getCustomIntervalLabel() : 'Custom'}</span>
@@ -530,10 +534,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
 
                         {/* Navigation */}
                         <div className="flex gap-1 sm:gap-2 shrink-0">
-                            <Button variant="secondary" size="icon" onClick={() => navigate(-1)} className="w-8 h-8 sm:w-10 sm:h-10">
+                            <Button variant="secondary" size="icon" onClick={() => navigate(-1)} className="w-8 h-8 sm:w-10 sm:h-10" aria-label="Previous period">
                                 <ChevronLeft size={18} className="sm:w-5 sm:h-5" />
                             </Button>
-                            <Button variant="secondary" size="icon" onClick={() => navigate(1)} className="w-8 h-8 sm:w-10 sm:h-10">
+                            <Button variant="secondary" size="icon" onClick={() => navigate(1)} className="w-8 h-8 sm:w-10 sm:h-10" aria-label="Next period">
                                 <ChevronRight size={18} className="sm:w-5 sm:h-5" />
                             </Button>
                         </div>
@@ -613,7 +617,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                         )}
                                     </p>
                                 </div>
-                                <button onClick={() => setSelectedDate(null)} className="p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-slate-400 hover:text-slate-800 dark:hover:text-white">
+                                <button onClick={() => setSelectedDate(null)} className="p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-slate-400 hover:text-slate-800 dark:hover:text-white" aria-label="Close">
                                     <X size={20} />
                                 </button>
                             </div>
@@ -743,7 +747,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                         <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{selectedGoogleEvent.title}</h3>
                                     </div>
                                 </div>
-                                <button onClick={() => setSelectedGoogleEvent(null)} className="p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-slate-400 hover:text-slate-800 dark:hover:text-white">
+                                <button onClick={() => setSelectedGoogleEvent(null)} className="p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-slate-400 hover:text-slate-800 dark:hover:text-white" aria-label="Close">
                                     <X size={20} />
                                 </button>
                             </div>

@@ -366,6 +366,7 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
               <button
                 onClick={() => { setIsEditorOpen(false); resetForm(); }}
                 className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-slate-600 dark:text-slate-300"
+                aria-label="Close editor"
               >
                 <X size={20} />
               </button>
@@ -457,6 +458,7 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
                               ? 'bg-brand-500 border-brand-500'
                               : 'border-slate-300 dark:border-slate-600 hover:border-brand-500'
                           }`}
+                          aria-label={item.isCompleted ? 'Mark item incomplete' : 'Mark item complete'}
                         >
                           {item.isCompleted && <Check size={14} className="text-white" />}
                         </button>
@@ -472,6 +474,7 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
                         <button
                           onClick={() => handleRemoveChecklistItem(item.id)}
                           className="p-1 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                          aria-label="Remove item"
                         >
                           <X size={16} />
                         </button>
@@ -551,6 +554,7 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
                           <button
                             onClick={() => handleUnshareNote(share.id)}
                             className="p-1.5 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                            aria-label="Remove share"
                           >
                             <X size={16} />
                           </button>

@@ -276,6 +276,7 @@ export const Layout: React.FC<LayoutProps> = ({
                             onClick={handleToggleSidebar}
                             className={`p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors ${!isExpanded ? 'mx-auto' : ''}`}
                             title={isSidebarCollapsed ? "Pin Sidebar Open" : "Collapse Sidebar"}
+                            aria-label={isSidebarCollapsed ? "Pin sidebar open" : "Collapse sidebar"}
                         >
                             {isSidebarCollapsed ? <PanelLeft size={20} /> : <PanelLeftClose size={20} />}
                         </button>
@@ -388,6 +389,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                                                             onClick={(e) => startEditingTag(tag, e)}
                                                                             className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-brand-500 p-1 transition-opacity"
                                                                             title="Rename Tag"
+                                                                            aria-label={`Rename tag ${tag}`}
                                                                         >
                                                                             <Pencil size={12} />
                                                                         </button>
@@ -461,6 +463,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                     onClick={toggleTheme}
                                     className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                                     title="Toggle Theme"
+                                    aria-label="Toggle theme"
                                 >
                                     {currentTheme === 'light' ? <Sun size={20} /> : <Moon size={20} />}
                                 </button>
@@ -470,6 +473,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                     onClick={() => { onNavigate('settings'); setExpandedMenus({}); }}
                                     className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors rounded-lg hover:bg-black/5 dark:hover:bg-white/5"
                                     title="Settings"
+                                    aria-label="Settings"
                                 >
                                     <Settings size={20} />
                                 </button>
@@ -482,7 +486,7 @@ export const Layout: React.FC<LayoutProps> = ({
                             <div className="absolute bottom-4 left-full ml-4 w-72 glass-panel rounded-2xl shadow-2xl p-5 animate-scale-in z-50 bg-white/90 dark:bg-slate-900/90">
                                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200 dark:border-white/5">
                                     <h3 className="font-bold text-slate-800 dark:text-slate-200">Account Overview</h3>
-                                    <button onClick={(e) => { e.stopPropagation(); setShowProfileStats(false) }} className="text-slate-500 hover:text-slate-800 dark:hover:text-white">
+                                    <button onClick={(e) => { e.stopPropagation(); setShowProfileStats(false) }} className="text-slate-500 hover:text-slate-800 dark:hover:text-white" aria-label="Close profile menu">
                                         <X size={16} />
                                     </button>
                                 </div>
@@ -543,6 +547,7 @@ export const Layout: React.FC<LayoutProps> = ({
                             <button
                                 className="md:hidden text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors"
                                 onClick={() => setIsMobileSidebarOpen(true)}
+                                aria-label="Open navigation menu"
                             >
                                 <Menu size={24} />
                             </button>
@@ -764,6 +769,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                     <button
                                         onClick={() => setIsMobileSidebarOpen(false)}
                                         className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
+                                        aria-label="Close navigation menu"
                                     >
                                         <X size={20} />
                                     </button>

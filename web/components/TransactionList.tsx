@@ -141,6 +141,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                             <button 
                                 onClick={() => navigate(-1)}
                                 className="p-1 hover:bg-white dark:hover:bg-white/10 rounded-md text-slate-500 transition-colors"
+                                aria-label="Previous period"
                             >
                                 <ChevronLeft size={16} />
                             </button>
@@ -150,6 +151,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                             <button 
                                 onClick={() => navigate(1)}
                                 className="p-1 hover:bg-white dark:hover:bg-white/10 rounded-md text-slate-500 transition-colors"
+                                aria-label="Next period"
                             >
                                 <ChevronRight size={16} />
                             </button>
@@ -196,6 +198,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                                                         : 'bg-red-500/10 text-red-500'
                                                 }`}
                                                 title="Toggle type"
+                                                aria-label={editType === 'income' ? 'Switch to expense' : 'Switch to income'}
                                             >
                                                 {editType === 'income' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
                                             </button>
@@ -230,6 +233,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                                                 onClick={() => saveEdit(t.id)}
                                                 className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors"
                                                 title="Save"
+                                                aria-label="Save changes"
                                             >
                                                 <Check size={18} />
                                             </button>
@@ -237,6 +241,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                                                 onClick={cancelEdit}
                                                 className="p-2.5 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
                                                 title="Cancel"
+                                                aria-label="Cancel editing"
                                             >
                                                 <X size={18} />
                                             </button>
@@ -269,6 +274,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                                                                 onClick={() => startEdit(t)}
                                                                 className="p-1.5 rounded-lg text-slate-400 hover:bg-brand-500/10 hover:text-brand-500 transition-colors"
                                                                 title="Edit"
+                                                                aria-label="Edit transaction"
                                                             >
                                                                 <Edit2 size={14} />
                                                             </button>
@@ -278,6 +284,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                                                                 onClick={() => handleDelete(t.id)}
                                                                 className="p-1.5 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
                                                                 title="Delete"
+                                                                aria-label="Delete transaction"
                                                             >
                                                                 <Trash2 size={14} />
                                                             </button>

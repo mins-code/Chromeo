@@ -227,6 +227,7 @@ const CommandBar: React.FC<CommandBarProps> = ({ isOpen, onClose, onTaskParsed, 
                         <button 
                             onClick={onClose}
                             className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                            aria-label="Close command bar"
                         >
                             <X size={18} />
                         </button>
@@ -264,6 +265,7 @@ const CommandBar: React.FC<CommandBarProps> = ({ isOpen, onClose, onTaskParsed, 
                                                 : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                                         } disabled:opacity-50`}
                                         title={isListening ? 'Stop listening' : 'Start voice input'}
+                                        aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
                                     >
                                         {isListening ? <MicOff size={20} /> : <Mic size={20} />}
                                     </button>

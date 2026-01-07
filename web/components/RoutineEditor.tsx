@@ -191,7 +191,7 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
               {routine ? 'Edit Routine' : 'New Routine'}
             </h2>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5" aria-label="Close editor">
             <X size={20} />
           </button>
         </div>
@@ -362,7 +362,7 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
                     />
                     <span className="text-xs text-slate-400">Day {index + 1}</span>
                     {cycleItems.length > 2 && (
-                      <button onClick={() => removeCycleItem(index)} className="text-slate-400 hover:text-red-500 p-1">
+                      <button onClick={() => removeCycleItem(index)} className="text-slate-400 hover:text-red-500 p-1" aria-label="Remove cycle item">
                         <Trash2 size={14} />
                       </button>
                     )}
@@ -450,6 +450,7 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
             <button
               onClick={() => setIsActive(!isActive)}
               className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${isActive ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}
+              aria-label={isActive ? 'Deactivate routine' : 'Activate routine'}
             >
               <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${isActive ? 'translate-x-6' : 'translate-x-0'}`} />
             </button>
@@ -478,6 +479,7 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
                   notificationEnabled === false ? 'bg-slate-300 dark:bg-slate-600' :
                   'bg-gradient-to-r from-slate-300 to-amber-400 dark:from-slate-600 dark:to-amber-500'
                 }`}
+                aria-label={notificationEnabled === true ? 'Disable notification' : notificationEnabled === false ? 'Use global settings' : 'Enable notification'}
               >
                 <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${
                   notificationEnabled === true ? 'translate-x-6' : 
@@ -513,7 +515,7 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
         {/* Footer */}
         <div className="p-6 border-t border-slate-200 dark:border-white/5 bg-white/80 dark:bg-slate-900/80 flex justify-between items-center z-10">
           {routine && onDelete ? (
-            <Button variant="danger" size="icon" onClick={() => onDelete(routine.id)} className="bg-red-500/10 hover:bg-red-500/20 text-red-500 dark:text-red-400">
+            <Button variant="danger" size="icon" onClick={() => onDelete(routine.id)} className="bg-red-500/10 hover:bg-red-500/20 text-red-500 dark:text-red-400" aria-label="Delete routine">
               <Trash2 size={18} />
             </Button>
           ) : <div />}

@@ -199,6 +199,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
           onClick={() => onChange(value >= max ? min : value + step)}
           className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
           type="button"
+          aria-label="Increment"
         >
           <ChevronUp size={14} />
         </button>
@@ -211,11 +212,13 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
           onKeyDown={handleKeyDown}
           onFocus={(e) => e.target.select()}
           className="w-10 h-7 text-center text-sm font-semibold text-white bg-white/10 rounded border-none focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+          aria-label="Enter time value"
         />
         <button
           onClick={() => onChange(value <= min ? max : value - step)}
           className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
           type="button"
+          aria-label="Decrement"
         >
           <ChevronDown size={14} />
         </button>
@@ -243,7 +246,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
           </span>
         </div>
         {selectedDate && (
-          <button onClick={handleClear} className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+          <button onClick={handleClear} className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" aria-label="Clear date">
             <X size={14} />
           </button>
         )}
@@ -281,11 +284,11 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
             <div className="p-3">
               {/* Calendar Header */}
               <div className="flex items-center justify-between mb-2">
-                <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 transition-colors">
+                <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 transition-colors" aria-label="Previous month">
                   <ChevronLeft size={16} />
                 </button>
                 <span className="text-sm font-semibold text-white">{format(currentMonth, 'MMM yyyy')}</span>
-                <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 transition-colors">
+                <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 transition-colors" aria-label="Next month">
                   <ChevronRight size={16} />
                 </button>
               </div>
@@ -341,6 +344,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
                     <button
                       onClick={() => handleTimeChange(hour12, minutes, !isPM)}
                       className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-brand-500 text-slate-900"
+                      aria-label={isPM ? 'Switch to AM' : 'Switch to PM'}
                     >
                       {isPM ? 'PM' : 'AM'}
                     </button>

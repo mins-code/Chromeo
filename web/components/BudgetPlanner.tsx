@@ -272,7 +272,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                         <div className="relative group">
                             <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-widest font-mono flex items-center gap-2">
                                 Savings
-                                <button onClick={() => setShowSavings(!showSavings)} className="text-slate-400 hover:text-brand-500 transition-colors">
+                                <button onClick={() => setShowSavings(!showSavings)} className="text-slate-400 hover:text-brand-500 transition-colors" aria-label={showSavings ? 'Hide savings' : 'Show savings'}>
                                     {showSavings ? <EyeOff size={12} /> : <Eye size={12} />}
                                 </button>
                             </p>
@@ -387,6 +387,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                             onClick={() => fileInputRef.current?.click()}
                             disabled={isScanning}
                             title="Scan UPI Screenshot"
+                            aria-label="Scan transaction screenshot"
                         >
                             {isScanning ? <Loader2 className="animate-spin" size={20} /> : <Camera size={20} />}
                         </Button>
@@ -555,6 +556,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                                             onClick={() => handleRemoveShare(share.id)}
                                             className="p-1.5 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
                                             title="Remove Share"
+                                            aria-label="Remove share"
                                         >
                                             <X size={16} />
                                         </button>

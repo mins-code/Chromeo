@@ -179,12 +179,14 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
           <button
             onClick={goToPrevMonth}
             className={`p-1.5 rounded-lg ${colors.textMuted} ${colors.hover} transition-colors`}
+            aria-label="Previous month"
           >
             <ChevronLeft size={16} />
           </button>
           <button
             onClick={goToNextMonth}
             className={`p-1.5 rounded-lg ${colors.textMuted} ${colors.hover} transition-colors`}
+            aria-label="Next month"
           >
             <ChevronRight size={16} />
           </button>
@@ -202,6 +204,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
                 onClick={() => setPickerYear(pickerYear - 12)}
                 className={`p-1 rounded ${colors.textMuted} ${colors.hover}`}
                 title="Previous 12 years"
+                aria-label="Previous 12 years"
               >
                 <ChevronLeft size={14} />
               </button>
@@ -232,6 +235,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
                 onClick={() => setPickerYear(pickerYear + 12)}
                 className={`p-1 rounded ${colors.textMuted} ${colors.hover}`}
                 title="Next 12 years"
+                aria-label="Next 12 years"
               >
                 <ChevronRight size={14} />
               </button>

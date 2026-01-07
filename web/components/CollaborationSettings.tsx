@@ -327,6 +327,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                           onClick={() => handleAcceptPartner(p.id)}
                           className="p-1.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 dark:hover:bg-emerald-500/30 transition-colors"
                           title="Accept"
+                          aria-label="Accept partner request"
                         >
                           <Check size={16} />
                         </button>
@@ -334,6 +335,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                           onClick={() => handleRejectPartner(p.id)}
                           className="p-1.5 rounded-lg bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/20 dark:hover:bg-red-500/30 transition-colors"
                           title="Reject"
+                          aria-label="Reject partner request"
                         >
                           <X size={16} />
                         </button>
@@ -352,6 +354,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                         onClick={() => handleRemovePartner(p.id)}
                         className="p-1.5 rounded-lg text-slate-400 hover:bg-red-500/10 dark:hover:bg-red-500/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         title="Remove"
+                        aria-label="Remove partner"
                       >
                         <UserMinus size={16} />
                       </button>
@@ -395,12 +398,14 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                     <button 
                       onClick={() => handleAcceptTeamInvite(team.id)}
                       className="p-1.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 dark:hover:bg-emerald-500/30"
+                      aria-label="Accept team invite"
                     >
                       <Check size={14} />
                     </button>
                     <button 
                       onClick={() => handleRejectTeamInvite(team.id)}
                       className="p-1.5 rounded-lg bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/20 dark:hover:bg-red-500/30"
+                      aria-label="Reject team invite"
                     >
                       <X size={14} />
                     </button>
@@ -484,6 +489,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                         onClick={(e) => { e.stopPropagation(); handleDeleteTeam(team.id); }}
                         className="p-1.5 rounded-lg text-slate-400 hover:bg-red-500/10 dark:hover:bg-red-500/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         title="Delete Team"
+                        aria-label="Delete team"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -583,6 +589,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                                   onClick={() => handleRemoveTeamMember(team.id, member.id)}
                                   className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors"
                                   title="Remove member"
+                                  aria-label="Remove team member"
                                 >
                                   <X size={14} />
                                 </button>

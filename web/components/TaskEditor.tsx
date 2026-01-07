@@ -406,7 +406,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                    {tags.map(tag => (
                        <span key={tag} className="bg-brand-500/10 text-brand-600 dark:text-brand-300 text-xs font-medium px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-brand-500/20">
                            {tag}
-                           <button onClick={() => removeTag(tag)} className="hover:text-slate-800 dark:hover:text-white"><X size={12} /></button>
+                           <button onClick={() => removeTag(tag)} className="hover:text-slate-800 dark:hover:text-white" aria-label={`Remove tag ${tag}`}><X size={12} /></button>
                        </span>
                    ))}
                </div>
