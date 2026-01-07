@@ -468,7 +468,8 @@ const App: React.FC = () => {
         handleEditDraft(taskDraft);
     };
 
-    const handleSaveTask = async (taskData: Partial<Task>) => {
+    // ⚡ Performance Optimization: Memoized handler to prevent re-renders of TaskEditor
+    const handleSaveTask = useCallback(async (taskData: Partial<Task>) => {
         console.log('[App] handleSaveTask called with:', taskData);
         let savedTask: Task | null = null;
 
@@ -489,20 +490,23 @@ const App: React.FC = () => {
                 return [...prev, ...newTags];
             });
         }
-    };
+    }, [updateTask, createTask]);
 
-    const handleDeleteTask = async (id: string) => {
+    // ⚡ Performance Optimization: Memoized handler to prevent re-renders of TaskEditor
+    const handleDeleteTask = useCallback(async (id: string) => {
         const success = await deleteTask(id);
         if (success) {
             setIsEditorOpen(false);
         }
-    };
+    }, [deleteTask]);
 
-    const handleToggleStatus = async (task: Task) => {
+    // ⚡ Performance Optimization: Memoized handler to prevent re-renders of TaskCard and CalendarView
+    const handleToggleStatus = useCallback(async (task: Task) => {
         await toggleStatus(task);
-    };
+    }, [toggleStatus]);
 
-    const handleAIAnalysis = async (task: Task) => {
+    // ⚡ Performance Optimization: Memoized handler to prevent re-renders of TaskCard
+    const handleAIAnalysis = useCallback(async (task: Task) => {
         const enhanced = await enhanceTaskWithAI(task.title, allTags);
         if (enhanced && enhanced.subtasks) {
             const subtasks = enhanced.subtasks.map(s => ({
@@ -512,7 +516,7 @@ const App: React.FC = () => {
             }));
             await updateTask({ ...task, subtasks: [...task.subtasks, ...subtasks] });
         }
-    };
+    }, [allTags, updateTask]);
 
     // Focus Mode Handlers
     const handleStartFocus = useCallback((task: Task) => {
