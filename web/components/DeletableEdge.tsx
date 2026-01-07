@@ -9,7 +9,22 @@ import { X } from 'lucide-react';
 
 interface DeletableEdgeData {
   onDelete?: (id: string) => void;
+  timeGap?: number | null; // Time gap in minutes between tasks
 }
+
+// Format time gap for display
+const formatTimeGap = (minutes: number): string => {
+  const absMinutes = Math.abs(minutes);
+  if (absMinutes >= 60) {
+    const hours = Math.floor(absMinutes / 60);
+    const mins = absMinutes % 60;
+    if (mins === 0) {
+      return `${minutes < 0 ? '-' : ''}${hours}h`;
+    }
+    return `${minutes < 0 ? '-' : ''}${hours}h ${mins}m`;
+  }
+  return `${minutes}m`;
+};
 
 const DeletableEdge: React.FC<EdgeProps<DeletableEdgeData>> = ({
   id,
@@ -44,6 +59,12 @@ const DeletableEdge: React.FC<EdgeProps<DeletableEdgeData>> = ({
     }
   };
 
+  // Determine label color based on time gap
+  const timeGap = data?.timeGap;
+  const hasTimeGap = timeGap !== null && timeGap !== undefined;
+  const isOverlap = hasTimeGap && timeGap < 0;
+  const isShortGap = hasTimeGap && timeGap >= 0 && timeGap <= 15;
+
   return (
     <>
       {/* Invisible wider path for easier hover detection */}
@@ -67,7 +88,7 @@ const DeletableEdge: React.FC<EdgeProps<DeletableEdgeData>> = ({
           transition: 'stroke-width 0.2s, stroke 0.2s',
         }}
       />
-      {/* Delete button */}
+      {/* Time gap label and delete button */}
       <EdgeLabelRenderer>
         <div
           style={{
@@ -75,9 +96,25 @@ const DeletableEdge: React.FC<EdgeProps<DeletableEdgeData>> = ({
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
             pointerEvents: 'all',
           }}
+          className="flex flex-col items-center gap-1"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
+          {/* Time gap badge - always visible if data exists */}
+          {hasTimeGap && (
+            <div 
+              className={`px-2 py-0.5 rounded-full text-xs font-medium shadow-md ${
+                isOverlap 
+                  ? 'bg-red-500/90 text-white' 
+                  : isShortGap 
+                    ? 'bg-amber-500/90 text-white'
+                    : 'bg-slate-700/90 text-slate-200'
+              }`}
+            >
+              {formatTimeGap(timeGap)}
+            </div>
+          )}
+          {/* Delete button - visible on hover */}
           {isHovered && (
             <button
               onClick={handleDelete}

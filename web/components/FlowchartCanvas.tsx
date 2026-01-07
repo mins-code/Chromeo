@@ -71,30 +71,49 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
 
   // Convert links to React Flow edges
   const initialEdges: Edge[] = useMemo(() => {
-    return links.map(link => ({
-      id: link.id,
-      source: link.fromTaskId,
-      target: link.toTaskId,
-      sourceHandle: link.sourceHandle || 'bottom',
-      targetHandle: link.targetHandle || 'top',
-      animated: link.linkType === 'flow',
-      deletable: true,
-      selectable: true,
-      type: 'deletable',
-      data: {
-        onDelete: onLinkDelete,
-      },
-      style: {
-        stroke: link.linkType === 'flow' ? '#6366f1' : '#ef4444',
-        strokeWidth: 3,
-        cursor: 'pointer',
-      },
-      markerEnd: {
-        type: 'arrowclosed' as const,
-        color: link.linkType === 'flow' ? '#6366f1' : '#ef4444',
-      },
-    }));
-  }, [links, onLinkDelete]);
+    return links.map(link => {
+      // Find the source and target tasks to calculate time gap
+      const sourceTask = tasks.find(t => t.id === link.fromTaskId);
+      const targetTask = tasks.find(t => t.id === link.toTaskId);
+      
+      let timeGap: number | null = null;
+      
+      if (sourceTask?.dueDate && targetTask?.dueDate) {
+        const sourceStart = new Date(sourceTask.dueDate).getTime();
+        const sourceDuration = (sourceTask.duration || 30) * 60 * 1000; // Convert minutes to ms
+        const sourceEnd = sourceStart + sourceDuration;
+        const targetStart = new Date(targetTask.dueDate).getTime();
+        
+        // Time gap in minutes (can be negative if tasks overlap)
+        timeGap = Math.round((targetStart - sourceEnd) / (60 * 1000));
+      }
+
+      return {
+        id: link.id,
+        source: link.fromTaskId,
+        target: link.toTaskId,
+        sourceHandle: link.sourceHandle || 'bottom',
+        targetHandle: link.targetHandle || 'top',
+        animated: link.linkType === 'flow',
+        deletable: true,
+        selectable: true,
+        type: 'deletable',
+        data: {
+          onDelete: onLinkDelete,
+          timeGap,
+        },
+        style: {
+          stroke: link.linkType === 'flow' ? '#6366f1' : '#ef4444',
+          strokeWidth: 3,
+          cursor: 'pointer',
+        },
+        markerEnd: {
+          type: 'arrowclosed' as const,
+          color: link.linkType === 'flow' ? '#6366f1' : '#ef4444',
+        },
+      };
+    });
+  }, [links, onLinkDelete, tasks]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);

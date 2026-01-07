@@ -200,18 +200,52 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
     [dayPlan]
   );
 
-  // Handle link creation
+  // Handle link creation - always link from earlier task to later task
   const handleLinkCreate = useCallback(
     (fromTaskId: string, toTaskId: string, sourceHandle?: string, targetHandle?: string) => {
       if (!dayPlan) return;
 
+      // Find the tasks to check their due times
+      const fromTask = tasks.find(t => t.id === fromTaskId);
+      const toTask = tasks.find(t => t.id === toTaskId);
+
+      // Determine correct direction based on due times
+      let actualFromId = fromTaskId;
+      let actualToId = toTaskId;
+      let actualSourceHandle = sourceHandle;
+      let actualTargetHandle = targetHandle;
+
+      if (fromTask?.dueDate && toTask?.dueDate) {
+        const fromTime = new Date(fromTask.dueDate).getTime();
+        const toTime = new Date(toTask.dueDate).getTime();
+
+        // If the "from" task is actually later, swap the direction
+        if (fromTime > toTime) {
+          actualFromId = toTaskId;
+          actualToId = fromTaskId;
+          // Swap handles as well
+          actualSourceHandle = targetHandle;
+          actualTargetHandle = sourceHandle;
+        }
+      }
+
+      // Check if this link already exists
+      const linkExists = dayPlan.links.some(
+        l => (l.fromTaskId === actualFromId && l.toTaskId === actualToId) ||
+             (l.fromTaskId === actualToId && l.toTaskId === actualFromId)
+      );
+
+      if (linkExists) {
+        return; // Don't create duplicate links
+      }
+
       const newLink: TaskLink = {
         id: crypto.randomUUID(),
-        fromTaskId,
-        toTaskId,
+        fromTaskId: actualFromId,
+        toTaskId: actualToId,
         linkType: 'flow',
-        sourceHandle,
-        targetHandle,
+        sourceHandle: actualSourceHandle,
+        targetHandle: actualTargetHandle,
       };
 
       const updatedPlan = {
@@ -223,7 +257,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
       setDayPlan(updatedPlan);
       DayPlanService.saveDayPlan(updatedPlan);
     },
-    [dayPlan]
+    [dayPlan, tasks]
   );
 
   // Handle link deletion
