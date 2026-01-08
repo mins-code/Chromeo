@@ -1,18 +1,87 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Task } from '../types';
-import { Clock, CheckCircle2, AlertCircle, Calendar } from 'lucide-react';
+import { Clock, CheckCircle2, AlertCircle, Calendar, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface TaskNodeProps {
   data: {
     task: Task;
     onClick: () => void;
+    onCreateFromHandle?: (taskId: string, position: 'top' | 'bottom' | 'left' | 'right') => void;
   };
 }
 
+// Custom handle with add button on hover
+const HandleWithAdd: React.FC<{
+  id: string;
+  type: 'source' | 'target';
+  position: Position;
+  onAdd?: () => void;
+}> = ({ id, type, position, onAdd }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Position the add button based on handle position
+  const getButtonPosition = () => {
+    switch (position) {
+      case Position.Top: return { bottom: '100%', left: '50%', transform: 'translate(-50%, -4px)' };
+      case Position.Bottom: return { top: '100%', left: '50%', transform: 'translate(-50%, 4px)' };
+      case Position.Left: return { right: '100%', top: '50%', transform: 'translate(-4px, -50%)' };
+      case Position.Right: return { left: '100%', top: '50%', transform: 'translate(4px, -50%)' };
+      default: return {};
+    }
+  };
+
+  return (
+    <div
+      className="group"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{ position: 'absolute', ...getHandleContainerPosition(position) }}
+    >
+      <Handle
+        id={id}
+        type={type}
+        position={position}
+        isConnectable={true}
+        className="!w-4 !h-4 !bg-indigo-500 !border-2 !border-white dark:!border-slate-900 hover:!bg-indigo-400 hover:!scale-125 transition-transform !relative !transform-none !top-0 !left-0"
+        style={{ position: 'relative' }}
+      />
+      {/* Add button on hover */}
+      {isHovered && onAdd && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onAdd();
+          }}
+          style={{
+            position: 'absolute',
+            ...getButtonPosition(),
+            zIndex: 50,
+          }}
+          className="flex items-center justify-center w-6 h-6 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg transition-all hover:scale-110 animate-fade-in"
+          title="Create new task"
+        >
+          <Plus size={12} />
+        </button>
+      )}
+    </div>
+  );
+};
+
+// Get container position for handle wrapper
+const getHandleContainerPosition = (position: Position): React.CSSProperties => {
+  switch (position) {
+    case Position.Top: return { top: 0, left: '50%', transform: 'translate(-50%, -50%)' };
+    case Position.Bottom: return { bottom: 0, left: '50%', transform: 'translate(-50%, 50%)' };
+    case Position.Left: return { left: 0, top: '50%', transform: 'translate(-50%, -50%)' };
+    case Position.Right: return { right: 0, top: '50%', transform: 'translate(50%, -50%)' };
+    default: return {};
+  }
+};
+
 const TaskNode: React.FC<TaskNodeProps> = ({ data }) => {
-  const { task, onClick } = data;
+  const { task, onClick, onCreateFromHandle } = data;
 
   // Priority colors
   const priorityConfig = {
@@ -28,39 +97,41 @@ const TaskNode: React.FC<TaskNodeProps> = ({ data }) => {
                      task.status === 'IN_PROGRESS' ? AlertCircle : 
                      Clock;
 
+  const handleCreateTask = (position: 'top' | 'bottom' | 'left' | 'right') => {
+    if (onCreateFromHandle) {
+      onCreateFromHandle(task.id, position);
+    }
+  };
+
   return (
     <div 
       onClick={onClick}
       className={`relative bg-white dark:bg-slate-800 rounded-xl border-2 ${config.border} shadow-lg hover:shadow-xl transition-all cursor-pointer min-w-[240px] max-w-[280px]`}
     >
-      {/* Connection Handles - All 4 sides */}
-      <Handle 
+      {/* Connection Handles - All 4 sides with add button on hover */}
+      <HandleWithAdd
         id="top"
-        type="target" 
-        position={Position.Top} 
-        isConnectable={true}
-        className="!w-4 !h-4 !bg-indigo-500 !border-2 !border-white dark:!border-slate-900 hover:!bg-indigo-400 hover:!scale-125 transition-transform"
+        type="target"
+        position={Position.Top}
+        onAdd={() => handleCreateTask('top')}
       />
-      <Handle 
+      <HandleWithAdd
         id="bottom"
-        type="source" 
-        position={Position.Bottom} 
-        isConnectable={true}
-        className="!w-4 !h-4 !bg-indigo-500 !border-2 !border-white dark:!border-slate-900 hover:!bg-indigo-400 hover:!scale-125 transition-transform"
+        type="source"
+        position={Position.Bottom}
+        onAdd={() => handleCreateTask('bottom')}
       />
-      <Handle 
+      <HandleWithAdd
         id="left"
-        type="target" 
-        position={Position.Left} 
-        isConnectable={true}
-        className="!w-4 !h-4 !bg-indigo-500 !border-2 !border-white dark:!border-slate-900 hover:!bg-indigo-400 hover:!scale-125 transition-transform"
+        type="target"
+        position={Position.Left}
+        onAdd={() => handleCreateTask('left')}
       />
-      <Handle 
+      <HandleWithAdd
         id="right"
-        type="source" 
-        position={Position.Right} 
-        isConnectable={true}
-        className="!w-4 !h-4 !bg-indigo-500 !border-2 !border-white dark:!border-slate-900 hover:!bg-indigo-400 hover:!scale-125 transition-transform"
+        type="source"
+        position={Position.Right}
+        onAdd={() => handleCreateTask('right')}
       />
 
       {/* Header */}
@@ -83,7 +154,7 @@ const TaskNode: React.FC<TaskNodeProps> = ({ data }) => {
           {task.title}
         </h4>
 
-        {/* Time & Duration */}
+        {/* Time and Duration */}
         <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
           {task.dueDate && (
             <div className="flex items-center gap-1">
@@ -103,36 +174,34 @@ const TaskNode: React.FC<TaskNodeProps> = ({ data }) => {
         {task.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {task.tags.slice(0, 2).map((tag, idx) => (
-              <span 
+              <span
                 key={idx}
-                className="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-xs font-medium"
+                className="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-xs"
               >
                 {tag}
               </span>
             ))}
             {task.tags.length > 2 && (
-              <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-xs font-medium">
+              <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-500 rounded text-xs">
                 +{task.tags.length - 2}
               </span>
             )}
           </div>
         )}
 
-        {/* Progress indicator for subtasks */}
-        {task.subtasks && task.subtasks.length > 0 && (
-          <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500 dark:text-slate-400">
-                {task.subtasks.filter(st => st.isCompleted).length}/{task.subtasks.length} subtasks
-              </span>
-              <div className="w-16 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-indigo-500 transition-all"
-                  style={{ 
-                    width: `${(task.subtasks.filter(st => st.isCompleted).length / task.subtasks.length) * 100}%` 
-                  }}
-                />
-              </div>
+        {/* Subtasks progress */}
+        {task.subtasks.length > 0 && (
+          <div className="mt-2">
+            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+              <span>{task.subtasks.filter(s => s.isCompleted).length}/{task.subtasks.length} subtasks</span>
+            </div>
+            <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-indigo-500 rounded-full transition-all"
+                style={{ 
+                  width: `${(task.subtasks.filter(s => s.isCompleted).length / task.subtasks.length) * 100}%` 
+                }}
+              />
             </div>
           </div>
         )}

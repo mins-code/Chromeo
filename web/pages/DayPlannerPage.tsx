@@ -316,6 +316,36 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
     [tasks, currentDate, onCreateTask]
   );
 
+  // Handle creating a task from a node handle
+  const handleCreateFromHandle = useCallback(
+    (taskId: string, position: 'top' | 'bottom' | 'left' | 'right') => {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      let newTaskDate: Date;
+      
+      if (task.dueDate) {
+        const taskStart = new Date(task.dueDate);
+        const taskDuration = (task.duration || 30) * 60 * 1000;
+        
+        // For bottom/right handles, create task AFTER this one
+        // For top/left handles, create task BEFORE this one
+        if (position === 'bottom' || position === 'right') {
+          // New task starts after current task ends
+          newTaskDate = new Date(taskStart.getTime() + taskDuration);
+        } else {
+          // New task ends when current task starts (30 min before by default)
+          newTaskDate = new Date(taskStart.getTime() - 30 * 60 * 1000);
+        }
+      } else {
+        newTaskDate = currentDate;
+      }
+      
+      onCreateTask(newTaskDate);
+    },
+    [tasks, currentDate, onCreateTask]
+  );
+
   // Auto-arrange algorithm - arrange by start time
   const handleAutoArrange = useCallback(() => {
     if (!dayPlan || planTasks.length === 0) return;
@@ -780,6 +810,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
                 onAutoArrange={handleAutoArrange}
                 onSelectionChange={setSelectedTasks}
                 onAddTaskBetween={handleAddTaskBetween}
+                onCreateFromHandle={handleCreateFromHandle}
               />
             </ReactFlowProvider>
           </div>
@@ -895,6 +926,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
                   onAutoArrange={handleAutoArrange}
                   onSelectionChange={setSelectedTasks}
                   onAddTaskBetween={handleAddTaskBetween}
+                  onCreateFromHandle={handleCreateFromHandle}
                 />
               </ReactFlowProvider>
             </div>

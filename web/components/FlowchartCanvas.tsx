@@ -29,6 +29,7 @@ interface FlowchartCanvasProps {
   onAutoArrange?: () => void;
   onSelectionChange?: (selectedTaskIds: string[]) => void;
   onAddTaskBetween?: (sourceTaskId: string, targetTaskId: string) => void;
+  onCreateFromHandle?: (taskId: string, position: 'top' | 'bottom' | 'left' | 'right') => void;
 }
 
 const nodeTypes = {
@@ -50,6 +51,7 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
   onAutoArrange,
   onSelectionChange,
   onAddTaskBetween,
+  onCreateFromHandle,
 }) => {
   // Handle selection change
   const handleSelectionChange = useCallback(({ nodes }: { nodes: Node[] }) => {
@@ -66,10 +68,14 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
         id: task.id,
         type: 'taskNode',
         position: position ? { x: position.x, y: position.y } : { x: Math.random() * 500, y: Math.random() * 500 },
-        data: { task, onClick: () => onTaskClick(task) },
+        data: { 
+          task, 
+          onClick: () => onTaskClick(task),
+          onCreateFromHandle,
+        },
       };
     });
-  }, [tasks, layout, onTaskClick]);
+  }, [tasks, layout, onTaskClick, onCreateFromHandle]);
 
   // Convert links to React Flow edges
   const initialEdges: Edge[] = useMemo(() => {
