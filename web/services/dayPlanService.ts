@@ -1,103 +1,159 @@
 /**
  * Day Plan Service
  * Manages day plans, templates, and task flowcharts
+ * Now synced to Supabase for cross-device access
  */
 
 import { DayPlan, DayPlanTemplate, Task, TaskLink, TaskLayout } from '../types';
+import { supabase } from './supabaseClient';
 
-const DAY_PLANS_KEY = 'chronodex_day_plans';
-const TEMPLATES_KEY = 'chronodex_day_plan_templates';
-const RECURRING_PLANS_KEY = 'chronodex_recurring_plans';
-
-// ============ Day Plans ============
-
-/**
- * Get all day plans from localStorage
- */
-const getAllDayPlans = (): Record<string, DayPlan> => {
-  try {
-    const stored = localStorage.getItem(DAY_PLANS_KEY);
-    return stored ? JSON.parse(stored) : {};
-  } catch (error) {
-    console.error('Error reading day plans:', error);
-    return {};
-  }
-};
-
-/**
- * Save all day plans to localStorage
- */
-const saveAllDayPlans = (plans: Record<string, DayPlan>): void => {
-  try {
-    localStorage.setItem(DAY_PLANS_KEY, JSON.stringify(plans));
-  } catch (error) {
-    console.error('Error saving day plans:', error);
-  }
-};
+// ============ Day Plans (Supabase) ============
 
 /**
  * Get day plan for a specific date
  */
-export const getDayPlan = (date: string): DayPlan | null => {
-  const plans = getAllDayPlans();
-  return plans[date] || null;
+export const getDayPlan = async (date: string): Promise<DayPlan | null> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data, error } = await supabase
+      .from('day_plans')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('date', date)
+      .single();
+
+    if (error || !data) return null;
+
+    // Convert from DB format to DayPlan format
+    return {
+      id: data.id,
+      userId: data.user_id,
+      date: data.date,
+      taskIds: data.task_ids || [],
+      links: (data.links || []) as TaskLink[],
+      layout: (data.layout || []) as TaskLayout[],
+      templateId: data.template_id,
+      isRecurring: data.is_recurring,
+      recurringConfig: data.recurring_config,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
+  } catch (error) {
+    console.error('Error reading day plan:', error);
+    return null;
+  }
 };
 
 /**
- * Save or update day plan
+ * Save or update day plan (upsert)
  */
-export const saveDayPlan = (plan: DayPlan): DayPlan => {
-  const plans = getAllDayPlans();
-  const updatedPlan = {
-    ...plan,
-    updatedAt: new Date().toISOString(),
-  };
-  plans[plan.date] = updatedPlan;
-  saveAllDayPlans(plans);
-  return updatedPlan;
+export const saveDayPlan = async (plan: DayPlan): Promise<DayPlan> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const dbPlan = {
+      id: plan.id,
+      user_id: user.id,
+      date: plan.date,
+      task_ids: plan.taskIds,
+      links: plan.links,
+      layout: plan.layout,
+      template_id: plan.templateId || null,
+      is_recurring: plan.isRecurring || false,
+      recurring_config: plan.recurringConfig || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase
+      .from('day_plans')
+      .upsert(dbPlan, { onConflict: 'user_id,date' })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error saving day plan:', error);
+      throw error;
+    }
+
+    return {
+      ...plan,
+      id: data.id,
+      updatedAt: data.updated_at,
+    };
+  } catch (error) {
+    console.error('Error saving day plan:', error);
+    throw error;
+  }
 };
 
 /**
  * Delete day plan
  */
-export const deleteDayPlan = (date: string): boolean => {
-  const plans = getAllDayPlans();
-  if (plans[date]) {
-    delete plans[date];
-    saveAllDayPlans(plans);
+export const deleteDayPlan = async (date: string): Promise<boolean> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { error } = await supabase
+      .from('day_plans')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('date', date);
+
+    if (error) {
+      console.error('Error deleting day plan:', error);
+      return false;
+    }
+
     return true;
+  } catch (error) {
+    console.error('Error deleting day plan:', error);
+    return false;
   }
-  return false;
 };
 
 /**
  * Clone day plan to another date(s)
  */
-export const cloneDayPlan = (
+export const cloneDayPlan = async (
   sourcePlanId: string,
   targetDates: string[],
   adjustTimes?: boolean
-): DayPlan[] => {
-  const plans = getAllDayPlans();
-  const sourcePlan = Object.values(plans).find(p => p.id === sourcePlanId);
-  
-  if (!sourcePlan) {
+): Promise<DayPlan[]> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  // Find source plan
+  const { data: sourcePlan, error: fetchError } = await supabase
+    .from('day_plans')
+    .select('*')
+    .eq('id', sourcePlanId)
+    .single();
+
+  if (fetchError || !sourcePlan) {
     throw new Error('Source plan not found');
   }
 
   const clonedPlans: DayPlan[] = [];
 
-  targetDates.forEach(targetDate => {
+  for (const targetDate of targetDates) {
     const clonedPlan: DayPlan = {
-      ...sourcePlan,
       id: crypto.randomUUID(),
+      userId: user.id,
       date: targetDate,
+      taskIds: sourcePlan.task_ids || [],
+      links: (sourcePlan.links || []) as TaskLink[],
+      layout: (sourcePlan.layout || []) as TaskLayout[],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
-    clonedPlans.push(saveDayPlan(clonedPlan));
-  });
+    const saved = await saveDayPlan(clonedPlan);
+    clonedPlans.push(saved);
+  }
 
   return clonedPlans;
 };
@@ -105,77 +161,127 @@ export const cloneDayPlan = (
 /**
  * Add task to day plan
  */
-export const addTaskToPlan = (
+export const addTaskToPlan = async (
   planId: string,
   taskId: string,
   position: { x: number; y: number }
-): DayPlan | null => {
-  const plans = getAllDayPlans();
-  const plan = Object.values(plans).find(p => p.id === planId);
-  
-  if (!plan) return null;
+): Promise<DayPlan | null> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  // Fetch the plan
+  const { data: plan, error } = await supabase
+    .from('day_plans')
+    .select('*')
+    .eq('id', planId)
+    .single();
+
+  if (error || !plan) return null;
 
   // Add task ID if not already in plan
-  if (!plan.taskIds.includes(taskId)) {
-    plan.taskIds.push(taskId);
+  const taskIds = plan.task_ids || [];
+  if (!taskIds.includes(taskId)) {
+    taskIds.push(taskId);
   }
 
   // Add or update layout
-  const existingLayoutIndex = plan.layout.findIndex(l => l.taskId === taskId);
-  const newLayout: TaskLayout = {
-    taskId,
-    x: position.x,
-    y: position.y,
-  };
+  const layout = (plan.layout || []) as TaskLayout[];
+  const existingLayoutIndex = layout.findIndex((l: TaskLayout) => l.taskId === taskId);
+  const newLayout: TaskLayout = { taskId, x: position.x, y: position.y };
 
   if (existingLayoutIndex >= 0) {
-    plan.layout[existingLayoutIndex] = newLayout;
+    layout[existingLayoutIndex] = newLayout;
   } else {
-    plan.layout.push(newLayout);
+    layout.push(newLayout);
   }
 
-  return saveDayPlan(plan);
+  // Save updated plan
+  const dayPlan: DayPlan = {
+    id: plan.id,
+    userId: plan.user_id,
+    date: plan.date,
+    taskIds,
+    links: (plan.links || []) as TaskLink[],
+    layout,
+    templateId: plan.template_id,
+    isRecurring: plan.is_recurring,
+    recurringConfig: plan.recurring_config,
+    createdAt: plan.created_at,
+    updatedAt: new Date().toISOString(),
+  };
+
+  return saveDayPlan(dayPlan);
 };
 
 /**
  * Remove task from day plan
  */
-export const removeTaskFromPlan = (planId: string, taskId: string): DayPlan | null => {
-  const plans = getAllDayPlans();
-  const plan = Object.values(plans).find(p => p.id === planId);
-  
-  if (!plan) return null;
+export const removeTaskFromPlan = async (planId: string, taskId: string): Promise<DayPlan | null> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  // Fetch the plan
+  const { data: plan, error } = await supabase
+    .from('day_plans')
+    .select('*')
+    .eq('id', planId)
+    .single();
+
+  if (error || !plan) return null;
 
   // Remove task ID
-  plan.taskIds = plan.taskIds.filter(id => id !== taskId);
+  const taskIds = (plan.task_ids || []).filter((id: string) => id !== taskId);
 
   // Remove layout
-  plan.layout = plan.layout.filter(l => l.taskId !== taskId);
+  const layout = (plan.layout || []).filter((l: TaskLayout) => l.taskId !== taskId);
 
   // Remove links involving this task
-  plan.links = plan.links.filter(
-    link => link.fromTaskId !== taskId && link.toTaskId !== taskId
+  const links = (plan.links || []).filter(
+    (link: TaskLink) => link.fromTaskId !== taskId && link.toTaskId !== taskId
   );
 
-  return saveDayPlan(plan);
+  // Save updated plan
+  const dayPlan: DayPlan = {
+    id: plan.id,
+    userId: plan.user_id,
+    date: plan.date,
+    taskIds,
+    links,
+    layout,
+    templateId: plan.template_id,
+    isRecurring: plan.is_recurring,
+    recurringConfig: plan.recurring_config,
+    createdAt: plan.created_at,
+    updatedAt: new Date().toISOString(),
+  };
+
+  return saveDayPlan(dayPlan);
 };
 
 /**
  * Link two tasks
  */
-export const linkTasks = (
+export const linkTasks = async (
   planId: string,
   fromTaskId: string,
   toTaskId: string,
   linkType: 'flow' | 'dependency' = 'flow'
-): TaskLink | null => {
-  const plans = getAllDayPlans();
-  const plan = Object.values(plans).find(p => p.id === planId);
-  
-  if (!plan) return null;
+): Promise<TaskLink | null> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  // Fetch the plan
+  const { data: plan, error } = await supabase
+    .from('day_plans')
+    .select('*')
+    .eq('id', planId)
+    .single();
+
+  if (error || !plan) return null;
 
   // Check if tasks exist in plan
-  if (!plan.taskIds.includes(fromTaskId) || !plan.taskIds.includes(toTaskId)) {
+  const taskIds = plan.task_ids || [];
+  if (!taskIds.includes(fromTaskId) || !taskIds.includes(toTaskId)) {
     return null;
   }
 
@@ -187,33 +293,72 @@ export const linkTasks = (
     linkType,
   };
 
-  plan.links.push(newLink);
-  saveDayPlan(plan);
+  const links = [...(plan.links || []), newLink];
 
+  // Save updated plan
+  const dayPlan: DayPlan = {
+    id: plan.id,
+    userId: plan.user_id,
+    date: plan.date,
+    taskIds,
+    links,
+    layout: plan.layout || [],
+    templateId: plan.template_id,
+    isRecurring: plan.is_recurring,
+    recurringConfig: plan.recurring_config,
+    createdAt: plan.created_at,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await saveDayPlan(dayPlan);
   return newLink;
 };
 
 /**
  * Remove task link
  */
-export const removeTaskLink = (planId: string, linkId: string): boolean => {
-  const plans = getAllDayPlans();
-  const plan = Object.values(plans).find(p => p.id === planId);
-  
-  if (!plan) return false;
+export const removeTaskLink = async (planId: string, linkId: string): Promise<boolean> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
 
-  const initialLength = plan.links.length;
-  plan.links = plan.links.filter(link => link.id !== linkId);
+  // Fetch the plan
+  const { data: plan, error } = await supabase
+    .from('day_plans')
+    .select('*')
+    .eq('id', planId)
+    .single();
 
-  if (plan.links.length < initialLength) {
-    saveDayPlan(plan);
-    return true;
+  if (error || !plan) return false;
+
+  const links = (plan.links || []).filter((link: TaskLink) => link.id !== linkId);
+
+  if (links.length === (plan.links || []).length) {
+    return false; // No link was removed
   }
 
-  return false;
+  // Save updated plan
+  const dayPlan: DayPlan = {
+    id: plan.id,
+    userId: plan.user_id,
+    date: plan.date,
+    taskIds: plan.task_ids || [],
+    links,
+    layout: plan.layout || [],
+    templateId: plan.template_id,
+    isRecurring: plan.is_recurring,
+    recurringConfig: plan.recurring_config,
+    createdAt: plan.created_at,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await saveDayPlan(dayPlan);
+  return true;
 };
 
-// ============ Templates ============
+// ============ Templates (localStorage - local only for now) ============
+
+const TEMPLATES_KEY = 'chronodex_day_plan_templates';
+const RECURRING_PLANS_KEY = 'chronodex_recurring_plans';
 
 /**
  * Get all templates
@@ -299,11 +444,11 @@ export const deleteTemplate = (templateId: string): boolean => {
 /**
  * Create day plan from template
  */
-export const applyTemplate = (
+export const applyTemplate = async (
   templateId: string,
   date: string,
   userId: string
-): DayPlan | null => {
+): Promise<DayPlan | null> => {
   const templates = getAllTemplates();
   const template = templates.find(t => t.id === templateId);
   
@@ -313,14 +458,14 @@ export const applyTemplate = (
     id: crypto.randomUUID(),
     userId,
     date,
-    taskIds: [], // Will be populated when tasks are created
+    taskIds: [],
     links: template.links.map(link => ({
       ...link,
       id: crypto.randomUUID(),
     })),
     layout: template.layout.map(item => ({
       ...item,
-      taskId: '', // Will be updated when tasks are created
+      taskId: (item as any).taskId || '',
     })),
     templateId,
     createdAt: new Date().toISOString(),
@@ -330,7 +475,7 @@ export const applyTemplate = (
   return saveDayPlan(newPlan);
 };
 
-// ============ Recurring Plans ============
+// ============ Recurring Plans (localStorage - local only for now) ============
 
 /**
  * Get all recurring plan configurations
@@ -367,44 +512,13 @@ export const saveRecurringRule = (
   const plans = getAllRecurringPlans();
   const id = crypto.randomUUID();
   
-  // Create a pseudo-DayPlan that acts as the recurring rule configuration
   const recurringPlan: DayPlan = {
     id,
     userId,
-    date: 'RECURRING', // Special flag
-    taskIds: [], // Placeholder, not used directly in rule
-    links: template.links.map(l => ({ ...l, id: crypto.randomUUID() })), // Assign IDs to match DayPlan type
-    layout: template.layout.map(l => ({ ...l, taskId: (l as any).taskId || '' })), // Assign TaskID if missing (though template layout usually has generic IDs or relative positions)
-    // Actually, template.layout is Omit<TaskLayout, 'taskId'>? No, wait.
-    // DayPlanTemplate: layout: Omit<TaskLayout, 'taskId'>[];
-    // DayPlan: layout: TaskLayout[];
-    // We need to store standard TaskLayouts. But since we don't have real tasks yet, what do we use for taskId?
-    // In templates, the layout matches the order? No, templates usually have some way to map.
-    // Let's re-read DayPlanTemplate definition.
-    // It creates a problem. If template layout has no Task IDs, how do we know which node is which?
-    // Ah, `saveAsTemplate` maps `layout.map(({ taskId, x, y }) => ({ taskId, x, y }))`.
-    // Wait, let's look at `saveAsTemplate` implementation in this file again.
-    
-    // In `saveAsTemplate`:
-    // layout: plan.layout.map(({ taskId, x, y }) => ({ taskId, x, y })),
-    // The type DayPlanTemplate says `layout: Omit<TaskLayout, 'taskId'>[]`. 
-    // BUT the implementation is keeping `taskId`. 
-    // This suggests the TYPE definition might be wrong or the implementation is ignoring it (or I misread `saveAsStandard`).
-    
-    // Let's assume for now we just want to save the visual structure. 
-    // If the template layout actually HAS taskIds (which are temporary/relative), we should preserve them.
-    // For now, I'll cast it to satisfy the compiler, assuming the template data is sufficient.
-    
-    // Correction: In DayPlanTemplate type, it IS `Omit<TaskLayout, 'taskId'>`.
-    // So `template.layout` elements DO NOT have `taskId`.
-    // But `DayPlan.layout` elements MUST have `taskId`.
-    // This means `DayPlanTemplate` is losing critical info if it doesn't store which node is at which X,Y.
-    // Unless `template.tasks` and `template.layout` are parallel arrays? Unlikely.
-    
-    // Let's check `saveAsTemplate` again. 
-    // `layout: plan.layout.map(({ taskId, x, y }) => ({ taskId, x, y }))`
-    // This tries to save `taskId`. If the type omits it, this code is already technically violating the type or the type allows it?
-    // If I cast it, it should be fine.
+    date: 'RECURRING',
+    taskIds: [],
+    links: template.links.map(l => ({ ...l, id: crypto.randomUUID() })),
+    layout: template.layout.map(l => ({ ...l, taskId: (l as any).taskId || '' })),
     templateId: template.id,
     isRecurring: true,
     recurringConfig,
@@ -433,17 +547,16 @@ export const checkForRecurringPlans = async (
   userId: string
 ): Promise<DayPlanTemplate | null> => {
   // Check if plan already exists for this date
-  const existingPlan = getDayPlan(date);
+  const existingPlan = await getDayPlan(date);
   if (existingPlan && existingPlan.taskIds.length > 0) {
     return null; // Don't overwrite existing plans
   }
 
   const recurringRules = getRecurringRules();
   const targetDate = new Date(date);
-  const dayOfWeek = targetDate.getDay(); // 0-6
+  const dayOfWeek = targetDate.getDay();
   
   // Find matching rule
-  // Prioritize specific weekday matches over generic intervals
   const match = recurringRules.find(rule => {
     if (!rule.recurringConfig) return false;
     
@@ -454,19 +567,12 @@ export const checkForRecurringPlans = async (
     
     // Check daily/weekly/monthly intervals
     if (rule.recurringConfig.frequency === 'daily') return true;
-    
-    // Weekly logic (simple interval)
-    if (rule.recurringConfig.frequency === 'weekly') {
-       // Check if this specific day matches the interval logic from start date
-       // For now, simpler implementation: just check if it's weekly
-       return true;
-    }
+    if (rule.recurringConfig.frequency === 'weekly') return true;
     
     return false;
   });
 
   if (match && match.templateId) {
-    // Fetch the template source
     const templates = getAllTemplates();
     const sourceTemplate = templates.find(t => t.id === match.templateId);
     return sourceTemplate || null;
@@ -474,4 +580,3 @@ export const checkForRecurringPlans = async (
 
   return null;
 };
-

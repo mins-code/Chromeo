@@ -59,7 +59,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
   // Load day plan for current date
   useEffect(() => {
     const loadPlan = async () => {
-      const existingPlan = DayPlanService.getDayPlan(dateKey);
+      const existingPlan = await DayPlanService.getDayPlan(dateKey);
       if (existingPlan) {
         setDayPlan(existingPlan);
         return;
@@ -68,8 +68,6 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
       // No existing plan - check for recurring templates
       const recurringTemplate = await DayPlanService.checkForRecurringPlans(dateKey, 'current-user');
       if (recurringTemplate) {
-        // For now, just create the empty plan and let user manually apply template
-        // Full auto-apply would require creating tasks which is complex in useEffect
         console.log('[DayPlanner] Recurring template found:', recurringTemplate);
       }
       
@@ -85,7 +83,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
         updatedAt: new Date().toISOString(),
       };
       setDayPlan(newPlan);
-      DayPlanService.saveDayPlan(newPlan);
+      await DayPlanService.saveDayPlan(newPlan);
     };
     loadPlan();
   }, [dateKey]);
@@ -176,7 +174,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
 
   // Handle task move
   const handleTaskMove = useCallback(
-    (taskId: string, x: number, y: number) => {
+    async (taskId: string, x: number, y: number) => {
       if (!dayPlan) return;
 
       const updatedLayout = [...dayPlan.layout];
@@ -195,14 +193,14 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
       };
 
       setDayPlan(updatedPlan);
-      DayPlanService.saveDayPlan(updatedPlan);
+      await DayPlanService.saveDayPlan(updatedPlan);
     },
     [dayPlan]
   );
 
   // Handle link creation - always link from earlier task to later task
   const handleLinkCreate = useCallback(
-    (fromTaskId: string, toTaskId: string, sourceHandle?: string, targetHandle?: string) => {
+    async (fromTaskId: string, toTaskId: string, sourceHandle?: string, targetHandle?: string) => {
       if (!dayPlan) return;
 
       // Find the tasks to check their due times
@@ -255,14 +253,14 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
       };
 
       setDayPlan(updatedPlan);
-      DayPlanService.saveDayPlan(updatedPlan);
+      await DayPlanService.saveDayPlan(updatedPlan);
     },
     [dayPlan, tasks]
   );
 
   // Handle link deletion
   const handleLinkDelete = useCallback(
-    (linkId: string) => {
+    async (linkId: string) => {
       if (!dayPlan) return;
 
       const updatedPlan = {
@@ -272,7 +270,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
       };
 
       setDayPlan(updatedPlan);
-      DayPlanService.saveDayPlan(updatedPlan);
+      await DayPlanService.saveDayPlan(updatedPlan);
     },
     [dayPlan]
   );
@@ -347,7 +345,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
   );
 
   // Auto-arrange algorithm - arrange by start time
-  const handleAutoArrange = useCallback(() => {
+  const handleAutoArrange = useCallback(async () => {
     if (!dayPlan || planTasks.length === 0) return;
 
     const GRID_SIZE = 320;
@@ -374,11 +372,11 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
     };
 
     setDayPlan(updatedPlan);
-    DayPlanService.saveDayPlan(updatedPlan);
+    await DayPlanService.saveDayPlan(updatedPlan);
   }, [dayPlan, planTasks]);
 
   // Auto-link tasks based on their due times
-  const handleAutoLink = useCallback(() => {
+  const handleAutoLink = useCallback(async () => {
     if (!dayPlan || planTasks.length < 2) return;
 
     // Filter tasks with due dates and sort by due time
@@ -429,7 +427,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
     };
 
     setDayPlan(updatedPlan);
-    DayPlanService.saveDayPlan(updatedPlan);
+    await DayPlanService.saveDayPlan(updatedPlan);
     alert(`Created ${newLinks.length} automatic link(s) based on task times!`);
   }, [dayPlan, planTasks]);
 
