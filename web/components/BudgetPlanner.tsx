@@ -12,7 +12,7 @@ import TransactionList from './TransactionList';
 import BudgetForecastChart from './BudgetForecastChart';
 import BudgetCategoryChart from './BudgetCategoryChart';
 import { calculateForecast, formatForecastDate } from '../utils/financialForecasting';
-import { Wallet, TrendingUp, TrendingDown, Plus, Trash2, IndianRupee, Eye, EyeOff, Repeat, ArrowRight, Settings, Share2, User, X, Loader2, UserPlus, Camera, LineChart, PieChart } from 'lucide-react';
+import { Wallet, Plus, Trash2, IndianRupee, Eye, EyeOff, Repeat, ArrowRight, Settings, Share2, User, X, Loader2, UserPlus, Camera, LineChart, PieChart } from 'lucide-react';
 import { t } from '../themeText';
 
 interface BudgetPlannerProps {

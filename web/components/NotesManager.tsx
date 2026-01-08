@@ -8,7 +8,7 @@ import Button from './Button';
 import Input from './Input';
 import Select from './Select';
 import { 
-  FileText, Plus, Trash2, Edit2, Share2, CheckSquare, 
+  FileText, Plus, Trash2, Share2, CheckSquare, 
   X, Loader2, UserPlus, User, Save, Search, StickyNote,
   Check
 } from 'lucide-react';

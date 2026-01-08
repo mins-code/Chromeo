@@ -16,8 +16,6 @@ import {
   Link2,
   Maximize2,
   X,
-  ChevronDown,
-  ChevronUp,
   Unlink,
 } from 'lucide-react';
 import Button from '../components/Button';
