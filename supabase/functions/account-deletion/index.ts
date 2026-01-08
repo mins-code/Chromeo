@@ -51,7 +51,16 @@ serve(async (req) => {
         .select('*')
         .eq('key', rateLimitKey)
         .gte('window_start', new Date(Date.now() - 60 * 60 * 1000).toISOString()) // 1 hour window for deletion actions
-        .single()
+        .maybeSingle()
+
+    if (limitError) {
+      console.error("Rate limit check failed:", limitError.message);
+      // Fail securely: if rate limiting is unavailable, prevent potential abuse
+      return new Response(
+        JSON.stringify({ success: false, error: 'Service temporarily unavailable. Please try again later.' }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (limitData && limitData.count >= 5) { // Strict limit: 5 requests per hour
         return new Response(
