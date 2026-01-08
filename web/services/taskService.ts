@@ -13,6 +13,7 @@ import {
   mapTaskToDbUpdate 
 } from "../types/supabase-custom";
 import { supabase } from "./supabaseClient";
+import { logger } from "../utils/logger";
 
 // ============================================================================
 // Helper Functions
@@ -62,7 +63,7 @@ export const getTasks = async (): Promise<Task[]> => {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching tasks:', error);
+    logger.error('Error fetching tasks', error);
     return [];
   }
 
@@ -97,7 +98,7 @@ export const createTask = async (task: Omit<Task, 'id' | 'createdAt'>): Promise<
     .single();
 
   if (error) {
-    console.error('Error creating task:', error);
+    logger.error('Error creating task', error);
     return null;
   }
 
@@ -127,7 +128,7 @@ export const updateTask = async (updatedTask: Task): Promise<Task | null> => {
     .single();
 
   if (error) {
-    console.error('Error updating task:', error);
+    logger.error('Error updating task', error);
     return null;
   }
 
@@ -145,7 +146,7 @@ export const deleteTask = async (id: string): Promise<boolean> => {
     .eq('id', id);
 
   if (error) {
-    console.error("Error deleting task:", error);
+    logger.error('Error deleting task', error);
     throw new Error(`Failed to delete task: ${error.message}`);
   }
 

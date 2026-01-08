@@ -4,6 +4,7 @@
  */
 
 import { Routine, RoutinePattern, WeekdayPattern, IntervalPattern, CyclePattern, CycleItem } from '../types';
+import { logger } from '../utils/logger';
 
 const STORAGE_KEY = 'chronodex_routines';
 
@@ -17,7 +18,7 @@ export const getRoutines = (): Routine[] => {
       return JSON.parse(stored);
     }
   } catch (error) {
-    console.error('Error reading routines:', error);
+    logger.error('Error reading routines', error);
   }
   return [];
 };
@@ -29,7 +30,7 @@ const saveRoutines = (routines: Routine[]): void => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(routines));
   } catch (error) {
-    console.error('Error saving routines:', error);
+    logger.error('Error saving routines', error);
   }
 };
 

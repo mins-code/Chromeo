@@ -1,6 +1,7 @@
 
 import { Budget, Transaction, RecurringTransaction, DbTransaction, DbUserSettings, DbBudgetShare } from "../types";
 import { supabase } from "./supabaseClient";
+import { logger } from "../utils/logger";
 
 // Helper to construct a Budget object from disparate DB tables
 export const getBudget = async (): Promise<Budget> => {
@@ -231,7 +232,7 @@ export const getBudgetShares = async (): Promise<BudgetShare[]> => {
         .eq('owner_id', user.id);
 
     if (error) {
-        console.error('Error fetching budget shares:', error);
+        logger.error('Error fetching budget shares', error);
         return [];
     }
 
@@ -261,7 +262,7 @@ export const shareBudgetWithPartner = async (partnerId: string): Promise<boolean
         .single();
 
     if (existing) {
-        console.warn('Budget already shared with this partner');
+        logger.warn('Budget already shared with this partner');
         return true; // Already shared, consider it success
     }
 
@@ -273,7 +274,7 @@ export const shareBudgetWithPartner = async (partnerId: string): Promise<boolean
         });
 
     if (error) {
-        console.error('Error sharing budget:', error);
+        logger.error('Error sharing budget', error);
         return false;
     }
 
@@ -287,7 +288,7 @@ export const unshareBudgetWithPartner = async (shareId: string): Promise<boolean
         .eq('id', shareId);
 
     if (error) {
-        console.error('Error removing budget share:', error);
+        logger.error('Error removing budget share', error);
         return false;
     }
 
@@ -307,7 +308,7 @@ export const getSharedBudgetFromPartner = async (ownerId: string): Promise<Budge
         .single();
 
     if (!share) {
-        console.warn('Budget not shared with you');
+        logger.warn('Budget not shared with you');
         return null;
     }
 
@@ -356,7 +357,7 @@ export const getBudgetsSharedWithMe = async (): Promise<SharedBudgetInfo[]> => {
         .eq('partner_id', user.id);
 
     if (error) {
-        console.error('Error fetching budgets shared with me:', error);
+        logger.error('Error fetching budgets shared with me', error);
         return [];
     }
 

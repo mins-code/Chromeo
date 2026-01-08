@@ -4,6 +4,7 @@
  */
 
 import { ChatMessage } from '../types';
+import { logger } from './logger';
 
 const STORAGE_KEY = 'chromedex_ai_chat_history';
 const STORAGE_VERSION = 1;
@@ -27,7 +28,7 @@ export const saveChatHistory = (messages: ChatMessage[]): void => {
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (error) {
-    console.error('Failed to save chat history:', error);
+    logger.error('Failed to save chat history', error);
     // Handle quota exceeded errors gracefully
     if (error instanceof DOMException && error.name === 'QuotaExceededError') {
       // Clear old data and try again
@@ -40,7 +41,7 @@ export const saveChatHistory = (messages: ChatMessage[]): void => {
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       } catch (retryError) {
-        console.error('Failed to save chat history after clearing:', retryError);
+        logger.error('Failed to save chat history after clearing', retryError);
       }
     }
   }
@@ -62,7 +63,7 @@ export const loadChatHistory = (): ChatMessage[] | null => {
     
     // Check version compatibility
     if (data.version !== STORAGE_VERSION) {
-      console.warn('Chat history version mismatch, clearing old data');
+      logger.warn('Chat history version mismatch, clearing old data');
       clearChatHistory();
       return null;
     }
@@ -72,14 +73,14 @@ export const loadChatHistory = (): ChatMessage[] | null => {
     const maxAge = MAX_RETENTION_DAYS * 24 * 60 * 60 * 1000;
     
     if (age > maxAge) {
-      console.warn('Chat history expired, clearing old data');
+      logger.warn('Chat history expired, clearing old data');
       clearChatHistory();
       return null;
     }
 
     return data.messages;
   } catch (error) {
-    console.error('Failed to load chat history:', error);
+    logger.error('Failed to load chat history', error);
     return null;
   }
 };
@@ -91,7 +92,7 @@ export const clearChatHistory = (): void => {
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch (error) {
-    console.error('Failed to clear chat history:', error);
+    logger.error('Failed to clear chat history', error);
   }
 };
 
@@ -112,7 +113,7 @@ export const getChatStorageStats = () => {
       lastUpdated: new Date(data.lastUpdated),
     };
   } catch (error) {
-    console.error('Failed to get storage stats:', error);
+    logger.error('Failed to get storage stats', error);
     return { messageCount: 0, sizeBytes: 0, lastUpdated: null };
   }
 };

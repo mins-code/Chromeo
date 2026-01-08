@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { logger } from '../utils/logger';
 import type { Partnership, Team, TeamMember, UserSearchResult } from '../types';
 
 // ============ USER SEARCH ============
@@ -17,7 +18,7 @@ export async function searchUsersByEmail(query: string): Promise<UserSearchResul
     .limit(10);
 
   if (error) {
-    console.error('Error searching users:', error);
+    logger.error('Error searching users', error);
     return [];
   }
 
@@ -47,7 +48,7 @@ export async function getPartnerships(): Promise<Partnership[]> {
     .or(`user_id_1.eq.${user.id},user_id_2.eq.${user.id}`);
 
   if (error) {
-    console.error('Error fetching partnerships:', error);
+    logger.error('Error fetching partnerships', error);
     return [];
   }
 
@@ -78,7 +79,7 @@ export async function sendPartnerRequest(targetUserId: string): Promise<boolean>
     .single();
 
   if (existing) {
-    console.warn('Partnership already exists');
+    logger.warn('Partnership already exists');
     return false;
   }
 
@@ -91,7 +92,7 @@ export async function sendPartnerRequest(targetUserId: string): Promise<boolean>
     });
 
   if (error) {
-    console.error('Error sending partner request:', error);
+    logger.error('Error sending partner request', error);
     return false;
   }
 
@@ -105,7 +106,7 @@ export async function acceptPartnerRequest(partnershipId: string): Promise<boole
     .eq('id', partnershipId);
 
   if (error) {
-    console.error('Error accepting partner request:', error);
+    logger.error('Error accepting partner request', error);
     return false;
   }
 
@@ -119,7 +120,7 @@ export async function rejectPartnerRequest(partnershipId: string): Promise<boole
     .eq('id', partnershipId);
 
   if (error) {
-    console.error('Error rejecting partner request:', error);
+    logger.error('Error rejecting partner request', error);
     return false;
   }
 
@@ -133,7 +134,7 @@ export async function removePartner(partnershipId: string): Promise<boolean> {
     .eq('id', partnershipId);
 
   if (error) {
-    console.error('Error removing partner:', error);
+    logger.error('Error removing partner', error);
     return false;
   }
 
@@ -153,7 +154,7 @@ export async function getTeams(): Promise<Team[]> {
     .eq('owner_id', user.id);
 
   if (ownedError) {
-    console.error('Error fetching owned teams:', ownedError);
+    logger.error('Error fetching owned teams', ownedError);
   }
 
   // Get teams user is a member of
@@ -166,7 +167,7 @@ export async function getTeams(): Promise<Team[]> {
     .eq('status', 'accepted');
 
   if (memberError) {
-    console.error('Error fetching member teams:', memberError);
+    logger.error('Error fetching member teams', memberError);
   }
 
   // Combine and deduplicate
@@ -233,7 +234,7 @@ export async function getTeamInvites(): Promise<Team[]> {
     .eq('status', 'pending');
 
   if (error) {
-    console.error('Error fetching team invites:', error);
+    logger.error('Error fetching team invites', error);
     return [];
   }
 
@@ -266,7 +267,7 @@ export async function createTeam(name: string, description?: string): Promise<Te
     .single();
 
   if (error) {
-    console.error('Error creating team:', error);
+    logger.error('Error creating team', error);
     return null;
   }
 
@@ -293,7 +294,7 @@ export async function updateTeam(id: string, updates: { name?: string; descripti
     .single();
 
   if (error) {
-    console.error('Error updating team:', error);
+    logger.error('Error updating team', error);
     return null;
   }
 
@@ -321,7 +322,7 @@ export async function deleteTeam(id: string): Promise<boolean> {
     .eq('id', id);
 
   if (error) {
-    console.error('Error deleting team:', error);
+    logger.error('Error deleting team', error);
     return false;
   }
 
@@ -343,7 +344,7 @@ export async function getTeamMembers(teamId: string): Promise<TeamMember[]> {
     .eq('team_id', teamId);
 
   if (error) {
-    console.error('Error fetching team members:', error);
+    logger.error('Error fetching team members', error);
     return [];
   }
 
@@ -368,7 +369,7 @@ export async function addTeamMember(teamId: string, userId: string, role: 'admin
     });
 
   if (error) {
-    console.error('Error adding team member:', error);
+    logger.error('Error adding team member', error);
     return false;
   }
 
@@ -382,7 +383,7 @@ export async function updateMemberRole(memberId: string, role: 'admin' | 'member
     .eq('id', memberId);
 
   if (error) {
-    console.error('Error updating member role:', error);
+    logger.error('Error updating member role', error);
     return false;
   }
 
@@ -396,7 +397,7 @@ export async function removeTeamMember(memberId: string): Promise<boolean> {
     .eq('id', memberId);
 
   if (error) {
-    console.error('Error removing team member:', error);
+    logger.error('Error removing team member', error);
     return false;
   }
 
@@ -414,7 +415,7 @@ export async function acceptTeamInvite(teamId: string): Promise<boolean> {
     .eq('user_id', user.id);
 
   if (error) {
-    console.error('Error accepting team invite:', error);
+    logger.error('Error accepting team invite', error);
     return false;
   }
 
@@ -432,7 +433,7 @@ export async function rejectTeamInvite(teamId: string): Promise<boolean> {
     .eq('user_id', user.id);
 
   if (error) {
-    console.error('Error rejecting team invite:', error);
+    logger.error('Error rejecting team invite', error);
     return false;
   }
 

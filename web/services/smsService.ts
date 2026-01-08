@@ -2,6 +2,7 @@
 import { Transaction } from "../types";
 import { supabase } from "./supabaseClient";
 import { categorizeTransaction } from "./geminiService";
+import { logger } from "../utils/logger";
 
 // Regex patterns for Indian Bank SMS
 const REGEX_PATTERNS = {
@@ -89,7 +90,7 @@ export const processAndSaveSMS = async (text: string, sender: string): Promise<P
     });
 
     if (error) {
-        console.error("Error saving SMS transaction:", error);
+        logger.error('Error saving SMS transaction', error);
     }
 
     return parsed;
