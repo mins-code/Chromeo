@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { logger } from '../utils/logger';
 import { format, addDays, subDays } from 'date-fns';
 import { Task, DayPlan, TaskLink, TaskLayout } from '../types';
 import {
@@ -68,7 +69,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
       // No existing plan - check for recurring templates
       const recurringTemplate = await DayPlanService.checkForRecurringPlans(dateKey, 'current-user');
       if (recurringTemplate) {
-        console.log('[DayPlanner] Recurring template found:', recurringTemplate);
+        logger.debug('[DayPlanner] Recurring template found', { recurringTemplate });
       }
       
       // Create empty day plan for this date

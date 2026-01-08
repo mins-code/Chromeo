@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { LayoutTemplate, Trash2, ArrowRight, X, Calendar } from 'lucide-react';
+import { LayoutTemplate, Trash2, X } from 'lucide-react';
 import Button from './Button';
 import { DayPlanTemplate } from '../types';
 import * as DayPlanService from '../services/dayPlanService';

@@ -4,6 +4,7 @@ import Button from './Button';
 import Input from './Input';
 import { X, Plus, Trash2, Wand2, Bell, Link as LinkIcon, Users, Check, Repeat, Calendar, MapPin, Clock, Play } from 'lucide-react';
 import { enhanceTaskWithAI } from '../services/geminiService';
+import { logger } from '../utils/logger';
 import DateTimePicker from './DateTimePicker';
 import Select from './Select';
 import { useTheme } from '../context/ThemeContext';
@@ -186,7 +187,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
   if (!isOpen) return null;
 
   const handleSave = () => {
-    console.log('[TaskEditor] Save clicked, title:', title);
+    logger.debug('[TaskEditor] Save clicked', { title });
     if (!title.trim()) {
       console.warn('[TaskEditor] Title is empty, cannot save');
       return;

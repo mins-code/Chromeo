@@ -299,7 +299,7 @@ export const Layout: React.FC<LayoutProps> = ({
                             const Icon = item.icon;
 
                             // Dynamic Children Handling
-                            let hasChildren = ('children' in item && !!item.children) || (item.id === 'calendar' && calendarTags.length > 0);
+                            const hasChildren = ('children' in item && !!item.children) || (item.id === 'calendar' && calendarTags.length > 0);
 
                             const isParentActive = (hasChildren && item.children?.some(child => child.id === currentView)) || (item.id === currentView);
                             const isActive = currentView === item.id;

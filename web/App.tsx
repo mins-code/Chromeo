@@ -4,6 +4,7 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Task, ViewMode, TaskStatus, Partner, TaskPriority, TaskType, ThemeOption, ViewSourceMode } from './types';
 import { getUrgencyScore } from './utils/taskScoring';
+import { logger } from './utils/logger';
 import { supabase, getProviderToken, signInWithGoogleCalendar } from './services/supabaseClient';
 import { CalendarEvent, listGoogleEvents, GoogleCalendarError } from './services/googleCalendarService';
 import TaskCard from './components/TaskCard';
@@ -286,7 +287,7 @@ const App: React.FC = () => {
                         { scope: '/' }
                     );
                     
-                    console.log('[App] Service Worker registered:', registration);
+                    logger.debug('[App] Service Worker registered', { registration });
 
                     // Wait for service worker to be ready
                     await navigator.serviceWorker.ready;
@@ -353,7 +354,7 @@ const App: React.FC = () => {
                     threeMonthsLater.toISOString()
                 );
                 setExternalEvents(events);
-                console.log(`[App] Fetched ${events.length} Google Calendar events`);
+                logger.debug('[App] Fetched Google Calendar events', { count: events.length });
             } catch (error) {
                 if (error instanceof GoogleCalendarError) {
                     console.error('[App] Google Calendar error:', error.code, error.message);
@@ -382,7 +383,7 @@ const App: React.FC = () => {
             const token = await getProviderToken();
             if (!token) {
                 // Trigger OAuth flow
-                console.log('[App] No Google token, triggering OAuth flow...');
+                logger.debug('[App] No Google token, triggering OAuth flow');
                 await signInWithGoogleCalendar();
             } else {
                 setHasGoogleToken(true);
@@ -393,38 +394,38 @@ const App: React.FC = () => {
     }, []);
 
     // Routine Handlers
-    const handleSaveRoutine = (routine: Routine) => {
+    const handleSaveRoutine = useCallback((routine: Routine) => {
         saveRoutineHook(routine);
         setIsRoutineEditorOpen(false);
         setEditingRoutine(undefined);
-    };
+    }, [saveRoutineHook]);
 
-    const handleDeleteRoutine = (id: string) => {
+    const handleDeleteRoutine = useCallback((id: string) => {
         deleteRoutineHook(id);
         setIsRoutineEditorOpen(false);
         setEditingRoutine(undefined);
-    };
+    }, [deleteRoutineHook]);
 
-    const handleToggleRoutine = (id: string) => {
+    const handleToggleRoutine = useCallback((id: string) => {
         toggleRoutineHook(id);
-    };
+    }, [toggleRoutineHook]);
 
-    const handleCreateRoutine = () => {
+    const handleCreateRoutine = useCallback(() => {
         setEditingRoutine(undefined);
         setIsRoutineEditorOpen(true);
-    };
+    }, []);
 
-    const handleEditRoutine = (routine: Routine) => {
+    const handleEditRoutine = useCallback((routine: Routine) => {
         setEditingRoutine(routine);
         setIsRoutineEditorOpen(true);
-    };
+    }, []);
 
-    const handleUsernameChange = (name: string) => {
+    const handleUsernameChange = useCallback((name: string) => {
         setUsername(name);
         if (session?.user) {
             supabase.from('user_settings').upsert({ user_id: session.user.id, display_name: name }).then();
         }
-    };
+    }, [session?.user]);
 
     const handleCreateTask = useCallback((initialDate?: Date, type: TaskType = 'TASK') => {
         setEditingTask(undefined);
@@ -448,7 +449,7 @@ const App: React.FC = () => {
     }, []);
 
     // Handler for Command Bar parsed task data
-    const handleCommandBarTask = (parsedData: ParsedTaskData) => {
+    const handleCommandBarTask = useCallback((parsedData: ParsedTaskData) => {
         const taskDraft: Partial<Task> = {
             title: parsedData.title,
             type: parsedData.type,
@@ -466,11 +467,11 @@ const App: React.FC = () => {
             isShared: false
         };
         handleEditDraft(taskDraft);
-    };
+    }, [handleEditDraft]);
 
     // ⚡ Performance Optimization: Memoized handler to prevent re-renders of TaskEditor
     const handleSaveTask = useCallback(async (taskData: Partial<Task>) => {
-        console.log('[App] handleSaveTask called with:', taskData);
+        logger.debug('[App] handleSaveTask called', { taskData });
         let savedTask: Task | null = null;
 
         try {
@@ -479,7 +480,7 @@ const App: React.FC = () => {
             } else {
                 savedTask = await createTask(taskData as Omit<Task, 'id' | 'createdAt'>);
             }
-            console.log('[App] Task saved successfully:', savedTask);
+            logger.debug('[App] Task saved successfully', { savedTask });
         } catch (error) {
             console.error('[App] Error saving task:', error);
         }
@@ -505,7 +506,7 @@ const App: React.FC = () => {
         await toggleStatus(task);
     }, [toggleStatus]);
 
-    // AI Analysis handler (not memoized due to allTags dependency order)
+    // AI Analysis handler (not memoized - allTags is defined later in component)
     const handleAIAnalysis = async (task: Task) => {
         const enhanced = await enhanceTaskWithAI(task.title, allTags);
         if (enhanced && enhanced.subtasks) {
@@ -530,7 +531,7 @@ const App: React.FC = () => {
         setFocusedTask(undefined);
     }, [toggleStatus]);
 
-    const handleAutoCreatedTask = async (taskData: Partial<Task>) => {
+    const handleAutoCreatedTask = useCallback(async (taskData: Partial<Task>) => {
         const newTask = await createTask(taskData as Omit<Task, 'id' | 'createdAt'>);
         if (newTask && newTask.tags && Array.isArray(newTask.tags)) {
             setSelectedCalendarTags(prev => {
@@ -538,7 +539,7 @@ const App: React.FC = () => {
                 return [...prev, ...newTags];
             });
         }
-    };
+    }, [createTask]);
 
     const handleToggleCalendarTag = useCallback((tag: string) => {
         setSelectedCalendarTags(prev =>
@@ -546,13 +547,13 @@ const App: React.FC = () => {
         );
     }, []);
 
-    const handleRenameTag = async (oldTag: string, newTag: string) => {
+    const handleRenameTag = useCallback(async (oldTag: string, newTag: string) => {
         if (!newTag.trim() || oldTag === newTag) return;
         const finalTag = newTag.trim();
 
-        console.log(`Renaming tag "${oldTag}" to "${finalTag}"`);
+        logger.debug(`Renaming tag "${oldTag}" to "${finalTag}"`);
         const tasksToUpdate = tasks.filter(t => t.tags.includes(oldTag));
-        console.log(`Found ${tasksToUpdate.length} tasks with tag "${oldTag}"`);
+        logger.debug(`Found ${tasksToUpdate.length} tasks with tag "${oldTag}"`);
 
         // Server Update using the hook's updateTask
         for (const t of tasksToUpdate) {
@@ -560,7 +561,7 @@ const App: React.FC = () => {
             const uniqueTags = [...new Set(newTags)];
             try {
                 await updateTask({ ...t, tags: uniqueTags });
-                console.log(`✓ Updated task "${t.title}" tags:`, uniqueTags);
+                logger.debug(`✓ Updated task "${t.title}" tags`, { tags: uniqueTags });
             } catch (error) {
                 console.error(`✗ Failed to update task "${t.title}":`, error);
             }
@@ -574,8 +575,8 @@ const App: React.FC = () => {
             return prev;
         });
         
-        console.log(`Tag rename complete: "${oldTag}" -> "${finalTag}"`);
-    };
+        logger.debug(`Tag rename complete: "${oldTag}" -> "${finalTag}"`);
+    }, [tasks, updateTask]);
 
     const handleSignOut = useCallback(async () => {
         await signOut();

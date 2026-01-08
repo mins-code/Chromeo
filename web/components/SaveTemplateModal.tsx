@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, FileText, Check, X } from 'lucide-react';
+import { Save, Check } from 'lucide-react';
 import Button from './Button';
 
 interface SaveTemplateModalProps {

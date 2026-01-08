@@ -10,6 +10,7 @@
 
 import { NotificationSettings } from '../types';
 import { supabase } from './supabaseClient';
+import { logger } from '../utils/logger';
 
 const DEFAULT_SETTINGS: NotificationSettings = {
   enabled: false,
@@ -172,7 +173,7 @@ export const subscribeToPush = async (): Promise<boolean> => {
     // Cache subscription locally
     localStorage.setItem(PUSH_SUBSCRIPTION_KEY, JSON.stringify(subscription.toJSON()));
     
-    console.log('Push notification subscription successful');
+    logger.info('Push notification subscription successful');
     return true;
   } catch (error) {
     console.error('Error subscribing to push notifications:', error);
@@ -209,7 +210,7 @@ export const unsubscribeFromPush = async (): Promise<boolean> => {
     }
 
     localStorage.removeItem(PUSH_SUBSCRIPTION_KEY);
-    console.log('Unsubscribed from push notifications');
+    logger.info('Unsubscribed from push notifications');
     return true;
   } catch (error) {
     console.error('Error unsubscribing from push:', error);
@@ -351,7 +352,7 @@ export const scheduleNotification = async (
       return false;
     }
     
-    console.log(`Scheduled notification for ${scheduledTime.toISOString()}`);
+    logger.debug(`Scheduled notification for ${scheduledTime.toISOString()}`);
     return true;
   } catch (error) {
     // Silently handle errors to prevent console spam
@@ -401,7 +402,7 @@ export const cancelNotification = async (taskId: string): Promise<boolean> => {
  */
 export const cancelAllNotifications = async (): Promise<void> => {
   // This would require a backend endpoint to delete all user's scheduled notifications
-  console.log('Cancel all notifications - not implemented for push');
+  logger.debug('Cancel all notifications - not implemented for push');
 };
 
 /**
