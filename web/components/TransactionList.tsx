@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Transaction, TRANSACTION_CATEGORIES } from '../types';
 import { ArrowUpRight, ArrowDownLeft, Calendar, Search, Edit2, Trash2, Check, X, Repeat, ChevronLeft, ChevronRight, Tag } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, addWeeks, subWeeks, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import { logger } from '../utils/logger';
 
 interface TransactionListProps {
     transactions: Transaction[];
@@ -88,7 +89,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
             await onEdit({ id, description: editDesc, amount, type: editType, category: editCategory });
             cancelEdit();
         } catch (error) {
-            console.error('Failed to update transaction:', error);
+            logger.error('Failed to update transaction', error);
             alert('Failed to update transaction');
         }
     };
@@ -100,7 +101,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
             try {
                 await onDelete(id);
             } catch (error) {
-                console.error('Failed to delete transaction:', error);
+                logger.error('Failed to delete transaction', error);
                 alert('Failed to delete transaction');
             }
         }

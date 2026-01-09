@@ -19,6 +19,7 @@ import { useTasks } from '../hooks/useTasks';
 import { useNotes } from '../hooks/useNotes';
 import { useBudget } from '../hooks/useBudget';
 import { useUniversalSearch, SearchResult } from '../hooks/useUniversalSearch';
+import { logger } from '../utils/logger';
 
 interface CommandBarProps {
     isOpen: boolean;
@@ -186,7 +187,7 @@ const CommandBar: React.FC<CommandBarProps> = ({ isOpen, onClose, onTaskParsed, 
                 onClose();
             }
         } catch (error) {
-            console.error('Failed to parse task:', error);
+            logger.error('Failed to parse task', error);
         } finally {
             setIsLoading(false);
         }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Routine } from '../types';
 import * as RoutineService from '../services/routineService';
+import { logger } from '../utils/logger';
 
 /**
  * Hook to manage routines with optimistic updates.
@@ -18,7 +19,7 @@ export function useRoutines() {
         const loaded = RoutineService.getRoutines();
         setRoutines(loaded);
       } catch (err) {
-        console.error('Failed to load routines:', err);
+        logger.error('Failed to load routines', err);
       } finally {
         setIsLoading(false);
       }

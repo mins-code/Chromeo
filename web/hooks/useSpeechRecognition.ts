@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { logger } from '../utils/logger';
 
 interface UseSpeechRecognitionReturn {
   isListening: boolean;
@@ -105,7 +106,7 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
       recognitionRef.current.start();
     } catch (err) {
       // Handle case where recognition is already started
-      console.error('Speech recognition start error:', err);
+      logger.error('Speech recognition start error', err);
       setIsListening(false);
     }
   }, []);

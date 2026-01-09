@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { logger } from '../utils/logger';
 
 interface UserSettings {
   displayName: string;
@@ -32,12 +33,12 @@ export function useUserSettings() {
           .maybeSingle();
 
         if (error) {
-          console.error('Error loading user settings:', error);
+          logger.error('Error loading user settings', error);
         } else if (data?.display_name) {
           setDisplayName(data.display_name);
         }
       } catch (err) {
-        console.error('Failed to load user settings:', err);
+        logger.error('Failed to load user settings', err);
       } finally {
         setIsLoading(false);
       }
@@ -63,10 +64,10 @@ export function useUserSettings() {
         });
 
       if (error) {
-        console.error('Error updating display name:', error);
+        logger.error('Error updating display name', error);
       }
     } catch (err) {
-      console.error('Failed to update display name:', err);
+      logger.error('Failed to update display name', err);
     }
   }, [session?.user?.id]);
 

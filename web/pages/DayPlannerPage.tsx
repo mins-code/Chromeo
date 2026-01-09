@@ -482,7 +482,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
               idMap.set(task.id, createdTask.id);
             }
           } catch (error) {
-            console.error('Failed to clone task', task.id, error);
+            logger.error(`Failed to clone task ${task.id}`, error);
           }
         }
 
