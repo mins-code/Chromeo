@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { Task } from '../types';
-import DraggableTask, { TYPE_COLORS } from './DraggableTask';
+import DraggableTask from './DraggableTask';
 import {
   startOfWeek,
   endOfWeek,

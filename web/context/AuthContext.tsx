@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, PropsWithChildren } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../services/supabaseClient';
+import { logger } from '../utils/logger';
 
 interface AuthContextType {
   session: Session | null;
@@ -27,11 +28,11 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
       try {
         const { data, error } = await supabase.auth.getSession();
         if (error) {
-          console.error("Auth Session Error:", error.message);
+          logger.error('Auth Session Error', new Error(error.message));
         }
         setSession(data?.session ?? null);
       } catch (err) {
-        console.error("Auth Initialization Failed:", err);
+        logger.error('Auth Initialization Failed', err as Error);
         setSession(null);
       } finally {
         setIsAuthLoading(false);

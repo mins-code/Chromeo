@@ -2,7 +2,7 @@ import React, { memo, useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { format } from 'date-fns';
 import { Task, RecurringTransaction } from '../types';
-import DraggableTask, { TYPE_COLORS } from './DraggableTask';
+import DraggableTask from './DraggableTask';
 import { DollarSign, X } from 'lucide-react';
 
 interface CalendarDayCellProps {

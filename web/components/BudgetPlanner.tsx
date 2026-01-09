@@ -14,6 +14,7 @@ import BudgetCategoryChart from './BudgetCategoryChart';
 import { calculateForecast, formatForecastDate } from '../utils/financialForecasting';
 import { Wallet, Plus, Trash2, IndianRupee, Eye, EyeOff, Repeat, ArrowRight, Settings, Share2, User, X, Loader2, UserPlus, Camera, LineChart, PieChart } from 'lucide-react';
 import { t } from '../themeText';
+import { logger } from '../utils/logger';
 
 interface BudgetPlannerProps {
     currentTheme: ThemeOption;
@@ -135,7 +136,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
 
             alert(`Successfully added ${transactions.length} transaction(s) from screenshot!`);
         } catch (error) {
-            console.error('Failed to scan screenshot:', error);
+            logger.error('Failed to scan screenshot', error as Error);
             alert('Failed to parse the screenshot. Please try again.');
         } finally {
             setIsScanning(false);

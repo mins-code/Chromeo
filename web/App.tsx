@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useMemo, useCallback, Suspense, lazy } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from './components/Layout';
-import { Task, ViewMode, TaskStatus, Partner, TaskPriority, TaskType, ThemeOption, ViewSourceMode } from './types';
+import { Task, ViewMode, TaskStatus, Partner, TaskPriority, TaskType, ViewSourceMode } from './types';
 import { getUrgencyScore } from './utils/taskScoring';
 import { logger } from './utils/logger';
 import { supabase, getProviderToken, signInWithGoogleCalendar } from './services/supabaseClient';
@@ -17,7 +17,7 @@ import Select from './components/Select';
 import { Search, Filter, Bell, CalendarDays, Clock, CheckSquare, Activity, ArrowRight, Repeat, MessageSquare, Loader2, X } from 'lucide-react';
 import { enhanceTaskWithAI } from './services/geminiService';
 import { ParsedTaskData } from './services/geminiService';
-import { getGreeting, t } from './themeText';
+import { t } from './themeText';
 import CommandBar from './components/CommandBar';
 
 // Lazy load heavy components for better initial bundle size
@@ -31,7 +31,7 @@ import { useAuth } from './context/AuthContext';
 import { useTheme } from './context/ThemeContext';
 import { useTasks } from './hooks/useTasks';
 import { useBudget } from './hooks/useBudget';
-import { useUserSettings } from './hooks/useUserSettings';
+// useUserSettings imported but used via context
 import { useRoutines } from './hooks/useRoutines';
 import * as PartnerService from './services/partnerService';
 import * as NotificationService from './services/notificationService';
@@ -105,7 +105,7 @@ const App: React.FC = () => {
     } = useTasks();
     const { 
         budget, 
-        isLoading: isBudgetLoading, 
+        isLoading: _isBudgetLoading, 
         refetch: refetchBudget, 
         processRecurring 
     } = useBudget();
@@ -306,7 +306,7 @@ const App: React.FC = () => {
                         await NotificationService.initializePushNotifications();
                     }
                 } catch (error) {
-                    console.error('[App] Service Worker registration failed:', error);
+                    logger.error('[App] Service Worker registration failed', error as Error);
                 }
             }
         };
@@ -357,12 +357,12 @@ const App: React.FC = () => {
                 logger.debug('[App] Fetched Google Calendar events', { count: events.length });
             } catch (error) {
                 if (error instanceof GoogleCalendarError) {
-                    console.error('[App] Google Calendar error:', error.code, error.message);
+                    logger.error('[App] Google Calendar error', error.code as unknown as Error, { message: error.message });
                     if (error.code === 'UNAUTHORIZED') {
                         setHasGoogleToken(false);
                     }
                 } else {
-                    console.error('[App] Failed to fetch Google Calendar events:', error);
+                    logger.error('[App] Failed to fetch Google Calendar events', error as Error);
                 }
                 setExternalEvents([]);
             } finally {
@@ -512,7 +512,7 @@ const App: React.FC = () => {
             }
             logger.debug('[App] Task saved successfully', { savedTask });
         } catch (error) {
-            console.error('[App] Error saving task:', error);
+            logger.error('[App] Error saving task', error as Error);
         }
 
         if (savedTask && savedTask.tags) {
@@ -593,7 +593,7 @@ const App: React.FC = () => {
                 await updateTask({ ...t, tags: uniqueTags });
                 logger.debug(`✓ Updated task "${t.title}" tags`, { tags: uniqueTags });
             } catch (error) {
-                console.error(`✗ Failed to update task "${t.title}":`, error);
+                logger.error(`Failed to update task "${t.title}"`, error as Error);
             }
         }
 

@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, Sparkles, PlusCircle, XCircle, Calendar, Bell, Edit2, Check, Clock, DollarSign, Wallet, TrendingDown, TrendingUp, Pencil, Trash2, RefreshCw, Copy, CheckCheck, ImagePlus, X, Image } from 'lucide-react';
+import { Send, Bot, User, Sparkles, XCircle, Check, Pencil, Trash2, RefreshCw, Copy, CheckCheck, ImagePlus, X, Image } from 'lucide-react';
 import { chatWithAI, parseTransactionScreenshot } from '../services/geminiService';
-import { ChatMessage, Task, TaskPriority, TaskStatus, TaskType, SuggestedPrompt } from '../types';
+import { ChatMessage, Task, TaskStatus, TaskType, SuggestedPrompt } from '../types';
 import * as BudgetService from '../services/budgetService';
 import { saveChatHistory, loadChatHistory, clearChatHistory } from '../utils/aiChatStorage';
+import { logger } from '../utils/logger';
 import Button from './Button';
 
 interface AIChatProps {
@@ -170,7 +171,7 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
                     data: p.data || p
                 }));
             } catch (e) {
-                console.error("Failed to parse AI JSON", e);
+                logger.error('Failed to parse AI JSON', e as Error);
             }
         }
 
@@ -187,7 +188,7 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
             setDraftGroups(prev => ({ ...prev, [aiMsg.id]: newDrafts }));
         }
     } catch (error) {
-        console.error(error);
+        logger.error('Chat error', error as Error);
         // Mark user message as error
         setMessages(prev => prev.map(m => 
           m.id === userMsg.id 
@@ -224,7 +225,7 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
       setCopiedMsgId(msgId);
       setTimeout(() => setCopiedMsgId(null), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      logger.error('Failed to copy', err as Error);
     }
   };
 

@@ -3,6 +3,7 @@ import { supabase } from '../services/supabaseClient';
 import Button from './Button';
 import Input from './Input';
 import { AlertTriangle, Loader2, Eye, EyeOff, Trash2, X, CheckCircle2 } from 'lucide-react';
+import { logger } from '../utils/logger';
 
 interface DeleteAccountModalProps {
   isOpen: boolean;
@@ -65,7 +66,7 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
       }, 2000);
 
     } catch (err: any) {
-      console.error('Delete account error:', err);
+      logger.error('Delete account error', err as Error);
       setError(err.message || 'Failed to delete account. Please try again.');
     } finally {
       setIsLoading(false);

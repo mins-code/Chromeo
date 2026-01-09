@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { AlertTriangle, CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import Button from '../components/Button';
+import { logger } from '../utils/logger';
 
 type DeletionStatus = 'loading' | 'confirming' | 'success' | 'error' | 'expired';
 
@@ -43,7 +44,7 @@ const ConfirmDeletePage: React.FC = () => {
                 throw new Error(data.error || 'Failed to delete account');
             }
         } catch (err: any) {
-            console.error('Deletion error:', err);
+            logger.error('Deletion error', err as Error);
             setStatus('error');
             setErrorMessage(err.message || 'Failed to delete account. Please try again.');
         }

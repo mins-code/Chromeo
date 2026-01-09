@@ -63,7 +63,7 @@ export const requestPermission = async (): Promise<boolean> => {
     const permission = await Notification.requestPermission();
     return permission === 'granted';
   } catch (error) {
-    console.error('Error requesting notification permission:', error);
+    logger.error('Error requesting notification permission', error as Error);
     return false;
   }
 };
@@ -78,7 +78,7 @@ export const getSettings = (): NotificationSettings => {
       return { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
     }
   } catch (error) {
-    console.error('Error reading notification settings:', error);
+    logger.error('Error reading notification settings', error as Error);
   }
   return DEFAULT_SETTINGS;
 };
@@ -90,7 +90,7 @@ export const saveSettings = (settings: NotificationSettings): void => {
   try {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   } catch (error) {
-    console.error('Error saving notification settings:', error);
+    logger.error('Error saving notification settings', error as Error);
   }
 };
 
@@ -121,12 +121,12 @@ export const subscribeToPush = async (): Promise<boolean> => {
   }
 
   if (!isPushSupported()) {
-    console.warn('Push notifications not supported in this browser');
+    logger.warn('Push notifications not supported in this browser');
     return false;
   }
 
   if (!VAPID_PUBLIC_KEY) {
-    console.error('VAPID_PUBLIC_KEY not configured');
+    logger.error('VAPID_PUBLIC_KEY not configured');
     return false;
   }
 
@@ -141,21 +141,21 @@ export const subscribeToPush = async (): Promise<boolean> => {
       // Create new subscription
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
       });
     }
 
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      console.error('User not authenticated');
+      logger.error('User not authenticated');
       return false;
     }
 
     // Check for valid session to avoid 401 errors
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      console.error('No valid session');
+      logger.error('No valid session');
       return false;
     }
 
@@ -176,7 +176,7 @@ export const subscribeToPush = async (): Promise<boolean> => {
     logger.info('Push notification subscription successful');
     return true;
   } catch (error) {
-    console.error('Error subscribing to push notifications:', error);
+    logger.error('Error subscribing to push notifications', error as Error);
     return false;
   }
 };
@@ -213,7 +213,7 @@ export const unsubscribeFromPush = async (): Promise<boolean> => {
     logger.info('Unsubscribed from push notifications');
     return true;
   } catch (error) {
-    console.error('Error unsubscribing from push:', error);
+    logger.error('Error unsubscribing from push', error as Error);
     return false;
   }
 };
@@ -287,7 +287,7 @@ export const sendNotification = async (
       return true;
     }
   } catch (error) {
-    console.error('Error sending notification:', error);
+    logger.error('Error sending notification', error as Error);
     return false;
   }
 };

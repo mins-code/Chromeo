@@ -189,7 +189,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
   const handleSave = () => {
     logger.debug('[TaskEditor] Save clicked', { title });
     if (!title.trim()) {
-      console.warn('[TaskEditor] Title is empty, cannot save');
+      logger.warn('[TaskEditor] Title is empty, cannot save');
       return;
     }
     
