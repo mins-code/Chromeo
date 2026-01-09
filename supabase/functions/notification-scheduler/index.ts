@@ -4,8 +4,8 @@ import webpush from "https://esm.sh/web-push@3.6.6";
 
 /**
  * Cron job to send scheduled push notifications
- * This function can be called without authentication (for cron jobs)
- * It uses the service role key to access the database securely
+ * This function requires authentication via the Service Role Key.
+ * It uses the service role key to access the database securely.
  */
 
 const corsHeaders = {
@@ -18,6 +18,15 @@ serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  // Security Check: Ensure the request is authorized
+  const authHeader = req.headers.get('Authorization');
+  if (authHeader !== `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
   try {

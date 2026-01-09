@@ -393,6 +393,36 @@ const App: React.FC = () => {
         }
     }, []);
 
+    // Filter tasks based on View Source Mode (Personal, Partners, Combined)
+    const visibleTasks = useMemo(() => {
+        if (!session?.user?.id) return [];
+        switch (viewSourceMode) {
+            case 'personal':
+                return tasks.filter(t => t.user_id === session.user.id && !t.isShared);
+            case 'partners':
+                return tasks.filter(t =>
+                    t.user_id !== session.user.id || // Tasks created by partners
+                    (t.user_id === session.user.id && t.isShared) // Tasks created by user and shared
+                );
+            case 'combined':
+                return tasks;
+            default:
+                return tasks.filter(t => t.user_id === session.user.id);
+        }
+    }, [tasks, viewSourceMode, session?.user?.id]);
+
+    // Computed Values needed for AI context
+    const allTags = useMemo(() => {
+        const tags = new Set<string>();
+        visibleTasks.forEach(t => t.tags.forEach(tag => tags.add(tag)));
+        if (visibleTasks.some(t => t.tags.length === 0)) tags.add('Untagged');
+        return Array.from(tags).sort((a, b) => {
+            if (a === 'Untagged') return -1;
+            if (b === 'Untagged') return 1;
+            return a.localeCompare(b);
+        });
+    }, [visibleTasks]);
+
     // Routine Handlers
     const handleSaveRoutine = useCallback((routine: Routine) => {
         saveRoutineHook(routine);
@@ -506,8 +536,8 @@ const App: React.FC = () => {
         await toggleStatus(task);
     }, [toggleStatus]);
 
-    // AI Analysis handler (not memoized - allTags is defined later in component)
-    const handleAIAnalysis = async (task: Task) => {
+    // ⚡ Performance Optimization: Memoized handler to prevent re-renders of TaskCard
+    const handleAIAnalysis = useCallback(async (task: Task) => {
         const enhanced = await enhanceTaskWithAI(task.title, allTags);
         if (enhanced && enhanced.subtasks) {
             const subtasks = enhanced.subtasks.map(s => ({
@@ -517,7 +547,7 @@ const App: React.FC = () => {
             }));
             await updateTask({ ...task, subtasks: [...task.subtasks, ...subtasks] });
         }
-    };
+    }, [allTags, updateTask]);
 
     // Focus Mode Handlers
     const handleStartFocus = useCallback((task: Task) => {
@@ -581,36 +611,6 @@ const App: React.FC = () => {
     const handleSignOut = useCallback(async () => {
         await signOut();
     }, [signOut]);
-
-    // Filter tasks based on View Source Mode (Personal, Partners, Combined)
-    const visibleTasks = useMemo(() => {
-        if (!session?.user?.id) return [];
-        switch (viewSourceMode) {
-            case 'personal':
-                return tasks.filter(t => t.user_id === session.user.id && !t.isShared);
-            case 'partners':
-                return tasks.filter(t => 
-                    t.user_id !== session.user.id || // Tasks created by partners
-                    (t.user_id === session.user.id && t.isShared) // Tasks created by user and shared
-                );
-            case 'combined':
-                return tasks;
-            default:
-                return tasks.filter(t => t.user_id === session.user.id);
-        }
-    }, [tasks, viewSourceMode, session?.user?.id]);
-
-    // Computed Values needed for AI context
-    const allTags = useMemo(() => {
-        const tags = new Set<string>();
-        visibleTasks.forEach(t => t.tags.forEach(tag => tags.add(tag)));
-        if (visibleTasks.some(t => t.tags.length === 0)) tags.add('Untagged');
-        return Array.from(tags).sort((a, b) => {
-            if (a === 'Untagged') return -1;
-            if (b === 'Untagged') return 1;
-            return a.localeCompare(b);
-        });
-    }, [visibleTasks]);
 
     const filteredTasks = useMemo(() => {
         return visibleTasks
@@ -883,9 +883,9 @@ const App: React.FC = () => {
                         tasks={calendarFilteredTasks}
                         recurringTransactions={budget.recurring}
                         externalEvents={externalEvents}
-                        onDateClick={(date) => handleCreateTask(date)}
+                        onDateClick={handleCreateTask}
                         onEditTask={handleEditTask}
-                        onUpdateTask={(task) => updateTask(task)}
+                        onUpdateTask={updateTask}
                         onToggleStatus={handleToggleStatus}
                         selectedDate={calendarNavigateDate}
                         onVisibleTagsChange={setCalendarVisibleTags}
