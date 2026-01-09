@@ -111,9 +111,25 @@ const Select: React.FC<SelectProps> = ({
                     {label}
                 </label>
             )}
-            <div 
+            <button
+                type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className={`flex items-center justify-between w-full px-4 py-2.5 rounded-xl border cursor-pointer transition-all duration-200 ${colors.bg} ${colors.border} ${isOpen ? 'ring-2 ring-opacity-50 ring-current' : ''}`}
+                onKeyDown={(e) => {
+                    if (e.key === 'Escape') setIsOpen(false);
+                    if (['ArrowDown', 'ArrowUp'].includes(e.key)) {
+                        e.preventDefault();
+                        if (!isOpen) setIsOpen(true);
+                        const idx = options.findIndex(o => o.value === value);
+                        const nextIdx = e.key === 'ArrowDown'
+                            ? Math.min(idx + 1, options.length - 1)
+                            : Math.max(idx - 1, 0);
+                        if (idx !== nextIdx && nextIdx >= 0) onChange(options[nextIdx].value);
+                    }
+                }}
+                aria-haspopup="listbox"
+                aria-expanded={isOpen}
+                aria-label={label || placeholder}
+                className={`flex items-center justify-between w-full px-4 py-2.5 rounded-xl border cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50 ${colors.bg} ${colors.border} ${isOpen ? 'ring-2 ring-opacity-50 ring-current' : ''}`}
             >
                 <span className={`block truncate text-sm font-medium ${selectedOption ? colors.text : 'text-slate-500'}`}>
                     {selectedOption ? selectedOption.label : placeholder}
@@ -121,14 +137,19 @@ const Select: React.FC<SelectProps> = ({
                 <span className={`ml-2 flex items-center transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
                    {isOpen ? <ChevronUp size={16} className={colors.text} /> : <ChevronDown size={16} className={colors.text} />}
                 </span>
-            </div>
+            </button>
 
             {isOpen && (
-                <div className={`absolute z-50 w-full mt-1 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 border ${colors.listBg} ${colors.listBorder}`}>
+                <div
+                    role="listbox"
+                    className={`absolute z-50 w-full mt-1 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 border ${colors.listBg} ${colors.listBorder}`}
+                >
                     <div className="max-h-60 overflow-auto py-1 custom-scrollbar">
                         {options.map((option) => (
                             <div
                                 key={option.value}
+                                role="option"
+                                aria-selected={value === option.value}
                                 onClick={() => {
                                     onChange(option.value);
                                     setIsOpen(false);
