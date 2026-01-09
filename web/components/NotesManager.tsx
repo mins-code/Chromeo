@@ -13,6 +13,7 @@ import {
   Check
 } from 'lucide-react';
 import { t } from '../themeText';
+import { logger } from '../utils/logger';
 
 interface NotesManagerProps {
   currentTheme: ThemeOption;
@@ -107,7 +108,7 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
       setIsEditorOpen(false);
       resetForm();
     } catch (error) {
-      console.error('Failed to save note:', error);
+      logger.error('Failed to save note', error);
       alert('Failed to save note. Please try again.');
     }
   };
@@ -119,7 +120,7 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
         setIsEditorOpen(false);
         resetForm();
       } catch (error) {
-        console.error('Failed to delete note:', error);
+        logger.error('Failed to delete note', error);
         alert('Failed to delete note. Please try again.');
       }
     }
@@ -157,7 +158,7 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
       await loadNoteShares(editingNote.id);
       setSelectedPartnerId('');
     } catch (error) {
-      console.error('Failed to share note:', error);
+      logger.error('Failed to share note', error);
       alert('Failed to share note. Please try again.');
     }
   };
@@ -170,7 +171,7 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
       await unshareNote(shareId);
       await loadNoteShares(editingNote.id);
     } catch (error) {
-      console.error('Failed to unshare note:', error);
+      logger.error('Failed to unshare note', error);
       alert('Failed to unshare note. Please try again.');
     }
   };
@@ -191,7 +192,7 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
             checklistItems: updatedItems
         });
     } catch (error) {
-        console.error('Failed to toggle item:', error);
+        logger.error('Failed to toggle item', error);
     }
   };
 

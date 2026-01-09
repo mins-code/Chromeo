@@ -584,14 +584,14 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
           const createdTask = await createTask(newTaskPayload);
           if (createdTask) {
             // Map the _tempId (source ID) to the new real ID
-            // @ts-ignore
-            const sourceId = templateTask._tempId || templateTask.id; // Fallback if id leaked
+          // @ts-expect-error _tempId is a temporary property added during template creation
+          const sourceId = templateTask._tempId || templateTask.id; // Fallback if id leaked
             if (sourceId) {
               idMap.set(sourceId, createdTask.id);
             }
           }
         } catch (error) {
-          console.error('Failed to create task from template', error);
+          logger.error('Failed to create task from template', error);
         }
       }
 

@@ -6,6 +6,7 @@
 
 import { DayPlan, DayPlanTemplate, Task, TaskLink, TaskLayout } from '../types';
 import { supabase } from './supabaseClient';
+import { logger } from '../utils/logger';
 
 // ============ Day Plans (Supabase) ============
 
@@ -41,7 +42,7 @@ export const getDayPlan = async (date: string): Promise<DayPlan | null> => {
       updatedAt: data.updated_at,
     };
   } catch (error) {
-    console.error('Error reading day plan:', error);
+    logger.error('Error reading day plan', error);
     return null;
   }
 };
@@ -74,7 +75,7 @@ export const saveDayPlan = async (plan: DayPlan): Promise<DayPlan> => {
       .single();
 
     if (error) {
-      console.error('Error saving day plan:', error);
+      logger.error('Error saving day plan', error);
       throw error;
     }
 
@@ -84,7 +85,7 @@ export const saveDayPlan = async (plan: DayPlan): Promise<DayPlan> => {
       updatedAt: data.updated_at,
     };
   } catch (error) {
-    console.error('Error saving day plan:', error);
+    logger.error('Error saving day plan', error);
     throw error;
   }
 };
@@ -104,13 +105,13 @@ export const deleteDayPlan = async (date: string): Promise<boolean> => {
       .eq('date', date);
 
     if (error) {
-      console.error('Error deleting day plan:', error);
+      logger.error('Error deleting day plan', error);
       return false;
     }
 
     return true;
   } catch (error) {
-    console.error('Error deleting day plan:', error);
+    logger.error('Error deleting day plan', error);
     return false;
   }
 };
@@ -368,7 +369,7 @@ const getAllTemplates = (): DayPlanTemplate[] => {
     const stored = localStorage.getItem(TEMPLATES_KEY);
     return stored ? JSON.parse(stored) : [];
   } catch (error) {
-    console.error('Error reading templates:', error);
+    logger.error('Error reading templates', error);
     return [];
   }
 };
@@ -380,7 +381,7 @@ const saveAllTemplates = (templates: DayPlanTemplate[]): void => {
   try {
     localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
   } catch (error) {
-    console.error('Error saving templates:', error);
+    logger.error('Error saving templates', error);
   }
 };
 
@@ -485,7 +486,7 @@ const getAllRecurringPlans = (): Record<string, DayPlan> => {
     const stored = localStorage.getItem(RECURRING_PLANS_KEY);
     return stored ? JSON.parse(stored) : {};
   } catch (error) {
-    console.error('Error reading recurring plans:', error);
+    logger.error('Error reading recurring plans', error);
     return {};
   }
 };
@@ -497,7 +498,7 @@ const saveAllRecurringPlans = (plans: Record<string, DayPlan>): void => {
   try {
     localStorage.setItem(RECURRING_PLANS_KEY, JSON.stringify(plans));
   } catch (error) {
-    console.error('Error saving recurring plans:', error);
+    logger.error('Error saving recurring plans', error);
   }
 };
 

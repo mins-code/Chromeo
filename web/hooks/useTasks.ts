@@ -9,6 +9,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Task, TaskStatus } from '../types';
 import * as TaskService from '../services/taskService';
 import { QUERY_CONFIG } from '../constants';
+import { logger } from '../utils/logger';
 
 // Type for mutation context (used for rollback on error)
 interface MutationContext {
@@ -67,7 +68,7 @@ export function useTasks() {
 
     // Rollback to previous state on error
     onError: (error, _updatedTask, context) => {
-      console.error('Failed to update task:', error);
+      logger.error('Failed to update task', error);
       if (context?.previousTasks) {
         queryClient.setQueryData(['tasks'], context.previousTasks);
       }
@@ -105,7 +106,7 @@ export function useTasks() {
 
     onError: (error, _id, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
-      console.error('Failed to delete task:', error);
+      logger.error('Failed to delete task', error);
       if (context?.previousTasks) {
         queryClient.setQueryData(['tasks'], context.previousTasks);
       }
@@ -151,7 +152,7 @@ export function useTasks() {
 
     onError: (error, _task, context) => {
       // Rollback to previous state on error
-      console.error('Failed to toggle task status:', error);
+      logger.error('Failed to toggle task status', error);
       if (context?.previousTasks) {
         queryClient.setQueryData(['tasks'], context.previousTasks);
       }
