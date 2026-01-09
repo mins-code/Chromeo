@@ -48,14 +48,14 @@ function isTransactionDue(transaction: RecurringTransaction, checkDate: Date): b
       if (checkDate < nextDue) return false;
       return checkDayOfWeek === nextDueDayOfWeek;
       
-    case 'monthly':
+    case 'monthly': {
       // Monthly transactions occur on the same day of month
       if (checkDate < nextDue) return false;
       // Handle month-end edge case (e.g., 31st doesn't exist in all months)
       const lastDayOfMonth = new Date(checkDate.getFullYear(), checkDate.getMonth() + 1, 0).getDate();
       const targetDay = Math.min(nextDueDay, lastDayOfMonth);
       return checkDay === targetDay;
-      
+    }
     case 'yearly':
       // Yearly transactions occur on the same month and day
       if (checkDate < nextDue) return false;
