@@ -163,6 +163,31 @@ serve(async (req) => {
       );
     }
 
+    // Rate Limiting (Atomic RPC)
+    // user is guaranteed to be defined here due to auth check above
+    const rateLimitKey = `push-notification:${user.id}`;
+
+    const { data: requestCount, error: rpcError } = await supabase.rpc('increment_rate_limit', {
+      p_key: rateLimitKey,
+      p_window_duration_seconds: 60
+    });
+
+    if (rpcError) {
+        console.error("Rate limit check failed:", rpcError.message);
+        // Fail securely: if rate limiting is unavailable, prevent potential abuse
+        return new Response(
+            JSON.stringify({ error: 'Service temporarily unavailable. Please try again later.' }),
+            { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+    }
+
+    if (requestCount > 20) { // Limit: 20 requests per minute
+        return new Response(
+            JSON.stringify({ error: 'Too many requests. Please try again later.' }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+    }
+
     const { action, subscription, notification, taskId, userId: requestedUserId } = await req.json();
 
     // Default to authenticated user, but allow service_role to override
