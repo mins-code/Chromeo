@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, Sparkles, XCircle, Check, Pencil, Trash2, RefreshCw, Copy, CheckCheck, ImagePlus, X, Image } from 'lucide-react';
+import { Send, Bot, User, XCircle, Check, Pencil, Trash2, RefreshCw, Copy, CheckCheck, ImagePlus, X, Image } from 'lucide-react';
 import { chatWithAI, parseTransactionScreenshot } from '../services/geminiService';
 import { ChatMessage, Task, TaskStatus, TaskType, SuggestedPrompt } from '../types';
 import * as BudgetService from '../services/budgetService';

@@ -14,7 +14,7 @@ import {
   Legend,
   TooltipProps
 } from 'recharts';
-import { Transaction, TRANSACTION_CATEGORIES } from '../types';
+import { Transaction } from '../types';
 
 interface BudgetCategoryChartProps {
   /** Array of transactions to aggregate */

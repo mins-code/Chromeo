@@ -106,7 +106,7 @@ const App: React.FC = () => {
     const { 
         budget, 
         isLoading: _isBudgetLoading, 
-        refetch: refetchBudget, 
+        refetch: _refetchBudget, 
         processRecurring 
     } = useBudget();
     
