@@ -3,7 +3,7 @@ import React from 'react';
 import { Task, TaskPriority, TaskStatus } from '../types';
 import { Calendar, CheckCircle2, Circle, MoreVertical, Sparkles, Bell, Users, Lock, Clock, MapPin, Play } from 'lucide-react';
 import Button from './Button';
-import { formatDateShort, formatTime, isPast, parseDate } from '../utils/date';
+import { formatDateShort, formatTime, isPast } from '../utils/date';
 
 interface TaskCardProps {
   task: Task;
@@ -182,4 +182,29 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasks = [], onEdit, onTogg
   );
 };
 
-export default React.memo(TaskCard);
+function arePropsEqual(prev: TaskCardProps, next: TaskCardProps) {
+  // If the task object itself changed (reference change due to update), we must re-render
+  if (prev.task !== next.task) return false;
+
+  // If callback props changed (should generally be stable if memoized in parent), re-render
+  if (prev.onEdit !== next.onEdit) return false;
+  if (prev.onToggleStatus !== next.onToggleStatus) return false;
+  if (prev.onAIAnalysis !== next.onAIAnalysis) return false;
+  if (prev.onFocus !== next.onFocus) return false;
+
+  // ⚡ Performance Optimization:
+  // "allTasks" is only used for calculating dependencies.
+  // If the current task has no dependencies, we can safely ignore changes to "allTasks" (which happens on every task update).
+  // This prevents O(N) re-renders of the entire list when a single task is updated.
+  const hasDependencies = next.task.dependencyIds && next.task.dependencyIds.length > 0;
+
+  if (hasDependencies) {
+    // If it has dependencies, we need to check if allTasks changed,
+    // because the status/title of a dependency might have changed.
+    if (prev.allTasks !== next.allTasks) return false;
+  }
+
+  return true;
+}
+
+export default React.memo(TaskCard, arePropsEqual);
