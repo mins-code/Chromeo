@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useId } from 'react';
 import { Calendar, Clock, ChevronLeft, ChevronRight, X, Keyboard, ChevronUp, ChevronDown } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, setHours, setMinutes, getHours, getMinutes, parse, isValid } from 'date-fns';
 
@@ -25,6 +25,10 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   const [currentMonth, setCurrentMonth] = useState(() => value ? new Date(value) : new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(() => value ? new Date(value) : null);
   
+  // Generate unique ID for accessibility
+  const generatedId = useId();
+  const triggerId = `date-picker-${generatedId}`;
+
   // 12-hour format state
   const [hour12, setHour12] = useState(() => {
     if (value) {
@@ -229,24 +233,46 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       {label && (
-        <label className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+        <label
+          htmlFor={triggerId}
+          className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 mb-2"
+        >
           <Calendar size={16} className="text-brand-500" />
           {label}
         </label>
       )}
       
       <div
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-slate-200 cursor-pointer hover:border-brand-500/50 transition-colors flex items-center justify-between group"
+        className="flex items-center w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-200 hover:border-brand-500/50 transition-colors group focus-within:ring-2 focus-within:ring-brand-500/50 focus-within:border-brand-500"
       >
-        <div className="flex items-center gap-2">
+        <button
+           id={triggerId}
+           type="button"
+           onClick={() => setIsOpen(!isOpen)}
+           onKeyDown={(e) => {
+             if (e.key === 'ArrowDown') {
+               e.preventDefault();
+               setIsOpen(true);
+             }
+           }}
+           className="flex-1 flex items-center gap-2 px-3 py-2.5 bg-transparent border-none outline-none rounded-l-xl text-left"
+           aria-haspopup="dialog"
+           aria-expanded={isOpen}
+           aria-label={label || placeholder}
+        >
           <Calendar size={16} className="text-slate-400 group-hover:text-brand-500 transition-colors" />
           <span className={selectedDate ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400'}>
             {formatDisplayValue() || placeholder}
           </span>
-        </div>
+        </button>
+
         {selectedDate && (
-          <button onClick={handleClear} className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" aria-label="Clear date">
+          <button
+             onClick={handleClear}
+             className="mr-2 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors focus:outline-none focus:bg-slate-100 dark:focus:bg-slate-700"
+             aria-label="Clear date"
+             type="button"
+          >
             <X size={14} />
           </button>
         )}
