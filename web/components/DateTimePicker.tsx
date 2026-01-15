@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useId } from 'react';
 import { Calendar, Clock, ChevronLeft, ChevronRight, X, Keyboard, ChevronUp, ChevronDown } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, setHours, setMinutes, getHours, getMinutes, parse, isValid } from 'date-fns';
 
@@ -38,6 +38,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   
   const containerRef = useRef<HTMLDivElement>(null);
   const typeInputRef = useRef<HTMLInputElement>(null);
+  const labelId = useId();
 
   // Convert 12h to 24h
   const get24Hour = (h12: number, pm: boolean) => {
@@ -229,24 +230,39 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       {label && (
-        <label className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+        <label
+          id={labelId}
+          className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 mb-2"
+        >
           <Calendar size={16} className="text-brand-500" />
           {label}
         </label>
       )}
       
       <div
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-slate-200 cursor-pointer hover:border-brand-500/50 transition-colors flex items-center justify-between group"
+        className="relative w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center group focus-within:ring-2 focus-within:ring-brand-500/50 focus-within:border-brand-500 transition-colors hover:border-brand-500/50"
       >
-        <div className="flex items-center gap-2">
-          <Calendar size={16} className="text-slate-400 group-hover:text-brand-500 transition-colors" />
-          <span className={selectedDate ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400'}>
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex-1 px-3 py-2.5 text-sm text-left flex items-center gap-2 bg-transparent border-none rounded-l-xl focus:outline-none"
+          aria-haspopup="dialog"
+          aria-expanded={isOpen}
+          aria-labelledby={label ? labelId : undefined}
+          aria-label={!label ? placeholder : undefined}
+        >
+          <Calendar size={16} className="text-slate-400 group-hover:text-brand-500 transition-colors flex-shrink-0" />
+          <span className={`truncate ${selectedDate ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400'}`}>
             {formatDisplayValue() || placeholder}
           </span>
-        </div>
+        </button>
         {selectedDate && (
-          <button onClick={handleClear} className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" aria-label="Clear date">
+          <button
+            type="button"
+            onClick={handleClear}
+            className="p-2 mr-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors flex-shrink-0"
+            aria-label="Clear date"
+          >
             <X size={14} />
           </button>
         )}
