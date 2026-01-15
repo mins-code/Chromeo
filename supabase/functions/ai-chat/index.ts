@@ -138,7 +138,8 @@ serve(async (req) => {
       history,
       mode,
       userName,
-      tagsContext,
+      tags, // NEW: Expect array of strings for safer handling
+      tagsContext, // OLD: Deprecated, but supported with strict sanitization
       currentDateContext,
       image,
       mimeType
@@ -165,8 +166,27 @@ serve(async (req) => {
     // Allow Unicode names but no newlines
     const cleanUserName = sanitizeInput(userName, 50, false) || 'User';
 
-    // Allow newlines and tag characters (#, @) in context
-    const cleanTagsContext = sanitizeInput(tagsContext, 1000, true);
+    // 🛡️ SECURITY: Safe Context Construction
+    // Prefer strict 'tags' array over loose 'tagsContext' string
+    let cleanTagsContext = '';
+
+    if (tags && Array.isArray(tags)) {
+        // Construct context safely from array
+        const safeTags = tags.map(t => sanitizeInput(t, 50, false)).filter(t => t.length > 0).join(', ');
+        if (safeTags.length > 0) {
+            // Instructions vary slightly by mode, but the core list is the same
+            if (mode === 'enhance') {
+                 cleanTagsContext = `\n\nEXISTING TAGS: ${safeTags}. Please choose tags from this list if relevant. Only create new tags if absolutely necessary.`;
+            } else {
+                 cleanTagsContext = `\n\nEXISTING TAGS: ${safeTags}. Use these for the "tags" field in your JSON output. Do not create new tags unless the user explicitly asks or the existing ones are completely irrelevant.`;
+            }
+        }
+    } else if (tagsContext) {
+        // Fallback for legacy clients or potential attack vectors
+        // 🛡️ SECURITY: Force 'allowNewlines: false' to prevent prompt injection via newlines
+        // This neutralizes attacks like "\n\nIGNORE PREVIOUS INSTRUCTIONS"
+        cleanTagsContext = sanitizeInput(tagsContext, 1000, false);
+    }
 
     // Rate Limiting
     const supabaseAdmin = createClient(
@@ -230,20 +250,6 @@ serve(async (req) => {
 
     if (mode && !['chat', 'enhance', 'parse', 'parse-image'].includes(mode)) {
       throw new Error('Invalid mode parameter');
-    }
-
-    // 🛡️ SECURITY: Sanitize Inputs to prevent Prompt Injection
-    // Only allow alphanumeric characters, spaces, and basic punctuation in userName
-    const safeUserName = (userName || 'User').replace(/[^a-zA-Z0-9\s\.\-]/g, '').slice(0, 50);
-
-    // Sanitize tagsContext. Ensure it's not containing malicious instructions.
-    // Assuming tagsContext is text like "Existing tags: ...". We'll limit its length and characters broadly.
-    // If it's malicious, it might try to break the prompt structure.
-    let safeTagsContext = '';
-    if (tagsContext && typeof tagsContext === 'string') {
-       safeTagsContext = tagsContext.slice(0, 1000); // Limit length
-       // Remove potential delimiters that might be used to trick the model
-       // (Though Gemini is robust, simple text sanitation is good practice)
     }
 
     const genAI = new GoogleGenerativeAI(apiKey)
