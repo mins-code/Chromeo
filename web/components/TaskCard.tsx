@@ -194,14 +194,34 @@ function arePropsEqual(prev: TaskCardProps, next: TaskCardProps) {
 
   // ⚡ Performance Optimization:
   // "allTasks" is only used for calculating dependencies.
-  // If the current task has no dependencies, we can safely ignore changes to "allTasks" (which happens on every task update).
-  // This prevents O(N) re-renders of the entire list when a single task is updated.
+  // We only re-render if the SPECIFIC dependencies of this task have changed.
   const hasDependencies = next.task.dependencyIds && next.task.dependencyIds.length > 0;
 
   if (hasDependencies) {
-    // If it has dependencies, we need to check if allTasks changed,
-    // because the status/title of a dependency might have changed.
-    if (prev.allTasks !== next.allTasks) return false;
+    if (prev.allTasks !== next.allTasks) {
+       // Deep check dependencies if the list reference changed.
+       // This prevents O(N) re-renders of dependency-heavy tasks when unrelated tasks change.
+       const ids = next.task.dependencyIds!;
+
+       const dependenciesChanged = ids.some(id => {
+           const prevTask = prev.allTasks?.find(t => t.id === id);
+           const nextTask = next.allTasks?.find(t => t.id === id);
+
+           // If reference is same, no change for this task
+           if (prevTask === nextTask) return false;
+
+           // If one is missing and other is present (deleted/created) or both missing
+           if (!prevTask || !nextTask) return prevTask !== nextTask;
+
+           // If critical fields changed (status or title affects visual blocked state)
+           if (prevTask.status !== nextTask.status) return true;
+           if (prevTask.title !== nextTask.title) return true;
+
+           return false;
+       });
+
+       if (dependenciesChanged) return false;
+    }
   }
 
   return true;
