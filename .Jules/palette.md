@@ -5,3 +5,7 @@
 ## 2024-05-24 - Custom Select Accessibility
 **Learning:** Custom select/dropdown components often lack keyboard navigation support (Enter/Space to open, Arrow keys to navigate, Enter to select, Esc to close) and ARIA attributes (`aria-haspopup`, `aria-expanded`, `role="listbox"`), making them inaccessible to screen reader and keyboard-only users.
 **Action:** Implement full keyboard support and ARIA roles for custom interactive components like Select, or use a library that handles this.
+
+## 2026-01-16 - Command Palette Accessibility
+**Learning:** The Command Palette (`CommandBar`) used `<button>` elements for results but kept focus on the input, which confuses screen readers. Standard Combobox pattern requires `role="combobox"` on input, `aria-activedescendant` pointing to the selected option, and `role="listbox"` containing `role="option"` elements (not buttons).
+**Action:** When building command palettes where focus remains on input, use `aria-activedescendant` and ensure result items are `div role="option"` with valid IDs, avoiding interactive elements like `<button>` inside the listbox.
