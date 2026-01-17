@@ -138,8 +138,8 @@ serve(async (req) => {
       history,
       mode,
       userName,
-      tags, // NEW: Expect array of strings for safer handling
-      tagsContext, // OLD: Deprecated, but supported with strict sanitization
+      tagsContext,
+      availableTags,
       currentDateContext,
       image,
       mimeType
@@ -166,26 +166,30 @@ serve(async (req) => {
     // Allow Unicode names but no newlines
     const cleanUserName = sanitizeInput(userName, 50, false) || 'User';
 
-    // 🛡️ SECURITY: Safe Context Construction
-    // Prefer strict 'tags' array over loose 'tagsContext' string
-    let cleanTagsContext = '';
+// 🛡️ SECURITY: Construct tags context securely on the server
+    let tagInstruction = '';
+    let usedSecureTags = false;
 
-    if (tags && Array.isArray(tags)) {
-        // Construct context safely from array
-        const safeTags = tags.map(t => sanitizeInput(t, 50, false)).filter(t => t.length > 0).join(', ');
-        if (safeTags.length > 0) {
-            // Instructions vary slightly by mode, but the core list is the same
-            if (mode === 'enhance') {
-                 cleanTagsContext = `\n\nEXISTING TAGS: ${safeTags}. Please choose tags from this list if relevant. Only create new tags if absolutely necessary.`;
-            } else {
-                 cleanTagsContext = `\n\nEXISTING TAGS: ${safeTags}. Use these for the "tags" field in your JSON output. Do not create new tags unless the user explicitly asks or the existing ones are completely irrelevant.`;
-            }
-        }
-    } else if (tagsContext) {
-        // Fallback for legacy clients or potential attack vectors
-        // 🛡️ SECURITY: Force 'allowNewlines: false' to prevent prompt injection via newlines
-        // This neutralizes attacks like "\n\nIGNORE PREVIOUS INSTRUCTIONS"
-        cleanTagsContext = sanitizeInput(tagsContext, 1000, false);
+    // Prefer availableTags array if provided (New Secure Method)
+    if (Array.isArray(availableTags) && availableTags.length > 0) {
+       const cleanTags = availableTags
+           .filter((t: any) => typeof t === 'string')
+           .map((t: string) => sanitizeInput(t, 50, false)) // No newlines allowed in individual tags
+           .filter((t: string) => t.length > 0); // Remove empty tags
+
+       if (cleanTags.length > 0) {
+          const tagsList = cleanTags.join(', ');
+          // We will append the specific instruction in the switch case
+          tagInstruction = `\n\nEXISTING TAGS: ${tagsList}.`;
+          usedSecureTags = true;
+       }
+    }
+
+    // Fallback to legacy tagsContext (Legacy Method)
+    if (!usedSecureTags && tagsContext) {
+       // 🛡️ SECURITY: Force 'allowNewlines: false' to prevent prompt injection via newlines
+       // This neutralizes attacks like "\n\nIGNORE PREVIOUS INSTRUCTIONS"
+       tagInstruction = sanitizeInput(tagsContext, 1000, false);
     }
 
     // Rate Limiting
@@ -259,11 +263,23 @@ serve(async (req) => {
     // --- DETERMINE SYSTEM INSTRUCTION BASED ON MODE ---
     switch (mode) {
       case 'chat':
-        systemInstruction = `${BASE_SYSTEM_INSTRUCTION}\n\nIMPORTANT: The user's name is "${cleanUserName}". Address them by name occasionally.${cleanTagsContext || ''}`;
+        {
+          let finalInstruction = tagInstruction;
+          if (usedSecureTags) {
+             finalInstruction += ' Use these for the "tags" field in your JSON output. Do not create new tags unless the user explicitly asks or the existing ones are completely irrelevant.';
+          }
+          systemInstruction = `${BASE_SYSTEM_INSTRUCTION}\n\nIMPORTANT: The user's name is "${cleanUserName}". Address them by name occasionally.${finalInstruction || ''}`;
+        }
         break;
 
       case 'enhance':
-        systemInstruction = BASE_SYSTEM_INSTRUCTION + `\n\nEnsure output is strictly JSON with keys: description, subtasks (string array), priority, tags.${cleanTagsContext || ''}`;
+        {
+          let finalInstruction = tagInstruction;
+          if (usedSecureTags) {
+             finalInstruction += ' Please choose tags from this list if relevant. Only create new tags if absolutely necessary.';
+          }
+          systemInstruction = BASE_SYSTEM_INSTRUCTION + `\n\nEnsure output is strictly JSON with keys: description, subtasks (string array), priority, tags.${finalInstruction || ''}`;
+        }
         isJsonMode = true;
         break;
 
