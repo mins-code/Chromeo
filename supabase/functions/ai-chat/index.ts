@@ -256,20 +256,6 @@ serve(async (req) => {
       throw new Error('Invalid mode parameter');
     }
 
-    // 🛡️ SECURITY: Sanitize Inputs to prevent Prompt Injection
-    // Only allow alphanumeric characters, spaces, and basic punctuation in userName
-    const safeUserName = (userName || 'User').replace(/[^a-zA-Z0-9\s\.\-]/g, '').slice(0, 50);
-
-    // Sanitize tagsContext. Ensure it's not containing malicious instructions.
-    // Assuming tagsContext is text like "Existing tags: ...". We'll limit its length and characters broadly.
-    // If it's malicious, it might try to break the prompt structure.
-    let safeTagsContext = '';
-    if (tagsContext && typeof tagsContext === 'string') {
-       safeTagsContext = tagsContext.slice(0, 1000); // Limit length
-       // Remove potential delimiters that might be used to trick the model
-       // (Though Gemini is robust, simple text sanitation is good practice)
-    }
-
     const genAI = new GoogleGenerativeAI(apiKey)
     let systemInstruction = "";
     let isJsonMode = false;
