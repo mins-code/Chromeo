@@ -7,6 +7,14 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// Custom error class for errors that are safe to display to the user
+class SafeError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "SafeError";
+  }
+}
+
 // Generate a secure random token
 function generateToken(): string {
   const array = new Uint8Array(32);
@@ -28,7 +36,7 @@ serve(async (req) => {
     // Get user from auth header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      throw new Error("Missing authorization header");
+      throw new SafeError("Missing authorization header");
     }
 
     // Create client with user's token to verify auth
@@ -38,7 +46,7 @@ serve(async (req) => {
 
     const { data: { user }, error: authError } = await userSupabase.auth.getUser();
     if (authError || !user) {
-      throw new Error("Unauthorized");
+      throw new SafeError("Unauthorized");
     }
 
     const { action, token, password } = await req.json();
@@ -78,7 +86,7 @@ serve(async (req) => {
     // Action: Delete with password verification - immediate deletion
     if (action === "delete-with-password") {
       if (!password) {
-        throw new Error("Password is required for verification");
+        throw new SafeError("Password is required for verification");
       }
 
       // Verify password by attempting to sign in
@@ -88,7 +96,7 @@ serve(async (req) => {
       });
 
       if (signInError) {
-        throw new Error("Invalid password. Please try again.");
+        throw new SafeError("Invalid password. Please try again.");
       }
 
       const userId = user.id;
@@ -134,7 +142,7 @@ serve(async (req) => {
       
       if (deleteUserError) {
         console.error("Error deleting auth user:", deleteUserError);
-        throw new Error("Failed to delete account. Please contact support.");
+        throw new SafeError("Failed to delete account. Please contact support.");
       }
 
       console.log(`Successfully deleted user ${userId} via password verification`);
@@ -228,7 +236,7 @@ serve(async (req) => {
         .single();
 
       if (findError || !existingRequest) {
-        throw new Error("No pending deletion request found. Please create a new request.");
+        throw new SafeError("No pending deletion request found. Please create a new request.");
       }
 
       // Check if expired
@@ -238,7 +246,7 @@ serve(async (req) => {
           .from("account_deletion_requests")
           .update({ status: "expired" })
           .eq("id", existingRequest.id);
-        throw new Error("Previous request has expired. Please create a new request.");
+        throw new SafeError("Previous request has expired. Please create a new request.");
       }
 
       // Resend the email
@@ -261,7 +269,7 @@ serve(async (req) => {
     // Action: Confirm deletion - actually deletes the account
     if (action === "confirm") {
       if (!token) {
-        throw new Error("Missing confirmation token");
+        throw new SafeError("Missing confirmation token");
       }
 
       // Find the deletion request
@@ -273,7 +281,7 @@ serve(async (req) => {
         .single();
 
       if (findError || !request) {
-        throw new Error("Invalid or expired deletion token");
+        throw new SafeError("Invalid or expired deletion token");
       }
 
       // Check if expired
@@ -282,12 +290,12 @@ serve(async (req) => {
           .from("account_deletion_requests")
           .update({ status: "expired" })
           .eq("id", request.id);
-        throw new Error("Deletion token has expired. Please request a new one.");
+        throw new SafeError("Deletion token has expired. Please request a new one.");
       }
 
       // Verify the token is for the current user
       if (request.user_id !== user.id) {
-        throw new Error("Token does not match current user");
+        throw new SafeError("Token does not match current user");
       }
 
       const userId = request.user_id;
@@ -341,7 +349,7 @@ serve(async (req) => {
       
       if (deleteUserError) {
         console.error("Error deleting auth user:", deleteUserError);
-        throw new Error("Failed to delete account. Please contact support.");
+        throw new SafeError("Failed to delete account. Please contact support.");
       }
 
       console.log(`Successfully deleted user ${userId}`);
@@ -390,12 +398,19 @@ serve(async (req) => {
       );
     }
 
-    throw new Error(`Unknown action: ${action}`);
+    throw new SafeError(`Unknown action: ${action}`);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Account deletion error:", error);
+
+    // Determine the error message to return
+    // Only return the message if it's a known SafeError
+    const message = error instanceof SafeError
+      ? error.message
+      : "An unexpected error occurred. Please try again.";
+
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: message }),
       { 
         status: 400, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
