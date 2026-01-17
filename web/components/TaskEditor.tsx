@@ -460,6 +460,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                                ? 'bg-brand-500 text-white shadow-md hover:bg-brand-600 active:scale-95'
                                : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                        }`}
+                       aria-label="Add tag"
                    >
                        <Plus size={18} />
                    </button>
@@ -562,6 +563,11 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                     title={
                       notificationEnabled === undefined ? 'Using global settings' :
                       notificationEnabled ? 'Enabled' : 'Disabled'
+                    }
+                    aria-label={
+                      notificationEnabled === true ? 'Disable notification' :
+                      notificationEnabled === false ? 'Use global settings' :
+                      'Enable notification'
                     }
                   >
                     <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${
@@ -893,7 +899,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
          {/* Footer */}
         <div className="p-6 border-t border-slate-200 dark:border-white/5 bg-white/80 dark:bg-slate-900/80 flex justify-between items-center z-10">
             {task ? (
-                <Button variant="danger" size="icon" onClick={() => onDelete && onDelete(task.id)} className="bg-red-500/10 hover:bg-red-500/20 text-red-500 dark:text-red-400">
+                <Button variant="danger" size="icon" onClick={() => onDelete && onDelete(task.id)} className="bg-red-500/10 hover:bg-red-500/20 text-red-500 dark:text-red-400" aria-label="Delete task">
                     <Trash2 size={18} />
                 </Button>
             ) : <div />}
