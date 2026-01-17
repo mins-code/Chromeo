@@ -27,7 +27,17 @@ const Select: React.FC<SelectProps> = ({
     label
 }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [highlightedIndex, setHighlightedIndex] = useState(-1);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const listboxId = React.useId();
+
+    // Reset highlight when opening
+    useEffect(() => {
+        if (isOpen) {
+            const idx = options.findIndex(o => o.value === value);
+            setHighlightedIndex(idx >= 0 ? idx : 0);
+        }
+    }, [isOpen, value, options]);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -115,19 +125,30 @@ const Select: React.FC<SelectProps> = ({
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 onKeyDown={(e) => {
-                    if (e.key === 'Escape') setIsOpen(false);
+                    if (e.key === 'Escape') { setIsOpen(false); e.stopPropagation(); }
+                    if (e.key === 'Enter' && isOpen) {
+                        e.preventDefault();
+                        if (highlightedIndex >= 0) {
+                            onChange(options[highlightedIndex].value);
+                            setIsOpen(false);
+                        }
+                    }
                     if (['ArrowDown', 'ArrowUp'].includes(e.key)) {
                         e.preventDefault();
-                        if (!isOpen) setIsOpen(true);
-                        const idx = options.findIndex(o => o.value === value);
-                        const nextIdx = e.key === 'ArrowDown'
-                            ? Math.min(idx + 1, options.length - 1)
-                            : Math.max(idx - 1, 0);
-                        if (idx !== nextIdx && nextIdx >= 0) onChange(options[nextIdx].value);
+                        if (!isOpen) {
+                            setIsOpen(true);
+                        } else {
+                            const nextIdx = e.key === 'ArrowDown'
+                                ? Math.min(highlightedIndex + 1, options.length - 1)
+                                : Math.max(highlightedIndex - 1, 0);
+                            setHighlightedIndex(nextIdx);
+                        }
                     }
                 }}
                 aria-haspopup="listbox"
                 aria-expanded={isOpen}
+                aria-controls={isOpen ? listboxId : undefined}
+                aria-activedescendant={isOpen && highlightedIndex >= 0 ? `${listboxId}-opt-${highlightedIndex}` : undefined}
                 aria-label={label || placeholder}
                 className={`flex items-center justify-between w-full px-4 py-2.5 rounded-xl border cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50 ${colors.bg} ${colors.border} ${isOpen ? 'ring-2 ring-opacity-50 ring-current' : ''}`}
             >
@@ -141,13 +162,15 @@ const Select: React.FC<SelectProps> = ({
 
             {isOpen && (
                 <div
+                    id={listboxId}
                     role="listbox"
                     className={`absolute z-50 w-full mt-1 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 border ${colors.listBg} ${colors.listBorder}`}
                 >
                     <div className="max-h-60 overflow-auto py-1 custom-scrollbar">
-                        {options.map((option) => (
+                        {options.map((option, idx) => (
                             <div
                                 key={option.value}
+                                id={`${listboxId}-opt-${idx}`}
                                 role="option"
                                 aria-selected={value === option.value}
                                 onClick={() => {
@@ -155,9 +178,11 @@ const Select: React.FC<SelectProps> = ({
                                     setIsOpen(false);
                                 }}
                                 className={`px-4 py-2.5 text-sm cursor-pointer transition-colors flex items-center justify-between ${
-                                    value === option.value 
-                                        ? `${colors.activeBg} ${colors.activeText} font-semibold` 
-                                        : `${colors.text} ${colors.hover}`
+                                    highlightedIndex === idx
+                                        ? `${colors.activeBg} ${colors.activeText}`
+                                        : value === option.value
+                                            ? `${colors.text} font-semibold`
+                                            : `${colors.text} ${colors.hover}`
                                 }`}
                             >
                                 <span className="block truncate">{option.label}</span>
