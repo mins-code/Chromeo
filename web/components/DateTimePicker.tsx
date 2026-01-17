@@ -42,6 +42,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   
   const containerRef = useRef<HTMLDivElement>(null);
   const typeInputRef = useRef<HTMLInputElement>(null);
+  const labelId = useId();
 
   // Convert 12h to 24h
   const get24Hour = (h12: number, pm: boolean) => {
@@ -270,35 +271,35 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
       )}
       
       <div
-        className="flex items-center w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-200 hover:border-brand-500/50 transition-colors group focus-within:ring-2 focus-within:ring-brand-500/50 focus-within:border-brand-500"
+        className="relative w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center group focus-within:ring-2 focus-within:ring-brand-500/50 focus-within:border-brand-500 transition-colors hover:border-brand-500/50"
       >
         <button
-           id={triggerId}
-           type="button"
-           onClick={() => setIsOpen(!isOpen)}
-           onKeyDown={(e) => {
-             if (e.key === 'ArrowDown') {
-               e.preventDefault();
-               setIsOpen(true);
-             }
-           }}
-           className="flex-1 flex items-center gap-2 px-3 py-2.5 bg-transparent border-none outline-none rounded-l-xl text-left"
-           aria-haspopup="dialog"
-           aria-expanded={isOpen}
-           aria-label={label || placeholder}
+          id={triggerId}
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              setIsOpen(true);
+            }
+          }}
+          className="flex-1 px-3 py-2.5 text-sm text-left flex items-center gap-2 bg-transparent border-none rounded-l-xl focus:outline-none"
+          aria-haspopup="dialog"
+          aria-expanded={isOpen}
+          aria-label={label || placeholder}
         >
-          <Calendar size={16} className="text-slate-400 group-hover:text-brand-500 transition-colors" />
-          <span className={selectedDate ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400'}>
+          <Calendar size={16} className="text-slate-400 group-hover:text-brand-500 transition-colors flex-shrink-0" />
+          <span className={`truncate ${selectedDate ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400'}`}>
             {formatDisplayValue() || placeholder}
           </span>
         </button>
 
         {selectedDate && (
           <button
-             onClick={handleClear}
-             className="mr-2 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors focus:outline-none focus:bg-slate-100 dark:focus:bg-slate-700"
-             aria-label="Clear date"
-             type="button"
+            type="button"
+            onClick={handleClear}
+            className="p-2 mr-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors flex-shrink-0"
+            aria-label="Clear date"
           >
             <X size={14} />
           </button>
