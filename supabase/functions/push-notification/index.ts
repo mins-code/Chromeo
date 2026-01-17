@@ -332,8 +332,8 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             success: false, 
-            message: "Push notification delivery failed",
-            error: pushError.message 
+            message: "Push notification delivery failed"
+            // 🛡️ SECURITY: Do not return raw pushError.message as it might contain key details
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -348,11 +348,19 @@ serve(async (req) => {
     throw new Error(`Unknown action: ${action}`);
 
   } catch (error) {
+    // 🛡️ SECURITY: Log full error internally but return generic message to client
     console.error("Push notification error:", error);
+
+    // Determine if it's a client error (400) or server error (500)
+    // We assume mostly 500s unless specific validation logic threw it,
+    // but to be safe we return 400 if it was clearly a bad request structure, otherwise 500.
+    // For simplicity and security, we default to 500 for unhandled exceptions
+    // unless we know it's a validation error.
+
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "An unexpected error occurred processing your request." }),
       { 
-        status: 400, 
+        status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
       }
     );
