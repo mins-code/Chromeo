@@ -144,9 +144,10 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
+    // 🛡️ SECURITY: Log full error internally but return generic message to client
     console.error("Notification scheduler error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Internal Server Error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
