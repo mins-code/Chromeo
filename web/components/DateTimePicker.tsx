@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Calendar, Clock, ChevronLeft, ChevronRight, X, Keyboard, ChevronUp, ChevronDown } from 'lucide-react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, setHours, setMinutes, getHours, getMinutes, parse, isValid } from 'date-fns';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, setHours, setMinutes, getHours, getMinutes, parse, isValid, addDays } from 'date-fns';
 
 interface DateTimePickerProps {
   value: string;
@@ -61,6 +61,14 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     if (mode === 'type' && typeInputRef.current) typeInputRef.current.focus();
   }, [mode]);
 
+  // Focus management for keyboard navigation
+  useEffect(() => {
+    if (isOpen && mode === 'picker' && selectedDate) {
+      const btn = document.getElementById(`date-${format(selectedDate, 'yyyy-MM-dd')}`);
+      if (btn) btn.focus();
+    }
+  }, [selectedDate, isOpen, mode, currentMonth]);
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) setIsOpen(false);
@@ -77,6 +85,16 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     const newDate = setMinutes(setHours(date, h24), minutes);
     setSelectedDate(newDate);
     emitChange(newDate);
+  };
+
+  const handleDayKeyDown = (e: React.KeyboardEvent, day: Date) => {
+    const directions = { ArrowRight: 1, ArrowLeft: -1, ArrowUp: -7, ArrowDown: 7 };
+    if (e.key in directions) {
+      e.preventDefault();
+      const newDate = addDays(day, directions[e.key as keyof typeof directions]);
+      handleDateSelect(newDate);
+      if (!isSameMonth(newDate, currentMonth)) setCurrentMonth(newDate);
+    }
   };
 
   const handleTimeChange = (newH12: number, newMin: number, newPM: boolean) => {
@@ -136,6 +154,15 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 
   const days = getDaysInMonth();
   const startPadding = getStartDayOfWeek();
+
+  // Calculate focus target for roving tabindex
+  const getFocusDate = () => {
+    if (selectedDate && isSameMonth(selectedDate, currentMonth)) return selectedDate;
+    const today = new Date();
+    if (isSameMonth(today, currentMonth)) return today;
+    return startOfMonth(currentMonth);
+  };
+  const focusDate = getFocusDate();
 
   // Spinner component for time - now with direct input
   const TimeSpinner = ({ value, onChange, min, max, step = 1, display }: { value: number; onChange: (v: number) => void; min: number; max: number; step?: number; display?: (v: number) => string }) => {
@@ -307,11 +334,15 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
                   const isSelected = selectedDate && isSameDay(day, selectedDate);
                   const isTodayDate = isToday(day);
                   const isCurrentMonth = isSameMonth(day, currentMonth);
+                  const isFocusable = isSameDay(day, focusDate);
                   return (
                     <button
                       key={day.toISOString()}
+                      id={`date-${format(day, 'yyyy-MM-dd')}`}
+                      tabIndex={isFocusable ? 0 : -1}
+                      onKeyDown={(e) => handleDayKeyDown(e, day)}
                       onClick={() => handleDateSelect(day)}
-                      className={`w-8 h-8 rounded-md text-xs font-medium transition-all flex items-center justify-center
+                      className={`w-8 h-8 rounded-md text-xs font-medium transition-all flex items-center justify-center outline-none focus:ring-2 focus:ring-brand-500 focus:z-10
                         ${isSelected ? 'bg-brand-500 text-white font-bold ring-2 ring-brand-400 shadow-lg shadow-brand-500/50' : isTodayDate ? 'bg-brand-500/20 text-brand-400' : isCurrentMonth ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600'}
                       `}
                     >
