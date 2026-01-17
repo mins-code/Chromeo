@@ -139,6 +139,7 @@ serve(async (req) => {
       mode,
       userName,
       tagsContext,
+      availableTags,
       currentDateContext,
       image,
       mimeType
@@ -165,8 +166,31 @@ serve(async (req) => {
     // Allow Unicode names but no newlines
     const cleanUserName = sanitizeInput(userName, 50, false) || 'User';
 
-    // Allow newlines and tag characters (#, @) in context
-    const cleanTagsContext = sanitizeInput(tagsContext, 1000, true);
+// 🛡️ SECURITY: Construct tags context securely on the server
+    let tagInstruction = '';
+    let usedSecureTags = false;
+
+    // Prefer availableTags array if provided (New Secure Method)
+    if (Array.isArray(availableTags) && availableTags.length > 0) {
+       const cleanTags = availableTags
+           .filter((t: any) => typeof t === 'string')
+           .map((t: string) => sanitizeInput(t, 50, false)) // No newlines allowed in individual tags
+           .filter((t: string) => t.length > 0); // Remove empty tags
+
+       if (cleanTags.length > 0) {
+          const tagsList = cleanTags.join(', ');
+          // We will append the specific instruction in the switch case
+          tagInstruction = `\n\nEXISTING TAGS: ${tagsList}.`;
+          usedSecureTags = true;
+       }
+    }
+
+    // Fallback to legacy tagsContext (Legacy Method)
+    if (!usedSecureTags && tagsContext) {
+       // 🛡️ SECURITY: Force 'allowNewlines: false' to prevent prompt injection via newlines
+       // This neutralizes attacks like "\n\nIGNORE PREVIOUS INSTRUCTIONS"
+       tagInstruction = sanitizeInput(tagsContext, 1000, false);
+    }
 
     // Rate Limiting
     const supabaseAdmin = createClient(
@@ -232,20 +256,6 @@ serve(async (req) => {
       throw new Error('Invalid mode parameter');
     }
 
-    // 🛡️ SECURITY: Sanitize Inputs to prevent Prompt Injection
-    // Only allow alphanumeric characters, spaces, and basic punctuation in userName
-    const safeUserName = (userName || 'User').replace(/[^a-zA-Z0-9\s\.\-]/g, '').slice(0, 50);
-
-    // Sanitize tagsContext. Ensure it's not containing malicious instructions.
-    // Assuming tagsContext is text like "Existing tags: ...". We'll limit its length and characters broadly.
-    // If it's malicious, it might try to break the prompt structure.
-    let safeTagsContext = '';
-    if (tagsContext && typeof tagsContext === 'string') {
-       safeTagsContext = tagsContext.slice(0, 1000); // Limit length
-       // Remove potential delimiters that might be used to trick the model
-       // (Though Gemini is robust, simple text sanitation is good practice)
-    }
-
     const genAI = new GoogleGenerativeAI(apiKey)
     let systemInstruction = "";
     let isJsonMode = false;
@@ -253,11 +263,23 @@ serve(async (req) => {
     // --- DETERMINE SYSTEM INSTRUCTION BASED ON MODE ---
     switch (mode) {
       case 'chat':
-        systemInstruction = `${BASE_SYSTEM_INSTRUCTION}\n\nIMPORTANT: The user's name is "${cleanUserName}". Address them by name occasionally.${cleanTagsContext || ''}`;
+        {
+          let finalInstruction = tagInstruction;
+          if (usedSecureTags) {
+             finalInstruction += ' Use these for the "tags" field in your JSON output. Do not create new tags unless the user explicitly asks or the existing ones are completely irrelevant.';
+          }
+          systemInstruction = `${BASE_SYSTEM_INSTRUCTION}\n\nIMPORTANT: The user's name is "${cleanUserName}". Address them by name occasionally.${finalInstruction || ''}`;
+        }
         break;
 
       case 'enhance':
-        systemInstruction = BASE_SYSTEM_INSTRUCTION + `\n\nEnsure output is strictly JSON with keys: description, subtasks (string array), priority, tags.${cleanTagsContext || ''}`;
+        {
+          let finalInstruction = tagInstruction;
+          if (usedSecureTags) {
+             finalInstruction += ' Please choose tags from this list if relevant. Only create new tags if absolutely necessary.';
+          }
+          systemInstruction = BASE_SYSTEM_INSTRUCTION + `\n\nEnsure output is strictly JSON with keys: description, subtasks (string array), priority, tags.${finalInstruction || ''}`;
+        }
         isJsonMode = true;
         break;
 

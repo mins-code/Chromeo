@@ -161,9 +161,20 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
     }, [tasks, unfilteredTasks, currentDate, viewMode, customIntervalDays]);
 
     // Report visible tags to parent component
+    const prevVisibleTagsRef = useRef<string[]>([]);
+
     useEffect(() => {
         if (onVisibleTagsChange) {
-            onVisibleTagsChange(visibleTags);
+            // ⚡ Performance Optimization: Only notify parent if tags actually changed
+            // This prevents the parent App component (and the whole tree) from re-rendering
+            // when navigating months if the visible tags remain the same.
+            const isSame = visibleTags.length === prevVisibleTagsRef.current.length &&
+                visibleTags.every((tag, i) => tag === prevVisibleTagsRef.current[i]);
+
+            if (!isSame) {
+                prevVisibleTagsRef.current = visibleTags;
+                onVisibleTagsChange(visibleTags);
+            }
         }
     }, [visibleTags, onVisibleTagsChange]);
     // Get display label for custom interval

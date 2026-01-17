@@ -198,30 +198,34 @@ function arePropsEqual(prev: TaskCardProps, next: TaskCardProps) {
   const hasDependencies = next.task.dependencyIds && next.task.dependencyIds.length > 0;
 
   if (hasDependencies) {
-    if (prev.allTasks !== next.allTasks) {
-       // Deep check dependencies if the list reference changed.
-       // This prevents O(N) re-renders of dependency-heavy tasks when unrelated tasks change.
-       const ids = next.task.dependencyIds!;
+    // If it has dependencies, we need to check if allTasks changed,
+    // because the status/title of a dependency might have changed.
 
-       const dependenciesChanged = ids.some(id => {
-           const prevTask = prev.allTasks?.find(t => t.id === id);
-           const nextTask = next.allTasks?.find(t => t.id === id);
+    // Quick check: if the array reference is the same, no changes occurred.
+    if (prev.allTasks === next.allTasks) return true;
 
-           // If reference is same, no change for this task
-           if (prevTask === nextTask) return false;
+    // Deep check: Instead of re-rendering whenever ANY task changes (which changes allTasks ref),
+    // we only re-render if the specific dependencies of THIS task have changed.
+    const depIds = next.task.dependencyIds!;
+    const prevAll = prev.allTasks || [];
+    const nextAll = next.allTasks || [];
 
-           // If one is missing and other is present (deleted/created) or both missing
-           if (!prevTask || !nextTask) return prevTask !== nextTask;
+    for (const depId of depIds) {
+      const prevDep = prevAll.find(t => t.id === depId);
+      const nextDep = nextAll.find(t => t.id === depId);
 
-           // If critical fields changed (status or title affects visual blocked state)
-           if (prevTask.status !== nextTask.status) return true;
-           if (prevTask.title !== nextTask.title) return true;
+      // If dependency existence changed
+      if (!prevDep !== !nextDep) return false;
 
-           return false;
-       });
-
-       if (dependenciesChanged) return false;
+      if (prevDep && nextDep) {
+        // Check relevant fields: status (for blocking) and title (for "Waiting for...")
+        if (prevDep.status !== nextDep.status) return false;
+        if (prevDep.title !== nextDep.title) return false;
+      }
     }
+
+    // If we're here, no relevant dependencies changed, so we can skip re-render
+    return true;
   }
 
   return true;
