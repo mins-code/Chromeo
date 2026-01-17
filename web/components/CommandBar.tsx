@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useId } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Loader2, 
@@ -51,6 +51,7 @@ const CommandBar: React.FC<CommandBarProps> = ({ isOpen, onClose, onTaskParsed, 
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const inputRef = useRef<HTMLInputElement>(null);
     const resultsRef = useRef<HTMLDivElement>(null);
+    const listboxId = useId();
 
     // Hooks for data
     const { tasks } = useTasks();
@@ -235,11 +236,16 @@ const CommandBar: React.FC<CommandBarProps> = ({ isOpen, onClose, onTaskParsed, 
                     </div>
 
                     {/* Input Form */}
-                    <form onSubmit={handleSubmit}>
+                    <form onSubmit={handleSubmit} role="search">
                         <div className="relative flex items-center">
                             <input
                                 ref={inputRef}
                                 type="text"
+                                role="combobox"
+                                aria-autocomplete="list"
+                                aria-expanded={results.length > 0}
+                                aria-controls={results.length > 0 ? listboxId : undefined}
+                                aria-activedescendant={selectedIndex >= 0 && results.length > 0 ? `${listboxId}-option-${selectedIndex}` : undefined}
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 placeholder={isListening ? "Listening..." : "Search tasks, notes, pages... or create new task"}
@@ -290,10 +296,17 @@ const CommandBar: React.FC<CommandBarProps> = ({ isOpen, onClose, onTaskParsed, 
                                 <Search size={12} />
                                 Jump To
                             </div>
-                            <div className="pb-2">
+                            <div
+                                className="pb-2"
+                                id={listboxId}
+                                role="listbox"
+                            >
                                 {results.map((result, index) => (
                                     <button
                                         key={`${result.type}-${result.id}`}
+                                        id={`${listboxId}-option-${index}`}
+                                        role="option"
+                                        aria-selected={index === selectedIndex}
                                         onClick={() => handleResultSelect(result)}
                                         className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
                                             index === selectedIndex
