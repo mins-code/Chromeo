@@ -166,7 +166,7 @@ serve(async (req) => {
     // Allow Unicode names but no newlines
     const cleanUserName = sanitizeInput(userName, 50, false) || 'User';
 
-    // 🛡️ SECURITY: Construct tags context securely on the server
+// 🛡️ SECURITY: Construct tags context securely on the server
     let tagInstruction = '';
     let usedSecureTags = false;
 
@@ -187,9 +187,9 @@ serve(async (req) => {
 
     // Fallback to legacy tagsContext (Legacy Method)
     if (!usedSecureTags && tagsContext) {
-       // Allow newlines and tag characters (#, @) in context
-       // Note: This is less secure as it relies on client-side construction
-       tagInstruction = sanitizeInput(tagsContext, 1000, true);
+       // 🛡️ SECURITY: Force 'allowNewlines: false' to prevent prompt injection via newlines
+       // This neutralizes attacks like "\n\nIGNORE PREVIOUS INSTRUCTIONS"
+       tagInstruction = sanitizeInput(tagsContext, 1000, false);
     }
 
     // Rate Limiting

@@ -5,6 +5,13 @@
 **Learning:** "Cron jobs" in Supabase are just HTTP requests. Unless the target function *explicitly* checks for an Authorization header (usually matching `SUPABASE_SERVICE_ROLE_KEY`), the endpoint is public.
 **Prevention:** Always verify `Authorization: Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` for functions intended only for internal scheduling.
 
+## 2024-05-26 - Context Injection in LLMs
+**Vulnerability:** The `ai-chat` Edge Function allowed a raw `tagsContext` string to be appended directly to the system prompt. A malicious user (or compromised client) could inject newlines and override system instructions (Prompt Injection) by crafting a malicious context string.
+**Learning:** Constructing LLM prompts by concatenating user-provided "context" strings is dangerous. Even with basic sanitization (removing quotes), attackers can use newlines to break out of the context block and issue new system commands.
+**Prevention:**
+1. Move prompt construction to the server. Accept structured data (e.g., arrays) from the client instead of pre-formatted text strings.
+2. Strictly sanitize inputs meant for context: remove newlines and control characters unless absolutely necessary.
+3. Use structured "System Instructions" or "Data" blocks clearly delimited from "User Instructions" if the model supports it.
 ## 2024-05-24 - Secure Error Handling Pattern
 **Vulnerability:** Edge Functions were returning `error.message` directly to the client in catch blocks, potentially exposing database schema details or internal logic upon unexpected crashes.
 **Learning:** `catch(error)` captures everything, including syntax errors or database timeouts. Blindly re-throwing or returning `error.message` is an information leak.
