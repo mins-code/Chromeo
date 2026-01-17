@@ -250,6 +250,11 @@ const CommandBar: React.FC<CommandBarProps> = ({ isOpen, onClose, onTaskParsed, 
                                 onChange={(e) => setInput(e.target.value)}
                                 placeholder={isListening ? "Listening..." : "Search tasks, notes, pages... or create new task"}
                                 disabled={isLoading}
+                                role="combobox"
+                                aria-autocomplete="list"
+                                aria-expanded={results.length > 0}
+                                aria-controls={listId}
+                                aria-activedescendant={selectedIndex >= 0 ? `${listId}-option-${selectedIndex}` : undefined}
                                 className="w-full px-5 py-4 pr-20 text-lg bg-transparent text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none disabled:opacity-50"
                             />
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
@@ -302,13 +307,13 @@ const CommandBar: React.FC<CommandBarProps> = ({ isOpen, onClose, onTaskParsed, 
                                 role="listbox"
                             >
                                 {results.map((result, index) => (
-                                    <button
+                                    <div
                                         key={`${result.type}-${result.id}`}
                                         id={`${listboxId}-option-${index}`}
                                         role="option"
                                         aria-selected={index === selectedIndex}
                                         onClick={() => handleResultSelect(result)}
-                                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+                                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors cursor-pointer ${
                                             index === selectedIndex
                                                 ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
                                                 : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
@@ -331,7 +336,7 @@ const CommandBar: React.FC<CommandBarProps> = ({ isOpen, onClose, onTaskParsed, 
                                         <div className="flex-shrink-0 text-slate-400">
                                             <ArrowRight size={14} />
                                         </div>
-                                    </button>
+                                    </div>
                                 ))}
                             </div>
                         </div>
