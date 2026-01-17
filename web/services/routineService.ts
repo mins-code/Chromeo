@@ -3,7 +3,7 @@
  * Handles CRUD operations and pattern matching for routines
  */
 
-import { Routine, RoutinePattern, WeekdayPattern, IntervalPattern, CyclePattern, CycleItem } from '../types';
+import { Routine, RoutinePattern, CyclePattern, CycleItem } from '../types';
 import { logger } from '../utils/logger';
 
 const STORAGE_KEY = 'chronodex_routines';
@@ -156,8 +156,7 @@ export interface RoutineForDate {
   color?: string;
 }
 
-export const getRoutinesForDate = (date: Date): RoutineForDate[] => {
-  const routines = getRoutines();
+export const getRoutinesForDate = (date: Date, routines: Routine[] = getRoutines()): RoutineForDate[] => {
   const activeRoutines: RoutineForDate[] = [];
   
   for (const routine of routines) {

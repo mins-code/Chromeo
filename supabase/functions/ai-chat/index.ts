@@ -139,6 +139,7 @@ serve(async (req) => {
       mode,
       userName,
       tagsContext,
+      availableTags,
       currentDateContext,
       image,
       mimeType
@@ -165,9 +166,31 @@ serve(async (req) => {
     // Allow Unicode names but no newlines
     const cleanUserName = sanitizeInput(userName, 50, false) || 'User';
 
-    // 🛡️ SECURITY: Prevent Prompt Injection
-    // Disallow newlines in tagsContext to prevent overriding system instructions
-    const cleanTagsContext = sanitizeInput(tagsContext, 1000, false);
+    // 🛡️ SECURITY: Construct tags context securely on the server
+    let tagInstruction = '';
+    let usedSecureTags = false;
+
+    // Prefer availableTags array if provided (New Secure Method)
+    if (Array.isArray(availableTags) && availableTags.length > 0) {
+       const cleanTags = availableTags
+           .filter((t: any) => typeof t === 'string')
+           .map((t: string) => sanitizeInput(t, 50, false)) // No newlines allowed in individual tags
+           .filter((t: string) => t.length > 0); // Remove empty tags
+
+       if (cleanTags.length > 0) {
+          const tagsList = cleanTags.join(', ');
+          // We will append the specific instruction in the switch case
+          tagInstruction = `\n\nEXISTING TAGS: ${tagsList}.`;
+          usedSecureTags = true;
+       }
+    }
+
+    // Fallback to legacy tagsContext (Legacy Method)
+    if (!usedSecureTags && tagsContext) {
+       // Allow newlines and tag characters (#, @) in context
+       // Note: This is less secure as it relies on client-side construction
+       tagInstruction = sanitizeInput(tagsContext, 1000, true);
+    }
 
     // Rate Limiting
     const supabaseAdmin = createClient(
@@ -240,11 +263,23 @@ serve(async (req) => {
     // --- DETERMINE SYSTEM INSTRUCTION BASED ON MODE ---
     switch (mode) {
       case 'chat':
-        systemInstruction = `${BASE_SYSTEM_INSTRUCTION}\n\nIMPORTANT: The user's name is "${cleanUserName}". Address them by name occasionally.${cleanTagsContext || ''}`;
+        {
+          let finalInstruction = tagInstruction;
+          if (usedSecureTags) {
+             finalInstruction += ' Use these for the "tags" field in your JSON output. Do not create new tags unless the user explicitly asks or the existing ones are completely irrelevant.';
+          }
+          systemInstruction = `${BASE_SYSTEM_INSTRUCTION}\n\nIMPORTANT: The user's name is "${cleanUserName}". Address them by name occasionally.${finalInstruction || ''}`;
+        }
         break;
 
       case 'enhance':
-        systemInstruction = BASE_SYSTEM_INSTRUCTION + `\n\nEnsure output is strictly JSON with keys: description, subtasks (string array), priority, tags.${cleanTagsContext || ''}`;
+        {
+          let finalInstruction = tagInstruction;
+          if (usedSecureTags) {
+             finalInstruction += ' Please choose tags from this list if relevant. Only create new tags if absolutely necessary.';
+          }
+          systemInstruction = BASE_SYSTEM_INSTRUCTION + `\n\nEnsure output is strictly JSON with keys: description, subtasks (string array), priority, tags.${finalInstruction || ''}`;
+        }
         isJsonMode = true;
         break;
 
