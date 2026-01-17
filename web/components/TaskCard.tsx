@@ -194,8 +194,7 @@ function arePropsEqual(prev: TaskCardProps, next: TaskCardProps) {
 
   // ⚡ Performance Optimization:
   // "allTasks" is only used for calculating dependencies.
-  // If the current task has no dependencies, we can safely ignore changes to "allTasks" (which happens on every task update).
-  // This prevents O(N) re-renders of the entire list when a single task is updated.
+  // We only re-render if the SPECIFIC dependencies of this task have changed.
   const hasDependencies = next.task.dependencyIds && next.task.dependencyIds.length > 0;
 
   if (hasDependencies) {
