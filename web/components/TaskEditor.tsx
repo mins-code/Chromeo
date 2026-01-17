@@ -460,6 +460,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                                ? 'bg-brand-500 text-white shadow-md hover:bg-brand-600 active:scale-95'
                                : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                        }`}
+                       aria-label="Add tag"
                    >
                        <Plus size={18} />
                    </button>
@@ -562,6 +563,11 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                     title={
                       notificationEnabled === undefined ? 'Using global settings' :
                       notificationEnabled ? 'Enabled' : 'Disabled'
+                    }
+                    aria-label={
+                      notificationEnabled === true ? 'Disable notification' :
+                      notificationEnabled === false ? 'Use global settings' :
+                      'Enable notification'
                     }
                   >
                     <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${
