@@ -5,6 +5,10 @@
 **Learning:** "Cron jobs" in Supabase are just HTTP requests. Unless the target function *explicitly* checks for an Authorization header (usually matching `SUPABASE_SERVICE_ROLE_KEY`), the endpoint is public.
 **Prevention:** Always verify `Authorization: Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` for functions intended only for internal scheduling.
 
+## 2024-05-24 - Secure Error Handling Pattern
+**Vulnerability:** Edge Functions were returning `error.message` directly to the client in catch blocks, potentially exposing database schema details or internal logic upon unexpected crashes.
+**Learning:** `catch(error)` captures everything, including syntax errors or database timeouts. Blindly re-throwing or returning `error.message` is an information leak.
+**Prevention:** Implement a custom `AppError` class for trusted, safe-to-expose errors. In the global catch block, check `instanceof AppError`. If true, return the message; otherwise, log the full error and return a generic "Internal Server Error".
 ## 2024-05-24 - Prompt Injection via Input Formatting
 **Vulnerability:** The AI chat function allowed newlines in the `tagsContext` parameter. Malicious users could potentially inject system instructions by formatting tags to look like new system prompts (e.g., `\n\nSYSTEM: ...`).
 **Learning:** Client-side formatting (clients adding `\n\n` for aesthetics) can conflict with server-side security hygiene.
