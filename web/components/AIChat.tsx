@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, User, XCircle, Check, Pencil, Trash2, RefreshCw, Copy, CheckCheck, ImagePlus, X, Image } from 'lucide-react';
 import { chatWithAI, parseTransactionScreenshot } from '../services/geminiService';
-import { ChatMessage, Task, TaskStatus, TaskType, SuggestedPrompt } from '../types';
+import { ChatMessage, Task, TaskStatus, TaskType, SuggestedPrompt, Routine, Note, ChecklistItem } from '../types';
 import * as BudgetService from '../services/budgetService';
+import * as RoutineService from '../services/routineService';
+import * as NotesService from '../services/notesService';
 import { saveChatHistory, loadChatHistory, clearChatHistory } from '../utils/aiChatStorage';
 import { logger } from '../utils/logger';
 import Button from './Button';
@@ -15,7 +17,7 @@ interface AIChatProps {
 }
 
 interface AIDraftItem {
-    category: 'TASK' | 'EVENT' | 'APPOINTMENT' | 'REMINDER' | 'TRANSACTION' | 'BUDGET_UPDATE';
+    category: 'TASK' | 'EVENT' | 'APPOINTMENT' | 'REMINDER' | 'TRANSACTION' | 'BUDGET_UPDATE' | 'ROUTINE' | 'NOTE';
     data: any;
 }
 
@@ -24,6 +26,8 @@ const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
   { label: 'Schedule meeting', prompt: 'Schedule a meeting ', icon: '📅' },
   { label: 'Add transaction', prompt: 'I spent ', icon: '💰' },
   { label: 'Set reminder', prompt: 'Remind me to ', icon: '🔔' },
+  { label: 'Create routine', prompt: 'Create a routine for ', icon: '🔁' },
+  { label: 'Add note', prompt: 'Create a note about ', icon: '📝' },
 ];
 
 const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, existingTags }) => {
@@ -303,6 +307,35 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
           BudgetService.addTransaction(draft.data.description, Number(draft.data.amount), draft.data.type || 'expense');
       } else if (draft.category === 'BUDGET_UPDATE') {
           BudgetService.updateBudgetSettings(Number(draft.data.limit), draft.data.duration || 'Monthly');
+      } else if (draft.category === 'ROUTINE') {
+          // Create routine from AI draft
+          const routineData: Routine = {
+              id: crypto.randomUUID(),
+              name: draft.data.name || 'New Routine',
+              description: draft.data.description || '',
+              pattern: draft.data.pattern || { type: 'weekday', days: [1, 2, 3, 4, 5] },
+              time: draft.data.time || '09:00',
+              duration: draft.data.duration || 60,
+              isActive: draft.data.isActive !== false,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+          };
+          RoutineService.saveRoutine(routineData);
+      } else if (draft.category === 'NOTE') {
+          // Create note from AI draft
+          const checklistItems: ChecklistItem[] = draft.data.isChecklist && draft.data.checklistItems
+              ? draft.data.checklistItems.map((item: any) => ({
+                  id: item.id || crypto.randomUUID(),
+                  text: item.text || '',
+                  isCompleted: item.isCompleted || false
+                }))
+              : [];
+          NotesService.createNote(
+              draft.data.title || 'New Note',
+              draft.data.content || '',
+              draft.data.isChecklist || false,
+              checklistItems
+          );
       }
       discardSingleDraft(msgId, index);
   };
@@ -351,11 +384,34 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
     if (data.dueDate) details.push(`📅 ${new Date(data.dueDate).toLocaleDateString()}`);
     if (data.priority) details.push(`⚡ ${data.priority}`);
     if (data.location) details.push(`📍 ${data.location}`);
-    if (data.duration) details.push(`⏱️ ${data.duration}min`);
+    if (data.duration && category !== 'ROUTINE') details.push(`⏱️ ${data.duration}min`);
     if (data.amount) details.push(`💰 $${data.amount}`);
     if (data.type === 'income') details.push('📈 Income');
     if (data.type === 'expense') details.push('📉 Expense');
     if (data.tags && data.tags.length > 0) details.push(`🏷️ ${data.tags.join(', ')}`);
+    
+    // Routine-specific details
+    if (category === 'ROUTINE') {
+      if (data.time) details.push(`🕐 ${data.time}`);
+      if (data.duration) details.push(`⏱️ ${data.duration}min`);
+      if (data.pattern?.type === 'weekday' && data.pattern.days) {
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const days = data.pattern.days.map((d: number) => dayNames[d]).join(', ');
+        details.push(`📆 ${days}`);
+      } else if (data.pattern?.type === 'interval') {
+        details.push(`🔄 Every ${data.pattern.every} days`);
+      } else if (data.pattern?.type === 'cycle' && data.pattern.items) {
+        const items = data.pattern.items.map((i: any) => i.name).join(' → ');
+        details.push(`🔁 ${items}`);
+      }
+    }
+    
+    // Note-specific details
+    if (category === 'NOTE') {
+      if (data.isChecklist && data.checklistItems?.length) {
+        details.push(`☑️ ${data.checklistItems.length} items`);
+      }
+    }
 
     return details;
   };

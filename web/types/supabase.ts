@@ -153,6 +153,7 @@ export type Database = {
           frequency: string | null
           next_due_date: string | null
           created_at: string | null
+          category: string | null
         }
         Insert: {
           id?: string
@@ -164,6 +165,7 @@ export type Database = {
           frequency?: string | null
           next_due_date?: string | null
           created_at?: string | null
+          category?: string | null
         }
         Update: {
           id?: string
@@ -175,6 +177,7 @@ export type Database = {
           frequency?: string | null
           next_due_date?: string | null
           created_at?: string | null
+          category?: string | null
         }
         Relationships: []
       }
@@ -280,8 +283,8 @@ export type Database = {
           is_active: boolean | null
           notification_enabled: boolean | null
           notification_minutes_before: number | null
-          notification_time: string | null
           created_at: string | null
+          updated_at: string | null
         }
         Insert: {
           id?: string
@@ -294,8 +297,8 @@ export type Database = {
           is_active?: boolean | null
           notification_enabled?: boolean | null
           notification_minutes_before?: number | null
-          notification_time?: string | null
           created_at?: string | null
+          updated_at?: string | null
         }
         Update: {
           id?: string
@@ -308,8 +311,8 @@ export type Database = {
           is_active?: boolean | null
           notification_enabled?: boolean | null
           notification_minutes_before?: number | null
-          notification_time?: string | null
           created_at?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -338,25 +341,208 @@ export type Database = {
         Row: {
           id: string
           user_id: string
-          endpoint: string
-          p256dh: string
-          auth: string
+          subscription: Json
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          subscription: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          subscription?: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      scheduled_notifications: {
+        Row: {
+          id: string
+          user_id: string
+          task_id: string | null
+          title: string
+          body: string | null
+          scheduled_at: string
+          sent: boolean | null
+          sent_at: string | null
           created_at: string | null
         }
         Insert: {
           id?: string
           user_id: string
-          endpoint: string
-          p256dh: string
-          auth: string
+          task_id?: string | null
+          title: string
+          body?: string | null
+          scheduled_at: string
+          sent?: boolean | null
+          sent_at?: string | null
           created_at?: string | null
         }
         Update: {
           id?: string
           user_id?: string
-          endpoint?: string
-          p256dh?: string
-          auth?: string
+          task_id?: string | null
+          title?: string
+          body?: string | null
+          scheduled_at?: string
+          sent?: boolean | null
+          sent_at?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      account_deletion_requests: {
+        Row: {
+          id: string
+          user_id: string
+          token: string
+          email: string
+          requested_at: string | null
+          expires_at: string
+          confirmed_at: string | null
+          status: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          token: string
+          email: string
+          requested_at?: string | null
+          expires_at: string
+          confirmed_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          token?: string
+          email?: string
+          requested_at?: string | null
+          expires_at?: string
+          confirmed_at?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      teams: {
+        Row: {
+          id: string
+          owner_id: string
+          name: string
+          description: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          owner_id: string
+          name: string
+          description?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          owner_id?: string
+          name?: string
+          description?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          id: string
+          team_id: string
+          user_id: string
+          role: string
+          status: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          team_id: string
+          user_id: string
+          role?: string
+          status?: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          team_id?: string
+          user_id?: string
+          role?: string
+          status?: string
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      day_plans: {
+        Row: {
+          id: string
+          user_id: string
+          date: string
+          task_ids: string[] | null
+          links: Json | null
+          layout: Json | null
+          template_id: string | null
+          is_recurring: boolean | null
+          recurring_config: Json | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          date: string
+          task_ids?: string[] | null
+          links?: Json | null
+          layout?: Json | null
+          template_id?: string | null
+          is_recurring?: boolean | null
+          recurring_config?: Json | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          date?: string
+          task_ids?: string[] | null
+          links?: Json | null
+          layout?: Json | null
+          template_id?: string | null
+          is_recurring?: boolean | null
+          recurring_config?: Json | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      rate_limits: {
+        Row: {
+          id: string
+          key: string
+          count: number
+          window_start: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          key: string
+          count?: number
+          window_start?: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          key?: string
+          count?: number
+          window_start?: string
           created_at?: string | null
         }
         Relationships: []
@@ -371,6 +557,38 @@ export type Database = {
           user_uuid: string
         }
         Returns: string[]
+      }
+      is_team_owner: {
+        Args: {
+          p_team_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
+      is_team_member: {
+        Args: {
+          p_team_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
+      is_team_admin: {
+        Args: {
+          p_team_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
+      cleanup_rate_limits: {
+        Args: Record<string, never>
+        Returns: undefined
+      }
+      increment_rate_limit: {
+        Args: {
+          p_key: string
+          p_window_duration_seconds: number
+        }
+        Returns: number
       }
     }
     Enums: {

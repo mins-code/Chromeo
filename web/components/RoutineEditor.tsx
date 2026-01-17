@@ -161,6 +161,7 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
       };
     }
     
+    const now = new Date().toISOString();
     const routineData: Routine = {
       id: routine?.id || crypto.randomUUID(),
       name: name.trim(),
@@ -171,7 +172,8 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
       isActive,
       notificationEnabled,
       notificationMinutesBefore,
-      createdAt: routine?.createdAt || new Date().toISOString()
+      createdAt: routine?.createdAt || now,
+      updatedAt: now
     };
     
     onSave(routineData);

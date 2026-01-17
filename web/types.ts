@@ -249,6 +249,7 @@ export interface Routine {
   notificationMinutesBefore?: number;
   notificationTime?: string; // Absolute ISO date string for notification
   createdAt: string;
+  updatedAt: string;
 }
 
 // ============ Day Planner Types ============

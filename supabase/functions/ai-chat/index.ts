@@ -76,6 +76,46 @@ Each item in the array **MUST** follow one of these schemas based on \`category\
   }
 }
 \`\`\`
+
+**PROTOCOL 3: ROUTINE MANAGEMENT**
+Create recurring routines for activities like workouts, habits, or regular schedules.
+
+**Schema D: Routine**
+\`\`\`json
+{
+  "category": "ROUTINE",
+  "data": {
+    "name": "String",
+    "description": "String",
+    "pattern": {
+      "type": "weekday" | "interval" | "cycle",
+      "days": [0-6], // 0=Sun, 1=Mon...6=Sat. Only for type "weekday"
+      "every": Number, // Every N days. Only for type "interval"
+      "startDate": "ISO_STRING", // Required for "interval" and "cycle"
+      "items": [{"name": "String", "color": "#HexColor"}] // Only for type "cycle", e.g. Push/Pull/Legs
+    },
+    "time": "HH:mm", // e.g. "07:00" for 7 AM
+    "duration": Number, // minutes
+    "isActive": true
+  }
+}
+\`\`\`
+
+**PROTOCOL 4: NOTE TAKING**
+Create quick notes or checklists for the user.
+
+**Schema E: Note**
+\`\`\`json
+{
+  "category": "NOTE",
+  "data": {
+    "title": "String",
+    "content": "String", // Plain text content
+    "isChecklist": Boolean, // true if user wants a checklist
+    "checklistItems": [{"id": "uuid", "text": "String", "isCompleted": false}] // Only if isChecklist is true
+  }
+}
+\`\`\`
 `;
 
 

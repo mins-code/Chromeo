@@ -3,17 +3,20 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   getSmoothStepPath,
-  EdgeProps,
+  Edge,
 } from '@xyflow/react';
+import type { EdgeProps } from '@xyflow/react';
 import { X, Plus } from 'lucide-react';
 
-interface DeletableEdgeData {
+interface DeletableEdgeData extends Record<string, unknown> {
   onDelete?: (id: string) => void;
   onAddTask?: (sourceId: string, targetId: string) => void;
   timeGap?: number | null;
   sourceTaskId?: string;
   targetTaskId?: string;
 }
+
+type DeletableEdgeType = Edge<DeletableEdgeData>;
 
 // Format time gap for display
 const formatTimeGap = (minutes: number): string => {
@@ -29,7 +32,7 @@ const formatTimeGap = (minutes: number): string => {
   return `${minutes}m`;
 };
 
-const DeletableEdge: React.FC<EdgeProps<DeletableEdgeData>> = ({
+const DeletableEdge: React.FC<EdgeProps<DeletableEdgeType>> = ({
   id,
   source,
   target,

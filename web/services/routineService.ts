@@ -227,6 +227,7 @@ export const getPatternDescription = (pattern: RoutinePattern): string => {
  * Create a new routine with defaults
  */
 export const createNewRoutine = (name: string = ''): Routine => {
+  const now = new Date().toISOString();
   return {
     id: crypto.randomUUID(),
     name,
@@ -240,7 +241,8 @@ export const createNewRoutine = (name: string = ''): Routine => {
     isActive: true,
     notificationEnabled: undefined,
     notificationMinutesBefore: undefined,
-    createdAt: new Date().toISOString()
+    createdAt: now,
+    updatedAt: now
   };
 };
 

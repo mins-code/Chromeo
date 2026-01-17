@@ -157,8 +157,7 @@ export const enhanceTaskWithAI = async (taskTitle: string, existingTags: string[
         body: {
           mode: 'enhance',
           message,
-          tagsContext, // Retain for backward compatibility with old edge functions
-          availableTags: existingTags // New secure method
+          availableTags: existingTags
         }
       })
     );
@@ -219,8 +218,7 @@ export const chatWithAI = async (
                   message,
                   history,
                   userName,
-                  tagsContext, // Retain for backward compatibility with old edge functions
-                  availableTags: existingTags // New secure method
+                  availableTags: existingTags
               }
           }),
           2 // Only 2 retries for chat to keep it responsive

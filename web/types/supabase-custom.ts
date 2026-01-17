@@ -74,14 +74,14 @@ export const mapTaskFromDb = (dbTask: DbTask): Task => ({
   priority: (dbTask.priority as TaskPriority) ?? TaskPriority.MEDIUM,
   dueDate: dbTask.due_date ?? undefined,
   reminderTime: dbTask.reminder_time ?? undefined,
-  subtasks: (dbTask.subtasks as SubTask[]) ?? [],
+  subtasks: (dbTask.subtasks as unknown as SubTask[]) ?? [],
   tags: dbTask.tags ?? [],
   type: (dbTask.type as TaskType) ?? 'TASK',
   duration: dbTask.duration ?? undefined,
   location: dbTask.location ?? undefined,
   dependencyIds: dbTask.dependency_ids ?? [],
   isShared: dbTask.is_shared ?? false,
-  recurrence: dbTask.recurrence as RecurrenceConfig | undefined,
+  recurrence: dbTask.recurrence as unknown as RecurrenceConfig | undefined,
   createdAt: dbTask.created_at ? new Date(dbTask.created_at).getTime() : Date.now(),
   notificationEnabled: dbTask.notification_enabled ?? undefined,
   notificationMinutesBefore: dbTask.notification_minutes_before ?? undefined,
@@ -124,7 +124,7 @@ export const mapNoteFromDb = (dbNote: DbNote): Note => ({
   title: dbNote.title,
   content: dbNote.content,
   isChecklist: dbNote.is_checklist ?? false,
-  checklistItems: (dbNote.checklist_items as ChecklistItem[]) ?? [],
+  checklistItems: (dbNote.checklist_items as unknown as ChecklistItem[]) ?? [],
   isShared: dbNote.is_shared ?? false,
   createdAt: dbNote.created_at ?? new Date().toISOString(),
   updatedAt: dbNote.updated_at ?? new Date().toISOString(),
@@ -137,14 +137,14 @@ export const mapRoutineFromDb = (dbRoutine: DbRoutine): Routine => ({
   id: dbRoutine.id,
   name: dbRoutine.name,
   description: dbRoutine.description ?? undefined,
-  pattern: dbRoutine.pattern as RoutinePattern,
+  pattern: dbRoutine.pattern as unknown as RoutinePattern,
   time: dbRoutine.time ?? undefined,
   duration: dbRoutine.duration ?? undefined,
   isActive: dbRoutine.is_active ?? true,
   notificationEnabled: dbRoutine.notification_enabled ?? undefined,
   notificationMinutesBefore: dbRoutine.notification_minutes_before ?? undefined,
-  notificationTime: dbRoutine.notification_time ?? undefined,
   createdAt: dbRoutine.created_at ?? new Date().toISOString(),
+  updatedAt: dbRoutine.updated_at ?? new Date().toISOString(),
 });
 
 // ============================================================================
@@ -232,7 +232,7 @@ export const mapNoteToDbInsert = (
  * Maps a frontend Routine to database insert payload.
  */
 export const mapRoutineToDbInsert = (
-  routine: Omit<Routine, 'id' | 'createdAt'>,
+  routine: Omit<Routine, 'id' | 'createdAt' | 'updatedAt'>,
   userId: string
 ): Database['public']['Tables']['routines']['Insert'] => ({
   user_id: userId,
@@ -244,11 +244,10 @@ export const mapRoutineToDbInsert = (
   is_active: routine.isActive,
   notification_enabled: routine.notificationEnabled ?? null,
   notification_minutes_before: routine.notificationMinutesBefore ?? null,
-  notification_time: routine.notificationTime ?? null,
 });
 
 // ============================================================================
 // Re-exports for convenience
 // ============================================================================
 
-export { Database } from './supabase';
+export type { Database } from './supabase';
