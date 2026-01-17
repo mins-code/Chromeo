@@ -150,10 +150,6 @@ export const enhanceTaskWithAI = async (taskTitle: string, existingTags: string[
       return cached;
     }
 
-    const tagsContext = existingTags.length > 0 
-      ? `\n\nEXISTING TAGS: ${existingTags.join(', ')}. Please choose tags from this list if relevant. Only create new tags if absolutely necessary.`
-      : '';
-
     const message = `Analyze the task "${taskTitle}". Provide a concise 1-sentence description, 3-5 actionable subtasks, a recommended priority level (LOW, MEDIUM, or HIGH), and 2 relevant tags.`;
 
     const { data, error } = await retryWithBackoff(() => 
@@ -161,7 +157,8 @@ export const enhanceTaskWithAI = async (taskTitle: string, existingTags: string[
         body: {
           mode: 'enhance',
           message,
-          tagsContext
+          tagsContext, // Retain for backward compatibility with old edge functions
+          availableTags: existingTags // New secure method
         }
       })
     );
@@ -215,10 +212,6 @@ export const chatWithAI = async (
     abortSignal?: AbortSignal
 ): Promise<string> => {
     try {
-        const tagsContext = existingTags.length > 0
-          ? `\n\nEXISTING TAGS: ${existingTags.join(', ')}. Use these for the "tags" field in your JSON output. Do not create new tags unless the user explicitly asks or the existing ones are completely irrelevant.`
-          : '';
-
         const { data, error } = await retryWithBackoff(() => 
           supabase.functions.invoke('ai-chat', {
               body: {
@@ -226,7 +219,8 @@ export const chatWithAI = async (
                   message,
                   history,
                   userName,
-                  tagsContext
+                  tagsContext, // Retain for backward compatibility with old edge functions
+                  availableTags: existingTags // New secure method
               }
           }),
           2 // Only 2 retries for chat to keep it responsive
