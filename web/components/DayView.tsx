@@ -26,6 +26,7 @@ interface DroppableHourCellProps {
 /**
  * ⚡ Performance Optimization:
  * Wrapped in React.memo to prevent grid re-renders when `currentTime` updates every minute.
+ * Props `dayDate` (from parent) and `children` (undefined in loop) are stable.
  */
 const DroppableHourCell = React.memo(({ dayDate, hour, height, intervalHours, children }: DroppableHourCellProps) => {
   const id = `${format(dayDate, 'yyyy-MM-dd')}-${hour.toString().padStart(2, '0')}`;
@@ -134,27 +135,27 @@ const DayView: React.FC<DayViewProps> = ({ tasks, currentDate, onEditTask }) => 
 
   // Pre-calculate task styles to prevent object recreation on every render
   const taskStyles = useMemo(() => {
-      const styles = new Map<string, React.CSSProperties>();
+    const styles = new Map<string, React.CSSProperties>();
 
-      dayTasks.forEach(task => {
-          const time = getTaskTime(task);
-          if (!time) {
-              styles.set(task.id, { display: 'none' });
-              return;
-          }
+    dayTasks.forEach(task => {
+        const time = getTaskTime(task);
+        if (!time) {
+            styles.set(task.id, { display: 'none' });
+            return;
+        }
 
-          // Calculate position based on interval
-          const cellHeight = HOUR_HEIGHT * INTERVAL_HOURS;
-          const top = (time.hour / INTERVAL_HOURS) * cellHeight + (time.minutes / 60) * (HOUR_HEIGHT);
-          const duration = task.duration || 60; // Default 60 minutes
-          const height = Math.max((duration / 60) * HOUR_HEIGHT, 24); // Minimum 24px
+        // Calculate position based on interval
+        const cellHeight = HOUR_HEIGHT * INTERVAL_HOURS;
+        const top = (time.hour / INTERVAL_HOURS) * cellHeight + (time.minutes / 60) * (HOUR_HEIGHT);
+        const duration = task.duration || 60; // Default 60 minutes
+        const height = Math.max((duration / 60) * HOUR_HEIGHT, 24); // Minimum 24px
 
-          styles.set(task.id, {
-              top: `${top}px`,
-              height: `${height}px`,
-          });
-      });
-      return styles;
+        styles.set(task.id, {
+            top: `${top}px`,
+            height: `${height}px`,
+        });
+    });
+    return styles;
   }, [dayTasks, HOUR_HEIGHT, INTERVAL_HOURS]);
 
   // Current time indicator position
@@ -257,4 +258,3 @@ const DayView: React.FC<DayViewProps> = ({ tasks, currentDate, onEditTask }) => 
 };
 
 export default React.memo(DayView);
-
