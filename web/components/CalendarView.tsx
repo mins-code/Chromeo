@@ -348,14 +348,20 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         setSelectedDate(date);
     };
 
-    const selectedDayTasks = selectedDate
-        ? tasks.filter(task => doesTaskOccurOnDate(task, selectedDate))
-        : [];
+    // ⚡ Performance Optimization: Memoize filtered tasks for selected date
+    // Prevents re-filtering the entire task list on every render (e.g. when hovering)
+    const selectedDayTasks = useMemo(() =>
+        selectedDate
+            ? tasks.filter(task => doesTaskOccurOnDate(task, selectedDate))
+            : []
+    , [selectedDate, tasks, doesTaskOccurOnDate]);
 
-    // Filter Google Calendar events for the selected date
-    const selectedDayGoogleEvents = selectedDate
-        ? externalEvents.filter(event => doesEventOccurOnDate(event, selectedDate))
-        : [];
+    // ⚡ Performance Optimization: Memoize filtered Google events
+    const selectedDayGoogleEvents = useMemo(() =>
+        selectedDate
+            ? externalEvents.filter(event => doesEventOccurOnDate(event, selectedDate))
+            : []
+    , [selectedDate, externalEvents, doesEventOccurOnDate]);
 
     // Drag and Drop handlers
     const handleDragStart = (event: any) => {
