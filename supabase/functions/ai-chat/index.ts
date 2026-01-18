@@ -5,6 +5,9 @@ import { GoogleGenerativeAI } from "npm:@google/generative-ai@^0.21.0"
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block',
 }
 
 // --- SYSTEM INSTRUCTIONS ---
