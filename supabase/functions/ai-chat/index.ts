@@ -189,12 +189,15 @@ serve(async (req) => {
     const sanitizeInput = (input: any, maxLength: number = 100, allowNewlines: boolean = false): string => {
       if (!input || typeof input !== 'string') return '';
 
-      // Remove potentially dangerous control characters but allow Unicode letters, numbers, and common punctuation
-      // We explicitly remove characters that could be used for prompt injection tricks like backticks or quotes if they aren't part of normal text.
-      // However, to be safe against template injection, we should escape quotes.
-      let sanitized = input
-        .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '') // Remove ASCII control characters
-        .replace(/["`]/g, "'"); // Replace quotes/backticks with single quotes to prevent breaking out of string
+      // Remove potentially dangerous control characters
+      let sanitized = input.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+
+      // Escape backslashes to prevent escape sequence attacks (e.g. escaping the quote that encloses this string)
+      // This neutralizes attacks like: myname\" -> "myname\"" which might confuse the LLM parser
+      sanitized = sanitized.replace(/\\/g, '\\\\');
+
+      // Replace quotes and backticks to prevent string breakouts
+      sanitized = sanitized.replace(/["`]/g, "'");
 
       if (!allowNewlines) {
         sanitized = sanitized.replace(/[\r\n]+/g, ' ');

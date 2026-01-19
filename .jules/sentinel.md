@@ -42,3 +42,8 @@
 **Vulnerability:** Supabase Edge Functions were catching all errors and returning `error.message` directly to the client in the JSON response.
 **Learning:** This "Fail Closed" but "Talkative" approach violates the Principle of Least Information. While it helps debugging, it exposes internal state (like "VAPID keys not configured" or database connection strings if they bubble up) to end users.
 **Prevention:** Always implement a top-level `catch` block that logs the full error to `console.error` (which goes to Supabase logs) but returns a generic "An unexpected error occurred" message to the HTTP client. Use a specific error code if the client needs to react differently, but never pass through the raw exception message.
+
+## 2025-05-27 - Escape Sequence Injection in LLM Prompts
+**Vulnerability:** The `ai-chat` function sanitized quotes (`"`) but not backslashes (`\`). This allowed attackers to inject an escape sequence (e.g., sending `User\`) which, when JSON-encoded or placed in a prompt string, could escape the closing quote of the variable (e.g., `"... name is "User\" ..."`), potentially breaking out of the sandbox string and confusing the LLM parser.
+**Learning:** Sanitizing just the delimiters (quotes) is insufficient if the escape character itself is allowed. The escape character can be used to neutralize the sanitizer's work.
+**Prevention:** Always escape or remove backslashes (`\`) before replacing quotes when sanitizing user input for LLM prompts or JSON contexts. `input.replace(/\\/g, '\\\\').replace(/"/g, "'")`.
