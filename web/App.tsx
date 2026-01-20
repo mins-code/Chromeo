@@ -196,7 +196,10 @@ const App: React.FC = () => {
     const { 
         dueRecurringItems, 
         showRecurringModal, 
+        isProcessing: isProcessingRecurring,
+        processingIds: processingRecurringIds,
         handleProcessRecurring, 
+        handleProcessAllRecurring,
         handleDismissRecurring 
     } = useRecurringProcessor();
 
@@ -789,32 +792,73 @@ const App: React.FC = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
                     <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10 animate-scale-in">
                         <div className="p-6 bg-brand-500 text-white">
-                            <div className="flex items-center gap-3">
-                                <Repeat size={24} />
-                                <h3 className="text-xl font-bold">Recurring Items Due</h3>
-                            </div>
-                            <p className="opacity-90 mt-1 text-sm">The following items are due for processing.</p>
-                        </div>
-                        <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
-                            {dueRecurringItems.map(item => (
-                                <div key={item.id} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5">
-                                    <div>
-                                        <p className="font-bold text-slate-800 dark:text-white">{item.description}</p>
-                                        <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
-                                            <span className={item.type === 'income' ? 'text-emerald-500' : 'text-red-500'}>
-                                                {item.type === 'income' ? '+' : '-'}{item.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
-                                            </span>
-                                            <span>• {item.frequency}</span>
-                                        </p>
-                                    </div>
-                                    <Button size="sm" onClick={() => handleProcessRecurring(item.id)}>
-                                        Confirm
-                                    </Button>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <Repeat size={24} />
+                                    <h3 className="text-xl font-bold">Recurring Items Due</h3>
                                 </div>
-                            ))}
+                                <span className="text-sm bg-white/20 px-3 py-1 rounded-full">
+                                    {dueRecurringItems.length} pending
+                                </span>
+                            </div>
+                            <p className="opacity-90 mt-2 text-sm">The following scheduled payments are due for processing.</p>
                         </div>
-                        <div className="p-4 border-t border-slate-200 dark:border-white/10 flex justify-end">
-                            <Button variant="ghost" onClick={handleDismissRecurring}>Close</Button>
+                        <div className="p-4 sm:p-6 space-y-3 max-h-[50vh] overflow-y-auto">
+                            {dueRecurringItems.map(item => {
+                                const isItemProcessing = processingRecurringIds.has(item.id);
+                                return (
+                                    <div key={item.id} className={`flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 transition-all ${isItemProcessing ? 'opacity-60' : ''}`}>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-bold text-slate-800 dark:text-white truncate">{item.description}</p>
+                                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                <span className={`text-sm font-semibold ${item.type === 'income' ? 'text-emerald-500' : 'text-red-500'}`}>
+                                                    {item.type === 'income' ? '+' : '-'}{item.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                                                </span>
+                                                <span className="text-xs text-slate-400">•</span>
+                                                <span className="text-xs text-slate-500 capitalize">{item.frequency}</span>
+                                            </div>
+                                        </div>
+                                        <Button 
+                                            size="sm" 
+                                            variant="secondary"
+                                            onClick={() => handleProcessRecurring(item.id)}
+                                            disabled={isProcessingRecurring || isItemProcessing}
+                                        >
+                                            {isItemProcessing ? (
+                                                <span className="flex items-center gap-1">
+                                                    <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                                                    <span className="hidden sm:inline">Processing</span>
+                                                </span>
+                                            ) : (
+                                                'Confirm'
+                                            )}
+                                        </Button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <div className="p-4 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row gap-3 sm:justify-between">
+                            <Button variant="ghost" onClick={handleDismissRecurring} disabled={isProcessingRecurring}>
+                                Remind Me Later
+                            </Button>
+                            <div className="flex gap-2">
+                                {dueRecurringItems.length > 1 && (
+                                    <Button 
+                                        variant="primary" 
+                                        onClick={handleProcessAllRecurring}
+                                        disabled={isProcessingRecurring}
+                                    >
+                                        {isProcessingRecurring ? (
+                                            <span className="flex items-center gap-2">
+                                                <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                                                Processing All...
+                                            </span>
+                                        ) : (
+                                            `Approve All (${dueRecurringItems.length})`
+                                        )}
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
