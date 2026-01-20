@@ -42,3 +42,8 @@
 **Vulnerability:** Supabase Edge Functions were catching all errors and returning `error.message` directly to the client in the JSON response.
 **Learning:** This "Fail Closed" but "Talkative" approach violates the Principle of Least Information. While it helps debugging, it exposes internal state (like "VAPID keys not configured" or database connection strings if they bubble up) to end users.
 **Prevention:** Always implement a top-level `catch` block that logs the full error to `console.error` (which goes to Supabase logs) but returns a generic "An unexpected error occurred" message to the HTTP client. Use a specific error code if the client needs to react differently, but never pass through the raw exception message.
+
+## 2026-01-20 - Account Deletion Token Leak
+**Vulnerability:** The account deletion confirmation token was returned directly in the HTTP response body to the client, allowing instant account deletion without email access.
+**Learning:** Security workarounds for infrastructure limitations (like broken email) often introduce critical vulnerabilities. "Temporary" hacks in dev environments can be dangerous if they expose sensitive tokens.
+**Prevention:** Never return authentication or verification tokens in API responses. Always use out-of-band channels (email, SMS) or server-side logs (for dev) to deliver secrets.
