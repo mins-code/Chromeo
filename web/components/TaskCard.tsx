@@ -66,10 +66,24 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasks = [], onEdit, onTogg
                 {typeLabel}
               </span>
             )}
-            {task.isShared && <Users size={14} className="text-blue-500 dark:text-blue-400" />}
-            <div className={`w-2.5 h-2.5 rounded-full ${task.priority === TaskPriority.HIGH ? 'bg-red-500 shadow-sm' :
+            {task.isShared && (
+              <span
+                role="img"
+                aria-label="Shared task"
+                title="Shared task"
+                className="flex items-center justify-center"
+              >
+                <Users size={14} className="text-blue-500 dark:text-blue-400" aria-hidden="true" />
+              </span>
+            )}
+            <div
+              role="img"
+              aria-label={`${task.priority.toLowerCase()} priority`}
+              title={`${task.priority} priority`}
+              className={`w-2.5 h-2.5 rounded-full ${task.priority === TaskPriority.HIGH ? 'bg-red-500 shadow-sm' :
                 task.priority === TaskPriority.MEDIUM ? 'bg-yellow-500' : 'bg-green-500'
-              }`} />
+              }`}
+            />
           </div>
 
           <h3 className={`font-semibold text-[15px] truncate pr-16 sm:pr-0 ${isDone ? 'text-slate-400 dark:text-slate-500 line-through decoration-slate-400' : 'text-slate-800 dark:text-slate-100'} ${isBlocked && !isDone ? 'text-slate-500' : ''}`}>
@@ -109,28 +123,28 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasks = [], onEdit, onTogg
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
             {task.reminderTime && (
               <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${isPast(task.reminderTime) ? 'bg-red-500/5 border-red-500/20 text-red-500 dark:text-red-400' : 'bg-yellow-500/5 border-yellow-500/20 text-yellow-600 dark:text-yellow-500'}`}>
-                <Bell size={12} />
+                <Bell size={12} aria-hidden="true" />
                 <span>{formatDateShort(task.reminderTime)} {formatTime(task.reminderTime)}</span>
               </div>
             )}
 
             {!task.reminderTime && task.dueDate && (
               <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
-                <Calendar size={12} />
+                <Calendar size={12} aria-hidden="true" />
                 <span>{formatDateShort(task.dueDate)}</span>
               </div>
             )}
 
             {task.duration && (
               <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
-                <Clock size={12} />
+                <Clock size={12} aria-hidden="true" />
                 <span>{task.duration}m</span>
               </div>
             )}
 
             {task.location && (
               <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
-                <MapPin size={12} />
+                <MapPin size={12} aria-hidden="true" />
                 <span className="truncate max-w-[100px]">{task.location}</span>
               </div>
             )}
