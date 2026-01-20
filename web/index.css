@@ -561,3 +561,133 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ========================================
+   Mobile & PWA Utilities
+   ======================================== */
+
+/* Safe Area Insets for PWA (iOS notch & home indicator) */
+.pb-safe-area {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.pt-safe-area {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+.pl-safe-area {
+  padding-left: env(safe-area-inset-left, 0);
+}
+
+.pr-safe-area {
+  padding-right: env(safe-area-inset-right, 0);
+}
+
+.mb-safe-area {
+  margin-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.mt-safe-area {
+  margin-top: env(safe-area-inset-top, 0);
+}
+
+/* Combined safe area insets */
+.p-safe-area {
+  padding-top: env(safe-area-inset-top, 0);
+  padding-right: env(safe-area-inset-right, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding-left: env(safe-area-inset-left, 0);
+}
+
+/* Safe area aware bottom padding for mobile nav */
+.pb-mobile-nav {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0));
+}
+
+/* Smooth scrolling for iOS (momentum scrolling) */
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Touch-friendly improvements for mobile */
+@media (pointer: coarse) {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Prevent text selection on interactive elements (mobile) */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Mobile-first responsive utilities */
+@media (max-width: 640px) {
+  .mobile-full-width {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .mobile-stack {
+    flex-direction: column !important;
+  }
+
+  .mobile-hidden {
+    display: none !important;
+  }
+
+  .mobile-text-sm {
+    font-size: 0.875rem !important;
+  }
+
+  .mobile-text-base {
+    font-size: 1rem !important;
+  }
+
+  .mobile-gap-2 {
+    gap: 0.5rem !important;
+  }
+
+  .mobile-p-3 {
+    padding: 0.75rem !important;
+  }
+}
+
+/* Tablet responsive utilities */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .tablet-stack {
+    flex-direction: column !important;
+  }
+}
+
+/* Standalone PWA specific styles */
+@media (display-mode: standalone) {
+  /* Extra padding at top for status bar in standalone mode */
+  .standalone-pt {
+    padding-top: env(safe-area-inset-top, 20px);
+  }
+
+  /* Ensure bottom nav respects home indicator */
+  .standalone-bottom-nav {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0));
+  }
+}
+
+/* Slide-in animation for mobile panels */
+@keyframes slideInRight {
+  0% { transform: translateX(100%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
+/* Active scale for touch feedback */
+.active\:scale-98:active {
+  transform: scale(0.98);
+}

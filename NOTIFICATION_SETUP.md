@@ -4,6 +4,17 @@
 
 This guide explains how to set up background push notifications for ChronoDeX so users receive notifications even when the app is closed.
 
+### Notification Options
+
+| Platform    | Method                   | Reliability                        | Setup Complexity |
+| ----------- | ------------------------ | ---------------------------------- | ---------------- |
+| Web/PWA     | Web Push API             | ⭐⭐⭐ (requires browser running)  | Medium           |
+| Android APK | Local Notifications      | ⭐⭐⭐⭐⭐ (native, works offline) | Low              |
+| Android APK | Firebase Cloud Messaging | ⭐⭐⭐⭐⭐ (server-triggered)      | High             |
+
+**For the most reliable notifications like native apps, build the Android APK!**
+See [ANDROID_BUILD.md](web/ANDROID_BUILD.md) for instructions.
+
 ## Prerequisites
 
 Before setting up notifications, ensure you have:

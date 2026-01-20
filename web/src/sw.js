@@ -3,54 +3,220 @@ import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching'
 cleanupOutdatedCaches()
 precacheAndRoute(self.__WB_MANIFEST)
 
-const SW_VERSION = '1.0.0';
+const SW_VERSION = '1.2.0';
 
-console.log(`[SW Custom] ChronoDeX Service Worker v${SW_VERSION} loading...`);
+console.log(`[SW] ChronoDeX Service Worker v${SW_VERSION} loading...`);
 
-// Listen for push events (notifications from server)
-self.addEventListener('push', (event) => {
-  console.log('[SW] Push notification received:', event);
+// Store VAPID key for re-subscription
+let VAPID_PUBLIC_KEY = null;
 
-  if (!event.data) {
-    console.log('[SW] Push event has no data');
-    return;
-  }
+// IndexedDB configuration for offline notifications
+const DB_NAME = 'chronodex-notifications';
+const DB_VERSION = 1;
+const STORE_NAME = 'scheduled-notifications';
 
-  try {
-    const data = event.data.json();
+/**
+ * Open IndexedDB for offline notifications
+ */
+const openNotificationsDB = () => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
     
-    const options = {
-      body: data.body || '',
-      icon: data.icon || '/logo-dark.jpg',
-      badge: data.badge || '/logo-dark.jpg',
-      vibrate: [100, 50, 100],
-      data: data.data || {},
-      tag: data.tag || `notification-${Date.now()}`,
-      requireInteraction: true, // Keep notification visible until user interacts
-      actions: [
-        { action: 'open', title: 'Open' },
-        { action: 'dismiss', title: 'Dismiss' }
-      ]
+    request.onerror = () => {
+      console.error('[SW] Failed to open notifications DB:', request.error);
+      reject(request.error);
     };
-
-    event.waitUntil(
-      self.registration.showNotification(data.title || 'ChronoDeX', options)
-    );
-  } catch (error) {
-    console.error('[SW] Error parsing push data:', error);
     
-    // Fallback notification
-    event.waitUntil(
-      self.registration.showNotification('ChronoDeX', {
-        body: event.data?.text() || 'You have a new notification',
+    request.onsuccess = () => {
+      resolve(request.result);
+    };
+    
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+        store.createIndex('scheduledTime', 'scheduledTime', { unique: false });
+        store.createIndex('fired', 'fired', { unique: false });
+      }
+    };
+  });
+};
+
+/**
+ * Get all unfired notifications that are due
+ */
+const getOverdueNotifications = async () => {
+  try {
+    const db = await openNotificationsDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.getAll();
+      
+      request.onsuccess = () => {
+        const now = Date.now();
+        const overdue = request.result.filter(n => 
+          n.scheduledTime <= now && !n.fired
+        );
+        resolve(overdue);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('[SW] Error getting overdue notifications:', error);
+    return [];
+  }
+};
+
+/**
+ * Mark a notification as fired in IndexedDB
+ */
+const markNotificationAsFired = async (id) => {
+  try {
+    const db = await openNotificationsDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const getRequest = store.get(id);
+      
+      getRequest.onsuccess = () => {
+        const notification = getRequest.result;
+        if (notification) {
+          notification.fired = true;
+          store.put(notification);
+        }
+      };
+      
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (error) {
+    console.error('[SW] Error marking notification as fired:', error);
+  }
+};
+
+/**
+ * Check and fire any overdue offline notifications
+ */
+const checkOfflineNotifications = async () => {
+  try {
+    const overdueNotifications = await getOverdueNotifications();
+    
+    if (overdueNotifications.length === 0) {
+      return;
+    }
+    
+    console.log(`[SW] Found ${overdueNotifications.length} overdue offline notification(s)`);
+    
+    for (const notification of overdueNotifications) {
+      // Show the notification
+      await self.registration.showNotification(notification.title, {
+        body: notification.body,
         icon: '/logo-dark.jpg',
         badge: '/logo-dark.jpg',
-      })
-    );
+        tag: notification.id,
+        vibrate: [200, 100, 200],
+        requireInteraction: true,
+        data: {
+          taskId: notification.taskId,
+          url: notification.taskId ? `/activities` : '/',
+          offlineNotification: true
+        },
+        actions: [
+          { action: 'open', title: 'Open App' },
+          { action: 'dismiss', title: 'Dismiss' }
+        ],
+      });
+      
+      // Mark as fired
+      await markNotificationAsFired(notification.id);
+      console.log(`[SW] Fired offline notification: ${notification.title}`);
+    }
+  } catch (error) {
+    console.error('[SW] Error checking offline notifications:', error);
   }
+};
+
+// Check for offline notifications every 30 seconds
+let notificationCheckInterval = null;
+
+const startNotificationChecker = () => {
+  if (notificationCheckInterval) {
+    clearInterval(notificationCheckInterval);
+  }
+  
+  // Check immediately on start
+  checkOfflineNotifications();
+  
+  // Then check every 30 seconds
+  notificationCheckInterval = setInterval(() => {
+    checkOfflineNotifications();
+  }, 30000);
+  
+  console.log('[SW] Offline notification checker started');
+};
+
+/**
+ * Push Event Handler
+ * This is the core of background notifications - it's triggered by the browser
+ * when a push message is received from the server, even when the app is closed.
+ */
+self.addEventListener('push', (event) => {
+  console.log('[SW] Push notification received');
+
+  // Always show a notification - this is required by the Push API
+  // If we don't show a notification, the browser may revoke push permission
+  const showNotification = async () => {
+    let title = 'ChronoDeX';
+    let options = {
+      body: 'You have a new notification',
+      icon: '/logo-dark.jpg',
+      badge: '/logo-dark.jpg',
+      vibrate: [200, 100, 200],
+      requireInteraction: true,
+      renotify: true,
+      silent: false,
+    };
+
+    if (event.data) {
+      try {
+        const data = event.data.json();
+        title = data.title || title;
+        options = {
+          body: data.body || options.body,
+          icon: data.icon || options.icon,
+          badge: data.badge || options.badge,
+          vibrate: [200, 100, 200],
+          data: data.data || {},
+          tag: data.tag || `chronodex-${Date.now()}`,
+          requireInteraction: true,
+          renotify: true,
+          silent: false,
+          actions: [
+            { action: 'open', title: 'Open App' },
+            { action: 'dismiss', title: 'Dismiss' }
+          ],
+        };
+      } catch (parseError) {
+        console.error('[SW] Error parsing push data, using text fallback:', parseError);
+        try {
+          options.body = event.data.text() || options.body;
+        } catch (textError) {
+          console.error('[SW] Failed to get text from push data:', textError);
+        }
+      }
+    }
+
+    return self.registration.showNotification(title, options);
+  };
+
+  event.waitUntil(showNotification());
 });
 
-// Handle notification click
+/**
+ * Notification Click Handler
+ * Opens the app when user taps on a notification
+ */
 self.addEventListener('notificationclick', (event) => {
   console.log('[SW] Notification clicked:', event.action);
   
@@ -60,7 +226,6 @@ self.addEventListener('notificationclick', (event) => {
     return;
   }
 
-  // Get the URL to open
   const urlToOpen = event.notification.data?.url || '/activities';
 
   event.waitUntil(
@@ -70,49 +235,109 @@ self.addEventListener('notificationclick', (event) => {
         for (const client of clientList) {
           if (client.url.includes(self.location.origin) && 'focus' in client) {
             client.focus();
-            // Navigate to the right page
+            // Navigate to the right page if not already there
             if (!client.url.includes(urlToOpen)) {
-              client.navigate(urlToOpen);
+              return client.navigate(urlToOpen);
             }
             return;
           }
         }
-        // If not open, open new window
+        // If app is not open, open new window
         return self.clients.openWindow(urlToOpen);
       })
   );
 });
 
-// Handle notification close
+/**
+ * Notification Close Handler
+ * Logs when user dismisses a notification
+ */
 self.addEventListener('notificationclose', (event) => {
-  console.log('[SW] Notification closed:', event.notification.tag);
+  console.log('[SW] Notification dismissed:', event.notification.tag);
 });
 
-// Handle subscription change (e.g., browser regenerated subscription)
+/**
+ * Push Subscription Change Handler
+ * Re-subscribes when browser regenerates subscription
+ */
 self.addEventListener('pushsubscriptionchange', (event) => {
-  console.log('[SW] Push subscription changed');
+  console.log('[SW] Push subscription changed, re-subscribing...');
   
-  // Re-subscribe with new subscription
   event.waitUntil(
-    self.registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: self.VAPID_PUBLIC_KEY // Will be set during registration
-    }).then((subscription) => {
-      console.log('[SW] Re-subscribed with new subscription');
-      // The app will need to update the subscription on the server
-      // This is handled by the notificationService when the app starts
-    }).catch((error) => {
-      console.error('[SW] Failed to re-subscribe:', error);
-    })
+    (async () => {
+      if (!VAPID_PUBLIC_KEY) {
+        console.error('[SW] Cannot re-subscribe: VAPID key not set');
+        return;
+      }
+
+      try {
+        const subscription = await self.registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: VAPID_PUBLIC_KEY
+        });
+        
+        console.log('[SW] Re-subscribed successfully');
+        
+        // Notify all clients about the new subscription
+        const clients = await self.clients.matchAll({ type: 'window' });
+        clients.forEach(client => {
+          client.postMessage({
+            type: 'PUSH_SUBSCRIPTION_CHANGED',
+            subscription: subscription.toJSON()
+          });
+        });
+      } catch (error) {
+        console.error('[SW] Failed to re-subscribe:', error);
+      }
+    })()
   );
 });
 
-// Message from main app (e.g., to update VAPID key)
+/**
+ * Message Handler
+ * Receives messages from the main app
+ */
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SET_VAPID_KEY') {
-    self.VAPID_PUBLIC_KEY = event.data.key;
+    VAPID_PUBLIC_KEY = event.data.key;
     console.log('[SW] VAPID public key set');
+  }
+  
+  // Check notifications on demand
+  if (event.data && event.data.type === 'CHECK_NOTIFICATIONS') {
+    console.log('[SW] Received CHECK_NOTIFICATIONS message');
+    checkOfflineNotifications();
+  }
+  
+  // Respond to ping messages (useful for checking if SW is active)
+  if (event.data && event.data.type === 'PING') {
+    event.ports[0]?.postMessage({ type: 'PONG', version: SW_VERSION });
   }
 });
 
-console.log('[SW Custom] ChronoDeX Service Worker loaded successfully');
+/**
+ * Install Event
+ * Skip waiting to activate immediately
+ */
+self.addEventListener('install', (event) => {
+  console.log('[SW] Installing...');
+  self.skipWaiting();
+});
+
+/**
+ * Activate Event
+ * Claim all clients immediately and start notification checker
+ */
+self.addEventListener('activate', (event) => {
+  console.log('[SW] Activating...');
+  event.waitUntil(
+    (async () => {
+      await self.clients.claim();
+      // Start the offline notification checker
+      startNotificationChecker();
+    })()
+  );
+});
+
+console.log('[SW] ChronoDeX Service Worker loaded successfully');
+

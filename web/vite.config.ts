@@ -25,9 +25,11 @@ export default defineConfig(({ mode }) => {
           theme_color: '#1e3a5f',
           background_color: '#0f172a',
           display: 'standalone',
-          orientation: 'portrait',
+          display_override: ['standalone', 'minimal-ui'],
+          orientation: 'any',
           scope: '/',
           start_url: '/',
+          categories: ['productivity', 'lifestyle', 'utilities'],
           icons: [
             {
               src: 'pwa-192x192.png',
@@ -46,6 +48,36 @@ export default defineConfig(({ mode }) => {
               sizes: '512x512',
               type: 'image/png',
               purpose: 'maskable'
+            }
+          ],
+          shortcuts: [
+            {
+              name: 'New Task',
+              short_name: 'Task',
+              description: 'Create a new task',
+              url: '/calendar?action=new-task',
+              icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }]
+            },
+            {
+              name: 'Calendar',
+              short_name: 'Calendar',
+              description: 'View calendar',
+              url: '/calendar',
+              icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }]
+            },
+            {
+              name: 'Day Planner',
+              short_name: 'Planner',
+              description: 'Plan your day',
+              url: '/day-planner',
+              icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }]
+            },
+            {
+              name: 'Budget',
+              short_name: 'Budget',
+              description: 'Track your budget',
+              url: '/budget',
+              icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }]
             }
           ]
         },

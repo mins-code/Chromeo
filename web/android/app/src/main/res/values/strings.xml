@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ChronoDeX</string>
+    <string name="title_activity_main">ChronoDeX</string>
+    <string name="package_name">com.chronodex.app</string>
+    <string name="custom_url_scheme">com.chronodex.app</string>
+</resources>

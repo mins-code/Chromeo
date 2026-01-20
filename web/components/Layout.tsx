@@ -845,24 +845,25 @@ export const Layout: React.FC<LayoutProps> = ({
                     )}
 
                     {/* Content Scroll Container */}
-                    <main className="flex-1 overflow-y-auto no-scrollbar pb-24 md:pb-0 relative scroll-smooth">
-                        <div className="container mx-auto max-w-6xl p-4 md:p-8 lg:p-10 space-y-8">
+                    <main className="flex-1 overflow-y-auto no-scrollbar pb-mobile-nav md:pb-0 relative scroll-smooth scroll-touch">
+                        <div className="container mx-auto max-w-6xl p-3 sm:p-4 md:p-8 lg:p-10 space-y-6 md:space-y-8">
                             {children}
                         </div>
                     </main>
 
                     {/* Mobile Floating Action Button (FAB) */}
-                    <div className="md:hidden absolute bottom-24 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
+                    <div className="md:hidden fixed bottom-28 left-1/2 -translate-x-1/2 z-40 pointer-events-none mb-safe-area">
                         <button
                             onClick={() => onAddTask('TASK')}
-                            className="pointer-events-auto bg-brand-500 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgb(14,165,233,0.4)] active:scale-90 transition-transform border-4 border-slate-50 dark:border-slate-900"
+                            className="pointer-events-auto bg-brand-500 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgb(14,165,233,0.4)] active:scale-90 transition-transform border-4 border-slate-50 dark:border-slate-900 touch-target"
+                            aria-label="Add new task"
                         >
                             <Plus size={28} />
                         </button>
                     </div>
 
                     {/* Mobile Bottom Nav */}
-                    <div className="md:hidden absolute bottom-0 left-0 right-0 glass border-t border-slate-200 dark:border-white/10 pb-safe-area z-30">
+                    <div className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-slate-200 dark:border-white/10 z-30 standalone-bottom-nav">
                         <div className="flex justify-around items-center h-20 px-4 pb-2">
                             {NAVIGATION_ITEMS.map((item) => {
                                 const Icon = item.icon;

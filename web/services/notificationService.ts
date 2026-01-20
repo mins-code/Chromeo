@@ -11,6 +11,8 @@
 import { NotificationSettings } from '../types';
 import { supabase } from './supabaseClient';
 import { logger } from '../utils/logger';
+import * as OfflineNotifications from './offlineNotificationService';
+import { nativeNotifications } from './nativeNotificationService';
 
 const DEFAULT_SETTINGS: NotificationSettings = {
   enabled: false,
@@ -305,9 +307,6 @@ export const scheduleNotification = async (
     taskId?: string;
   }
 ): Promise<boolean> => {
-  // Skip if backend is disabled
-  if (!PUSH_NOTIFICATIONS_BACKEND_ENABLED) return false;
-
   const settings = getSettings();
   if (!settings.enabled) return false;
 
@@ -317,13 +316,30 @@ export const scheduleNotification = async (
   // Don't schedule if time has passed
   if (delay <= 0) return false;
 
+  // ALWAYS cache locally for offline support
+  try {
+    await OfflineNotifications.cacheNotification({
+      id,
+      taskId: options?.taskId || id,
+      title,
+      body: options?.body || '',
+      scheduledTime: scheduledTime.getTime(),
+    });
+    logger.debug(`[Notifications] Cached notification locally: ${id}`);
+  } catch (cacheError) {
+    logger.error('[Notifications] Failed to cache notification locally', cacheError as Error);
+  }
+
+  // Skip server-side scheduling if backend is disabled
+  if (!PUSH_NOTIFICATIONS_BACKEND_ENABLED) return true;
+
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return false;
+    if (!user) return true; // Still return true since we cached locally
 
     // Also check for a valid session to avoid 401 errors
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return false;
+    if (!session) return true; // Still return true since we cached locally
 
     // Silently fail if push notification function is not available
     // This prevents CORS errors when the function isn't deployed or configured
@@ -349,15 +365,16 @@ export const scheduleNotification = async (
     if (error) {
       // Silently log the error instead of throwing
       console.debug('Push notification scheduling skipped:', error.message);
-      return false;
+      // Still return true since we have local cache
     }
     
     logger.debug(`Scheduled notification for ${scheduledTime.toISOString()}`);
     return true;
   } catch (error) {
     // Silently handle errors to prevent console spam
-    console.debug('Error scheduling notification:', error);
-    return false;
+    console.debug('Error scheduling notification on server:', error);
+    // Return true since we still have local cache working
+    return true;
   }
 };
 
@@ -365,13 +382,21 @@ export const scheduleNotification = async (
  * Cancel a scheduled notification
  */
 export const cancelNotification = async (taskId: string): Promise<boolean> => {
-  // Skip if backend is disabled
-  if (!PUSH_NOTIFICATIONS_BACKEND_ENABLED) return false;
+  // Always remove from local cache
+  try {
+    await OfflineNotifications.removeCachedNotificationByTaskId(taskId);
+    logger.debug(`[Notifications] Removed notification from local cache: ${taskId}`);
+  } catch (cacheError) {
+    logger.error('[Notifications] Failed to remove notification from local cache', cacheError as Error);
+  }
+
+  // Skip server-side cancellation if backend is disabled
+  if (!PUSH_NOTIFICATIONS_BACKEND_ENABLED) return true;
 
   try {
     // Check for valid session before making API call
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return false;
+    if (!session) return true; // Still return true since we cleared local cache
 
     const { error } = await supabase.functions.invoke('push-notification', {
       body: {
@@ -388,12 +413,11 @@ export const cancelNotification = async (taskId: string): Promise<boolean> => {
 
     if (error) {
       console.debug('Push notification cancellation skipped:', error.message);
-      return false;
     }
     return true;
   } catch (error) {
-    console.debug('Error cancelling notification:', error);
-    return false;
+    console.debug('Error cancelling notification on server:', error);
+    return true; // Still return true since we cleared local cache
   }
 };
 
@@ -401,8 +425,16 @@ export const cancelNotification = async (taskId: string): Promise<boolean> => {
  * Cancel all scheduled notifications for a user
  */
 export const cancelAllNotifications = async (): Promise<void> => {
+  // Clear local cache
+  try {
+    await OfflineNotifications.cleanupOldNotifications();
+    logger.debug('[Notifications] Cleaned up old notifications from local cache');
+  } catch (error) {
+    logger.error('[Notifications] Failed to cleanup local cache', error as Error);
+  }
+  
   // This would require a backend endpoint to delete all user's scheduled notifications
-  logger.debug('Cancel all notifications - not implemented for push');
+  logger.debug('Cancel all notifications - server-side not implemented for push');
 };
 
 /**
@@ -444,9 +476,25 @@ export const scheduleTaskReminder = async (
     'REMINDER': '⏰ Reminder',
   };
 
+  const notificationTitle = typeLabels[taskType] || 'Reminder';
+
+  // Use native local notifications on Android/iOS (works offline!)
+  if (nativeNotifications.isNative()) {
+    await nativeNotifications.scheduleLocal({
+      id: taskId,
+      title: notificationTitle,
+      body: title,
+      scheduledAt: notifyTime,
+      data: { taskId, url: '/activities' },
+    });
+    logger.debug(`[Notifications] Scheduled native notification for ${notifyTime.toISOString()}`);
+    return;
+  }
+
+  // Web Push for browsers (requires server-side scheduling)
   await scheduleNotification(
     `task-${taskId}`,
-    typeLabels[taskType] || 'Reminder',
+    notificationTitle,
     notifyTime,
     {
       body: title,
@@ -491,6 +539,26 @@ export const sendBudgetAlert = async (
  */
 export const initializePushNotifications = async (): Promise<boolean> => {
   const settings = getSettings();
+  
+  // Initialize offline notification database regardless of settings
+  // This ensures we can cache notifications for offline use
+  try {
+    await OfflineNotifications.initDB();
+    logger.debug('[Notifications] Offline notification database initialized');
+    
+    // Cleanup old notifications
+    await OfflineNotifications.cleanupOldNotifications();
+    
+    // Notify service worker to check for any pending notifications
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'CHECK_NOTIFICATIONS'
+      });
+    }
+  } catch (error) {
+    logger.error('[Notifications] Failed to initialize offline notifications', error as Error);
+  }
+  
   if (!settings.enabled) return false;
   
   if (Notification.permission !== 'granted') {
@@ -504,4 +572,22 @@ export const initializePushNotifications = async (): Promise<boolean> => {
   }
 
   return true;
+};
+
+/**
+ * Get offline notification statistics (for debugging)
+ */
+export const getOfflineNotificationStats = async () => {
+  return OfflineNotifications.getNotificationStats();
+};
+
+/**
+ * Force check for pending offline notifications
+ */
+export const checkPendingOfflineNotifications = async () => {
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'CHECK_NOTIFICATIONS'
+    });
+  }
 };

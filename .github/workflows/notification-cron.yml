@@ -1,0 +1,37 @@
+name: Notification Scheduler
+
+on:
+  schedule:
+    # Run every minute
+    - cron: "*/1 * * * *"
+  workflow_dispatch: # Allow manual trigger for testing
+
+jobs:
+  trigger-notifications:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Notification Scheduler
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "Triggering notification scheduler at $(date -u)"
+
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            "${SUPABASE_URL}/functions/v1/notification-scheduler" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --max-time 30)
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+
+          echo "Response: $body"
+          echo "HTTP Code: $http_code"
+
+          if [ "$http_code" != "200" ]; then
+            echo "::warning::Scheduler returned non-200 status: $http_code"
+            exit 1
+          fi
+
+          echo "✅ Notification scheduler completed successfully"

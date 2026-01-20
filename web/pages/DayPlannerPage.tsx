@@ -51,6 +51,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
   const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isTaskPanelOpen, setIsTaskPanelOpen] = useState(true);
+  const [isMobileTaskPanelOpen, setIsMobileTaskPanelOpen] = useState(false);
 
   // Format current date as YYYY-MM-DD
   const dateKey = useMemo(() => format(currentDate, 'yyyy-MM-dd'), [currentDate]);
@@ -679,60 +680,73 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
   return (
     <div className="h-full flex flex-col animate-fade-in">
       {/* Header */}
-      <div className="border-b border-slate-200 dark:border-white/5 pb-6">
+      <div className="border-b border-slate-200 dark:border-white/5 pb-4 lg:pb-6">
         {/* Date Navigation */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-3 lg:mb-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button
               onClick={goToPreviousDay}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400 transition-colors"
+              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400 transition-colors touch-target"
+              aria-label="Previous day"
             >
               <ChevronLeft size={20} />
             </button>
 
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-                {format(currentDate, 'EEEE, MMMM d, yyyy')}
+            <div className="text-center min-w-0">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-800 dark:text-slate-100 truncate">
+                {format(currentDate, 'EEE, MMM d, yyyy')}
               </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                 {planTasks.length} tasks in plan
               </p>
             </div>
 
             <button
               onClick={goToNextDay}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400 transition-colors"
+              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400 transition-colors touch-target"
+              aria-label="Next day"
             >
               <ChevronRight size={20} />
             </button>
           </div>
 
-          <Button variant="secondary" size="sm" onClick={goToToday}>
+          <Button variant="secondary" size="sm" onClick={goToToday} className="flex-shrink-0">
             <Calendar size={16} />
-            Today
+            <span className="hidden xs:inline">Today</span>
           </Button>
         </div>
 
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1 sm:gap-2">
           <Button variant="primary" size="sm" onClick={() => onCreateTask(currentDate)}>
             <Plus size={16} />
-            <span className="hidden sm:inline">Add Task</span>
+            <span className="hidden xs:inline">Add Task</span>
+          </Button>
+
+          {/* Mobile Task Panel Toggle */}
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            onClick={() => setIsMobileTaskPanelOpen(!isMobileTaskPanelOpen)}
+            className="lg:hidden"
+          >
+            <Calendar size={16} />
+            <span className="hidden sm:inline">Tasks ({unusedTasks.length})</span>
           </Button>
 
           <Button variant="secondary" size="sm" onClick={() => setIsCloneModalOpen(true)}>
             <Copy size={16} />
-            <span className="hidden sm:inline">Clone</span>
+            <span className="hidden md:inline">Clone</span>
           </Button>
 
           <Button variant="secondary" size="sm" onClick={() => setIsTemplatesModalOpen(true)}>
             <Download size={16} />
-            <span className="hidden md:inline">Templates</span>
+            <span className="hidden lg:inline">Templates</span>
           </Button>
 
           <Button variant="secondary" size="sm" onClick={() => setIsSaveTemplateModalOpen(true)}>
             <Save size={16} />
-            <span className="hidden md:inline">Save</span>
+            <span className="hidden lg:inline">Save</span>
           </Button>
 
       <Button variant="secondary" size="sm" onClick={() => setIsRecurringModalOpen(true)}>
@@ -740,19 +754,19 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
             <span className="hidden md:inline">Recurring</span>
           </Button>
 
-          <Button variant="secondary" size="sm" onClick={handleAutoArrange}>
+          <Button variant="secondary" size="sm" onClick={handleAutoArrange} className="hidden sm:flex">
             <LayoutIcon size={16} />
-            <span className="hidden lg:inline">Arrange</span>
+            <span className="hidden xl:inline">Arrange</span>
           </Button>
 
-          <Button variant="secondary" size="sm" onClick={handleAutoLink} title="Auto-link tasks by time">
+          <Button variant="secondary" size="sm" onClick={handleAutoLink} title="Auto-link tasks by time" className="hidden sm:flex">
             <Link2 size={16} />
-            <span className="hidden lg:inline">Auto-Link</span>
+            <span className="hidden xl:inline">Auto-Link</span>
           </Button>
 
-          <Button variant="secondary" size="sm" onClick={() => setIsFullscreen(true)} title="Fullscreen mode">
+          <Button variant="secondary" size="sm" onClick={() => setIsFullscreen(true)} title="Fullscreen mode" className="hidden md:flex">
             <Maximize2 size={16} />
-            <span className="hidden lg:inline">Fullscreen</span>
+            <span className="hidden xl:inline">Fullscreen</span>
           </Button>
 
           <div className="flex-1" />
@@ -781,10 +795,10 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 flex gap-6 pt-6 overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row gap-3 lg:gap-6 pt-4 lg:pt-6 overflow-hidden">
         {/* Flowchart Canvas */}
         <div
-          className="flex-1 min-w-0 flex flex-col bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden"
+          className="flex-1 min-w-0 min-h-[300px] lg:min-h-0 flex flex-col bg-white dark:bg-slate-900 rounded-xl lg:rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden"
           onDrop={handleCanvasDrop}
           onDragOver={handleCanvasDragOver}
         >
@@ -813,8 +827,8 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
           </div>
         </div>
 
-        {/* Unused Tasks Sidebar - Fixed width */}
-        <div className="w-72 xl:w-64 min-h-[400px] flex-shrink-0 flex flex-col bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/5">
+        {/* Unused Tasks Sidebar - Hidden on mobile, visible on lg+ */}
+        <div className="hidden lg:flex w-64 xl:w-72 min-h-[400px] flex-shrink-0 flex-col bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/5">
           <div className="p-4 border-b border-slate-200 dark:border-white/5">
             <h3 className="font-semibold text-slate-800 dark:text-slate-100">Available Tasks</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -861,6 +875,93 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
             )}
           </div>
         </div>
+
+        {/* Mobile Task Panel Overlay */}
+        {isMobileTaskPanelOpen && (
+          <div className="lg:hidden fixed inset-0 z-50">
+            {/* Backdrop */}
+            <div 
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
+              onClick={() => setIsMobileTaskPanelOpen(false)}
+            />
+            {/* Slide-in Panel */}
+            <div className="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-white/5 flex flex-col animate-slide-in-right">
+              <div className="p-4 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-slate-800 dark:text-slate-100">Available Tasks</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    {unusedTasks.length} tasks not in plan
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsMobileTaskPanelOpen(false)}
+                  className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                  aria-label="Close task panel"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-2 scroll-touch">
+                {unusedTasks.length === 0 ? (
+                  <div className="text-center py-8 text-slate-400 text-sm">
+                    All tasks are in the plan
+                  </div>
+                ) : (
+                  unusedTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      draggable
+                      onDragStart={() => handleDragStart(task)}
+                      onClick={() => {
+                        onEditTask(task);
+                        setIsMobileTaskPanelOpen(false);
+                      }}
+                      className="p-3 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-200 dark:border-white/5 hover:border-brand-500/30 cursor-pointer transition-all hover:shadow-md active:scale-98"
+                    >
+                      <div className="font-medium text-sm text-slate-800 dark:text-slate-100">
+                        {task.title}
+                      </div>
+                      {task.dueDate && (
+                        <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                          <Calendar size={10} />
+                          {format(new Date(task.dueDate), 'h:mm a')}
+                        </div>
+                      )}
+                      {task.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {task.tags.slice(0, 2).map((tag, idx) => (
+                            <span
+                              key={idx}
+                              className="px-2 py-0.5 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-xs"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="p-4 border-t border-slate-200 dark:border-white/5">
+                <Button 
+                  variant="primary" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={() => {
+                    onCreateTask(currentDate);
+                    setIsMobileTaskPanelOpen(false);
+                  }}
+                >
+                  <Plus size={16} />
+                  Add New Task
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Fullscreen Mode Overlay */}

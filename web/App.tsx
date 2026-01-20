@@ -35,6 +35,7 @@ import { useBudget } from './hooks/useBudget';
 import { useRoutines } from './hooks/useRoutines';
 import * as PartnerService from './services/partnerService';
 import * as NotificationService from './services/notificationService';
+import { nativeNotifications } from './services/nativeNotificationService';
 import { NotificationSettings, Routine } from './types';
 import RoutineEditor from './components/RoutineEditor';
 import RoutineList from './components/RoutineList';
@@ -278,7 +279,15 @@ const App: React.FC = () => {
 
     // Register Service Worker and Initialize Push Notifications
     useEffect(() => {
-        const registerServiceWorker = async () => {
+        const initializeNotifications = async () => {
+            // Initialize native notifications first (for Capacitor Android/iOS)
+            // This is a no-op on web, but essential for native apps
+            if (session?.user && notificationSettings.enabled) {
+                await nativeNotifications.initialize();
+                logger.debug('[App] Native notifications initialized');
+            }
+
+            // For web: Register service worker and web push
             if ('serviceWorker' in navigator) {
                 try {
                     // Register the custom service worker
@@ -311,7 +320,7 @@ const App: React.FC = () => {
             }
         };
 
-        registerServiceWorker();
+        initializeNotifications();
     }, [session, notificationSettings.enabled]);
 
     // Google Calendar: Check token availability
