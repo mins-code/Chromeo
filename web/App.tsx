@@ -613,7 +613,7 @@ const App: React.FC = () => {
     }, [signOut]);
 
     const filteredTasks = useMemo(() => {
-        return visibleTasks
+        const filtered = visibleTasks
             .filter(t => {
                 if (currentView === 'tasks' && t.type !== 'TASK') return false;
                 if (currentView === 'events' && t.type !== 'EVENT') return false;
@@ -624,8 +624,13 @@ const App: React.FC = () => {
                     t.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
                 const matchesStatus = filterStatus === 'ALL' || t.status === filterStatus;
                 return matchesSearch && matchesStatus;
-            })
-            .sort((a, b) => getUrgencyScore(b) - getUrgencyScore(a)); // Higher urgency first
+            });
+
+        // ⚡ Bolt Optimization: Pre-calculate scores to avoid O(N log N) recalculations during sort
+        const scores = new Map<string, number>();
+        filtered.forEach(task => scores.set(task.id, getUrgencyScore(task)));
+
+        return filtered.sort((a, b) => (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0));
     }, [visibleTasks, searchQuery, filterStatus, currentView]);
 
     const calendarFilteredTasks = useMemo(() => {
