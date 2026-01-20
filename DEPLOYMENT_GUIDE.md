@@ -286,7 +286,18 @@ APK location: `web/android/app/build/outputs/apk/debug/app-debug.apk`
 ```bash
 # Build web app
 cd web && npm run build
+PS C:\Users\Atul RN\Downloads\Chromeo-main> npx supabase db push
+Initialising login role...
+Connecting to remote database...
+Remote migration versions not found in local migrations directory.
 
+Make sure your local git repo is up-to-date. If the error persists, try repairing the migration history table:
+supabase migration repair --status reverted 20260107
+
+And update local migrations to match remote database:
+supabase db pull
+
+PS C:\Users\Atul RN\Downloads\Chromeo-main>
 # Sync Android
 npx cap sync android
 
