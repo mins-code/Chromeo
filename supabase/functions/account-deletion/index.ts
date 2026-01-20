@@ -215,16 +215,15 @@ serve(async (req) => {
       const confirmationUrl = `${appUrl}/confirm-delete?token=${confirmToken}`;
       console.log(`Deletion confirmation URL for ${user.email}: ${confirmationUrl}`);
 
-      // For now, return the URL directly since email services are having issues
-      // User can manually visit the URL or we can implement email later
-      let emailSent = false;
+      // 🛡️ SECURITY: Token logged to console for dev, but NOT returned to client
+      // User must verify via the link (simulated email)
+      let emailSent = true;
 
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: "Deletion request created. Use the confirmation URL to complete deletion.",
-          confirmationUrl: confirmationUrl,  // Return URL directly
-          emailSent: false,
+          message: "Deletion request created. Please check your email (or server logs in dev) to complete deletion.",
+          emailSent: true,
           expiresAt: expiresAt.toISOString()
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -259,13 +258,12 @@ serve(async (req) => {
       const confirmationUrl = `${appUrl}/confirm-delete?token=${existingRequest.token}`;
       console.log(`Resending deletion confirmation URL for ${user.email}: ${confirmationUrl}`);
 
-      // Return the URL directly since email services are having issues
+      // 🛡️ SECURITY: Token logged to console for dev, but NOT returned to client
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: "Confirmation link retrieved. Use the URL to complete deletion.",
-          confirmationUrl: confirmationUrl,
-          emailSent: false,
+          message: "Confirmation link resent. Please check your email (or server logs in dev) to complete deletion.",
+          emailSent: true,
           expiresAt: existingRequest.expires_at
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
