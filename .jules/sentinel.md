@@ -47,3 +47,7 @@
 **Vulnerability:** The account deletion confirmation token was returned directly in the HTTP response body to the client, allowing instant account deletion without email access.
 **Learning:** Security workarounds for infrastructure limitations (like broken email) often introduce critical vulnerabilities. "Temporary" hacks in dev environments can be dangerous if they expose sensitive tokens.
 **Prevention:** Never return authentication or verification tokens in API responses. Always use out-of-band channels (email, SMS) or server-side logs (for dev) to deliver secrets.
+## 2025-05-27 - Escape Sequence Injection in LLM Prompts
+**Vulnerability:** The `ai-chat` function sanitized quotes (`"`) but not backslashes (`\`). This allowed attackers to inject an escape sequence (e.g., sending `User\`) which, when JSON-encoded or placed in a prompt string, could escape the closing quote of the variable (e.g., `"... name is "User\" ..."`), potentially breaking out of the sandbox string and confusing the LLM parser.
+**Learning:** Sanitizing just the delimiters (quotes) is insufficient if the escape character itself is allowed. The escape character can be used to neutralize the sanitizer's work.
+**Prevention:** Always escape or remove backslashes (`\`) before replacing quotes when sanitizing user input for LLM prompts or JSON contexts. `input.replace(/\\/g, '\\\\').replace(/"/g, "'")`.
