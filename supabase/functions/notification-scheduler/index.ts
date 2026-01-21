@@ -1,12 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import webpush from "https://esm.sh/web-push@3.6.6";
 
 /**
  * Cron job to process scheduled push notifications
  * Called by GitHub Actions every minute.
  * 
- * Authentication: Uses a custom CRON_SECRET for simple auth,
- * or accepts any valid service role key.
+ * MULTI-DEVICE SUPPORT: Sends notifications to ALL devices registered by the user
  */
 
 const corsHeaders = {
@@ -27,8 +27,6 @@ serve(async (req) => {
   // Security Check: Verify the request has authorization
   const authHeader = req.headers.get('Authorization');
   
-  // Accept any Bearer token that looks like a service role key (starts with eyJ)
-  // This is a trusted endpoint only called by GitHub Actions
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     console.log("Unauthorized request - no auth header");
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -49,6 +47,21 @@ serve(async (req) => {
   }
 
   try {
+    // Setup VAPID for web push
+    const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY");
+    const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY");
+    const VAPID_EMAIL = Deno.env.get("VAPID_EMAIL") || "mailto:admin@chronodex.app";
+
+    if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+      console.error("VAPID keys not configured!");
+      return new Response(
+        JSON.stringify({ error: "VAPID keys not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || token;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -85,46 +98,116 @@ serve(async (req) => {
 
     console.log(`Processing ${dueNotifications.length} due notifications`);
 
-    const results: Array<{ id: string; status: string; error?: string }> = [];
+    const results: Array<{ id: string; status: string; devices: number; errors?: string[] }> = [];
 
     for (const notification of dueNotifications) {
       try {
-        // Get user's push subscription
-        const { data: subData, error: subError } = await supabase
+        // Get ALL push subscriptions for this user (multi-device support!)
+        const { data: subscriptions, error: subError } = await supabase
           .from("push_subscriptions")
-          .select("subscription, platform, fcm_token")
-          .eq("user_id", notification.user_id)
-          .single();
+          .select("id, subscription, platform, fcm_token")
+          .eq("user_id", notification.user_id);
 
-        if (subError || !subData) {
-          console.log(`No subscription for user ${notification.user_id}, marking as sent`);
+        if (subError) {
+          console.error(`Error fetching subscriptions for user ${notification.user_id}:`, subError);
+          results.push({ id: notification.id, status: "error", devices: 0, errors: [subError.message] });
+          continue;
+        }
+
+        if (!subscriptions || subscriptions.length === 0) {
+          console.log(`No subscriptions for user ${notification.user_id}, marking as sent`);
           await supabase
             .from("scheduled_notifications")
             .update({ sent: true })
             .eq("id", notification.id);
-          results.push({ id: notification.id, status: "skipped_no_subscription" });
+          results.push({ id: notification.id, status: "skipped_no_subscription", devices: 0 });
           continue;
         }
 
-        // Mark notification as processed
+        console.log(`Found ${subscriptions.length} device(s) for user ${notification.user_id}`);
+
+        // Prepare push payload
+        const payload = JSON.stringify({
+          title: notification.title,
+          body: notification.body,
+          icon: "/logo-dark.jpg",
+          badge: "/logo-dark.jpg",
+          tag: `task-${notification.task_id || notification.id}`,
+          data: {
+            taskId: notification.task_id,
+            url: "/activities",
+          },
+        });
+
+        const deviceErrors: string[] = [];
+        let successfulDevices = 0;
+
+        // Send to ALL devices
+        for (const sub of subscriptions) {
+          try {
+            if (sub.subscription && sub.platform === 'web') {
+              // Web Push notification
+              await webpush.sendNotification(sub.subscription, payload);
+              successfulDevices++;
+              console.log(`✓ Sent to web device ${sub.id}`);
+              
+              // Update last_active timestamp
+              await supabase
+                .from("push_subscriptions")
+                .update({ last_active: new Date().toISOString() })
+                .eq("id", sub.id);
+            } else if (sub.fcm_token && (sub.platform === 'android' || sub.platform === 'ios')) {
+              // FCM for native apps - would need additional implementation
+              console.log(`FCM notification for ${sub.platform} device ${sub.id} - not yet implemented`);
+              // TODO: Implement FCM sending when Firebase is configured
+            }
+          } catch (pushError: unknown) {
+            const errorMsg = pushError instanceof Error ? pushError.message : String(pushError);
+            console.error(`Failed to send to device ${sub.id}:`, errorMsg);
+            deviceErrors.push(`Device ${sub.id}: ${errorMsg}`);
+
+            // If subscription is invalid (410 Gone), remove it
+            if (pushError && typeof pushError === 'object' && 'statusCode' in pushError) {
+              const statusCode = (pushError as { statusCode: number }).statusCode;
+              if (statusCode === 410) {
+                console.log(`Removing expired subscription ${sub.id}`);
+                await supabase
+                  .from("push_subscriptions")
+                  .delete()
+                  .eq("id", sub.id);
+              }
+            }
+          }
+        }
+
+        // Mark notification as sent
         await supabase
           .from("scheduled_notifications")
           .update({ sent: true, sent_at: new Date().toISOString() })
           .eq("id", notification.id);
 
-        results.push({ id: notification.id, status: "processed" });
-        console.log(`Processed notification ${notification.id} for user ${notification.user_id}`);
+        results.push({ 
+          id: notification.id, 
+          status: successfulDevices > 0 ? "sent" : "failed",
+          devices: successfulDevices,
+          errors: deviceErrors.length > 0 ? deviceErrors : undefined
+        });
+        
+        console.log(`Notification ${notification.id}: sent to ${successfulDevices}/${subscriptions.length} devices`);
 
       } catch (processError: unknown) {
         const errorMessage = processError instanceof Error ? processError.message : String(processError);
         console.error(`Failed to process notification ${notification.id}:`, processError);
-        results.push({ id: notification.id, status: "error", error: errorMessage });
+        results.push({ id: notification.id, status: "error", devices: 0, errors: [errorMessage] });
       }
     }
 
+    const totalSent = results.filter(r => r.status === "sent").length;
+    const totalDevices = results.reduce((acc, r) => acc + r.devices, 0);
+
     return new Response(
       JSON.stringify({ 
-        message: `Processed ${dueNotifications.length} notifications`,
+        message: `Processed ${dueNotifications.length} notifications, sent to ${totalDevices} devices`,
         results 
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

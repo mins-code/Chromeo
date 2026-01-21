@@ -201,23 +201,52 @@ serve(async (req) => {
 
 
     // Action: Subscribe - Save push subscription to database
+    // Multi-device support: Each device (identified by endpoint) gets its own row
     if (action === "subscribe") {
       if (!subscription) {
         throw new Error("Missing subscription");
       }
 
-      // Upsert subscription (update if exists, insert if new)
-      const { error } = await supabase
-        .from("push_subscriptions")
-        .upsert({
-          user_id: userId,
-          subscription: subscription,
-          updated_at: new Date().toISOString(),
-        }, {
-          onConflict: "user_id",
-        });
+      const endpoint = subscription.endpoint;
+      if (!endpoint) {
+        throw new Error("Missing subscription endpoint");
+      }
 
-      if (error) throw error;
+      // Check if this exact subscription already exists
+      const { data: existing } = await supabase
+        .from("push_subscriptions")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("subscription->>endpoint", endpoint)
+        .single();
+
+      if (existing) {
+        // Update existing subscription
+        const { error } = await supabase
+          .from("push_subscriptions")
+          .update({
+            subscription: subscription,
+            platform: "web",
+            updated_at: new Date().toISOString(),
+            last_active: new Date().toISOString(),
+          })
+          .eq("id", existing.id);
+
+        if (error) throw error;
+      } else {
+        // Insert new subscription for this device
+        const { error } = await supabase
+          .from("push_subscriptions")
+          .insert({
+            user_id: userId,
+            subscription: subscription,
+            platform: "web",
+            updated_at: new Date().toISOString(),
+            last_active: new Date().toISOString(),
+          });
+
+        if (error) throw error;
+      }
 
       return new Response(
         JSON.stringify({ success: true, message: "Subscription saved" }),
