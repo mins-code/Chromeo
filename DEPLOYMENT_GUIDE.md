@@ -189,6 +189,7 @@ Or manually open `web/android` folder in Android Studio.
 ### Step 4: Wait for Gradle Sync
 
 Android Studio will automatically sync Gradle. Wait for it to complete (bottom status bar).
+###abc
 
 ### Step 5: Build APK
 
