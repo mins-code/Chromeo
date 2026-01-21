@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { Task } from '../types';
 import DraggableTask from './DraggableTask';
@@ -13,6 +13,7 @@ import {
   getMinutes,
 } from 'date-fns';
 import { Maximize2, Minimize2 } from 'lucide-react';
+import CurrentTimeIndicator from './CurrentTimeIndicator';
 
 interface WeekViewProps {
   tasks: Task[];
@@ -116,18 +117,11 @@ const TaskBlock = React.memo(({ task, style, onEditTask }: TaskBlockProps) => {
 });
 
 const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) => {
-  const [currentTime, setCurrentTime] = useState(new Date());
   const [isExpanded, setIsExpanded] = useState(false); // Default to compact (4hr)
 
   const HOUR_HEIGHT = isExpanded ? 60 : 40; // Smaller cells in compact
   const INTERVAL_HOURS = isExpanded ? 1 : 4;
   const HOURS = isExpanded ? HOURS_EXPANDED : HOURS_COMPACT;
-
-  // Update current time every minute
-  useEffect(() => {
-    const interval = setInterval(() => setCurrentTime(new Date()), 60000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Get days of the week
   const weekDays = useMemo(() => {
@@ -189,14 +183,6 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
       });
       return styles;
   }, [tasks, HOUR_HEIGHT, INTERVAL_HOURS]);
-
-  // Current time indicator position
-  const currentTimePosition = useMemo(() => {
-    const hours = currentTime.getHours();
-    const minutes = currentTime.getMinutes();
-    const cellHeight = HOUR_HEIGHT * INTERVAL_HOURS;
-    return (hours / INTERVAL_HOURS) * cellHeight + (minutes / 60) * HOUR_HEIGHT;
-  }, [currentTime, HOUR_HEIGHT, INTERVAL_HOURS]);
 
   const todayIndex = weekDays.findIndex(day => isToday(day));
 
@@ -280,15 +266,7 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
 
                 {/* Current time indicator */}
                 {dayIdx === todayIndex && (
-                  <div
-                    className="absolute left-0 right-0 z-20 pointer-events-none"
-                    style={{ top: currentTimePosition }}
-                  >
-                    <div className="relative flex items-center">
-                      <div className="w-2 h-2 rounded-full bg-red-500 -ml-1" />
-                      <div className="flex-1 h-0.5 bg-red-500" />
-                    </div>
-                  </div>
+                  <CurrentTimeIndicator hourHeight={HOUR_HEIGHT} />
                 )}
               </div>
             );
