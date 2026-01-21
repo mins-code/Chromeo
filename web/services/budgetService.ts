@@ -148,6 +148,48 @@ export const processRecurringTransaction = async (recurringId: string): Promise<
     return getBudget();
 };
 
+export const updateRecurringTransaction = async (
+    id: string,
+    updates: {
+        description?: string;
+        amount?: number;
+        type?: 'income' | 'expense';
+        frequency?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+        nextDueDate?: string;
+    }
+): Promise<Budget> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+        const updateData: Record<string, unknown> = {};
+        if (updates.description !== undefined) updateData.description = updates.description;
+        if (updates.amount !== undefined) updateData.amount = updates.amount;
+        if (updates.type !== undefined) updateData.type = updates.type;
+        if (updates.frequency !== undefined) updateData.frequency = updates.frequency;
+        if (updates.nextDueDate !== undefined) updateData.next_due_date = updates.nextDueDate;
+
+        await supabase
+            .from('transactions')
+            .update(updateData)
+            .eq('id', id)
+            .eq('user_id', user.id)
+            .not('next_due_date', 'is', null); // Only update recurring templates
+    }
+    return getBudget();
+};
+
+export const deleteRecurringTransaction = async (id: string): Promise<Budget> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+        await supabase
+            .from('transactions')
+            .delete()
+            .eq('id', id)
+            .eq('user_id', user.id)
+            .not('next_due_date', 'is', null); // Only delete recurring templates
+    }
+    return getBudget();
+};
+
 export const addRecurringTransaction = async (
     description: string,
     amount: number,

@@ -9,6 +9,7 @@ import Button from './Button';
 import Input from './Input';
 import Select from './Select';
 import TransactionList from './TransactionList';
+import RecurringBillsManager from './RecurringBillsManager';
 import BudgetForecastChart from './BudgetForecastChart';
 import BudgetCategoryChart from './BudgetCategoryChart';
 import { calculateForecast, formatForecastDate } from '../utils/financialForecasting';
@@ -22,7 +23,7 @@ interface BudgetPlannerProps {
 
 const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
     // Use the budget hook for state management
-    const { budget, updateSettings, addTransaction, addRecurringTransaction, updateTransaction, deleteTransaction } = useBudget();
+    const { budget, updateSettings, addTransaction, addRecurringTransaction, updateTransaction, deleteTransaction, updateRecurring, deleteRecurring } = useBudget();
 
     const [limitInput, setLimitInput] = useState('');
     const [durationInput, setDurationInput] = useState('Monthly');
@@ -681,6 +682,13 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                     </div>
                 )}
             </div>
+
+            {/* Recurring Bills Manager */}
+            <RecurringBillsManager
+                recurring={budget.recurring}
+                onUpdate={updateRecurring}
+                onDelete={deleteRecurring}
+            />
 
             {/* Transaction List */}
             <TransactionList 

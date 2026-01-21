@@ -1,5 +1,5 @@
 
-import { LayoutDashboard, CheckSquare, Calendar as CalendarIcon, Bot, Settings, Users, Wallet, Bell, Clock, FolderKanban, CalendarDays, LayoutGrid, Repeat, Workflow, StickyNote } from 'lucide-react';
+import { CheckSquare, Calendar as CalendarIcon, Wallet, Bell, Clock, CalendarDays, LayoutGrid, Repeat, Workflow, StickyNote } from 'lucide-react';
 
 export const APP_NAME = "ChronoDeX";
 
@@ -55,3 +55,9 @@ export const STORAGE_KEYS = {
   PARTNER: 'chronodex_partner',
 } as const;
 
+// Environment flags for production-aware code
+export const IS_PRODUCTION = import.meta.env.PROD;
+export const IS_DEVELOPMENT = import.meta.env.DEV;
+
+// App version (for cache busting and tracking)
+export const APP_VERSION = '1.0.0';

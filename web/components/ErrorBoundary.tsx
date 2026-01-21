@@ -1,6 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import Button from './Button';
+import { logger } from '../utils/logger';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -17,6 +18,8 @@ interface ErrorBoundaryState {
  * React Error Boundary component for graceful error handling.
  * Catches JavaScript errors in child component tree and displays
  * a fallback UI instead of crashing the whole app.
+ * 
+ * In production, errors are logged via the centralized logger for monitoring.
  */
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = {
@@ -30,8 +33,19 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
-    (this as any).setState({ errorInfo });
+    // Report error to logging system
+    this.reportError(error, errorInfo);
+    (this as unknown as { setState: (state: Partial<ErrorBoundaryState>) => void }).setState({ errorInfo });
+  }
+
+  /**
+   * Report error to logging/monitoring system
+   * In production, this could send to Sentry, DataDog, etc.
+   */
+  private reportError(error: Error, errorInfo: ErrorInfo): void {
+    logger.error('React Error Boundary caught error', error, {
+      componentStack: errorInfo.componentStack,
+    });
   }
 
   private handleReload = (): void => {

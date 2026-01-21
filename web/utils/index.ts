@@ -9,3 +9,5 @@ export * from './errorHandler';
 export * from './taskScoring';
 export { logger } from './logger';
 export { monitoring } from './monitoring';
+export { performanceMonitor } from './performance';
+export { env, validateEnv, isBrowser, isMobile, isPWA } from './env';

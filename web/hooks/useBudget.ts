@@ -93,6 +93,29 @@ export function useBudget() {
     },
   });
 
+  const updateRecurringMutation = useMutation({
+    mutationFn: ({ id, updates }: {
+      id: string;
+      updates: {
+        description?: string;
+        amount?: number;
+        type?: 'income' | 'expense';
+        frequency?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+        nextDueDate?: string;
+      };
+    }) => BudgetService.updateRecurringTransaction(id, updates),
+    onSuccess: (updatedBudget) => {
+      queryClient.setQueryData(['budget'], updatedBudget);
+    },
+  });
+
+  const deleteRecurringMutation = useMutation({
+    mutationFn: (id: string) => BudgetService.deleteRecurringTransaction(id),
+    onSuccess: (updatedBudget) => {
+      queryClient.setQueryData(['budget'], updatedBudget);
+    },
+  });
+
   return {
     budget: query.data ?? DEFAULT_BUDGET,
     isLoading: query.isLoading,
@@ -104,11 +127,15 @@ export function useBudget() {
     deleteTransaction: deleteTransactionMutation.mutateAsync,
     processRecurring: processRecurringMutation.mutateAsync,
     addRecurringTransaction: addRecurringTransactionMutation.mutateAsync,
+    updateRecurring: updateRecurringMutation.mutateAsync,
+    deleteRecurring: deleteRecurringMutation.mutateAsync,
     isUpdating: updateSettingsMutation.isPending,
     isAddingTransaction: addTransactionMutation.isPending,
     isAddingRecurringTransaction: addRecurringTransactionMutation.isPending,
     isUpdatingTransaction: updateTransactionMutation.isPending,
     isDeletingTransaction: deleteTransactionMutation.isPending,
     isProcessingRecurring: processRecurringMutation.isPending,
+    isUpdatingRecurring: updateRecurringMutation.isPending,
+    isDeletingRecurring: deleteRecurringMutation.isPending,
   };
 }
