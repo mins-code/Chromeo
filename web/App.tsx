@@ -5,8 +5,8 @@ import { Layout } from './components/Layout';
 import { Task, ViewMode, TaskStatus, Partner, TaskPriority, TaskType, ViewSourceMode } from './types';
 import { getUrgencyScore } from './utils/taskScoring';
 import { logger } from './utils/logger';
-import { supabase, getProviderToken, signInWithGoogleCalendar } from './services/supabaseClient';
-import { CalendarEvent, listGoogleEvents, GoogleCalendarError } from './services/googleCalendarService';
+// Services imported only where needed
+
 import TaskCard from './components/TaskCard';
 import TaskEditor from './components/TaskEditor';
 import FocusSession from './components/FocusSession';
@@ -31,11 +31,13 @@ import { useAuth } from './context/AuthContext';
 import { useTheme } from './context/ThemeContext';
 import { useTasks } from './hooks/useTasks';
 import { useBudget } from './hooks/useBudget';
-// useUserSettings imported but used via context
+import { useUserSettings } from './hooks/useUserSettings';
+import { usePartners } from './hooks/usePartners';
+import { useGoogleCalendar } from './hooks/useGoogleCalendar';
+import { useSystemNotifications } from './hooks/useSystemNotifications';
 import { useRoutines } from './hooks/useRoutines';
-import * as PartnerService from './services/partnerService';
 import * as NotificationService from './services/notificationService';
-import { nativeNotifications } from './services/nativeNotificationService';
+
 import { NotificationSettings, Routine } from './types';
 import RoutineEditor from './components/RoutineEditor';
 import RoutineList from './components/RoutineList';
@@ -124,15 +126,17 @@ const App: React.FC = () => {
     const [isFocusModeOpen, setIsFocusModeOpen] = useState(false);
     const [focusedTask, setFocusedTask] = useState<Task | undefined>(undefined);
 
-    // Username state
-    const [username, setUsername] = useState('User');
+    // User Settings
+    const { displayName: username, updateDisplayName: setUsername } = useUserSettings();
+
 
     // State for creating task from calendar or create button
     const [calendarSelectedDate, setCalendarSelectedDate] = useState<Date | undefined>(undefined);
     const [editorInitialType, setEditorInitialType] = useState<TaskType>('TASK');
 
     // Partner State
-    const [partner, setPartner] = useState<Partner | null>(null);
+    const { partner, hasConnectedPartners } = usePartners();
+
 
     // Tag Filtering State for Calendar
     const [selectedCalendarTags, setSelectedCalendarTags] = useState<string[]>([]);
@@ -155,7 +159,7 @@ const App: React.FC = () => {
         setViewSourceMode(mode);
         localStorage.setItem('viewSourceMode', mode);
     }, []);
-    const [hasConnectedPartners, setHasConnectedPartners] = useState(false);
+
 
     // Notification Settings State
     const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(
@@ -173,12 +177,14 @@ const App: React.FC = () => {
     const [editingRoutine, setEditingRoutine] = useState<Routine | undefined>(undefined);
 
     // Google Calendar Integration State
-    const [googleCalendarEnabled, setGoogleCalendarEnabled] = useState<boolean>(() => {
-        return localStorage.getItem('googleCalendarEnabled') === 'true';
-    });
-    const [hasGoogleToken, setHasGoogleToken] = useState<boolean>(false);
-    const [externalEvents, setExternalEvents] = useState<CalendarEvent[]>([]);
-    const [isLoadingGoogleEvents, setIsLoadingGoogleEvents] = useState(false);
+    const { 
+        isEnabled: googleCalendarEnabled, 
+        hasToken: hasGoogleToken, 
+        events: externalEvents, 
+        isLoading: isLoadingGoogleEvents, 
+        toggleEnabled: handleGoogleCalendarToggle 
+    } = useGoogleCalendar();
+
 
     // --- CUSTOM HOOKS INTEGRATION ---
 
@@ -212,46 +218,11 @@ const App: React.FC = () => {
 
     // --- END HOOKS ---
 
-    // Load username when session changes
-    useEffect(() => {
-        const loadUsername = async () => {
-            if (session?.user) {
-                const { data } = await supabase
-                    .from('user_settings')
-                    .select('display_name')
-                    .eq('user_id', session.user.id)
-                    .single();
-                if (data?.display_name) {
-                    setUsername(data.display_name);
-                }
-            }
-        };
-        loadUsername();
-    }, [session]);
+    // System Notifications
+    useSystemNotifications(session, notificationSettings);
 
-    // Check for connected partners
-    useEffect(() => {
-        const checkPartners = async () => {
-            if (session?.user) {
-                const partnerships = await PartnerService.getPartnerships();
-                const acceptedPartners = partnerships.filter(p => p.status === 'accepted');
-                setHasConnectedPartners(acceptedPartners.length > 0);
-                
-                if (acceptedPartners.length > 0) {
-                    const firstPartner = acceptedPartners[0];
-                    setPartner({
-                        id: firstPartner.partnerId,
-                        name: firstPartner.partnerName || firstPartner.partnerEmail,
-                        email: firstPartner.partnerEmail,
-                        isConnected: true
-                    });
-                } else {
-                    setPartner(null);
-                }
-            }
-        };
-        checkPartners();
-    }, [session]);
+    // Load username and check partners are now handled by hooks
+
 
     // Initialize calendar tags
     useEffect(() => {
@@ -280,130 +251,11 @@ const App: React.FC = () => {
         return () => window.removeEventListener('keydown', handleGlobalKeyDown);
     }, []);
 
-    // Register Service Worker and Initialize Push Notifications
-    useEffect(() => {
-        const initializeNotifications = async () => {
-            // Initialize native notifications first (for Capacitor Android/iOS)
-            // This is a no-op on web, but essential for native apps
-            if (session?.user && notificationSettings.enabled) {
-                await nativeNotifications.initialize();
-                logger.debug('[App] Native notifications initialized');
-            }
+    // System Notifications initialized by hook
 
-            // For web: Register service worker and web push
-            if ('serviceWorker' in navigator) {
-                try {
-                    // Register the custom service worker
-                    const registration = await navigator.serviceWorker.register(
-                        '/sw.js',
-                        { scope: '/' }
-                    );
-                    
-                    logger.debug('[App] Service Worker registered', { registration });
 
-                    // Wait for service worker to be ready
-                    await navigator.serviceWorker.ready;
+    // Google Calendar Logic is now in useGoogleCalendar hook
 
-                    // Send VAPID public key to service worker for push subscription
-                    const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-                    if (vapidKey && registration.active) {
-                        registration.active.postMessage({
-                            type: 'SET_VAPID_KEY',
-                            key: vapidKey
-                        });
-                    }
-
-                    // Initialize push notifications if enabled and user is authenticated
-                    if (session?.user && notificationSettings.enabled) {
-                        await NotificationService.initializePushNotifications();
-                    }
-                } catch (error) {
-                    logger.error('[App] Service Worker registration failed', error as Error);
-                }
-            }
-        };
-
-        initializeNotifications();
-    }, [session, notificationSettings.enabled]);
-
-    // Google Calendar: Check token availability
-    useEffect(() => {
-        const checkGoogleToken = async () => {
-            if (session?.user && googleCalendarEnabled) {
-                const token = await getProviderToken();
-                setHasGoogleToken(!!token);
-            } else {
-                setHasGoogleToken(false);
-            }
-        };
-        checkGoogleToken();
-    }, [session, googleCalendarEnabled]);
-
-    // Google Calendar: Fetch events when enabled and token available
-    useEffect(() => {
-        const fetchGoogleEvents = async () => {
-            if (!googleCalendarEnabled || !hasGoogleToken) {
-                setExternalEvents([]);
-                return;
-            }
-
-            setIsLoadingGoogleEvents(true);
-            try {
-                const token = await getProviderToken();
-                if (!token) {
-                    setHasGoogleToken(false);
-                    return;
-                }
-
-                // Fetch events for next 3 months
-                const now = new Date();
-                const threeMonthsLater = new Date();
-                threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
-
-                const events = await listGoogleEvents(
-                    token,
-                    now.toISOString(),
-                    threeMonthsLater.toISOString()
-                );
-                setExternalEvents(events);
-                logger.debug('[App] Fetched Google Calendar events', { count: events.length });
-            } catch (error) {
-                if (error instanceof GoogleCalendarError) {
-                    logger.error('[App] Google Calendar error', error.code as unknown as Error, { message: error.message });
-                    if (error.code === 'UNAUTHORIZED') {
-                        setHasGoogleToken(false);
-                    }
-                } else {
-                    logger.error('[App] Failed to fetch Google Calendar events', error as Error);
-                }
-                setExternalEvents([]);
-            } finally {
-                setIsLoadingGoogleEvents(false);
-            }
-        };
-
-        fetchGoogleEvents();
-    }, [googleCalendarEnabled, hasGoogleToken]);
-
-    // Google Calendar: Toggle handler
-    const handleGoogleCalendarToggle = useCallback(async (enabled: boolean) => {
-        setGoogleCalendarEnabled(enabled);
-        localStorage.setItem('googleCalendarEnabled', String(enabled));
-
-        if (enabled) {
-            // Check if we have a token
-            const token = await getProviderToken();
-            if (!token) {
-                // Trigger OAuth flow
-                logger.debug('[App] No Google token, triggering OAuth flow');
-                await signInWithGoogleCalendar();
-            } else {
-                setHasGoogleToken(true);
-            }
-        } else {
-            setExternalEvents([]);
-        }
-    }, []);
 
     // Filter tasks based on View Source Mode (Personal, Partners, Combined)
     const visibleTasks = useMemo(() => {
@@ -464,10 +316,7 @@ const App: React.FC = () => {
 
     const handleUsernameChange = useCallback((name: string) => {
         setUsername(name);
-        if (session?.user) {
-            supabase.from('user_settings').upsert({ user_id: session.user.id, display_name: name }).then();
-        }
-    }, [session?.user]);
+    }, [setUsername]);
 
     const handleCreateTask = useCallback((initialDate?: Date, type: TaskType = 'TASK') => {
         setEditingTask(undefined);
@@ -695,13 +544,13 @@ const App: React.FC = () => {
     const totalExpenses = budget.transactions.filter(t => t.type === 'expense').reduce((acc, curr) => acc + curr.amount, 0);
     const budgetRemaining = budget.limit - totalExpenses;
 
-    const userStats = {
+    const userStats = useMemo(() => ({
         userName: username,
         pendingTasks: todaysPendingTasks.length,
         totalTasks: tasks.length,
         budgetRemaining: budgetRemaining,
         partnerName: partner?.name
-    };
+    }), [username, todaysPendingTasks.length, tasks.length, budgetRemaining, partner?.name]);
 
     const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
