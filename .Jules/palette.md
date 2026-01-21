@@ -18,3 +18,7 @@
 ## 2024-05-24 - Grid Navigation in DatePicker
 **Learning:** Date pickers that render days as individual buttons without grid navigation (Arrow keys) force keyboard users to tab through every single day (30+ tab stops) to reach controls after the calendar.
 **Action:** Implement "roving tabindex" for grid-like components: set `tabIndex={0}` on the focused item and `tabIndex={-1}` on others, managing focus via Arrow keys. Ensure stable IDs for focus management.
+
+## 2026-01-28 - Dynamic List Focus Management
+**Learning:** In dynamic lists (like subtasks), adding or removing items without managing focus breaks keyboard flow. Users have to manually tab to the new item or back to the previous one.
+**Action:** Implement explicit focus management using `useEffect` and refs/IDs when modifying list state. Ensure focus moves to the newly created item or the logical predecessor upon deletion.
