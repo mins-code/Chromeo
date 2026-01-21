@@ -51,3 +51,11 @@
 **Vulnerability:** The `ai-chat` function sanitized quotes (`"`) but not backslashes (`\`). This allowed attackers to inject an escape sequence (e.g., sending `User\`) which, when JSON-encoded or placed in a prompt string, could escape the closing quote of the variable (e.g., `"... name is "User\" ..."`), potentially breaking out of the sandbox string and confusing the LLM parser.
 **Learning:** Sanitizing just the delimiters (quotes) is insufficient if the escape character itself is allowed. The escape character can be used to neutralize the sanitizer's work.
 **Prevention:** Always escape or remove backslashes (`\`) before replacing quotes when sanitizing user input for LLM prompts or JSON contexts. `input.replace(/\\/g, '\\\\').replace(/"/g, "'")`.
+
+## 2025-05-27 - Hardening Content Security Policy
+**Vulnerability:** The application's CSP included `'unsafe-eval'`, which significantly weakens protection against XSS attacks by allowing string execution. It also whitelisted `https://cdn.jsdelivr.net`, which allows loading arbitrary scripts from a public CDN.
+**Learning:** Default or copied CSP configurations often include `'unsafe-eval'` for compatibility, but modern React applications (especially with Vite) do not require it in production. Broad CDN whitelists undermine CSP effectiveness.
+**Prevention:**
+1. Remove `'unsafe-eval'` from `script-src` to prevent arbitrary code execution.
+2. Remove broad CDN whitelists (`cdn.jsdelivr.net`) and use specific sources (like `esm.sh`) or strictly `self`.
+3. Add `object-src 'none'` to prevent Flash/Java applet injection.
