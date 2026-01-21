@@ -15,6 +15,7 @@ const navIdToTextKey: Record<string, keyof Omit<ThemeText, 'greeting'>> = {
     'events': 'events',
     'appointments': 'appointments',
     'calendar': 'calendar',
+    'day-planner': 'dayPlanner',
     'budget': 'budgetPlan',
     'notes': 'notes',
     'ai-chat': 'aiAssistant',
@@ -851,8 +852,9 @@ export const Layout: React.FC<LayoutProps> = ({
                         </div>
                     </main>
 
-                    {/* Mobile Floating Action Button (FAB) */}
-                    <div className="md:hidden fixed bottom-28 left-1/2 -translate-x-1/2 z-40 pointer-events-none mb-safe-area">
+                    {/* Mobile Floating Action Buttons (FAB) - Create Task + AI Assistant */}
+                    <div className="md:hidden fixed bottom-28 z-40 pointer-events-none mb-safe-area flex gap-4 px-6 w-full justify-between">
+                        {/* Create Task FAB - Left */}
                         <button
                             onClick={() => onAddTask('TASK')}
                             className="pointer-events-auto bg-brand-500 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgb(14,165,233,0.4)] active:scale-90 transition-transform border-4 border-slate-50 dark:border-slate-900 touch-target"
@@ -860,40 +862,130 @@ export const Layout: React.FC<LayoutProps> = ({
                         >
                             <Plus size={28} />
                         </button>
+                        
+                        {/* AI Assistant FAB - Right */}
+                        {onOpenAI && (
+                            <button
+                                onClick={onOpenAI}
+                                className={`pointer-events-auto w-14 h-14 rounded-full flex items-center justify-center active:scale-90 transition-transform border-4 border-slate-50 dark:border-slate-900 touch-target ${
+                                    currentTheme === 'cyberpunk'
+                                        ? 'bg-gradient-to-r from-[#00FFFF] to-[#FF00FF] text-[#0a0014] shadow-[0_8px_30px_rgba(0,255,255,0.4)]'
+                                        : currentTheme === 'sunset'
+                                        ? 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-[0_8px_30px_rgba(244,63,94,0.4)]'
+                                        : currentTheme === 'onepiece'
+                                        ? 'bg-gradient-to-r from-[#D4A574] to-[#E8C399] text-[#0A0A0A] shadow-[0_8px_30px_rgba(212,165,116,0.4)]'
+                                        : currentTheme === 'light'
+                                        ? 'bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-[0_8px_30px_rgba(30,58,95,0.3)]'
+                                        : 'bg-gradient-to-r from-white to-slate-200 text-slate-900 shadow-[0_8px_30px_rgba(255,255,255,0.2)]'
+                                }`}
+                                aria-label="Open AI Assistant"
+                            >
+                                <Bot size={26} />
+                            </button>
+                        )}
                     </div>
 
-                    {/* Mobile Bottom Nav */}
+                    {/* Mobile Bottom Nav - Day Planner centered with 2 items on each side */}
                     <div className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-slate-200 dark:border-white/10 z-30 standalone-bottom-nav">
-                        <div className="flex justify-around items-center h-20 px-4 pb-2">
-                            {NAVIGATION_ITEMS.map((item) => {
-                                const Icon = item.icon;
-                                const isActive = currentView === item.id;
+                        <div className="flex items-end justify-around h-20 px-2 pb-2">
+                            {/* Left Side - Calendar */}
+                            {(() => {
+                                const calendarItem = NAVIGATION_ITEMS.find(item => item.id === 'calendar');
+                                if (!calendarItem) return null;
+                                const Icon = calendarItem.icon;
+                                const isActive = currentView === 'calendar';
                                 return (
                                     <button
-                                        key={item.id}
-                                        onClick={() => onNavigate(item.id as ViewMode)}
-                                        className={`flex flex-col items-center justify-center w-full h-full gap-1.5 transition-all ${isActive ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
-                                            }`}
+                                        onClick={() => onNavigate('calendar')}
+                                        className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all ${isActive ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
                                     >
                                         <div className={`p-1.5 rounded-full transition-all ${isActive ? 'bg-brand-500/10' : ''}`}>
-                                            <Icon size={24} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'scale-110 transition-transform' : ''} />
+                                            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'scale-110 transition-transform' : ''} />
                                         </div>
-                                        <span className={`text-[10px] font-medium ${isActive ? 'text-brand-500' : 'text-slate-500'}`}>{getNavLabel(item.id, item.label)}</span>
+                                        <span className={`text-[10px] font-medium ${isActive ? 'text-brand-500' : 'text-slate-500'}`}>{getNavLabel('calendar', calendarItem.label)}</span>
                                     </button>
-                                )
-                            })}
-                            {/* AI Assistant Tab */}
-                            {onOpenAI && (
-                                <button
-                                    onClick={onOpenAI}
-                                    className={`flex flex-col items-center justify-center w-full h-full gap-1.5 transition-all ${currentView === 'ai-chat' ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
-                                >
-                                    <div className={`p-1.5 rounded-full transition-all ${currentView === 'ai-chat' ? 'bg-brand-500/10' : ''}`}>
-                                        <Bot size={24} strokeWidth={currentView === 'ai-chat' ? 2.5 : 2} className={currentView === 'ai-chat' ? 'scale-110 transition-transform' : ''} />
-                                    </div>
-                                    <span className={`text-[10px] font-medium ${currentView === 'ai-chat' ? 'text-brand-500' : 'text-slate-500'}`}>AI</span>
-                                </button>
-                            )}
+                                );
+                            })()}
+                            
+                            {/* Left Side - Budget */}
+                            {(() => {
+                                const budgetItem = NAVIGATION_ITEMS.find(item => item.id === 'budget');
+                                if (!budgetItem) return null;
+                                const Icon = budgetItem.icon;
+                                const isActive = currentView === 'budget';
+                                return (
+                                    <button
+                                        onClick={() => onNavigate('budget')}
+                                        className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all ${isActive ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
+                                    >
+                                        <div className={`p-1.5 rounded-full transition-all ${isActive ? 'bg-brand-500/10' : ''}`}>
+                                            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'scale-110 transition-transform' : ''} />
+                                        </div>
+                                        <span className={`text-[10px] font-medium ${isActive ? 'text-brand-500' : 'text-slate-500'}`}>{getNavLabel('budget', budgetItem.label)}</span>
+                                    </button>
+                                );
+                            })()}
+                            
+                            {/* Center - Day Planner (Raised/Prominent) */}
+                            {(() => {
+                                const dayPlannerItem = NAVIGATION_ITEMS.find(item => item.id === 'day-planner');
+                                if (!dayPlannerItem) return null;
+                                const Icon = dayPlannerItem.icon;
+                                const isActive = currentView === 'day-planner';
+                                return (
+                                    <button
+                                        onClick={() => onNavigate('day-planner')}
+                                        className={`flex flex-col items-center justify-center flex-1 transition-all -mt-3 ${isActive ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
+                                    >
+                                        <div className={`p-3 rounded-2xl transition-all shadow-lg ${
+                                            isActive 
+                                                ? 'bg-brand-500 text-white shadow-brand-500/40' 
+                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-brand-500/10'
+                                        }`}>
+                                            <Icon size={26} strokeWidth={2} />
+                                        </div>
+                                        <span className={`text-[10px] font-semibold mt-1 ${isActive ? 'text-brand-500' : 'text-slate-500'}`}>{getNavLabel('day-planner', dayPlannerItem.label)}</span>
+                                    </button>
+                                );
+                            })()}
+                            
+                            {/* Right Side - Notes */}
+                            {(() => {
+                                const notesItem = NAVIGATION_ITEMS.find(item => item.id === 'notes');
+                                if (!notesItem) return null;
+                                const Icon = notesItem.icon;
+                                const isActive = currentView === 'notes';
+                                return (
+                                    <button
+                                        onClick={() => onNavigate('notes')}
+                                        className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all ${isActive ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
+                                    >
+                                        <div className={`p-1.5 rounded-full transition-all ${isActive ? 'bg-brand-500/10' : ''}`}>
+                                            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'scale-110 transition-transform' : ''} />
+                                        </div>
+                                        <span className={`text-[10px] font-medium ${isActive ? 'text-brand-500' : 'text-slate-500'}`}>{getNavLabel('notes', notesItem.label)}</span>
+                                    </button>
+                                );
+                            })()}
+                            
+                            {/* Right Side - Activities */}
+                            {(() => {
+                                const activitiesItem = NAVIGATION_ITEMS.find(item => item.id === 'activities');
+                                if (!activitiesItem) return null;
+                                const Icon = activitiesItem.icon;
+                                const isActive = currentView === 'activities' || currentView === 'tasks' || currentView === 'reminders' || currentView === 'events' || currentView === 'appointments' || currentView === 'routines';
+                                return (
+                                    <button
+                                        onClick={() => onNavigate('activities')}
+                                        className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all ${isActive ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
+                                    >
+                                        <div className={`p-1.5 rounded-full transition-all ${isActive ? 'bg-brand-500/10' : ''}`}>
+                                            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'scale-110 transition-transform' : ''} />
+                                        </div>
+                                        <span className={`text-[10px] font-medium ${isActive ? 'text-brand-500' : 'text-slate-500'}`}>{getNavLabel('activities', activitiesItem.label)}</span>
+                                    </button>
+                                );
+                            })()}
                         </div>
                     </div>
 

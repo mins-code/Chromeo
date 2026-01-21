@@ -10,6 +10,7 @@ export interface ThemeText {
     events: string;
     appointments: string;
     calendar: string;
+    dayPlanner: string;
     budgetPlan: string;
     aiAssistant: string;
     settings: string;
@@ -69,6 +70,7 @@ const defaultText: ThemeText = {
     events: 'Events',
     appointments: 'Appointments',
     calendar: 'Calendar',
+    dayPlanner: 'Day Planner',
     budgetPlan: 'Budget Plan',
     aiAssistant: 'AI Assistant',
     settings: 'Settings',
@@ -128,6 +130,7 @@ const onepieceText: ThemeText = {
     events: 'Events',
     appointments: 'Alliance Meetings',
     calendar: 'Calendar',
+    dayPlanner: "Captain's Plan",
     budgetPlan: "Nami's Treasury",
     aiAssistant: 'Dr. Vegapunk',
     settings: 'Settings',
