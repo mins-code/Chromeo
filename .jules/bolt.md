@@ -12,3 +12,7 @@
 ## 2024-05-23 - Calendar Filter Optimization
 **Learning:** In large React components like `CalendarView`, inline array filtering (e.g., `tasks.filter(...)`) inside the render body can be a silent performance killer. Even if the array itself is stable, the filtering runs on *every* render (e.g., when hovering or dragging), causing downstream components to re-render if they receive the filtered array as a prop, or simply wasting CPU cycles.
 **Action:** Always wrap expensive or array-returning transformations in `useMemo` when they depend on state or props, especially in interactive views like calendars or grids.
+
+## 2026-02-12 - Isolate High-Frequency Timers
+**Learning:** High-frequency timers (like `currentTime` updating every minute in a calendar) in large parent components (like `WeekView`) trigger expensive re-renders of the entire component tree, including the DOM reconciliation of static grid layouts.
+**Action:** Isolate the timer and the visual element dependent on it into a small, separate component (e.g., `CurrentTimeIndicator`) so only that leaf component re-renders.
