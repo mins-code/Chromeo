@@ -80,6 +80,9 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
   const [customNotificationUnit, setCustomNotificationUnit] = useState<'minutes' | 'hours' | 'days'>('minutes');
 
   const [isEnhancing, setIsEnhancing] = useState(false);
+
+  // Focus management for subtasks
+  const [focusTarget, setFocusTarget] = useState<string | null>(null);
   
   // Tag autocomplete states
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
@@ -99,6 +102,17 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
       tag.includes(newTag.trim()) && !tags.includes(tag)
     );
   }, [newTag, existingTags, tags]);
+
+  // Handle subtask focus
+  useEffect(() => {
+    if (focusTarget) {
+      const el = document.getElementById(`subtask-input-${focusTarget}`);
+      if (el) {
+        el.focus();
+        setFocusTarget(null);
+      }
+    }
+  }, [subtasks, focusTarget]);
 
   useEffect(() => {
     if (task) {
@@ -224,7 +238,9 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
   };
 
   const handleAddSubtask = () => {
-      setSubtasks([...subtasks, { id: crypto.randomUUID(), title: '', isCompleted: false }]);
+      const newId = crypto.randomUUID();
+      setSubtasks([...subtasks, { id: newId, title: '', isCompleted: false }]);
+      setFocusTarget(newId);
   };
 
   const handleUpdateSubtask = (id: string, val: string) => {
@@ -233,6 +249,22 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
 
   const handleDeleteSubtask = (id: string) => {
       setSubtasks(subtasks.filter(s => s.id !== id));
+  };
+
+  const handleSubtaskKeyDown = (e: React.KeyboardEvent, index: number, id: string) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        handleAddSubtask();
+    } else if (e.key === 'Backspace' && !subtasks[index].title) {
+        e.preventDefault();
+        if (subtasks.length > 0) {
+            const prevIndex = index - 1;
+            if (prevIndex >= 0) {
+                setFocusTarget(subtasks[prevIndex].id);
+            }
+            handleDeleteSubtask(id);
+        }
+    }
   };
   
   const handleToggleSubtask = (id: string) => {
@@ -865,20 +897,24 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                     </button>
                 </div>
                 <div className="space-y-2.5">
-                    {subtasks.map(st => (
+                    {subtasks.map((st, index) => (
                         <div key={st.id} className="flex items-center gap-3 group bg-slate-50 dark:bg-black/20 p-2 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-white/5 transition-all">
                              <input 
                                 type="checkbox" 
                                 checked={st.isCompleted} 
                                 onChange={() => handleToggleSubtask(st.id)}
                                 className="rounded-md border-slate-400 dark:border-slate-600 bg-transparent text-brand-500 focus:ring-0 focus:ring-offset-0 w-4 h-4"
+                                aria-label={`Mark "${st.title || 'subtask'}" as ${st.isCompleted ? 'incomplete' : 'complete'}`}
                             />
                             <input 
+                                id={`subtask-input-${st.id}`}
                                 type="text"
                                 value={st.title}
                                 onChange={(e) => handleUpdateSubtask(st.id, e.target.value)}
+                                onKeyDown={(e) => handleSubtaskKeyDown(e, index, st.id)}
                                 className={`flex-1 bg-transparent border-none focus:ring-0 p-0 text-sm ${st.isCompleted ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-slate-200'}`}
                                 placeholder="What needs to be done?"
+                                aria-label="Subtask title"
                             />
                             <button
                                 onClick={() => handleDeleteSubtask(st.id)}
