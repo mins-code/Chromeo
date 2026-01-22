@@ -90,7 +90,7 @@ export const performanceMonitor = {
    * @param callback - Callback to measure
    * @returns The result of the callback
    */
-  trackComponentRender: async <T>(
+  trackComponentRender: async <T,>(
     componentName: string,
     callback: () => T | Promise<T>
   ): Promise<T> => {
