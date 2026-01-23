@@ -98,6 +98,7 @@ export const useNotificationScheduler = (
     // Handle notification settings toggle
     const handleNotificationToggle = async (enabled: boolean) => {
         if (enabled && notificationPermission !== 'granted') {
+            // Request permission (will initialize native notifications on Capacitor)
             const granted = await NotificationService.requestPermission();
             setNotificationPermission(NotificationService.getPermissionStatus());
             if (!granted) return;
@@ -108,6 +109,7 @@ export const useNotificationScheduler = (
         NotificationService.saveSettings(newSettings);
 
         if (enabled) {
+            // Send test notification to confirm it works
             NotificationService.sendTestNotification();
         }
     };

@@ -34,6 +34,19 @@ const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
 const PUSH_NOTIFICATIONS_BACKEND_ENABLED = true;
 
 /**
+ * Check if running on native Capacitor platform (Android/iOS)
+ */
+const isNativePlatform = (): boolean => {
+  try {
+    // Check if Capacitor is available and is native platform
+    // This will be true for Android/iOS apps, false for web
+    return (window as any).Capacitor?.isNativePlatform?.() === true;
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Check if browser supports notifications
  */
 export const isSupported = (): boolean => {
@@ -49,16 +62,39 @@ export const isPushSupported = (): boolean => {
 
 /**
  * Get current notification permission status
+ * On native platforms (Android/iOS), always returns 'granted' since
+ * Capacitor handles runtime permissions automatically
  */
 export const getPermissionStatus = (): NotificationPermission | 'unsupported' => {
+  // On native platforms, Capacitor Local Notifications handle permissions
+  // Return 'granted' to indicate native notifications are available
+  if (isNativePlatform()) {
+    return 'granted';
+  }
+  
+  // On web, check for Web Notification API support
   if (!isSupported()) return 'unsupported';
   return Notification.permission;
 };
 
 /**
  * Request notification permission from user
+ * On native platforms, initializes Capacitor Local Notifications
+ * On web, requests browser notification permission
  */
 export const requestPermission = async (): Promise<boolean> => {
+  // On native platforms, initialize Capacitor Local Notifications
+  if (isNativePlatform()) {
+    try {
+      const initialized = await nativeNotifications.initialize();
+      return initialized;
+    } catch (error) {
+      logger.error('Error initializing native notifications', error as Error);
+      return false;
+    }
+  }
+  
+  // On web, request browser notification permission
   if (!isSupported()) return false;
   
   try {
