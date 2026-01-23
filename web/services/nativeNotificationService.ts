@@ -66,8 +66,8 @@ class NativeNotificationService {
   private Capacitor: CapacitorType | null = null;
 
   constructor() {
-    // Platform detection is async, start with web
-    this.detectPlatform();
+    // Platform detection will be done lazily on initialize or first use
+    this.platform = 'web';
   }
 
   /**
@@ -102,7 +102,13 @@ class NativeNotificationService {
     }
 
     // Wait for platform detection
-    await this.detectPlatform();
+    try {
+      if (!this.Capacitor) {
+        await this.detectPlatform();
+      }
+    } catch (e) {
+      logger.error('[NativeNotifications] Platform detection failed', e as Error);
+    }
 
     if (this.platform === 'web') {
       this.initialized = true;
@@ -165,14 +171,14 @@ class NativeNotificationService {
 
         // Listen for notification tap
         PushNotifications.addListener('pushNotificationActionPerformed', (action: unknown) => {
-          logger.info('[NativeNotifications] Push notification tapped:', action);
+          logger.info('[NativeNotifications] Push notification tapped:', action as Record<string, unknown>);
           // The web view will handle navigation based on URL
         });
       }
 
       // Listen for local notification tap
       LocalNotifications.addListener('localNotificationActionPerformed', (action: unknown) => {
-        logger.info('[NativeNotifications] Local notification tapped:', action);
+        logger.info('[NativeNotifications] Local notification tapped:', action as Record<string, unknown>);
       });
 
       this.initialized = true;
