@@ -16,6 +16,21 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
   const [timeRemaining, setTimeRemaining] = useState(DEFAULT_FOCUS_TIME);
   const [isRunning, setIsRunning] = useState(true);
   const [isTimerComplete, setIsTimerComplete] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
+
+  // Update accessible status message
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (isTimerComplete) {
+      setStatusMessage("Time's up! Great job!");
+    } else if (isRunning) {
+      setStatusMessage(timeRemaining === DEFAULT_FOCUS_TIME ? "Focus session started" : "Timer resumed");
+    } else {
+      setStatusMessage("Timer paused");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTimerComplete, isRunning, isOpen]);
 
   // Reset timer when opening with a new task
   useEffect(() => {
@@ -114,7 +129,11 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
       {/* Progress Ring Background */}
       <div className="relative mb-8">
         {/* Circular progress indicator */}
-        <svg className="w-80 h-80 -rotate-90" viewBox="0 0 100 100">
+        <svg
+          className="w-80 h-80 -rotate-90"
+          viewBox="0 0 100 100"
+          aria-hidden="true"
+        >
           <circle
             cx="50"
             cy="50"
@@ -139,6 +158,8 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
         {/* Timer Display */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span 
+            role="timer"
+            aria-live="off"
             className={`font-mono font-bold tracking-tight transition-all duration-300 ${
               isTimerComplete 
                 ? 'text-6xl sm:text-7xl text-emerald-400 animate-pulse' 
@@ -148,11 +169,16 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
             {isTimerComplete ? "Time's Up!" : formatTime(timeRemaining)}
           </span>
           {!isTimerComplete && (
-            <span className="text-slate-500 text-sm mt-2">
+            <span className="text-slate-500 text-sm mt-2" aria-hidden="true">
               {isRunning ? 'Stay focused...' : 'Paused'}
             </span>
           )}
         </div>
+      </div>
+
+      {/* Screen Reader Announcements */}
+      <div role="status" aria-live="polite" className="sr-only">
+        {statusMessage}
       </div>
 
       {/* Task Info */}
