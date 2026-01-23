@@ -118,10 +118,8 @@ class NativeNotificationService {
     try {
       // Dynamic import Capacitor plugins
       const { LocalNotifications } = await import('@capacitor/local-notifications');
-      const { PushNotifications } = await import('@capacitor/push-notifications');
       
       this.LocalNotifications = LocalNotifications;
-      this.PushNotifications = PushNotifications;
 
       // Request permission for local notifications
       const localPerm = await LocalNotifications.requestPermissions();
@@ -135,8 +133,11 @@ class NativeNotificationService {
         await this.createNotificationChannel();
       }
 
-      // Initialize push notifications for server-side push (safely)
+      // Try to initialize push notifications (optional - requires Firebase)
       try {
+        const { PushNotifications } = await import('@capacitor/push-notifications');
+        this.PushNotifications = PushNotifications;
+
         const pushPerm = await PushNotifications.requestPermissions();
         if (pushPerm.receive === 'granted') {
           await PushNotifications.register();
@@ -175,10 +176,14 @@ class NativeNotificationService {
             logger.info('[NativeNotifications] Push notification tapped:', action as Record<string, unknown>);
             // The web view will handle navigation based on URL
           });
+          
+          logger.info('[NativeNotifications] Push notifications initialized successfully');
         }
       } catch (pushError) {
         // This is expected if google-services.json is missing or Firebase isn't configured
-        logger.warn('[NativeNotifications] Push notifications failed to initialize (likely missing google-services.json). Local notifications will still work.', pushError as Error);
+        // The app will continue to work with Local Notifications only
+        logger.info('[NativeNotifications] Push notifications not available (Firebase not configured). Local notifications will work normally.');
+        // Don't log as error since this is expected behavior
       }
 
       // Listen for local notification tap
