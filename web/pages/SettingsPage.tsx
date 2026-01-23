@@ -25,6 +25,7 @@ import {
   Trash2,
   Link2,
   ExternalLink,
+  Terminal,
 } from 'lucide-react';
 
 interface SettingsPageProps {
@@ -455,6 +456,31 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
           currentUserId={session?.user?.id}
           currentUserEmail={session?.user?.email}
         />
+
+        {/* Advanced Section */}
+        <div className="col-span-1 lg:col-span-2 space-y-4">
+          <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
+             <Terminal className="text-brand-500" />
+            <h3>Advanced</h3>
+          </div>
+          <div className="bg-white/40 dark:bg-dark-surface/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 backdrop-blur-sm">
+            <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">Diagnostics</h4>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-800 dark:text-slate-200 font-medium">Debug Logging</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">View internal application logs for troubleshooting</p>
+              </div>
+              <Button 
+                variant="secondary"
+                onClick={() => onNavigate('debug-logs')}
+                className="flex items-center gap-2"
+              >
+                <Terminal size={16} />
+                View Logs
+              </Button>
+            </div>
+          </div>
+        </div>
 
         {/* Danger Zone - Account Deletion */}
         <div className="glass rounded-2xl p-6 lg:col-span-2 border-2 border-red-500/20">

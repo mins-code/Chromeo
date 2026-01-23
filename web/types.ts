@@ -198,7 +198,7 @@ export interface NoteShare {
   createdAt: string;
 }
 
-export type ViewMode = 'dashboard' | 'activities' | 'all-activities' | 'tasks' | 'reminders' | 'events' | 'appointments' | 'budget' | 'ai-chat' | 'settings' | 'calendar' | 'routines' | 'day-planner' | 'notes';
+export type ViewMode = 'dashboard' | 'activities' | 'all-activities' | 'tasks' | 'reminders' | 'events' | 'appointments' | 'budget' | 'ai-chat' | 'settings' | 'calendar' | 'routines' | 'day-planner' | 'notes' | 'debug-logs';
 
 export type ViewSourceMode = 'personal' | 'partners' | 'combined';
 

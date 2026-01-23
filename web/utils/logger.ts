@@ -43,11 +43,54 @@ function formatLogMessage(level: LogLevel, message: string, context?: LogContext
 /**
  * Logger class for production-safe logging
  */
+/**
+ * Logger class for production-safe logging
+ */
 class Logger {
   private isDevelopment: boolean;
+  private readonly MAX_LOGS = 200;
+  private readonly STORAGE_KEY = 'debug_logs';
 
   constructor() {
     this.isDevelopment = import.meta.env.DEV;
+  }
+
+  private saveLog(level: LogLevel, message: string, context?: LogContext, error?: Error): void {
+    try {
+      const timestamp = new Date().toISOString();
+      const logEntry = {
+        timestamp,
+        level,
+        message,
+        context: context ? redactSensitiveData(context) : undefined,
+        error: error ? {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        } : undefined
+      };
+
+      const existingLogs = this.getLogs();
+      const newLogs = [logEntry, ...existingLogs].slice(0, this.MAX_LOGS);
+      
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(newLogs));
+    } catch (e) {
+      // Fallback if localStorage fails (e.g. quota exceeded)
+      console.warn('Failed to save log to localStorage', e);
+    }
+  }
+
+  getLogs(): any[] {
+    try {
+      const logs = localStorage.getItem(this.STORAGE_KEY);
+      return logs ? JSON.parse(logs) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  clearLogs(): void {
+    localStorage.removeItem(this.STORAGE_KEY);
   }
 
   /**
@@ -57,6 +100,8 @@ class Logger {
     if (this.isDevelopment) {
       console.debug(formatLogMessage('debug', message, context));
     }
+    // Always save debug logs for inspection in the debug view
+    this.saveLog('debug', message, context);
   }
 
   /**
@@ -66,6 +111,7 @@ class Logger {
     if (this.isDevelopment) {
       console.info(formatLogMessage('info', message, context));
     }
+    this.saveLog('info', message, context);
   }
 
   /**
@@ -73,6 +119,7 @@ class Logger {
    */
   warn(message: string, context?: LogContext): void {
     console.warn(formatLogMessage('warn', message, context));
+    this.saveLog('warn', message, context);
     
     // In production, you could send to error tracking service
     if (!this.isDevelopment) {
@@ -91,6 +138,7 @@ class Logger {
     };
     
     console.error(formatLogMessage('error', message, errorContext));
+    this.saveLog('error', message, context, error);
     
     // In production, send to error tracking service
     if (!this.isDevelopment) {

@@ -97,13 +97,16 @@ class NativeNotificationService {
    * Must be called after app startup
    */
   async initialize(): Promise<boolean> {
+    logger.debug('[NativeNotifications] Initialize called');
     if (this.initialized) {
+      logger.debug('[NativeNotifications] Already initialized');
       return true;
     }
 
     // Wait for platform detection
     try {
       if (!this.Capacitor) {
+        logger.debug('[NativeNotifications] Detecting platform...');
         await this.detectPlatform();
       }
     } catch (e) {
@@ -117,12 +120,16 @@ class NativeNotificationService {
 
     try {
       // Dynamic import Capacitor plugins
+      logger.debug('[NativeNotifications] Importing LocalNotifications plugin...');
       const { LocalNotifications } = await import('@capacitor/local-notifications');
       
       this.LocalNotifications = LocalNotifications;
 
       // Request permission for local notifications
+      logger.debug('[NativeNotifications] Requesting local notification permissions...');
       const localPerm = await LocalNotifications.requestPermissions();
+      logger.info(`[NativeNotifications] Local permission status: ${localPerm.display}`);
+      
       if (localPerm.display !== 'granted') {
         logger.warn('[NativeNotifications] Local notification permission denied');
         return false;

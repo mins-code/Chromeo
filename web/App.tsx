@@ -25,6 +25,7 @@ const AIChat = lazy(() => import('./components/AIChat'));
 const CalendarView = lazy(() => import('./components/CalendarView'));
 const BudgetPlanner = lazy(() => import('./components/BudgetPlanner'));
 const NotesManager = lazy(() => import('./components/NotesManager'));
+import DebugLogPage from './pages/DebugLogPage';
 
 // Import new hooks and contexts
 import { useAuth } from './context/AuthContext';
@@ -70,7 +71,9 @@ const pathToViewMode: Record<string, ViewMode> = {
     '/settings': 'settings',
     '/routines': 'routines',
     '/notes': 'notes',
+    '/notes': 'notes',
     '/day-planner': 'day-planner',
+    '/debug-logs': 'debug-logs',
 };
 
 const viewModeToPath: Record<ViewMode, string> = {
@@ -87,7 +90,9 @@ const viewModeToPath: Record<ViewMode, string> = {
     'settings': '/settings',
     'routines': '/routines',
     'notes': '/notes',
+    'notes': '/notes',
     'day-planner': '/day-planner',
+    'debug-logs': '/debug-logs',
 };
 
 const App: React.FC = () => {
@@ -249,6 +254,24 @@ const App: React.FC = () => {
         };
         window.addEventListener('keydown', handleGlobalKeyDown);
         return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    }, []);
+
+    // Startup Logging
+    useEffect(() => {
+        logger.info('App mounted', {
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString(),
+            resolution: `${window.innerWidth}x${window.innerHeight}`
+        });
+        
+        // Log unhandled promise rejections
+        const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+            logger.error('Unhandled Promise Rejection', event.reason as Error);
+        };
+        
+        window.addEventListener('unhandledrejection', handleUnhandledRejection);
+        return () => window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     }, []);
 
     // System Notifications initialized by hook
@@ -599,6 +622,10 @@ const App: React.FC = () => {
                 <p className="text-slate-400 text-sm animate-pulse">Syncing your ChronoDeX...</p>
             </div>
         );
+    }
+
+    if (currentView === 'debug-logs') {
+        return <DebugLogPage />;
     }
 
     return (
