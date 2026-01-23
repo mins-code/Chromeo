@@ -474,6 +474,10 @@ const App: React.FC = () => {
     }, [signOut]);
 
     const filteredTasks = useMemo(() => {
+        // ⚡ Bolt Optimization: Lift search query processing out of loop
+        const query = searchQuery.toLowerCase();
+        const hasQuery = query.length > 0;
+
         const filtered = visibleTasks
             .filter(t => {
                 if (currentView === 'tasks' && t.type !== 'TASK') return false;
@@ -481,8 +485,11 @@ const App: React.FC = () => {
                 if (currentView === 'appointments' && t.type !== 'APPOINTMENT') return false;
                 if (currentView === 'reminders' && t.type !== 'REMINDER') return false;
 
-                const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    t.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+                // Optimization: Skip expensive string operations if no search query
+                const matchesSearch = !hasQuery ||
+                    t.title.toLowerCase().includes(query) ||
+                    t.tags.some(tag => tag.toLowerCase().includes(query));
+
                 const matchesStatus = filterStatus === 'ALL' || t.status === filterStatus;
                 return matchesSearch && matchesStatus;
             });
@@ -495,11 +502,14 @@ const App: React.FC = () => {
     }, [visibleTasks, searchQuery, filterStatus, currentView]);
 
     const calendarFilteredTasks = useMemo(() => {
+        // ⚡ Bolt Optimization: Use Set for O(1) tag lookup instead of O(K) array includes
+        const selectedTagsSet = new Set(selectedCalendarTags);
+
         return visibleTasks.filter(t => {
             if (t.tags.length === 0) {
-                return selectedCalendarTags.includes('Untagged');
+                return selectedTagsSet.has('Untagged');
             }
-            return t.tags.some(tag => selectedCalendarTags.includes(tag));
+            return t.tags.some(tag => selectedTagsSet.has(tag));
         });
     }, [visibleTasks, selectedCalendarTags]);
 
