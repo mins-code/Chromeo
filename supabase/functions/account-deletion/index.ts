@@ -57,12 +57,15 @@ serve(async (req) => {
 
     // Rate Limiting
     const rateLimitKey = `account-deletion:${user.id}:${action}`
-    const { data: limitData, error: limitError } = await supabase
-        .from('rate_limits')
-        .select('*')
-        .eq('key', rateLimitKey)
-        .gte('window_start', new Date(Date.now() - 60 * 60 * 1000).toISOString()) // 1 hour window for deletion actions
-        .maybeSingle()
+    const WINDOW_DURATION = 3600; // 1 hour
+    const MAX_REQUESTS = 5;
+
+    // 🛡️ SECURITY: Use atomic RPC to prevent race conditions
+    const { data: currentCount, error: limitError } = await supabase
+      .rpc('increment_rate_limit', {
+        p_key: rateLimitKey,
+        p_window_duration_seconds: WINDOW_DURATION
+      });
 
     if (limitError) {
       console.error("Rate limit check failed:", limitError.message);
@@ -73,17 +76,11 @@ serve(async (req) => {
       );
     }
 
-    if (limitData && limitData.count >= 5) { // Strict limit: 5 requests per hour
+    if (typeof currentCount === 'number' && currentCount > MAX_REQUESTS) {
         return new Response(
             JSON.stringify({ success: false, error: 'Too many requests. Please try again later.' }),
             { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         )
-    }
-
-    if (limitData) {
-        await supabase.from('rate_limits').update({ count: limitData.count + 1 }).eq('id', limitData.id)
-    } else {
-        await supabase.from('rate_limits').insert({ key: rateLimitKey, count: 1, window_start: new Date().toISOString() })
     }
 
     // Action: Delete with password verification - immediate deletion

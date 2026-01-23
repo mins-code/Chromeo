@@ -81,7 +81,8 @@ serve(async (req) => {
         scheduled_at
       `)
       .eq("sent", false)
-      .lte("scheduled_at", now);
+      .lte("scheduled_at", now)
+      .limit(50); // 🛡️ SECURITY: Limit batch size to prevent DoS/timeout
 
     if (fetchError) {
       console.error("Failed to fetch notifications:", fetchError);
@@ -215,9 +216,9 @@ serve(async (req) => {
 
   } catch (error: unknown) {
     console.error("Notification scheduler error:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    // 🛡️ SECURITY: Log detailed error but don't leak it to client
     return new Response(
-      JSON.stringify({ error: "Internal Server Error", details: errorMessage }),
+      JSON.stringify({ error: "Internal Server Error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

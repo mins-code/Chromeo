@@ -16,21 +16,7 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
   const [timeRemaining, setTimeRemaining] = useState(DEFAULT_FOCUS_TIME);
   const [isRunning, setIsRunning] = useState(true);
   const [isTimerComplete, setIsTimerComplete] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('');
-
-  // Update accessible status message
-  useEffect(() => {
-    if (!isOpen) return;
-
-    if (isTimerComplete) {
-      setStatusMessage("Time's up! Great job!");
-    } else if (isRunning) {
-      setStatusMessage(timeRemaining === DEFAULT_FOCUS_TIME ? "Focus session started" : "Timer resumed");
-    } else {
-      setStatusMessage("Timer paused");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isTimerComplete, isRunning, isOpen]);
+  const [a11yStatus, setA11yStatus] = useState('');
 
   // Reset timer when opening with a new task
   useEffect(() => {
@@ -38,8 +24,9 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
       setTimeRemaining(DEFAULT_FOCUS_TIME);
       setIsRunning(true);
       setIsTimerComplete(false);
+      setA11yStatus(`Focus session started for ${task.title}`);
     }
-  }, [isOpen, task?.id]);
+  }, [isOpen, task?.id, task.title]);
 
   // Countdown logic
   useEffect(() => {
@@ -50,6 +37,7 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
         if (prev <= 1) {
           setIsRunning(false);
           setIsTimerComplete(true);
+          setA11yStatus("Time's up! Great job.");
           // Play notification sound (using Web Audio API for a simple beep)
           try {
             const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -80,12 +68,24 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
       // Restart timer if complete
       setTimeRemaining(DEFAULT_FOCUS_TIME);
       setIsTimerComplete(false);
+      setIsRunning(true);
+      setA11yStatus("Timer restarted");
+    } else {
+      setIsRunning(prev => {
+        const nextState = !prev;
+        setA11yStatus(nextState ? "Timer resumed" : "Timer paused");
+        return nextState;
+      });
     }
-    setIsRunning(prev => !prev);
   }, [isTimerComplete]);
 
   const addFiveMinutes = useCallback(() => {
-    setTimeRemaining(prev => prev + 5 * 60);
+    setTimeRemaining(prev => {
+      const next = prev + 5 * 60;
+      const mins = Math.floor(next / 60);
+      setA11yStatus(`Added 5 minutes. ${mins} minutes remaining.`);
+      return next;
+    });
     if (isTimerComplete) {
       setIsTimerComplete(false);
       setIsRunning(true);
@@ -93,6 +93,7 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
   }, [isTimerComplete]);
 
   const handleComplete = useCallback(() => {
+    setA11yStatus("Task completed");
     onComplete(task);
     onClose();
   }, [task, onComplete, onClose]);
@@ -111,6 +112,11 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900 flex flex-col items-center justify-center p-6 animate-fade-in">
+      {/* Live Region for Screen Readers */}
+      <div className="sr-only" role="status" aria-live="polite">
+        {a11yStatus}
+      </div>
+
       {/* Exit Button */}
       <button
         onClick={onClose}
@@ -129,11 +135,7 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
       {/* Progress Ring Background */}
       <div className="relative mb-8">
         {/* Circular progress indicator */}
-        <svg
-          className="w-80 h-80 -rotate-90"
-          viewBox="0 0 100 100"
-          aria-hidden="true"
-        >
+        <svg className="w-80 h-80 -rotate-90" viewBox="0 0 100 100" aria-hidden="true">
           <circle
             cx="50"
             cy="50"
@@ -159,7 +161,6 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span 
             role="timer"
-            aria-live="off"
             className={`font-mono font-bold tracking-tight transition-all duration-300 ${
               isTimerComplete 
                 ? 'text-6xl sm:text-7xl text-emerald-400 animate-pulse' 
