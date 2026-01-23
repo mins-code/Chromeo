@@ -135,45 +135,50 @@ class NativeNotificationService {
         await this.createNotificationChannel();
       }
 
-      // Initialize push notifications for server-side push
-      const pushPerm = await PushNotifications.requestPermissions();
-      if (pushPerm.receive === 'granted') {
-        await PushNotifications.register();
+      // Initialize push notifications for server-side push (safely)
+      try {
+        const pushPerm = await PushNotifications.requestPermissions();
+        if (pushPerm.receive === 'granted') {
+          await PushNotifications.register();
 
-        // Listen for FCM token
-        PushNotifications.addListener('registration', async (token: unknown) => {
-          const tokenData = token as TokenData;
-          this.fcmToken = tokenData.value;
-          logger.info('[NativeNotifications] FCM Token received');
-          await this.saveFcmToken(tokenData.value);
-        });
+          // Listen for FCM token
+          PushNotifications.addListener('registration', async (token: unknown) => {
+            const tokenData = token as TokenData;
+            this.fcmToken = tokenData.value;
+            logger.info('[NativeNotifications] FCM Token received');
+            await this.saveFcmToken(tokenData.value);
+          });
 
-        // Listen for push notifications when app is in foreground
-        PushNotifications.addListener('pushNotificationReceived', async (notification: unknown) => {
-          const notif = notification as { title?: string; body?: string; data?: Record<string, unknown> };
-          logger.info('[NativeNotifications] Push received in foreground:', notif);
-          
-          // Show as local notification since we're in foreground
-          if (this.LocalNotifications) {
-            await this.LocalNotifications.schedule({
-              notifications: [{
-                id: Math.floor(Math.random() * 100000),
-                title: notif.title || 'ChronoDeX',
-                body: notif.body || '',
-                schedule: { at: new Date() },
-                smallIcon: 'ic_stat_icon',
-                sound: 'default',
-                channelId: 'chronodex-reminders',
-              }],
-            });
-          }
-        });
+          // Listen for push notifications when app is in foreground
+          PushNotifications.addListener('pushNotificationReceived', async (notification: unknown) => {
+            const notif = notification as { title?: string; body?: string; data?: Record<string, unknown> };
+            logger.info('[NativeNotifications] Push received in foreground:', notif);
+            
+            // Show as local notification since we're in foreground
+            if (this.LocalNotifications) {
+              await this.LocalNotifications.schedule({
+                notifications: [{
+                  id: Math.floor(Math.random() * 100000),
+                  title: notif.title || 'ChronoDeX',
+                  body: notif.body || '',
+                  schedule: { at: new Date() },
+                  smallIcon: 'ic_stat_icon',
+                  sound: 'default',
+                  channelId: 'chronodex-reminders',
+                }],
+              });
+            }
+          });
 
-        // Listen for notification tap
-        PushNotifications.addListener('pushNotificationActionPerformed', (action: unknown) => {
-          logger.info('[NativeNotifications] Push notification tapped:', action as Record<string, unknown>);
-          // The web view will handle navigation based on URL
-        });
+          // Listen for notification tap
+          PushNotifications.addListener('pushNotificationActionPerformed', (action: unknown) => {
+            logger.info('[NativeNotifications] Push notification tapped:', action as Record<string, unknown>);
+            // The web view will handle navigation based on URL
+          });
+        }
+      } catch (pushError) {
+        // This is expected if google-services.json is missing or Firebase isn't configured
+        logger.warn('[NativeNotifications] Push notifications failed to initialize (likely missing google-services.json). Local notifications will still work.', pushError as Error);
       }
 
       // Listen for local notification tap
