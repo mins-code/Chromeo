@@ -22,3 +22,7 @@
 ## 2026-01-28 - Dynamic List Focus Management
 **Learning:** In dynamic lists (like subtasks), adding or removing items without managing focus breaks keyboard flow. Users have to manually tab to the new item or back to the previous one.
 **Action:** Implement explicit focus management using `useEffect` and refs/IDs when modifying list state. Ensure focus moves to the newly created item or the logical predecessor upon deletion.
+
+## 2026-02-04 - Timer Accessibility
+**Learning:** Countdown timers that update the DOM every second create excessive noise for screen readers if live regions are not managed carefully. Using `role="timer"` does not automatically silence this.
+**Action:** Use `role="timer"` with `aria-live="off"` for the visible ticking element, and provide a separate, visually hidden `role="status"` element with `aria-live="polite"` to announce only significant state changes (Start, Stop, Complete).

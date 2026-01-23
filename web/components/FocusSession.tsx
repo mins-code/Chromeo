@@ -170,11 +170,16 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
             {isTimerComplete ? "Time's Up!" : formatTime(timeRemaining)}
           </span>
           {!isTimerComplete && (
-            <span className="text-slate-500 text-sm mt-2">
+            <span className="text-slate-500 text-sm mt-2" aria-hidden="true">
               {isRunning ? 'Stay focused...' : 'Paused'}
             </span>
           )}
         </div>
+      </div>
+
+      {/* Screen Reader Announcements */}
+      <div role="status" aria-live="polite" className="sr-only">
+        {statusMessage}
       </div>
 
       {/* Task Info */}
