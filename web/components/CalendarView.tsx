@@ -381,7 +381,24 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
             } else {
                 // Recurring: Check against days in month
                 // This is still iterated, but only for recurring tasks (minority)
+                const { frequency } = task.recurrence;
+                const targetDayOfWeek = taskDate.getDay();
+                const targetDayOfMonth = taskDate.getDate();
+                const targetMonth = taskDate.getMonth();
+
                 for (let day = 1; day <= daysInMonth; day++) {
+                    // ⚡ Performance Optimization: Skip days that physically cannot match the recurrence pattern
+                    // avoiding unnecessary Date allocations and expensive checks.
+                    if (frequency === 'weekly') {
+                        const currentDayOfWeek = (firstDay + day - 1) % 7;
+                        if (currentDayOfWeek !== targetDayOfWeek) continue;
+                    } else if (frequency === 'monthly') {
+                        if (day !== targetDayOfMonth) continue;
+                    } else if (frequency === 'yearly') {
+                        // Yearly tasks only occur if the month matches and the day matches
+                        if (month !== targetMonth || day !== targetDayOfMonth) continue;
+                    }
+
                     const currentDayDate = new Date(year, month, day);
                     if (checkRecurrence(task, taskDate, currentDayDate)) {
                         tasksByDay.get(day)!.push(task);
