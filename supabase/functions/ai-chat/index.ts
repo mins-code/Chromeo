@@ -247,13 +247,15 @@ serve(async (req) => {
     // Identify user
     const rateLimitUserId = user ? user.id : 'anonymous'
     const rateLimitKey = `ai-chat:${rateLimitUserId}`
+    const WINDOW_DURATION = 60; // 1 minute
+    const MAX_REQUESTS = 10;
 
-    const { data: limitData, error: limitError } = await supabaseAdmin
-        .from('rate_limits')
-        .select('*')
-        .eq('key', rateLimitKey)
-        .gte('window_start', new Date(Date.now() - 60 * 1000).toISOString()) // 1 minute window
-        .maybeSingle()
+    // 🛡️ SECURITY: Use atomic RPC to prevent race conditions (TOCTOU)
+    const { data: currentCount, error: limitError } = await supabaseAdmin
+      .rpc('increment_rate_limit', {
+        p_key: rateLimitKey,
+        p_window_duration_seconds: WINDOW_DURATION
+      });
 
     if (limitError) {
         console.error("Rate limit check failed:", limitError.message);
@@ -264,18 +266,11 @@ serve(async (req) => {
         )
     }
 
-    if (limitData && limitData.count >= 10) { // Limit: 10 requests per minute
+    if (typeof currentCount === 'number' && currentCount > MAX_REQUESTS) {
         return new Response(
             JSON.stringify({ error: 'Too many requests. Please try again later.' }),
             { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         )
-    }
-
-    // Update rate limit
-    if (limitData) {
-        await supabaseAdmin.from('rate_limits').update({ count: limitData.count + 1 }).eq('id', limitData.id)
-    } else {
-        await supabaseAdmin.from('rate_limits').insert({ key: rateLimitKey, count: 1, window_start: new Date().toISOString() })
     }
 
     // Input validation
