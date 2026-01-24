@@ -536,25 +536,6 @@ const App: React.FC = () => {
         });
     }, [visibleTasks, selectedCalendarTags]);
 
-    const sortedTodoTasks = useMemo(() => {
-        return tasks
-            .filter(t => t.status !== TaskStatus.DONE)
-            .sort((a, b) => getUrgencyScore(b) - getUrgencyScore(a));
-    }, [tasks]);
-
-    const getTopItem = (type: TaskType) => {
-        return tasks
-            .filter(t => t.type === type && t.status !== TaskStatus.DONE)
-            .sort((a, b) => {
-                const pWeight = { [TaskPriority.HIGH]: 3, [TaskPriority.MEDIUM]: 2, [TaskPriority.LOW]: 1 };
-                if (pWeight[a.priority] !== pWeight[b.priority]) return pWeight[b.priority] - pWeight[a.priority];
-
-                const dateA = a.dueDate || a.reminderTime || (Number.MAX_SAFE_INTEGER + '');
-                const dateB = b.dueDate || b.reminderTime || (Number.MAX_SAFE_INTEGER + '');
-                return new Date(dateA).getTime() - new Date(dateB).getTime();
-            })[0];
-    }
-
     // Calculate tasks due today
     const todaysPendingTasks = useMemo(() => {
         const today = new Date();
