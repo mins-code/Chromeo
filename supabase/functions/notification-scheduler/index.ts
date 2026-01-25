@@ -24,22 +24,12 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  // Security Check: Verify the request has authorization
+  // Security Check: Verify the request has authorization from the Service Role (Cron/GitHub Actions)
   const authHeader = req.headers.get('Authorization');
   
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    console.log("Unauthorized request - no auth header");
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
-  const token = authHeader.replace('Bearer ', '');
-  
-  // Basic validation: token should be a JWT (starts with eyJ) and be reasonably long
-  if (!token.startsWith('eyJ') || token.length < 100) {
-    console.log("Unauthorized request - invalid token format");
+  // 🛡️ SECURITY: Strict check - only allow requests with the Service Role Key
+  if (authHeader !== `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`) {
+    console.log("Unauthorized request - invalid service role key");
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -63,7 +53,8 @@ serve(async (req) => {
     webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || token;
+    // 🛡️ SECURITY: Use the Service Role Key explicitly since we verified it
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get all due notifications that haven't been sent yet
