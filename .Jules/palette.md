@@ -26,3 +26,7 @@
 ## 2026-02-04 - Timer Accessibility
 **Learning:** Countdown timers that update the DOM every second create excessive noise for screen readers if live regions are not managed carefully. Using `role="timer"` does not automatically silence this.
 **Action:** Use `role="timer"` with `aria-live="off"` for the visible ticking element, and provide a separate, visually hidden `role="status"` element with `aria-live="polite"` to announce only significant state changes (Start, Stop, Complete).
+
+## 2026-02-14 - Disconnected Toggle Labels
+**Learning:** Visual toggle switches often separate the text label from the input for layout purposes (e.g., using `justify-between`), breaking the click target and accessibility association.
+**Action:** Use `id` and `htmlFor` to explicitly link the text label to the input, even if they are physically separated in the DOM. Ensure the input has an `aria-label` if the visual label is purely decorative or complex.
