@@ -55,7 +55,8 @@ const TimePickerDropdown: React.FC<TimePickerDropdownProps> = ({
     min, 
     max, 
     step = 1, 
-    display 
+    display,
+    unitLabel
   }: { 
     value: number; 
     onChange: (v: number) => void; 
@@ -63,6 +64,7 @@ const TimePickerDropdown: React.FC<TimePickerDropdownProps> = ({
     max: number; 
     step?: number; 
     display?: (v: number) => string;
+    unitLabel: string;
   }) => {
     const handleWheel = (e: React.WheelEvent) => {
       e.preventDefault();
@@ -77,22 +79,27 @@ const TimePickerDropdown: React.FC<TimePickerDropdownProps> = ({
       <div 
         className="flex flex-col items-center gap-0.5 cursor-ns-resize" 
         onWheel={handleWheel}
-        title="Scroll to change value"
+        title={`Scroll to change ${unitLabel}`}
       >
         <button
           type="button"
           onClick={() => onChange(value >= max ? min : value + step)}
           className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+          aria-label={`Increase ${unitLabel}`}
         >
           <ChevronUp size={14} />
         </button>
-        <span className="w-8 h-7 flex items-center justify-center text-sm font-semibold text-white bg-white/10 rounded">
+        <span
+          className="w-8 h-7 flex items-center justify-center text-sm font-semibold text-white bg-white/10 rounded"
+          aria-hidden="true"
+        >
           {display ? display(value) : String(value).padStart(2, '0')}
         </span>
         <button
           type="button"
           onClick={() => onChange(value <= min ? max : value - step)}
           className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+          aria-label={`Decrease ${unitLabel}`}
         >
           <ChevronDown size={14} />
         </button>
@@ -109,15 +116,25 @@ const TimePickerDropdown: React.FC<TimePickerDropdownProps> = ({
         </label>
       )}
 
-      <div
+      <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 cursor-pointer hover:border-emerald-500/50 transition-colors flex items-center justify-between group"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsOpen(!isOpen);
+          }
+        }}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        aria-label={label ? `Select time for ${label}` : "Select time"}
+        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 cursor-pointer hover:border-emerald-500/50 transition-colors flex items-center justify-between group focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
       >
         <div className="flex items-center gap-2">
           <Clock size={16} className="text-slate-400 group-hover:text-emerald-500 transition-colors" />
           <span>{formatDisplayValue()}</span>
         </div>
-      </div>
+      </button>
 
       {isOpen && (
         <div className="absolute z-50 top-full left-0 mt-2 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden animate-scale-in p-4">
@@ -128,19 +145,22 @@ const TimePickerDropdown: React.FC<TimePickerDropdownProps> = ({
               onChange={(v) => handleTimeChange(v, minutes, isPM)} 
               min={1} 
               max={12} 
+              unitLabel="hours"
             />
-            <span className="text-white font-bold">:</span>
+            <span className="text-white font-bold" aria-hidden="true">:</span>
             <TimeSpinner 
               value={minutes} 
               onChange={(v) => handleTimeChange(hours12, v, isPM)} 
               min={0} 
               max={55} 
               step={5} 
+              unitLabel="minutes"
             />
             <button
               type="button"
               onClick={() => handleTimeChange(hours12, minutes, !isPM)}
               className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-500 text-slate-900 hover:bg-emerald-600"
+              aria-label={`Switch to ${!isPM ? 'PM' : 'AM'}`}
             >
               {isPM ? 'PM' : 'AM'}
             </button>
