@@ -27,7 +27,7 @@ serve(async (req) => {
   // Security Check: Verify the request has authorization from the Service Role (Cron/GitHub Actions)
   const authHeader = req.headers.get('Authorization');
   
-  // 🛡️ SECURITY: Strict check - only allow requests with the Service Role Key
+  // 🛡️ SECURITY: Strictly verify the Service Role Key for Cron/System calls
   if (authHeader !== `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`) {
     console.log("Unauthorized request - invalid service role key");
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -35,6 +35,8 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
+
+  const token = authHeader.replace('Bearer ', '');
 
   try {
     // Setup VAPID for web push

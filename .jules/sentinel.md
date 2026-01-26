@@ -69,3 +69,7 @@
 **Vulnerability:** The `notification-scheduler` function allowed any user with a valid JWT to trigger the notification process because it only validated the token format (`startsWith('eyJ')`), not its identity or role.
 **Learning:** Validating that a token *exists* and *looks like* a JWT is not the same as validating *authorization*. Using a fallback like `Deno.env.get('KEY') || token` essentially allows the user-provided token to bypass the requirement for the environment key if the logic isn't strict.
 **Prevention:** For system-only functions, strictly compare `req.headers.get('Authorization')` against `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`. Do not accept user tokens as a fallback.
+## 2026-01-25 - Notification Scheduler Auth Bypass
+**Vulnerability:** The `notification-scheduler` Edge Function used a weak validation check (`startsWith('eyJ')`) for the Authorization header, allowing unauthorized users to trigger the notification dispatch process.
+**Learning:** Checking for the *format* of a token is not authentication. Any string can be made to look like a JWT.
+**Prevention:** For service-to-service or cron-triggered functions, strictly validate that the `Authorization` header matches `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`.
