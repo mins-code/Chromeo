@@ -64,3 +64,12 @@
 **Vulnerability:** Rate limiting in `ai-chat` and `account-deletion` edge functions was implemented using a "Read-Check-Write" pattern. High-concurrency requests could exploit this race condition (Time-of-Check to Time-of-Use) to bypass limits, as multiple requests could read the same "under limit" count before any write occurred.
 **Learning:** Database constraints or atomic operations are required for robust rate limiting. Application-level checks without locking are insufficient for enforcing strict quotas.
 **Prevention:** Use atomic Database RPC functions (like `increment_rate_limit` with `ON CONFLICT DO UPDATE`) to handle the check-and-increment logic in a single transaction, ensuring strict serialization of counter updates.
+
+## 2025-05-27 - Loose Token Validation in Edge Functions
+**Vulnerability:** The `notification-scheduler` function allowed any user with a valid JWT to trigger the notification process because it only validated the token format (`startsWith('eyJ')`), not its identity or role.
+**Learning:** Validating that a token *exists* and *looks like* a JWT is not the same as validating *authorization*. Using a fallback like `Deno.env.get('KEY') || token` essentially allows the user-provided token to bypass the requirement for the environment key if the logic isn't strict.
+**Prevention:** For system-only functions, strictly compare `req.headers.get('Authorization')` against `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`. Do not accept user tokens as a fallback.
+## 2026-01-25 - Notification Scheduler Auth Bypass
+**Vulnerability:** The `notification-scheduler` Edge Function used a weak validation check (`startsWith('eyJ')`) for the Authorization header, allowing unauthorized users to trigger the notification dispatch process.
+**Learning:** Checking for the *format* of a token is not authentication. Any string can be made to look like a JWT.
+**Prevention:** For service-to-service or cron-triggered functions, strictly validate that the `Authorization` header matches `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`.

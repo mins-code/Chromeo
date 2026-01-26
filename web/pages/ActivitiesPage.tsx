@@ -28,6 +28,7 @@ const viewModeToPath: Record<ViewMode, string> = {
   'routines': '/routines',
   'day-planner': '/day-planner',
   'notes': '/notes',
+  'debug-logs': '/debug-logs',
 };
 
 // Function to get activity categories with themed labels
@@ -87,24 +88,54 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
     }
   };
 
-  const getTopItem = (type: TaskType | null): Task | undefined => {
-    if (!type) return undefined; // Routines don't have tasks
-    return tasks
-      .filter(t => t.type === type && t.status !== TaskStatus.DONE)
-      .sort((a, b) => {
-        const pWeight = { [TaskPriority.HIGH]: 3, [TaskPriority.MEDIUM]: 2, [TaskPriority.LOW]: 1 };
-        if (pWeight[a.priority] !== pWeight[b.priority]) {
-          return pWeight[b.priority] - pWeight[a.priority];
+  // ⚡ Bolt Optimization: Compute top items in O(N) pass instead of sorting per category
+  const topItemsByType = React.useMemo(() => {
+    const bestByType: Record<string, Task | undefined> = {};
+    const pWeight = { [TaskPriority.HIGH]: 3, [TaskPriority.MEDIUM]: 2, [TaskPriority.LOW]: 1 };
+
+    tasks.forEach(task => {
+        if (task.status === TaskStatus.DONE) return;
+
+        // Only consider valid types
+        if (!['TASK', 'REMINDER', 'EVENT', 'APPOINTMENT'].includes(task.type)) return;
+
+        const currentBest = bestByType[task.type];
+        if (!currentBest) {
+            bestByType[task.type] = task;
+            return;
         }
-        const dateA = a.dueDate || a.reminderTime || String(Number.MAX_SAFE_INTEGER);
-        const dateB = b.dueDate || b.reminderTime || String(Number.MAX_SAFE_INTEGER);
-        return new Date(dateA).getTime() - new Date(dateB).getTime();
-      })[0];
-  };
+
+        // Compare task vs currentBest
+        let replace = false;
+
+        // 1. Priority check
+        const taskP = pWeight[task.priority] || 0;
+        const bestP = pWeight[currentBest.priority] || 0;
+
+        if (taskP > bestP) {
+            replace = true;
+        } else if (taskP === bestP) {
+            // 2. Date check
+            const dateA = task.dueDate || task.reminderTime || String(Number.MAX_SAFE_INTEGER);
+            const dateB = currentBest.dueDate || currentBest.reminderTime || String(Number.MAX_SAFE_INTEGER);
+            const timeA = new Date(dateA).getTime();
+            const timeB = new Date(dateB).getTime();
+
+            if (timeA < timeB) {
+                replace = true;
+            }
+        }
+
+        if (replace) {
+            bestByType[task.type] = task;
+        }
+    });
+    return bestByType;
+  }, [tasks]);
 
   const getCount = (cat: ReturnType<typeof getActivityCategories>[0]) => {
     if (cat.id === 'routines') {
-      return routines.filter(r => r.isEnabled).length;
+      return routines.filter(r => r.isActive).length;
     }
     return tasks.filter(t => t.type === cat.type && t.status !== TaskStatus.DONE).length;
   };
@@ -188,7 +219,7 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {getActivityCategories(theme).map(cat => {
             const isRoutines = cat.id === 'routines';
-            const topItem = isRoutines ? undefined : getTopItem(cat.type);
+            const topItem = isRoutines ? undefined : topItemsByType[cat.type];
             const count = getCount(cat);
             const Icon = cat.icon;
 

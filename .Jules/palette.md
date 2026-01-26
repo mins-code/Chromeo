@@ -30,3 +30,6 @@
 ## 2026-02-05 - TimePicker Accessibility
 **Learning:** The `TimePickerDropdown` used a `div` with `onClick` as a trigger, which is inaccessible to keyboard users. Internal spinners also lacked labels.
 **Action:** Always use `<button type="button">` for interactive triggers, ensure `onKeyDown` handles Enter/Space, and provide unique `aria-label`s for internal controls like spinners using a context label (e.g., "Increase hours").
+## 2026-02-14 - Disconnected Toggle Labels
+**Learning:** Visual toggle switches often separate the text label from the input for layout purposes (e.g., using `justify-between`), breaking the click target and accessibility association.
+**Action:** Use `id` and `htmlFor` to explicitly link the text label to the input, even if they are physically separated in the DOM. Ensure the input has an `aria-label` if the visual label is purely decorative or complex.

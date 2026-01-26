@@ -36,11 +36,19 @@ const CloneDayModal: React.FC<CloneDayModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="clone-day-title"
+    >
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md border border-slate-200 dark:border-white/10 overflow-hidden">
         {/* Header */}
         <div className="p-6 border-b border-slate-200 dark:border-white/10">
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+          <h2
+            id="clone-day-title"
+            className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"
+          >
             <CalendarIcon className="text-brand-500" />
             Clone Day Plan
           </h2>
@@ -71,18 +79,23 @@ const CloneDayModal: React.FC<CloneDayModalProps> = ({
           {/* Time Adjustment */}
           <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-white/5 space-y-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+              <label
+                htmlFor="shift-times-toggle"
+                className="flex items-center gap-2 cursor-pointer"
+              >
                 <Clock size={18} className="text-slate-400" />
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                   Shift Times
                 </span>
-              </div>
+              </label>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
+                  id="shift-times-toggle"
                   type="checkbox"
                   checked={adjustTime}
                   onChange={(e) => setAdjustTime(e.target.checked)}
                   className="sr-only peer"
+                  aria-label="Shift task times"
                 />
                 <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-300 dark:peer-focus:ring-brand-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-brand-600"></div>
               </label>
@@ -100,6 +113,7 @@ const CloneDayModal: React.FC<CloneDayModalProps> = ({
                     onChange={(e) => setTimeOffset(Number(e.target.value))}
                     className="flex-1 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-sm"
                     placeholder="0"
+                    aria-label="Shift tasks by minutes"
                   />
                   <div className="text-xs text-slate-400">
                     Use negative for earlier
