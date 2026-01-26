@@ -24,7 +24,7 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  // Security Check: Verify the request has authorization
+  // Security Check: Verify the request has authorization from the Service Role (Cron/GitHub Actions)
   const authHeader = req.headers.get('Authorization');
   
   // 🛡️ SECURITY: Strictly verify the Service Role Key for Cron/System calls
@@ -55,7 +55,8 @@ serve(async (req) => {
     webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || token;
+    // 🛡️ SECURITY: Use the Service Role Key explicitly since we verified it
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get all due notifications that haven't been sent yet
