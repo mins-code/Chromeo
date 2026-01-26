@@ -71,7 +71,6 @@ const pathToViewMode: Record<string, ViewMode> = {
     '/settings': 'settings',
     '/routines': 'routines',
     '/notes': 'notes',
-    '/notes': 'notes',
     '/day-planner': 'day-planner',
     '/debug-logs': 'debug-logs',
 };
@@ -89,7 +88,6 @@ const viewModeToPath: Record<ViewMode, string> = {
     'ai-chat': '/ai-chat',
     'settings': '/settings',
     'routines': '/routines',
-    'notes': '/notes',
     'notes': '/notes',
     'day-planner': '/day-planner',
     'debug-logs': '/debug-logs',

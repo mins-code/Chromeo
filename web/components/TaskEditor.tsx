@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import { Task, TaskPriority, TaskStatus, SubTask, RecurrenceConfig, TaskType, NotificationSettings } from '../types';
 import Button from './Button';
 import Input from './Input';
@@ -87,6 +87,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
   // Tag autocomplete states
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
+  const listboxId = useId();
   
   // Extract all existing tags from available tasks
   const existingTags = React.useMemo(() => {
@@ -446,6 +447,11 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                <div className="flex gap-2">
                    <div className="flex-1">
                        <Input 
+                           role="combobox"
+                           aria-autocomplete="list"
+                           aria-expanded={showTagSuggestions && suggestedTags.length > 0}
+                           aria-controls={showTagSuggestions && suggestedTags.length > 0 ? listboxId : undefined}
+                           aria-activedescendant={showTagSuggestions && suggestedTags.length > 0 ? `${listboxId}-option-${selectedSuggestionIndex}` : undefined}
                            placeholder="Type tag..." 
                            value={newTag} 
                            onChange={e => {
@@ -500,25 +506,29 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                
                {/* Autocomplete Dropdown */}
                {showTagSuggestions && suggestedTags.length > 0 && (
-                   <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto animate-scale-in">
+                   <ul
+                       id={listboxId}
+                       role="listbox"
+                       className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto animate-scale-in p-0 m-0 list-none"
+                   >
                        {suggestedTags.map((tag, index) => (
-                           <button
+                           <li
                                key={tag}
-                               type="button"
+                               id={`${listboxId}-option-${index}`}
+                               role="option"
+                               aria-selected={index === selectedSuggestionIndex}
                                onClick={() => selectSuggestedTag(tag)}
-                               className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                               className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer flex items-center gap-2 ${
                                    index === selectedSuggestionIndex
                                        ? 'bg-brand-500/20 text-brand-700 dark:text-brand-300'
                                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                                }`}
                            >
-                               <span className="flex items-center gap-2">
-                                   <span className="w-2 h-2 rounded-full bg-brand-500"></span>
-                                   {tag}
-                               </span>
-                           </button>
+                               <span className="w-2 h-2 rounded-full bg-brand-500 shrink-0"></span>
+                               {tag}
+                           </li>
                        ))}
-                   </div>
+                   </ul>
                )}
             </div>
 
