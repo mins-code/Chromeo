@@ -19,6 +19,7 @@ import { useTasks } from '../hooks/useTasks';
 import { useNotes } from '../hooks/useNotes';
 import { useBudget } from '../hooks/useBudget';
 import { useUniversalSearch, SearchResult } from '../hooks/useUniversalSearch';
+import { useDebounce } from '../hooks/useDebounce';
 import { logger } from '../utils/logger';
 
 interface CommandBarProps {
@@ -58,9 +59,12 @@ const CommandBar: React.FC<CommandBarProps> = ({ isOpen, onClose, onTaskParsed, 
     const { notes } = useNotes();
     const { budget } = useBudget();
 
+    // Debounce search input to avoid expensive filtering on every keystroke
+    const debouncedInput = useDebounce(input, 300);
+
     // Universal search
     const { results } = useUniversalSearch({
-        query: input,
+        query: debouncedInput,
         tasks,
         notes,
         transactions: budget.transactions,
