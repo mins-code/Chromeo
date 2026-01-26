@@ -26,3 +26,7 @@
 ## 2026-02-04 - Timer Accessibility
 **Learning:** Countdown timers that update the DOM every second create excessive noise for screen readers if live regions are not managed carefully. Using `role="timer"` does not automatically silence this.
 **Action:** Use `role="timer"` with `aria-live="off"` for the visible ticking element, and provide a separate, visually hidden `role="status"` element with `aria-live="polite"` to announce only significant state changes (Start, Stop, Complete).
+
+## 2026-02-05 - TimePicker Accessibility
+**Learning:** The `TimePickerDropdown` used a `div` with `onClick` as a trigger, which is inaccessible to keyboard users. Internal spinners also lacked labels.
+**Action:** Always use `<button type="button">` for interactive triggers, ensure `onKeyDown` handles Enter/Space, and provide unique `aria-label`s for internal controls like spinners using a context label (e.g., "Increase hours").
