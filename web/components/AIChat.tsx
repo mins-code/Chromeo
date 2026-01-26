@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, User, XCircle, Check, Pencil, Trash2, RefreshCw, Copy, CheckCheck, ImagePlus, X, Image } from 'lucide-react';
 import { chatWithAI, parseTransactionScreenshot } from '../services/geminiService';
-import { ChatMessage, Task, TaskStatus, TaskType, SuggestedPrompt, Routine, Note, ChecklistItem } from '../types';
+import { ChatMessage, Task, TaskStatus, TaskType, SuggestedPrompt, Routine, ChecklistItem } from '../types';
 import * as BudgetService from '../services/budgetService';
 import * as RoutineService from '../services/routineService';
 import * as NotesService from '../services/notesService';
@@ -29,6 +29,185 @@ const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
   { label: 'Create routine', prompt: 'Create a routine for ', icon: '🔁' },
   { label: 'Add note', prompt: 'Create a note about ', icon: '📝' },
 ];
+
+const getRelativeTime = (timestamp: number): string => {
+  const seconds = Math.floor((Date.now() - timestamp) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+};
+
+const renderMessageText = (text: string) => {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={index} className="font-bold text-slate-900 dark:text-brand-300">{part.substring(2, part.length - 2)}</strong>;
+    }
+    return part;
+  });
+};
+
+const renderDraftDetails = (draft: AIDraftItem) => {
+  const { data, category } = draft;
+  const details: string[] = [];
+
+  if (data.dueDate) details.push(`📅 ${new Date(data.dueDate).toLocaleDateString()}`);
+  if (data.priority) details.push(`⚡ ${data.priority}`);
+  if (data.location) details.push(`📍 ${data.location}`);
+  if (data.duration && category !== 'ROUTINE') details.push(`⏱️ ${data.duration}min`);
+  if (data.amount) details.push(`💰 $${data.amount}`);
+  if (data.type === 'income') details.push('📈 Income');
+  if (data.type === 'expense') details.push('📉 Expense');
+  if (data.tags && data.tags.length > 0) details.push(`🏷️ ${data.tags.join(', ')}`);
+
+  // Routine-specific details
+  if (category === 'ROUTINE') {
+    if (data.time) details.push(`🕐 ${data.time}`);
+    if (data.duration) details.push(`⏱️ ${data.duration}min`);
+    if (data.pattern?.type === 'weekday' && data.pattern.days) {
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const days = data.pattern.days.map((d: number) => dayNames[d]).join(', ');
+      details.push(`📆 ${days}`);
+    } else if (data.pattern?.type === 'interval') {
+      details.push(`🔄 Every ${data.pattern.every} days`);
+    } else if (data.pattern?.type === 'cycle' && data.pattern.items) {
+      const items = data.pattern.items.map((i: any) => i.name).join(' → ');
+      details.push(`🔁 ${items}`);
+    }
+  }
+
+  // Note-specific details
+  if (category === 'NOTE') {
+    if (data.isChecklist && data.checklistItems?.length) {
+      details.push(`☑️ ${data.checklistItems.length} items`);
+    }
+  }
+
+  return details;
+};
+
+interface ChatMessageItemProps {
+  msg: ChatMessage;
+  drafts?: AIDraftItem[];
+  isCopied: boolean;
+  onRetry?: (id: string) => void;
+  onCopy: (text: string, id: string) => void;
+  onConfirmDraft: (msgId: string, index: number) => void;
+  onEditDraft: (msgId: string, index: number) => void;
+  onDiscardDraft: (msgId: string, index: number) => void;
+}
+
+const ChatMessageItem = React.memo(({
+  msg,
+  drafts,
+  isCopied,
+  onRetry,
+  onCopy,
+  onConfirmDraft,
+  onEditDraft,
+  onDiscardDraft
+}: ChatMessageItemProps) => {
+  return (
+    <div>
+        <div className={`flex gap-4 animate-slide-up ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+          <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg ${
+              msg.role === 'user' ? 'bg-gradient-to-br from-brand-500 to-brand-600' : 'bg-gradient-to-br from-purple-500 to-indigo-600'
+          }`}>
+              {msg.role === 'user' ? <User size={16} className="text-white" /> : <Bot size={16} className="text-white" />}
+          </div>
+          <div className="flex-1 max-w-[85%]">
+            <div className={`rounded-2xl px-5 py-3.5 text-sm leading-relaxed shadow-md whitespace-pre-wrap ${
+                msg.role === 'user'
+                ? 'bg-white/90 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-tr-none border border-slate-200 dark:border-white/10'
+                : 'bg-white/80 dark:bg-slate-800 border border-slate-200 dark:border-white/5 text-slate-700 dark:text-slate-200 rounded-tl-none'
+            }`}>
+              {renderMessageText(msg.text)}
+              {msg.status === 'error' && (
+                <div className="mt-2 pt-2 border-t border-white/20 dark:border-white/10 flex items-center gap-2">
+                  <span className="text-xs opacity-75">Failed to send</span>
+                  {msg.role === 'user' && onRetry && (
+                    <button
+                      onClick={() => onRetry(msg.id)}
+                      className="text-xs underline hover:opacity-80 flex items-center gap-1"
+                      aria-label="Retry sending message"
+                    >
+                      <RefreshCw size={12} /> Retry
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2 mt-1 px-2">
+              <span className="text-xs text-slate-500 dark:text-slate-400">{getRelativeTime(msg.timestamp)}</span>
+              {msg.status === 'sent' && (
+                <button
+                  onClick={() => onCopy(msg.text, msg.id)}
+                  className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 flex items-center gap-1"
+                  aria-label="Copy message"
+                >
+                  {isCopied ? <CheckCheck size={12} /> : <Copy size={12} />}
+                  {isCopied && <span>Copied!</span>}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {drafts && drafts.length > 0 && (
+            <div className="ml-14 mt-4 max-w-[85%] animate-scale-in space-y-3" role="list" aria-label="Draft items">
+                {drafts.map((draft, idx) => (
+                    <div key={idx} className="bg-white/80 dark:bg-slate-800/80 border border-brand-500/30 rounded-xl p-4 shadow-xl backdrop-blur-md" role="listitem">
+                        <div className="flex justify-between items-start mb-2">
+                            <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-600 dark:text-brand-400">{draft.category}</span>
+                            <div className="flex gap-1" role="group" aria-label="Draft actions">
+                                {['TASK', 'EVENT', 'APPOINTMENT', 'REMINDER'].includes(draft.category) && (
+                                  <button
+                                    onClick={() => onEditDraft(msg.id, idx)}
+                                    className="p-1.5 text-blue-500 hover:bg-blue-500/10 rounded transition-colors"
+                                    title="Edit before saving"
+                                    aria-label="Edit draft"
+                                  >
+                                    <Pencil size={16} />
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => onConfirmDraft(msg.id, idx)}
+                                  className="p-1.5 text-emerald-500 hover:bg-emerald-500/10 rounded transition-colors"
+                                  title="Confirm and Save"
+                                  aria-label="Confirm and save draft"
+                                >
+                                  <Check size={16} />
+                                </button>
+                                <button
+                                  onClick={() => onDiscardDraft(msg.id, idx)}
+                                  className="p-1.5 text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                                  title="Discard"
+                                  aria-label="Discard draft"
+                                >
+                                  <XCircle size={16} />
+                                </button>
+                            </div>
+                        </div>
+                        <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2">{draft.data.title || draft.data.description}</h4>
+                        {draft.data.description && draft.data.title && (
+                          <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">{draft.data.description}</p>
+                        )}
+                        <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-400">
+                          {renderDraftDetails(draft).map((detail, i) => (
+                            <span key={i} className="bg-slate-100 dark:bg-slate-700/50 px-2 py-0.5 rounded">{detail}</span>
+                          ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        )}
+    </div>
+  );
+});
 
 const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, existingTags }) => {
   const WELCOME_MESSAGE: ChatMessage = {
@@ -67,17 +246,6 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
   useEffect(() => {
     scrollToBottom();
   }, [messages, draftGroups]);
-
-  const getRelativeTime = (timestamp: number): string => {
-    const seconds = Math.floor((Date.now() - timestamp) / 1000);
-    if (seconds < 60) return 'just now';
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    return `${days}d ago`;
-  };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -223,7 +391,7 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
     setTimeout(() => handleSend(), 100);
   };
 
-  const handleCopyMessage = async (text: string, msgId: string) => {
+  const handleCopyMessage = useCallback(async (text: string, msgId: string) => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedMsgId(msgId);
@@ -231,7 +399,7 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
     } catch (err) {
       logger.error('Failed to copy', err as Error);
     }
-  };
+  }, []);
 
   const handleClearChat = useCallback(() => {
     if (confirm('Are you sure you want to clear the chat history? This cannot be undone.')) {
@@ -292,8 +460,22 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
     return newData;
   };
 
-  const confirmSingleDraft = (msgId: string, index: number) => {
-      const draft = draftGroups[msgId][index];
+  const discardSingleDraft = useCallback((msgId: string, index: number) => {
+      setDraftGroups(prev => {
+          const group = [...(prev[msgId] || [])];
+          group.splice(index, 1);
+          if (group.length === 0) {
+              const { [msgId]: _, ...rest } = prev;
+              return rest;
+          }
+          return { ...prev, [msgId]: group };
+      });
+  }, []);
+
+  const confirmSingleDraft = useCallback((msgId: string, index: number) => {
+      const draft = draftGroups[msgId]?.[index];
+      if (!draft) return;
+
       if (['TASK', 'EVENT', 'APPOINTMENT', 'REMINDER'].includes(draft.category)) {
           const normalizedData = normalizeDraftData(draft.data);
           onConfirmTask?.({
@@ -338,10 +520,12 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
           );
       }
       discardSingleDraft(msgId, index);
-  };
+  }, [draftGroups, onConfirmTask, discardSingleDraft]);
 
-  const editSingleDraft = (msgId: string, index: number) => {
-    const draft = draftGroups[msgId][index];
+  const editSingleDraft = useCallback((msgId: string, index: number) => {
+    const draft = draftGroups[msgId]?.[index];
+    if (!draft) return;
+
     if (['TASK', 'EVENT', 'APPOINTMENT', 'REMINDER'].includes(draft.category)) {
         const normalizedData = normalizeDraftData(draft.data);
         onEditTask?.({
@@ -353,68 +537,7 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
         });
         discardSingleDraft(msgId, index);
     }
-  };
-
-  const discardSingleDraft = (msgId: string, index: number) => {
-      setDraftGroups(prev => {
-          const group = [...(prev[msgId] || [])];
-          group.splice(index, 1);
-          if (group.length === 0) {
-              const { [msgId]: _, ...rest } = prev;
-              return rest;
-          }
-          return { ...prev, [msgId]: group };
-      });
-  };
-
-  const renderMessageText = (text: string) => {
-    const parts = text.split(/(\*\*[^*]+\*\*)/g);
-    return parts.map((part, index) => {
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={index} className="font-bold text-slate-900 dark:text-brand-300">{part.substring(2, part.length - 2)}</strong>;
-      }
-      return part;
-    });
-  };
-
-  const renderDraftDetails = (draft: AIDraftItem) => {
-    const { data, category } = draft;
-    const details: string[] = [];
-
-    if (data.dueDate) details.push(`📅 ${new Date(data.dueDate).toLocaleDateString()}`);
-    if (data.priority) details.push(`⚡ ${data.priority}`);
-    if (data.location) details.push(`📍 ${data.location}`);
-    if (data.duration && category !== 'ROUTINE') details.push(`⏱️ ${data.duration}min`);
-    if (data.amount) details.push(`💰 $${data.amount}`);
-    if (data.type === 'income') details.push('📈 Income');
-    if (data.type === 'expense') details.push('📉 Expense');
-    if (data.tags && data.tags.length > 0) details.push(`🏷️ ${data.tags.join(', ')}`);
-    
-    // Routine-specific details
-    if (category === 'ROUTINE') {
-      if (data.time) details.push(`🕐 ${data.time}`);
-      if (data.duration) details.push(`⏱️ ${data.duration}min`);
-      if (data.pattern?.type === 'weekday' && data.pattern.days) {
-        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const days = data.pattern.days.map((d: number) => dayNames[d]).join(', ');
-        details.push(`📆 ${days}`);
-      } else if (data.pattern?.type === 'interval') {
-        details.push(`🔄 Every ${data.pattern.every} days`);
-      } else if (data.pattern?.type === 'cycle' && data.pattern.items) {
-        const items = data.pattern.items.map((i: any) => i.name).join(' → ');
-        details.push(`🔁 ${items}`);
-      }
-    }
-    
-    // Note-specific details
-    if (category === 'NOTE') {
-      if (data.isChecklist && data.checklistItems?.length) {
-        details.push(`☑️ ${data.checklistItems.length} items`);
-      }
-    }
-
-    return details;
-  };
+  }, [draftGroups, onEditTask, discardSingleDraft]);
 
   return (
     <div className="flex flex-col h-full glass rounded-2xl overflow-hidden">
@@ -454,100 +577,17 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
         )}
 
         {messages.map((msg) => (
-          <div key={msg.id}>
-              <div className={`flex gap-4 animate-slide-up ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg ${
-                    msg.role === 'user' ? 'bg-gradient-to-br from-brand-500 to-brand-600' : 'bg-gradient-to-br from-purple-500 to-indigo-600'
-                }`}>
-                    {msg.role === 'user' ? <User size={16} className="text-white" /> : <Bot size={16} className="text-white" />}
-                </div>
-                <div className="flex-1 max-w-[85%]">
-                  <div className={`rounded-2xl px-5 py-3.5 text-sm leading-relaxed shadow-md whitespace-pre-wrap ${
-                      msg.role === 'user' 
-                      ? 'bg-white/90 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-tr-none border border-slate-200 dark:border-white/10' 
-                      : 'bg-white/80 dark:bg-slate-800 border border-slate-200 dark:border-white/5 text-slate-700 dark:text-slate-200 rounded-tl-none'
-                  }`}>
-                    {renderMessageText(msg.text)}
-                    {msg.status === 'error' && (
-                      <div className="mt-2 pt-2 border-t border-white/20 dark:border-white/10 flex items-center gap-2">
-                        <span className="text-xs opacity-75">Failed to send</span>
-                        {msg.role === 'user' && (
-                          <button
-                            onClick={() => handleRetry(msg.id)}
-                            className="text-xs underline hover:opacity-80 flex items-center gap-1"
-                            aria-label="Retry sending message"
-                          >
-                            <RefreshCw size={12} /> Retry
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 mt-1 px-2">
-                    <span className="text-xs text-slate-500 dark:text-slate-400">{getRelativeTime(msg.timestamp)}</span>
-                    {msg.status === 'sent' && (
-                      <button
-                        onClick={() => handleCopyMessage(msg.text, msg.id)}
-                        className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 flex items-center gap-1"
-                        aria-label="Copy message"
-                      >
-                        {copiedMsgId === msg.id ? <CheckCheck size={12} /> : <Copy size={12} />}
-                        {copiedMsgId === msg.id && <span>Copied!</span>}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {draftGroups[msg.id] && draftGroups[msg.id].length > 0 && (
-                  <div className="ml-14 mt-4 max-w-[85%] animate-scale-in space-y-3" role="list" aria-label="Draft items">
-                      {draftGroups[msg.id].map((draft, idx) => (
-                          <div key={idx} className="bg-white/80 dark:bg-slate-800/80 border border-brand-500/30 rounded-xl p-4 shadow-xl backdrop-blur-md" role="listitem">
-                              <div className="flex justify-between items-start mb-2">
-                                  <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-600 dark:text-brand-400">{draft.category}</span>
-                                  <div className="flex gap-1" role="group" aria-label="Draft actions">
-                                      {['TASK', 'EVENT', 'APPOINTMENT', 'REMINDER'].includes(draft.category) && (
-                                        <button 
-                                          onClick={() => editSingleDraft(msg.id, idx)} 
-                                          className="p-1.5 text-blue-500 hover:bg-blue-500/10 rounded transition-colors" 
-                                          title="Edit before saving"
-                                          aria-label="Edit draft"
-                                        >
-                                          <Pencil size={16} />
-                                        </button>
-                                      )}
-                                      <button 
-                                        onClick={() => confirmSingleDraft(msg.id, idx)} 
-                                        className="p-1.5 text-emerald-500 hover:bg-emerald-500/10 rounded transition-colors" 
-                                        title="Confirm and Save"
-                                        aria-label="Confirm and save draft"
-                                      >
-                                        <Check size={16} />
-                                      </button>
-                                      <button 
-                                        onClick={() => discardSingleDraft(msg.id, idx)} 
-                                        className="p-1.5 text-red-500 hover:bg-red-500/10 rounded transition-colors" 
-                                        title="Discard"
-                                        aria-label="Discard draft"
-                                      >
-                                        <XCircle size={16} />
-                                      </button>
-                                  </div>
-                              </div>
-                              <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2">{draft.data.title || draft.data.description}</h4>
-                              {draft.data.description && draft.data.title && (
-                                <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">{draft.data.description}</p>
-                              )}
-                              <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-400">
-                                {renderDraftDetails(draft).map((detail, i) => (
-                                  <span key={i} className="bg-slate-100 dark:bg-slate-700/50 px-2 py-0.5 rounded">{detail}</span>
-                                ))}
-                              </div>
-                          </div>
-                      ))}
-                  </div>
-              )}
-          </div>
+          <ChatMessageItem
+            key={msg.id}
+            msg={msg}
+            drafts={draftGroups[msg.id]}
+            isCopied={copiedMsgId === msg.id}
+            onRetry={msg.status === 'error' ? handleRetry : undefined}
+            onCopy={handleCopyMessage}
+            onConfirmDraft={confirmSingleDraft}
+            onEditDraft={editSingleDraft}
+            onDiscardDraft={discardSingleDraft}
+          />
         ))}
         {isLoading && (
           <div className="flex items-center gap-3 ml-14 animate-slide-up">
