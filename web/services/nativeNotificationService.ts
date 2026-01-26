@@ -142,6 +142,12 @@ class NativeNotificationService {
 
       // Try to initialize push notifications (optional - requires Firebase)
       try {
+        // NOTE: Push Notifications require google-services.json to be present in android/app/
+        // Without it, calling register() crashes the app on some devices.
+        // We are disabling this by default to prevent crashes for users without Firebase.
+        // Uncomment the code below ONLY if you have set up Firebase.
+        
+        /*
         const { PushNotifications } = await import('@capacitor/push-notifications');
         this.PushNotifications = PushNotifications;
 
@@ -186,6 +192,8 @@ class NativeNotificationService {
           
           logger.info('[NativeNotifications] Push notifications initialized successfully');
         }
+        */
+        logger.info('[NativeNotifications] Push notifications skipped (requires firebase config)');
       } catch (pushError) {
         // This is expected if google-services.json is missing or Firebase isn't configured
         // The app will continue to work with Local Notifications only
