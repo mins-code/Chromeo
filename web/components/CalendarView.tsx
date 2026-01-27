@@ -107,6 +107,13 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         // Check each task to see if it falls within the range
         // Use unfilteredTasks if available to show ALL possible tags for this view, otherwise fall back to tasks
         (unfilteredTasks || tasks).forEach(task => {
+            // ⚡ Bolt Optimization: Skip expensive date parsing if all tags are already visible
+            if (task.tags.length === 0) {
+                if (tags.has('Untagged')) return;
+            } else {
+                if (task.tags.every(tag => tags.has(tag))) return;
+            }
+
             const taskDateStr = task.dueDate || task.reminderTime;
             if (!taskDateStr) return;
             
