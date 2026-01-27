@@ -9,13 +9,30 @@ import webpush from "https://esm.sh/web-push@3.6.6";
  * MULTI-DEVICE SUPPORT: Sends notifications to ALL devices registered by the user
  */
 
+// 🛡️ SECURITY: Restrict CORS to the application domain
+// This prevents malicious browser scripts from reading the response.
+// Note: This does not block server-to-server calls (like curl), which is expected for the Cron job.
+const ALLOWED_ORIGIN = Deno.env.get("APP_URL") || "https://chronodex.vercel.app";
+
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
   "X-XSS-Protection": "1; mode=block",
+};
+
+// 🛡️ SECURITY: Timing-safe comparison to prevent timing attacks
+const secureCompare = async (a: string, b: string): Promise<boolean> => {
+  const encoder = new TextEncoder();
+  const aBuf = encoder.encode(a);
+  const bBuf = encoder.encode(b);
+
+  // Buffers must be same length for timingSafeEqual
+  if (aBuf.byteLength !== bBuf.byteLength) return false;
+
+  return await crypto.subtle.timingSafeEqual(aBuf, bBuf);
 };
 
 serve(async (req) => {
@@ -24,21 +41,36 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  // Security Check: Verify the request has authorization from the Service Role (Cron/GitHub Actions)
-  const authHeader = req.headers.get('Authorization');
-  
-  // 🛡️ SECURITY: Strictly verify the Service Role Key for Cron/System calls
-  if (authHeader !== `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`) {
-    console.log("Unauthorized request - invalid service role key");
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
-  const token = authHeader.replace('Bearer ', '');
-
   try {
+    // Security Check: Verify the request has authorization from the Service Role (Cron/GitHub Actions)
+    const authHeader = req.headers.get('Authorization');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    // 🛡️ SECURITY: Fail securely if key is missing in environment
+    if (!serviceRoleKey) {
+        console.error("INTERNAL SECURITY ERROR: SUPABASE_SERVICE_ROLE_KEY is missing");
+        return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+    }
+
+    const expectedHeader = `Bearer ${serviceRoleKey}`;
+
+    // 🛡️ SECURITY: Strictly verify the Service Role Key using timing-safe comparison
+    let authorized = false;
+    if (authHeader) {
+        authorized = await secureCompare(authHeader, expectedHeader);
+    }
+
+    if (!authorized) {
+      console.log("Unauthorized request - invalid service role key");
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Setup VAPID for web push
     const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY");
     const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY");
@@ -56,7 +88,7 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     // 🛡️ SECURITY: Use the Service Role Key explicitly since we verified it
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseKey = serviceRoleKey; // Use local variable
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get all due notifications that haven't been sent yet
@@ -208,7 +240,8 @@ serve(async (req) => {
     );
 
   } catch (error: unknown) {
-    console.error("Notification scheduler error:", error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error("Notification scheduler error:", errorMsg);
     // 🛡️ SECURITY: Log detailed error but don't leak it to client
     return new Response(
       JSON.stringify({ error: "Internal Server Error" }),
