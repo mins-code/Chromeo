@@ -98,6 +98,18 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
     onClose();
   }, [task, onComplete, onClose]);
 
+  // Handle Escape key to close
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   // Format time as MM:SS
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -177,11 +189,6 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
         </div>
       </div>
 
-      {/* Screen Reader Announcements */}
-      <div role="status" aria-live="polite" className="sr-only">
-        {statusMessage}
-      </div>
-
       {/* Task Info */}
       <div className="text-center max-w-xl mb-12">
         <h1 className="text-2xl sm:text-3xl font-bold text-white mb-3 leading-tight">
@@ -199,6 +206,7 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
         {/* Pause/Resume Button */}
         <Button
           onClick={togglePause}
+          autoFocus
           className={`px-8 py-4 text-lg rounded-2xl transition-all duration-200 ${
             isRunning
               ? 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
