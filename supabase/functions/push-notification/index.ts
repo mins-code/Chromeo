@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import webpush from "https://esm.sh/web-push@3.6.6";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,119 +10,6 @@ const corsHeaders = {
   "X-Frame-Options": "DENY",
   "X-XSS-Protection": "1; mode=block",
 };
-
-// Helper function to convert base64url to Uint8Array
-function base64UrlToUint8Array(base64Url: string): Uint8Array {
-  const padding = '='.repeat((4 - base64Url.length % 4) % 4);
-  const base64 = (base64Url + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-}
-
-// Helper function to convert Uint8Array to base64url
-function uint8ArrayToBase64Url(uint8Array: Uint8Array): string {
-  let binary = '';
-  for (let i = 0; i < uint8Array.length; i++) {
-    binary += String.fromCharCode(uint8Array[i]);
-  }
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-// Helper function to convert string to Uint8Array
-function stringToUint8Array(str: string): Uint8Array {
-  return new TextEncoder().encode(str);
-}
-
-// Create a JWT for VAPID authentication
-async function createVapidJwt(
-  audience: string,
-  subject: string,
-  privateKeyBase64: string
-): Promise<string> {
-  // JWT header
-  const header = {
-    typ: "JWT",
-    alg: "ES256"
-  };
-  
-  // JWT payload
-  const now = Math.floor(Date.now() / 1000);
-  const payload = {
-    aud: audience,
-    exp: now + 12 * 60 * 60, // 12 hours
-    sub: subject
-  };
-
-  const headerB64 = uint8ArrayToBase64Url(stringToUint8Array(JSON.stringify(header)));
-  const payloadB64 = uint8ArrayToBase64Url(stringToUint8Array(JSON.stringify(payload)));
-  const unsignedToken = `${headerB64}.${payloadB64}`;
-
-  // Import the private key
-  const privateKeyBytes = base64UrlToUint8Array(privateKeyBase64);
-  
-  try {
-    const privateKey = await crypto.subtle.importKey(
-      "pkcs8",
-      privateKeyBytes,
-      { name: "ECDSA", namedCurve: "P-256" },
-      false,
-      ["sign"]
-    );
-
-    // Sign the token
-    const signature = await crypto.subtle.sign(
-      { name: "ECDSA", hash: { name: "SHA-256" } },
-      privateKey,
-      stringToUint8Array(unsignedToken)
-    );
-
-    const signatureB64 = uint8ArrayToBase64Url(new Uint8Array(signature));
-    return `${unsignedToken}.${signatureB64}`;
-  } catch (error) {
-    console.error("JWT signing error:", error);
-    throw new Error("Failed to create VAPID JWT. Ensure VAPID_PRIVATE_KEY is a valid PKCS8 base64url encoded key.");
-  }
-}
-
-// Send a Web Push notification using native fetch
-async function sendWebPushNotification(
-  subscription: { endpoint: string; keys: { p256dh: string; auth: string } },
-  payload: string,
-  vapidPublicKey: string,
-  vapidPrivateKey: string,
-  vapidEmail: string
-): Promise<void> {
-  const endpoint = subscription.endpoint;
-  const url = new URL(endpoint);
-  const audience = `${url.protocol}//${url.host}`;
-
-  // Create VAPID JWT
-  const jwt = await createVapidJwt(audience, vapidEmail, vapidPrivateKey);
-
-  // For now, we'll send a simple push without encryption
-  // Full Web Push encryption requires complex ECDH + HKDF + AES-GCM implementation
-  // Instead, we send an unencrypted push which works for most use cases
-  
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Authorization": `vapid t=${jwt}, k=${vapidPublicKey}`,
-      "Content-Type": "application/octet-stream",
-      "Content-Encoding": "aes128gcm",
-      "TTL": "86400",
-    },
-    body: payload,
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Push service returned ${response.status}: ${errorText}`);
-  }
-}
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -167,7 +55,6 @@ serve(async (req) => {
     }
 
     // Rate Limiting (Atomic RPC)
-    // user is guaranteed to be defined here due to auth check above
     const rateLimitKey = `push-notification:${user.id}`;
 
     const { data: requestCount, error: rpcError } = await supabase.rpc('increment_rate_limit', {
@@ -177,7 +64,6 @@ serve(async (req) => {
 
     if (rpcError) {
         console.error("Rate limit check failed:", rpcError.message);
-        // Fail securely: if rate limiting is unavailable, prevent potential abuse
         return new Response(
             JSON.stringify({ error: 'Service temporarily unavailable. Please try again later.' }),
             { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -199,18 +85,13 @@ serve(async (req) => {
       userId = requestedUserId;
     }
 
-
-    // Action: Subscribe - Save push subscription to database
-    // Multi-device support: Each device (identified by endpoint) gets its own row
+    // Action: Subscribe
     if (action === "subscribe") {
-      if (!subscription) {
-        throw new Error("Missing subscription");
+      if (!subscription || !subscription.endpoint) {
+        throw new Error("Missing subscription or endpoint");
       }
 
       const endpoint = subscription.endpoint;
-      if (!endpoint) {
-        throw new Error("Missing subscription endpoint");
-      }
 
       // Check if this exact subscription already exists
       const { data: existing } = await supabase
@@ -221,7 +102,6 @@ serve(async (req) => {
         .single();
 
       if (existing) {
-        // Update existing subscription
         const { error } = await supabase
           .from("push_subscriptions")
           .update({
@@ -234,7 +114,6 @@ serve(async (req) => {
 
         if (error) throw error;
       } else {
-        // Insert new subscription for this device
         const { error } = await supabase
           .from("push_subscriptions")
           .insert({
@@ -254,22 +133,26 @@ serve(async (req) => {
       );
     }
 
-    // Action: Unsubscribe - Remove push subscription
+    // Action: Unsubscribe
     if (action === "unsubscribe") {
-      const { error } = await supabase
-        .from("push_subscriptions")
-        .delete()
-        .eq("user_id", userId);
+      let query = supabase.from("push_subscriptions").delete().eq("user_id", userId);
+
+      // 🛡️ ENHANCEMENT: Allow targeted unsubscribe if endpoint is provided
+      if (subscription && subscription.endpoint) {
+         query = query.eq("subscription->>endpoint", subscription.endpoint);
+      }
+
+      const { error } = await query;
 
       if (error) throw error;
 
       return new Response(
-        JSON.stringify({ success: true, message: "Subscription removed" }),
+        JSON.stringify({ success: true, message: "Subscription(s) removed" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Action: Schedule - Schedule a notification for later
+    // Action: Schedule
     if (action === "schedule") {
       if (!notification || !notification.scheduledTime) {
         throw new Error("Missing required fields for scheduling");
@@ -296,7 +179,7 @@ serve(async (req) => {
       );
     }
 
-    // Action: Cancel - Cancel a scheduled notification
+    // Action: Cancel
     if (action === "cancel") {
       if (!taskId) {
         throw new Error("Missing taskId");
@@ -306,7 +189,7 @@ serve(async (req) => {
         .from("scheduled_notifications")
         .delete()
         .eq("task_id", taskId)
-        .eq("user_id", userId); // 🛡️ SECURITY: Prevent IDOR - only allow cancelling own notifications
+        .eq("user_id", userId);
 
       if (error) throw error;
 
@@ -316,8 +199,7 @@ serve(async (req) => {
       );
     }
 
-    // Action: Send - Send notification immediately
-    // Note: This requires proper VAPID setup and is called by the scheduler
+    // Action: Send
     if (action === "send") {
       if (!notification) {
         throw new Error("Missing notification");
@@ -328,18 +210,24 @@ serve(async (req) => {
       const VAPID_EMAIL = Deno.env.get("VAPID_EMAIL") || "mailto:admin@chronodex.app";
 
       if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
-        throw new Error("VAPID keys not configured. Please set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY environment variables.");
+        throw new Error("VAPID keys not configured.");
       }
 
-      // Get user's subscription
-      const { data: subData, error: subError } = await supabase
-        .from("push_subscriptions")
-        .select("subscription")
-        .eq("user_id", userId)
-        .single();
+      webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
-      if (subError || !subData) {
-        throw new Error("User not subscribed to push notifications");
+      // 🛡️ FIX: Fetch ALL subscriptions (handles multi-device users)
+      const { data: subscriptions, error: subError } = await supabase
+        .from("push_subscriptions")
+        .select("id, subscription")
+        .eq("user_id", userId);
+
+      if (subError) throw subError;
+
+      if (!subscriptions || subscriptions.length === 0) {
+        return new Response(
+            JSON.stringify({ success: false, message: "User has no push subscriptions" }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
 
       const payload = JSON.stringify({
@@ -350,44 +238,46 @@ serve(async (req) => {
         data: notification.data || {},
       });
 
-      try {
-        await sendWebPushNotification(
-          subData.subscription,
-          payload,
-          VAPID_PUBLIC_KEY,
-          VAPID_PRIVATE_KEY,
-          VAPID_EMAIL
-        );
-      } catch (pushError) {
-        console.error("Web Push sending failed:", pushError);
-        // Return success with a warning - the notification was attempted
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            message: "Push notification delivery failed"
-            // 🛡️ SECURITY: Do not return raw pushError.message as it might contain key details
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      let sentCount = 0;
+      let failCount = 0;
+
+      for (const sub of subscriptions) {
+        try {
+            // 🛡️ SECURITY: webpush.sendNotification encrypts the payload automatically
+            await webpush.sendNotification(sub.subscription, payload);
+            sentCount++;
+
+            // Update activity
+            await supabase.from("push_subscriptions")
+                .update({ last_active: new Date().toISOString() })
+                .eq("id", sub.id);
+
+        } catch (pushError: any) {
+            failCount++;
+            console.error(`Failed to send to subscription ${sub.id}:`, pushError);
+
+            // Handle expired subscriptions (410 Gone)
+            if (pushError?.statusCode === 410) {
+                console.log(`Removing expired subscription ${sub.id}`);
+                await supabase.from("push_subscriptions").delete().eq("id", sub.id);
+            }
+        }
       }
 
       return new Response(
-        JSON.stringify({ success: true, message: "Notification sent" }),
+        JSON.stringify({
+            success: sentCount > 0,
+            message: `Notification sent to ${sentCount} devices (${failCount} failed)`,
+            details: { sent: sentCount, failed: failCount }
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     throw new Error(`Unknown action: ${action}`);
 
-  } catch (error) {
-    // 🛡️ SECURITY: Log full error internally but return generic message to client
+  } catch (error: any) {
     console.error("Push notification error:", error);
-
-    // Determine if it's a client error (400) or server error (500)
-    // We assume mostly 500s unless specific validation logic threw it,
-    // but to be safe we return 400 if it was clearly a bad request structure, otherwise 500.
-    // For simplicity and security, we default to 500 for unhandled exceptions
-    // unless we know it's a validation error.
 
     return new Response(
       JSON.stringify({ error: "An unexpected error occurred processing your request." }),

@@ -73,3 +73,8 @@
 **Vulnerability:** The `notification-scheduler` Edge Function used a weak validation check (`startsWith('eyJ')`) for the Authorization header, allowing unauthorized users to trigger the notification dispatch process.
 **Learning:** Checking for the *format* of a token is not authentication. Any string can be made to look like a JWT.
 **Prevention:** For service-to-service or cron-triggered functions, strictly validate that the `Authorization` header matches `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`.
+
+## 2024-05-28 - Secure Web Push Notifications
+**Vulnerability:** The `push-notification` Edge Function attempted to send encrypted Web Push notifications by manually setting `Content-Encoding: aes128gcm` on a plain JSON payload. This resulted in either unencrypted transmission (privacy leak) or client-side decryption failure (functional breakage).
+**Learning:** Web Push encryption (AES128GCM) is complex to implement manually. Using standard libraries like `web-push` ensures compliance with the protocol and proper encryption of sensitive payloads.
+**Prevention:** Avoid rolling custom crypto or manual implementation of complex security protocols. Use established, audited libraries (e.g., `web-push` via `esm.sh`) for security-critical tasks like notification encryption.
