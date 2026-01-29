@@ -359,6 +359,14 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         const tasksByDay = new Map<number, Task[]>();
         for (let i = 1; i <= daysInMonth; i++) tasksByDay.set(i, []);
 
+        // ⚡ Performance Optimization: Pre-calculate dates for the month
+        // Reduces allocations from O(RecurringTasks * Days) to O(Days)
+        const monthDates: Date[] = [];
+        // Index 0 unused to match 1-based days
+        for (let i = 1; i <= daysInMonth; i++) {
+            monthDates[i] = new Date(year, month, i);
+        }
+
         // 2. Iterate Tasks Once
         tasks.forEach(task => {
             let taskDateStr = task.dueDate || task.reminderTime;
@@ -399,7 +407,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                         if (month !== targetMonth || day !== targetDayOfMonth) continue;
                     }
 
-                    const currentDayDate = new Date(year, month, day);
+                    const currentDayDate = monthDates[day];
                     if (checkRecurrence(task, taskDate, currentDayDate)) {
                         tasksByDay.get(day)!.push(task);
                     }
