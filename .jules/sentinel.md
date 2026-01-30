@@ -73,3 +73,8 @@
 **Vulnerability:** The `notification-scheduler` Edge Function used a weak validation check (`startsWith('eyJ')`) for the Authorization header, allowing unauthorized users to trigger the notification dispatch process.
 **Learning:** Checking for the *format* of a token is not authentication. Any string can be made to look like a JWT.
 **Prevention:** For service-to-service or cron-triggered functions, strictly validate that the `Authorization` header matches `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`.
+
+## 2026-01-28 - Timing Attacks on Auth Tokens
+**Vulnerability:** The `notification-scheduler` used a standard string comparison (`!==`) to validate the Service Role Key. This is vulnerable to timing attacks, where an attacker can deduce the key byte-by-byte by measuring the response time of the function.
+**Learning:** Standard string comparisons fail early on mismatch. `crypto.subtle` in Web Crypto API lacks `timingSafeEqual`, requiring careful implementation in Deno/Edge environments.
+**Prevention:** Use a constant-time comparison algorithm. A portable approach is to hash both the input and the secret (e.g., SHA-256) and then compare the hashes using a bitwise constant-time loop.
