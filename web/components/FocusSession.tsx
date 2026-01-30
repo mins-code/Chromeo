@@ -28,6 +28,23 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
     }
   }, [isOpen, task?.id, task.title]);
 
+  // Handle Escape key to close
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   // Countdown logic
   useEffect(() => {
     if (!isOpen || !isRunning || timeRemaining <= 0) return;
@@ -111,7 +128,11 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900 flex flex-col items-center justify-center p-6 animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 bg-slate-900 flex flex-col items-center justify-center p-6 animate-fade-in"
+      role="dialog"
+      aria-modal="true"
+    >
       {/* Live Region for Screen Readers */}
       <div className="sr-only" role="status" aria-live="polite">
         {a11yStatus}
@@ -175,11 +196,6 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
             </span>
           )}
         </div>
-      </div>
-
-      {/* Screen Reader Announcements */}
-      <div role="status" aria-live="polite" className="sr-only">
-        {statusMessage}
       </div>
 
       {/* Task Info */}
