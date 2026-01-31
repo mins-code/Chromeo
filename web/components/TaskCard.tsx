@@ -34,7 +34,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasks = [], onEdit, onTogg
 
   return (
     <div
-      className={`group relative glass-panel rounded-2xl p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 ${isDone ? 'opacity-60 grayscale-[0.5]' : ''} ${isBlocked ? 'border-red-500/30 bg-red-500/5' : ''}`}
+      role="article"
+      className={`group relative glass-panel cursor-pointer rounded-2xl p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 ${isDone ? 'opacity-60 grayscale-[0.5]' : ''} ${isBlocked ? 'border-red-500/30 bg-red-500/5' : ''}`}
       onClick={() => onEdit(task)}
     >
       <div className="flex items-start gap-4">
@@ -86,8 +87,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasks = [], onEdit, onTogg
             />
           </div>
 
-          <h3 className={`font-semibold text-[15px] truncate pr-16 sm:pr-0 ${isDone ? 'text-slate-400 dark:text-slate-500 line-through decoration-slate-400' : 'text-slate-800 dark:text-slate-100'} ${isBlocked && !isDone ? 'text-slate-500' : ''}`}>
-            {task.title}
+          <h3>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(task);
+              }}
+              className={`w-full text-left font-semibold text-[15px] truncate pr-16 sm:pr-0 focus:outline-none focus:underline hover:text-brand-600 dark:hover:text-brand-400 transition-colors ${isDone ? 'text-slate-400 dark:text-slate-500 line-through decoration-slate-400' : 'text-slate-800 dark:text-slate-100'} ${isBlocked && !isDone ? 'text-slate-500' : ''}`}
+            >
+              {task.title}
+            </button>
           </h3>
 
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 line-clamp-2 leading-relaxed">
