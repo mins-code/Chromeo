@@ -109,6 +109,10 @@ const App: React.FC = () => {
         deleteTask, 
         toggleStatus 
     } = useTasks();
+
+    // ⚡ Bolt Optimization: Create a Map for O(1) lookups in child components (TaskCard)
+    const tasksMap = useMemo(() => new Map(tasks.map(t => [t.id, t])), [tasks]);
+
     const { 
         budget, 
         isLoading: _isBudgetLoading, 
@@ -779,7 +783,7 @@ const App: React.FC = () => {
                             <TaskCard
                                 key={task.id}
                                 task={task}
-                                allTasks={tasks}
+                                allTasksMap={tasksMap}
                                 onEdit={handleEditTask}
                                 onToggleStatus={handleToggleStatus}
                                 onAIAnalysis={handleAIAnalysis}
