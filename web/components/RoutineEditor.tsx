@@ -93,6 +93,15 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
     }
   }, [routine, isOpen]);
 
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const toggleDay = (day: number) => {
@@ -183,13 +192,21 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 transition-all duration-300">
       <div className="absolute inset-0 bg-black/60 dark:bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
-      <div className="relative glass rounded-2xl w-full max-w-xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl animate-scale-in">
+      <div
+        className="relative glass rounded-2xl w-full max-w-xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl animate-scale-in"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="routine-editor-title"
+      >
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-white/5 bg-white/50 dark:bg-slate-900/50">
           <div className="flex items-center gap-3">
             <Repeat className="text-emerald-500" size={20} />
-            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 tracking-tight">
+            <h2
+              id="routine-editor-title"
+              className="text-lg font-semibold text-slate-800 dark:text-slate-100 tracking-tight"
+            >
               {routine ? 'Edit Routine' : 'New Routine'}
             </h2>
           </div>
@@ -274,6 +291,8 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
                     key={index}
                     onClick={() => toggleDay(index)}
                     title={FULL_DAY_NAMES[index]}
+                    aria-label={FULL_DAY_NAMES[index]}
+                    aria-pressed={selectedDays.includes(index)}
                     className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${
                       selectedDays.includes(index)
                         ? 'bg-emerald-500 text-white shadow-md'
