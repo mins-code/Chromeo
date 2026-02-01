@@ -3,14 +3,14 @@ import { ChevronLeft, ChevronRight, Plus, X, Clock, Repeat, Calendar, CalendarDa
 import { DndContext, DragEndEvent, DragOverlay, pointerWithin } from '@dnd-kit/core';
 import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, addMonths, subMonths, isSameDay, addDays, subDays, startOfMonth, endOfMonth, differenceInCalendarDays } from 'date-fns';
 import { formatDateWithWeekday } from '../utils/date';
-import { Task, TaskPriority, TaskStatus, RecurringTransaction, ThemeOption } from '../types';
+import { Task, TaskStatus, RecurringTransaction, ThemeOption } from '../types';
 import { CalendarEvent, formatEventTime, doesEventOccurOnDate } from '../services/googleCalendarService';
 import Button from './Button';
 import CalendarDayCell from './CalendarDayCell';
 import WeekView from './WeekView';
 import DayView from './DayView';
 import CustomIntervalView from './CustomIntervalView';
-import DraggableTask, { TYPE_COLORS } from './DraggableTask';
+import { TYPE_COLORS } from './DraggableTask';
 import Select from './Select';
 
 interface CalendarViewProps {
@@ -510,6 +510,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         }
     };
 
+    // ⚡ Bolt Optimization: Calculate today string once per render
+    // instead of re-calculating it for every cell in the loop.
+    const todayStr = new Date().toDateString();
 
     return (
         <DndContext
@@ -662,7 +665,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                     date={cell.date || null}
                                     tasks={cell.tasks || []}
                                     financialItems={cell.financialItems || []}
-                                    isToday={cell.date?.toDateString() === new Date().toDateString()}
+                                    isToday={cell.date?.toDateString() === todayStr}
                                     onClick={() => cell.date && handleDayClick(cell.date)}
                                 />
                             ))}
