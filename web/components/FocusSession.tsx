@@ -28,6 +28,18 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
     }
   }, [isOpen, task?.id, task.title]);
 
+  // Handle Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   // Countdown logic
   useEffect(() => {
     if (!isOpen || !isRunning || timeRemaining <= 0) return;

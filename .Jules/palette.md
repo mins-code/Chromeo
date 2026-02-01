@@ -33,3 +33,7 @@
 ## 2026-02-14 - Disconnected Toggle Labels
 **Learning:** Visual toggle switches often separate the text label from the input for layout purposes (e.g., using `justify-between`), breaking the click target and accessibility association.
 **Action:** Use `id` and `htmlFor` to explicitly link the text label to the input, even if they are physically separated in the DOM. Ensure the input has an `aria-label` if the visual label is purely decorative or complex.
+
+## 2026-02-19 - Modal Focus Management
+**Learning:** The `FocusSession` modal lacked keyboard support for the Escape key and initial focus management, making it difficult for keyboard users to exit or interact with the primary action immediately.
+**Action:** When building modals, always implement `useEffect` for the Escape key listener and use `autoFocus` (or manual ref focus) on the primary action or container to ensure keyboard focus is captured.
