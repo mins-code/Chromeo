@@ -2,7 +2,6 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "X-Content-Type-Options": "nosniff",
@@ -124,9 +123,23 @@ async function sendWebPushNotification(
 }
 
 serve(async (req) => {
+  // 🛡️ SECURITY: Dynamic CORS to allow only specific origins
+  const origin = req.headers.get("Origin");
+  const allowedOrigins = [
+    Deno.env.get("APP_URL"),
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+  ].filter(Boolean);
+
+  // If no APP_URL is set (e.g. initial dev), fall back to checking if it's localhost or just allow if origin is null (e.g. curl)
+  // But strictly, we default to the first allowed origin or null if none
+  const allowOrigin = allowedOrigins.includes(origin) ? origin : (allowedOrigins[0] || "*");
+
+  const headers = { ...corsHeaders, "Access-Control-Allow-Origin": allowOrigin };
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers });
   }
 
   try {
@@ -140,7 +153,7 @@ serve(async (req) => {
         }),
         { 
           status: 401, 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+          headers: { ...headers, "Content-Type": "application/json" }
         }
       );
     }
@@ -161,7 +174,7 @@ serve(async (req) => {
         }),
         { 
           status: 401, 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+          headers: { ...headers, "Content-Type": "application/json" }
         }
       );
     }
@@ -180,14 +193,14 @@ serve(async (req) => {
         // Fail securely: if rate limiting is unavailable, prevent potential abuse
         return new Response(
             JSON.stringify({ error: 'Service temporarily unavailable. Please try again later.' }),
-            { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 503, headers: { ...headers, "Content-Type": "application/json" } }
         );
     }
 
     if (requestCount > 20) { // Limit: 20 requests per minute
         return new Response(
             JSON.stringify({ error: 'Too many requests. Please try again later.' }),
-            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 429, headers: { ...headers, "Content-Type": "application/json" } }
         );
     }
 
@@ -250,22 +263,37 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, message: "Subscription saved" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...headers, "Content-Type": "application/json" } }
       );
     }
 
     // Action: Unsubscribe - Remove push subscription
     if (action === "unsubscribe") {
-      const { error } = await supabase
-        .from("push_subscriptions")
-        .delete()
-        .eq("user_id", userId);
+      let error;
+
+      // 🛡️ SECURITY/AVAILABILITY: If endpoint provided, only remove that specific device
+      // This prevents "unsubscribe on phone" from killing "laptop notifications"
+      if (subscription && subscription.endpoint) {
+        const result = await supabase
+          .from("push_subscriptions")
+          .delete()
+          .eq("user_id", userId)
+          .eq("subscription->>endpoint", subscription.endpoint);
+        error = result.error;
+      } else {
+        // Fallback: Remove all subscriptions (backward compatibility)
+        const result = await supabase
+          .from("push_subscriptions")
+          .delete()
+          .eq("user_id", userId);
+        error = result.error;
+      }
 
       if (error) throw error;
 
       return new Response(
         JSON.stringify({ success: true, message: "Subscription removed" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...headers, "Content-Type": "application/json" } }
       );
     }
 
@@ -292,7 +320,7 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, message: "Notification scheduled" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...headers, "Content-Type": "application/json" } }
       );
     }
 
@@ -312,12 +340,12 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, message: "Notification cancelled" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...headers, "Content-Type": "application/json" } }
       );
     }
 
     // Action: Send - Send notification immediately
-    // Note: This requires proper VAPID setup and is called by the scheduler
+    // Note: This requires proper VAPID setup and is called by the scheduler or for testing
     if (action === "send") {
       if (!notification) {
         throw new Error("Missing notification");
@@ -332,13 +360,18 @@ serve(async (req) => {
       }
 
       // Get user's subscription
-      const { data: subData, error: subError } = await supabase
+      // 🛡️ SECURITY/AVAILABILITY: Fetch ALL subscriptions, not just .single()
+      // .single() crashes if user has multiple devices (DoS)
+      const { data: subscriptions, error: subError } = await supabase
         .from("push_subscriptions")
         .select("subscription")
-        .eq("user_id", userId)
-        .single();
+        .eq("user_id", userId);
 
-      if (subError || !subData) {
+      if (subError) {
+         throw subError;
+      }
+
+      if (!subscriptions || subscriptions.length === 0) {
         throw new Error("User not subscribed to push notifications");
       }
 
@@ -350,30 +383,43 @@ serve(async (req) => {
         data: notification.data || {},
       });
 
-      try {
-        await sendWebPushNotification(
-          subData.subscription,
-          payload,
-          VAPID_PUBLIC_KEY,
-          VAPID_PRIVATE_KEY,
-          VAPID_EMAIL
-        );
-      } catch (pushError) {
-        console.error("Web Push sending failed:", pushError);
-        // Return success with a warning - the notification was attempted
-        return new Response(
+      let successCount = 0;
+      const errors = [];
+
+      // Send to all devices
+      for (const sub of subscriptions) {
+        try {
+          await sendWebPushNotification(
+            sub.subscription,
+            payload,
+            VAPID_PUBLIC_KEY,
+            VAPID_PRIVATE_KEY,
+            VAPID_EMAIL
+          );
+          successCount++;
+        } catch (pushError: any) {
+          console.error("Web Push sending failed for one device:", pushError);
+          errors.push(pushError.message);
+        }
+      }
+
+      if (successCount === 0 && errors.length > 0) {
+         // All failed
+         return new Response(
           JSON.stringify({ 
             success: false, 
-            message: "Push notification delivery failed"
-            // 🛡️ SECURITY: Do not return raw pushError.message as it might contain key details
+            message: "Push notification delivery failed for all devices"
           }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: { ...headers, "Content-Type": "application/json" } }
         );
       }
 
       return new Response(
-        JSON.stringify({ success: true, message: "Notification sent" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+            success: true,
+            message: `Notification sent to ${successCount}/${subscriptions.length} devices`
+        }),
+        { headers: { ...headers, "Content-Type": "application/json" } }
       );
     }
 
@@ -383,17 +429,11 @@ serve(async (req) => {
     // 🛡️ SECURITY: Log full error internally but return generic message to client
     console.error("Push notification error:", error);
 
-    // Determine if it's a client error (400) or server error (500)
-    // We assume mostly 500s unless specific validation logic threw it,
-    // but to be safe we return 400 if it was clearly a bad request structure, otherwise 500.
-    // For simplicity and security, we default to 500 for unhandled exceptions
-    // unless we know it's a validation error.
-
     return new Response(
       JSON.stringify({ error: "An unexpected error occurred processing your request." }),
       { 
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        headers: { ...headers, "Content-Type": "application/json" }
       }
     );
   }

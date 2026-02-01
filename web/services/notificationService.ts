@@ -231,6 +231,9 @@ export const unsubscribeFromPush = async (): Promise<boolean> => {
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
     
+    // Capture subscription data before unsubscribing
+    const subscriptionJSON = subscription ? subscription.toJSON() : null;
+
     if (subscription) {
       await subscription.unsubscribe();
     }
@@ -243,6 +246,7 @@ export const unsubscribeFromPush = async (): Promise<boolean> => {
         body: {
           action: 'unsubscribe',
           userId: user.id,
+          subscription: subscriptionJSON, // Pass subscription to allow targeted removal
         },
       });
     }
