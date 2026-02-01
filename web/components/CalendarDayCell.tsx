@@ -16,6 +16,11 @@ interface CalendarDayCellProps {
 
 const CalendarDayCell = memo(({ day, date, tasks, financialItems = [], isToday, onClick }: CalendarDayCellProps) => {
   const [showFinancialPopup, setShowFinancialPopup] = useState(false);
+
+  // ⚡ Bolt Optimization: Calculate dates once per render instead of inside the task loop
+  const today = new Date();
+  const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const currentDateOnly = date ? new Date(date.getFullYear(), date.getMonth(), date.getDate()) : null;
   
   const droppableId = date ? format(date, 'yyyy-MM-dd') : `empty-${day}`;
   const { setNodeRef, isOver } = useDroppable({
@@ -67,15 +72,12 @@ const CalendarDayCell = memo(({ day, date, tasks, financialItems = [], isToday, 
               
               // If recurring, check if this date is the most recent/relevant occurrence
               let isMostRecentOccurrence = true;
-              if (isRecurring && date && (task.dueDate || task.reminderTime)) {
-                const taskDateStr = task.dueDate || task.reminderTime;
+              if (isRecurring && currentDateOnly && (task.dueDate || task.reminderTime)) {
+                const taskDateStr = (task.dueDate || task.reminderTime) as string;
                 const taskDate = new Date(taskDateStr);
                 
                 // Normalize dates to compare only date parts
                 const taskDateOnly = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
-                const currentDateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-                const today = new Date();
-                const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
                 
                 // Calculate days from today for both the task's original date and the current occurrence
                 const daysFromTodayOriginal = Math.abs(todayOnly.getTime() - taskDateOnly.getTime());

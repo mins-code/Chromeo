@@ -583,6 +583,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         }
     };
 
+    // ⚡ Bolt Optimization: Calculate today string once per render
+    // instead of re-calculating it for every cell in the loop.
+    const todayStr = new Date().toDateString();
 
     return (
         <DndContext
@@ -735,7 +738,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                     date={cell.date || null}
                                     tasks={cell.tasks || []}
                                     financialItems={cell.financialItems || []}
-                                    isToday={cell.date?.toDateString() === new Date().toDateString()}
+                                    isToday={cell.date?.toDateString() === todayStr}
                                     onClick={() => cell.date && handleDayClick(cell.date)}
                                 />
                             ))}
