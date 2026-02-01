@@ -38,7 +38,10 @@ serve(async (req) => {
         .from('transactions')
         .select('*')
         .not('next_due_date', 'is', null)
-        .lte('next_due_date', now.toISOString());
+        .lte('next_due_date', now.toISOString())
+        // 🛡️ SECURITY: Limit batch size to prevent DoS/timeout, order by due date for fairness
+        .order('next_due_date', { ascending: true })
+        .limit(50);
 
     if (txError) throw txError;
 
@@ -85,7 +88,10 @@ serve(async (req) => {
         .from('tasks')
         .select('*')
         .not('next_recurrence_date', 'is', null)
-        .lte('next_recurrence_date', now.toISOString());
+        .lte('next_recurrence_date', now.toISOString())
+        // 🛡️ SECURITY: Limit batch size to prevent DoS/timeout, order by due date for fairness
+        .order('next_recurrence_date', { ascending: true })
+        .limit(50);
 
     if (taskError) throw taskError;
 
