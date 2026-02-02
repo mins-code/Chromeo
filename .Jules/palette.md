@@ -41,3 +41,7 @@
 ## 2026-02-19 - Modal Focus Management
 **Learning:** The `FocusSession` modal lacked keyboard support for the Escape key and initial focus management, making it difficult for keyboard users to exit or interact with the primary action immediately.
 **Action:** When building modals, always implement `useEffect` for the Escape key listener and use `autoFocus` (or manual ref focus) on the primary action or container to ensure keyboard focus is captured.
+
+## 2026-02-23 - Color Picker Accessibility
+**Learning:** Interactive color pickers implemented as simple `div`s with `onClick` are completely inaccessible to keyboard users and provide no feedback to screen readers about the selected color.
+**Action:** Convert color swatches to `<button type="button">`, add `aria-label` describing the action and *current* color name (mapping hex to human-readable names), and ensure focus indicators are visible.
