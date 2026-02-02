@@ -22,6 +22,19 @@ const CYCLE_COLORS = [
   '#06B6D4', '#3B82F6', '#8B5CF6', '#EC4899', '#6B7280'
 ];
 
+const COLOR_NAMES: Record<string, string> = {
+  '#EF4444': 'Red',
+  '#F97316': 'Orange',
+  '#F59E0B': 'Amber',
+  '#84CC16': 'Lime',
+  '#10B981': 'Emerald',
+  '#06B6D4': 'Cyan',
+  '#3B82F6': 'Blue',
+  '#8B5CF6': 'Violet',
+  '#EC4899': 'Pink',
+  '#6B7280': 'Gray'
+};
+
 const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose, onSave, onDelete }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -364,15 +377,17 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
                 {cycleItems.map((item, index) => (
                   <div key={index} className="flex items-center gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg border border-slate-200 dark:border-slate-600">
                     <GripVertical size={14} className="text-slate-400" />
-                    <div 
-                      className="w-6 h-6 rounded-full cursor-pointer border-2 border-white shadow"
+                    <button
+                      type="button"
+                      className="w-6 h-6 rounded-full border-2 border-white shadow transition-transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 dark:focus:ring-offset-slate-800"
                       style={{ backgroundColor: item.color || CYCLE_COLORS[0] }}
                       onClick={() => {
                         const currentIndex = CYCLE_COLORS.indexOf(item.color || CYCLE_COLORS[0]);
                         const nextColor = CYCLE_COLORS[(currentIndex + 1) % CYCLE_COLORS.length];
                         updateCycleItemColor(index, nextColor);
                       }}
-                      title="Click to change color"
+                      title={`Change color. Current: ${COLOR_NAMES[item.color || CYCLE_COLORS[0]] || 'Custom'}`}
+                      aria-label={`Change color for ${item.name || `Cycle item ${index + 1}`}. Current color: ${COLOR_NAMES[item.color || CYCLE_COLORS[0]] || 'Custom'}`}
                     />
                     <input
                       type="text"
@@ -380,6 +395,7 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
                       onChange={e => updateCycleItemName(index, e.target.value)}
                       className="flex-1 bg-transparent border-none focus:ring-0 p-0 text-sm text-slate-800 dark:text-slate-200"
                       placeholder="Item name"
+                      aria-label={`Name for cycle item ${index + 1}`}
                     />
                     <span className="text-xs text-slate-400">Day {index + 1}</span>
                     {cycleItems.length > 2 && (
