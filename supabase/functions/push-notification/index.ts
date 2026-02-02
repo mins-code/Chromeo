@@ -146,6 +146,21 @@ serve(async (req) => {
         throw new AppError("Missing required fields for scheduling");
       }
 
+      // 🛡️ SECURITY: Prevent IDOR - Check if this task ID is already scheduled by another user
+      // Since 'task_id' is UNIQUE, upserting would overwrite the existing owner's notification
+      if (taskId) {
+        const { data: existing } = await supabase
+          .from("scheduled_notifications")
+          .select("user_id")
+          .eq("task_id", taskId)
+          .single();
+
+        if (existing && existing.user_id !== userId) {
+          console.error(`IDOR Attempt: User ${userId} tried to overwrite notification for task ${taskId} owned by ${existing.user_id}`);
+          throw new AppError("You do not have permission to modify this notification", 403);
+        }
+      }
+
       const { error } = await supabase
         .from("scheduled_notifications")
         .upsert({
