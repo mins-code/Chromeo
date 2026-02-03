@@ -3,7 +3,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import webpush from "https://esm.sh/web-push@3.6.6";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "X-Content-Type-Options": "nosniff",
@@ -20,9 +19,23 @@ class AppError extends Error {
 }
 
 serve(async (req) => {
+  // 🛡️ SECURITY: Dynamic CORS to allow only specific origins
+  const origin = req.headers.get("Origin");
+  const allowedOrigins = [
+    Deno.env.get("APP_URL"),
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+  ].filter(Boolean);
+
+  // If no APP_URL is set (e.g. initial dev), fall back to checking if it's localhost or just allow if origin is null (e.g. curl)
+  // But strictly, we default to the first allowed origin or null if none
+  const allowOrigin = allowedOrigins.includes(origin) ? origin : (allowedOrigins[0] || "*");
+
+  const headers = { ...corsHeaders, "Access-Control-Allow-Origin": allowOrigin };
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers });
   }
 
   try {
@@ -56,14 +69,14 @@ serve(async (req) => {
         console.error("Rate limit check failed:", rpcError.message);
         return new Response(
             JSON.stringify({ error: 'Service temporarily unavailable. Please try again later.' }),
-            { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 503, headers: { ...headers, "Content-Type": "application/json" } }
         );
     }
 
     if (requestCount > 20) { // Limit: 20 requests per minute
         return new Response(
             JSON.stringify({ error: 'Too many requests. Please try again later.' }),
-            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 429, headers: { ...headers, "Content-Type": "application/json" } }
         );
     }
 
@@ -117,7 +130,7 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, message: "Subscription saved" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...headers, "Content-Type": "application/json" } }
       );
     }
 
@@ -178,7 +191,7 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, message: "Notification scheduled" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...headers, "Content-Type": "application/json" } }
       );
     }
 
@@ -198,7 +211,7 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, message: "Notification cancelled" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...headers, "Content-Type": "application/json" } }
       );
     }
 
