@@ -34,6 +34,10 @@
 ## 2026-02-14 - Disconnected Toggle Labels
 **Learning:** Visual toggle switches often separate the text label from the input for layout purposes (e.g., using `justify-between`), breaking the click target and accessibility association.
 **Action:** Use `id` and `htmlFor` to explicitly link the text label to the input, even if they are physically separated in the DOM. Ensure the input has an `aria-label` if the visual label is purely decorative or complex.
+
+## 2026-02-18 - Modal Focus Management
+**Learning:** The `FocusSession` modal lacked a focus trap, `autoFocus` on initial content, and an `Escape` key listener, despite having visual hints ("Press Esc to exit").
+**Action:** When implementing overlays/modals, always add `autoFocus` to the primary action (or container) and an `Escape` key listener. Ensure only one live region is used for status updates to avoid duplicates or bugs.
 ## 2026-02-17 - Toggle Button State
 **Learning:** Multi-select toggle buttons (like weekday pickers) that rely solely on background color changes for state are inaccessible to screen readers.
 **Action:** Always add `aria-pressed={isSelected}` to toggle buttons so screen readers announce the state (e.g., "Monday, toggle button, pressed").
