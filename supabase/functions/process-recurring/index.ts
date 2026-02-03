@@ -1,13 +1,37 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// 🛡️ SECURITY: Restrict CORS to the application domain
+const ALLOWED_ORIGIN = Deno.env.get("APP_URL") || "https://chronodex.vercel.app";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
   'X-XSS-Protection': '1; mode=block',
+};
+
+// 🛡️ SECURITY: Timing-safe comparison using SHA-256
+const secureCompare = async (a: string, b: string): Promise<boolean> => {
+  const encoder = new TextEncoder();
+  const aBuf = encoder.encode(a);
+  const bBuf = encoder.encode(b);
+
+  const key = await crypto.subtle.digest("SHA-256", aBuf);
+  const lock = await crypto.subtle.digest("SHA-256", bBuf);
+
+  const keyArr = new Uint8Array(key);
+  const lockArr = new Uint8Array(lock);
+
+  // Use constant-time comparison loop
+  let mismatch = 0;
+  for (let i = 0; i < keyArr.length; i++) {
+    mismatch |= keyArr[i] ^ lockArr[i];
+  }
+
+  return mismatch === 0;
 };
 
 serve(async (req) => {
@@ -15,19 +39,39 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
-  // Security Check: Ensure the request is authorized
-  const authHeader = req.headers.get('Authorization');
-  if (authHeader !== `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
   try {
+    // Security Check: Ensure the request is authorized
+    const authHeader = req.headers.get('Authorization');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    // 🛡️ SECURITY: Fail securely if key is missing in environment
+    if (!serviceRoleKey) {
+        console.error("INTERNAL SECURITY ERROR: SUPABASE_SERVICE_ROLE_KEY is missing");
+        return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+    }
+
+    const expectedHeader = `Bearer ${serviceRoleKey}`;
+    let authorized = false;
+
+    // 🛡️ SECURITY: Strictly verify the Service Role Key using timing-safe comparison
+    if (authHeader) {
+        authorized = await secureCompare(authHeader, expectedHeader);
+    }
+
+    if (!authorized) {
+        console.log("Unauthorized request - invalid service role key");
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      serviceRoleKey // Use the confirmed key
     );
 
     const now = new Date();
@@ -154,6 +198,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error processing recurring items:', error);
+    // 🛡️ SECURITY: Return generic error message
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
