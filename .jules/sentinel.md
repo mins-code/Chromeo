@@ -73,3 +73,10 @@
 **Vulnerability:** The `notification-scheduler` Edge Function used a weak validation check (`startsWith('eyJ')`) for the Authorization header, allowing unauthorized users to trigger the notification dispatch process.
 **Learning:** Checking for the *format* of a token is not authentication. Any string can be made to look like a JWT.
 **Prevention:** For service-to-service or cron-triggered functions, strictly validate that the `Authorization` header matches `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`.
+
+## 2025-05-27 - IDOR via Service Role Client
+**Vulnerability:** The `push-notification` Edge Function utilized a Service Role client (which bypasses RLS) to perform `upsert` operations on the `scheduled_notifications` table. This allowed any authenticated user to overwrite a notification scheduled by another user by guessing the `task_id` (since `task_id` is unique and the `upsert` updated the existing record regardless of ownership).
+**Learning:** When using administrative/service-role clients in serverless functions to bypass some restrictions (like subscription checks), you essentially disable the database's security layer (RLS). You must manually re-implement ownership checks in your application logic.
+**Prevention:**
+1. Prefer using a user-scoped client (passed with the user's JWT) for user-initiated actions so RLS policies are enforced.
+2. If a Service Role client is necessary, explicitly query and verify ownership of the resource (`user_id` match) before performing updates or deletes.

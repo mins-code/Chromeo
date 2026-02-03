@@ -28,6 +28,18 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
     }
   }, [isOpen, task?.id, task.title]);
 
+  // Handle Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   // Countdown logic
   useEffect(() => {
     if (!isOpen || !isRunning || timeRemaining <= 0) return;
@@ -98,11 +110,10 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
     onClose();
   }, [task, onComplete, onClose]);
 
-  // Handle Escape key to close
+  // Keydown handler for Escape
   useEffect(() => {
-    if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && isOpen) {
         onClose();
       }
     };
@@ -173,6 +184,7 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span 
             role="timer"
+            aria-live="off"
             className={`font-mono font-bold tracking-tight transition-all duration-300 ${
               isTimerComplete 
                 ? 'text-6xl sm:text-7xl text-emerald-400 animate-pulse' 
