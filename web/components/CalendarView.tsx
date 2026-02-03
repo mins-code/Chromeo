@@ -295,7 +295,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
 
 
     // Optimized helper to check if a recurring task happens on a specific date without re-parsing dates
-    const checkRecurrence = useCallback((task: Task, taskDate: Date, date: Date): boolean => {
+    const checkRecurrence = useCallback((task: Task, taskDate: Date, date: Date, endDate?: Date | null): boolean => {
         const isSameDay = taskDate.getDate() === date.getDate() &&
             taskDate.getMonth() === date.getMonth() &&
             taskDate.getFullYear() === date.getFullYear();
@@ -304,7 +304,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
 
         if (!task.recurrence || task.recurrence.frequency === 'none') return false;
         if (date < taskDate) return false;
-        if (task.recurrence.endDate && date > new Date(task.recurrence.endDate)) return false;
 
         // ⚡ Correctness Fix: Use differenceInCalendarDays to correctly handle time-of-day discrepancies and DST
         const diffDays = differenceInCalendarDays(date, taskDate);
@@ -345,7 +344,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         }
 
         const taskDate = new Date(taskDateStr);
-        return checkRecurrence(task, taskDate, date);
+        const endDate = task.recurrence?.endDate ? new Date(task.recurrence.endDate) : null;
+        return checkRecurrence(task, taskDate, date, endDate);
     }, [checkRecurrence]);
 
     // Optimized calendar generation: O(Tasks + Days) instead of O(Tasks * Days)
