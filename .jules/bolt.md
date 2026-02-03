@@ -16,3 +16,7 @@
 ## 2026-02-12 - Isolate High-Frequency Timers
 **Learning:** High-frequency timers (like `currentTime` updating every minute in a calendar) in large parent components (like `WeekView`) trigger expensive re-renders of the entire component tree, including the DOM reconciliation of static grid layouts.
 **Action:** Isolate the timer and the visual element dependent on it into a small, separate component (e.g., `CurrentTimeIndicator`) so only that leaf component re-renders.
+
+## 2026-02-14 - Recurrence Calculation Accuracy vs Performance
+**Learning:** Using simple math (e.g. `Math.ceil(diff / 24h)`) for date recurrence is fast but error-prone (e.g. DST transitions or same-day time differences), leading to bugs where tasks don't appear. `date-fns` `differenceInCalendarDays` is robust but slightly slower.
+**Action:** Prioritize correctness for core logic like calendar recurrence. Mitigate performance cost by optimizing the algorithm structure (e.g., "jumping" to valid days using `addDays` instead of iterating every day) rather than using unsafe micro-optimizations.

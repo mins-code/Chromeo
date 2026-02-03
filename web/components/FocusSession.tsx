@@ -28,21 +28,16 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
     }
   }, [isOpen, task?.id, task.title]);
 
-  // Handle Escape key to close
+  // Handle Escape key
   useEffect(() => {
+    if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose();
       }
     };
-
-    if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-    }
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
   // Countdown logic
@@ -115,6 +110,17 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
     onClose();
   }, [task, onComplete, onClose]);
 
+  // Keydown handler for Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   // Format time as MM:SS
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -182,6 +188,7 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span 
             role="timer"
+            aria-live="off"
             className={`font-mono font-bold tracking-tight transition-all duration-300 ${
               isTimerComplete 
                 ? 'text-6xl sm:text-7xl text-emerald-400 animate-pulse' 
@@ -215,6 +222,7 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
         {/* Pause/Resume Button */}
         <Button
           onClick={togglePause}
+          autoFocus
           className={`px-8 py-4 text-lg rounded-2xl transition-all duration-200 ${
             isRunning
               ? 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
