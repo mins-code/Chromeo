@@ -3,6 +3,30 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import webpush from "https://esm.sh/web-push@3.6.6";
 
 /**
+ * Robust constant-time comparison using hashing to prevent timing attacks.
+ * Compares SHA-256 hashes of inputs to avoid length leakage and content-based timing differences.
+ */
+async function safeCompare(a: string, b: string): Promise<boolean> {
+  const encoder = new TextEncoder();
+  const aBuf = encoder.encode(a);
+  const bBuf = encoder.encode(b);
+
+  const aHash = await crypto.subtle.digest("SHA-256", aBuf);
+  const bHash = await crypto.subtle.digest("SHA-256", bBuf);
+
+  // Compare hashes byte-by-byte in constant time
+  const aView = new DataView(aHash);
+  const bView = new DataView(bHash);
+
+  let mismatch = 0;
+  for (let i = 0; i < aView.byteLength; i++) {
+    mismatch |= aView.getUint8(i) ^ bView.getUint8(i);
+  }
+
+  return mismatch === 0;
+}
+
+/**
  * Cron job to process scheduled push notifications
  * Called by GitHub Actions every minute.
  * 
