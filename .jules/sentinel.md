@@ -74,6 +74,10 @@
 **Learning:** Checking for the *format* of a token is not authentication. Any string can be made to look like a JWT.
 **Prevention:** For service-to-service or cron-triggered functions, strictly validate that the `Authorization` header matches `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`.
 
+## 2024-05-28 - Secure Web Push Notifications
+**Vulnerability:** The `push-notification` Edge Function attempted to send encrypted Web Push notifications by manually setting `Content-Encoding: aes128gcm` on a plain JSON payload. This resulted in either unencrypted transmission (privacy leak) or client-side decryption failure (functional breakage).
+**Learning:** Web Push encryption (AES128GCM) is complex to implement manually. Using standard libraries like `web-push` ensures compliance with the protocol and proper encryption of sensitive payloads.
+**Prevention:** Avoid rolling custom crypto or manual implementation of complex security protocols. Use established, audited libraries (e.g., `web-push` via `esm.sh`) for security-critical tasks like notification encryption.
 ## 2025-05-27 - IDOR via Service Role Client
 **Vulnerability:** The `push-notification` Edge Function utilized a Service Role client (which bypasses RLS) to perform `upsert` operations on the `scheduled_notifications` table. This allowed any authenticated user to overwrite a notification scheduled by another user by guessing the `task_id` (since `task_id` is unique and the `upsert` updated the existing record regardless of ownership).
 **Learning:** When using administrative/service-role clients in serverless functions to bypass some restrictions (like subscription checks), you essentially disable the database's security layer (RLS). You must manually re-implement ownership checks in your application logic.

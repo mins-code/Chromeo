@@ -45,7 +45,6 @@ serve(async (req) => {
     }
 
     // Rate Limiting (Atomic RPC)
-    // user is guaranteed to be defined here due to auth check above
     const rateLimitKey = `push-notification:${user.id}`;
 
     const { data: requestCount, error: rpcError } = await supabase.rpc('increment_rate_limit', {
@@ -55,7 +54,6 @@ serve(async (req) => {
 
     if (rpcError) {
         console.error("Rate limit check failed:", rpcError.message);
-        // Fail securely: if rate limiting is unavailable, prevent potential abuse
         return new Response(
             JSON.stringify({ error: 'Service temporarily unavailable. Please try again later.' }),
             { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -92,7 +90,6 @@ serve(async (req) => {
         .single();
 
       if (existing) {
-        // Update existing subscription
         const { error } = await supabase
           .from("push_subscriptions")
           .update({
@@ -105,7 +102,6 @@ serve(async (req) => {
 
         if (error) throw error;
       } else {
-        // Insert new subscription for this device
         const { error } = await supabase
           .from("push_subscriptions")
           .insert({
@@ -125,22 +121,26 @@ serve(async (req) => {
       );
     }
 
-    // Action: Unsubscribe - Remove push subscription
+    // Action: Unsubscribe
     if (action === "unsubscribe") {
-      const { error } = await supabase
-        .from("push_subscriptions")
-        .delete()
-        .eq("user_id", userId);
+      let query = supabase.from("push_subscriptions").delete().eq("user_id", userId);
+
+      // 🛡️ ENHANCEMENT: Allow targeted unsubscribe if endpoint is provided
+      if (subscription && subscription.endpoint) {
+         query = query.eq("subscription->>endpoint", subscription.endpoint);
+      }
+
+      const { error } = await query;
 
       if (error) throw error;
 
       return new Response(
-        JSON.stringify({ success: true, message: "Subscription removed" }),
+        JSON.stringify({ success: true, message: "Subscription(s) removed" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Action: Schedule - Schedule a notification for later
+    // Action: Schedule
     if (action === "schedule") {
       if (!notification || !notification.scheduledTime) {
         throw new AppError("Missing required fields for scheduling");
@@ -182,7 +182,7 @@ serve(async (req) => {
       );
     }
 
-    // Action: Cancel - Cancel a scheduled notification
+    // Action: Cancel
     if (action === "cancel") {
       if (!taskId) {
         throw new AppError("Missing taskId");
