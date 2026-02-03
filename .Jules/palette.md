@@ -1,7 +1,8 @@
-## 2024-05-24 - Input Component Accessibility
-**Learning:** The `Input` component was rendering error messages but lacked `aria-invalid` and `aria-describedby` attributes, which are critical for screen readers to associate the error with the input field. Also, the password toggle in `Auth` had `tabIndex={-1}`, creating a keyboard trap/exclusion.
-**Action:** Always verify form components include these ARIA attributes and that interactive elements are keyboard accessible (avoid `tabIndex={-1}` unless necessary).
+# Palette's Journal 🎨
 
+## 2024-05-23 - Accessible Card Patterns
+**Learning:** "Clickable Cards" are a common UX pattern but difficult to make accessible when they contain other interactive elements (like buttons). Nesting `<button>` inside a container `<button>` is invalid HTML.
+**Action:** Instead of making the container a button, use `cursor-pointer` on the container for mouse users, but wrap the *primary text content* (e.g., the Title) in a `<button>` for keyboard users. This provides a clear, distinct tab target for the "main action" without creating invalid DOM structures or trapping focus.
 ## 2024-05-24 - Custom Select Accessibility
 **Learning:** Custom select/dropdown components often lack keyboard navigation support (Enter/Space to open, Arrow keys to navigate, Enter to select, Esc to close) and ARIA attributes (`aria-haspopup`, `aria-expanded`, `role="listbox"`), making them inaccessible to screen reader and keyboard-only users.
 **Action:** Implement full keyboard support and ARIA roles for custom interactive components like Select, or use a library that handles this.
@@ -33,3 +34,18 @@
 ## 2026-02-14 - Disconnected Toggle Labels
 **Learning:** Visual toggle switches often separate the text label from the input for layout purposes (e.g., using `justify-between`), breaking the click target and accessibility association.
 **Action:** Use `id` and `htmlFor` to explicitly link the text label to the input, even if they are physically separated in the DOM. Ensure the input has an `aria-label` if the visual label is purely decorative or complex.
+
+## 2026-02-18 - Modal Focus Management
+**Learning:** The `FocusSession` modal lacked a focus trap, `autoFocus` on initial content, and an `Escape` key listener, despite having visual hints ("Press Esc to exit").
+**Action:** When implementing overlays/modals, always add `autoFocus` to the primary action (or container) and an `Escape` key listener. Ensure only one live region is used for status updates to avoid duplicates or bugs.
+## 2026-02-17 - Toggle Button State
+**Learning:** Multi-select toggle buttons (like weekday pickers) that rely solely on background color changes for state are inaccessible to screen readers.
+**Action:** Always add `aria-pressed={isSelected}` to toggle buttons so screen readers announce the state (e.g., "Monday, toggle button, pressed").
+
+## 2026-02-19 - Modal Focus Management
+**Learning:** The `FocusSession` modal lacked keyboard support for the Escape key and initial focus management, making it difficult for keyboard users to exit or interact with the primary action immediately.
+**Action:** When building modals, always implement `useEffect` for the Escape key listener and use `autoFocus` (or manual ref focus) on the primary action or container to ensure keyboard focus is captured.
+
+## 2026-02-23 - Color Picker Accessibility
+**Learning:** Interactive color pickers implemented as simple `div`s with `onClick` are completely inaccessible to keyboard users and provide no feedback to screen readers about the selected color.
+**Action:** Convert color swatches to `<button type="button">`, add `aria-label` describing the action and *current* color name (mapping hex to human-readable names), and ensure focus indicators are visible.

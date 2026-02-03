@@ -1,0 +1,19 @@
+
+> chronodex@0.0.0 dev /app/web
+> vite
+
+
+  VITE v6.4.1  ready in 387 ms
+
+  ➜  Local:   http://localhost:3000/
+  ➜  Network: http://192.168.0.2:3000/
+3:23:55 AM [vite] (client) hmr update /App.tsx, /index.css
+3:25:05 AM [vite] (client) hmr update /App.tsx, /index.css
+  VITE v6.4.1  ready in 335 ms
+
+  ➜  Local:   http://localhost:3000/
+  ➜  Network: http://192.168.0.2:3000/
+3:35:12 AM [vite] (client) hmr update /App.tsx, /index.css
+3:35:12 AM [vite] (client) hmr update /App.tsx, /index.css
+3:36:16 AM [vite] (client) hmr update /App.tsx, /index.css
+ ELIFECYCLE  Command failed.

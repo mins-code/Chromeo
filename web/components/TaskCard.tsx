@@ -7,20 +7,20 @@ import { formatDateShort, formatTime, isPast } from '../utils/date';
 
 interface TaskCardProps {
   task: Task;
-  allTasks?: Task[];
+  allTasksMap?: Map<string, Task>;
   onEdit: (task: Task) => void;
   onToggleStatus: (task: Task) => void;
   onAIAnalysis?: (task: Task) => void;
   onFocus?: (task: Task) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, allTasks = [], onEdit, onToggleStatus, onAIAnalysis, onFocus }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, allTasksMap, onEdit, onToggleStatus, onAIAnalysis, onFocus }) => {
   const isDone = task.status === TaskStatus.DONE;
 
   // Check dependencies - early exit if no dependencies
   const hasDependencies = task.dependencyIds && task.dependencyIds.length > 0;
-  const unfinishedDependencies = hasDependencies
-    ? task.dependencyIds.map(id => allTasks.find(t => t.id === id)).filter(t => t && t.status !== TaskStatus.DONE)
+  const unfinishedDependencies = hasDependencies && allTasksMap
+    ? task.dependencyIds.map(id => allTasksMap.get(id)).filter((t): t is Task => !!t && t.status !== TaskStatus.DONE)
     : [];
   const isBlocked = unfinishedDependencies.length > 0;
   const blockedBy = unfinishedDependencies?.[0]?.title;
@@ -34,7 +34,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasks = [], onEdit, onTogg
 
   return (
     <div
-      className={`group relative glass-panel rounded-2xl p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 ${isDone ? 'opacity-60 grayscale-[0.5]' : ''} ${isBlocked ? 'border-red-500/30 bg-red-500/5' : ''}`}
+      role="article"
+      className={`group relative glass-panel cursor-pointer rounded-2xl p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 ${isDone ? 'opacity-60 grayscale-[0.5]' : ''} ${isBlocked ? 'border-red-500/30 bg-red-500/5' : ''}`}
       onClick={() => onEdit(task)}
     >
       <div className="flex items-start gap-4">
@@ -86,8 +87,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasks = [], onEdit, onTogg
             />
           </div>
 
-          <h3 className={`font-semibold text-[15px] truncate pr-16 sm:pr-0 ${isDone ? 'text-slate-400 dark:text-slate-500 line-through decoration-slate-400' : 'text-slate-800 dark:text-slate-100'} ${isBlocked && !isDone ? 'text-slate-500' : ''}`}>
-            {task.title}
+          <h3>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(task);
+              }}
+              className={`w-full text-left font-semibold text-[15px] truncate pr-16 sm:pr-0 focus:outline-none focus:underline hover:text-brand-600 dark:hover:text-brand-400 transition-colors ${isDone ? 'text-slate-400 dark:text-slate-500 line-through decoration-slate-400' : 'text-slate-800 dark:text-slate-100'} ${isBlocked && !isDone ? 'text-slate-500' : ''}`}
+            >
+              {task.title}
+            </button>
           </h3>
 
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 line-clamp-2 leading-relaxed">
@@ -207,26 +217,27 @@ function arePropsEqual(prev: TaskCardProps, next: TaskCardProps) {
   if (prev.onFocus !== next.onFocus) return false;
 
   // ⚡ Performance Optimization:
-  // "allTasks" is only used for calculating dependencies.
+  // "allTasksMap" is only used for calculating dependencies.
   // We only re-render if the SPECIFIC dependencies of this task have changed.
   const hasDependencies = next.task.dependencyIds && next.task.dependencyIds.length > 0;
 
   if (hasDependencies) {
-    // If it has dependencies, we need to check if allTasks changed,
-    // because the status/title of a dependency might have changed.
+    // If it has dependencies, we need to check if allTasksMap changed
+    if (prev.allTasksMap === next.allTasksMap) return true;
 
-    // Quick check: if the array reference is the same, no changes occurred.
-    if (prev.allTasks === next.allTasks) return true;
-
-    // Deep check: Instead of re-rendering whenever ANY task changes (which changes allTasks ref),
+    // Deep check: Instead of re-rendering whenever ANY task changes (which changes allTasksMap ref),
     // we only re-render if the specific dependencies of THIS task have changed.
     const depIds = next.task.dependencyIds!;
-    const prevAll = prev.allTasks || [];
-    const nextAll = next.allTasks || [];
+    const prevMap = prev.allTasksMap;
+    const nextMap = next.allTasksMap;
+
+    // Safety check - if map is missing, force render to be safe
+    if (!prevMap || !nextMap) return false;
 
     for (const depId of depIds) {
-      const prevDep = prevAll.find(t => t.id === depId);
-      const nextDep = nextAll.find(t => t.id === depId);
+      // ⚡ O(1) Lookup instead of O(N) find
+      const prevDep = prevMap.get(depId);
+      const nextDep = nextMap.get(depId);
 
       // If dependency existence changed
       if (!prevDep !== !nextDep) return false;
