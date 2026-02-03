@@ -134,7 +134,11 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900 flex flex-col items-center justify-center p-6 animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 bg-slate-900 flex flex-col items-center justify-center p-6 animate-fade-in"
+      role="dialog"
+      aria-modal="true"
+    >
       {/* Live Region for Screen Readers */}
       <div className="sr-only" role="status" aria-live="polite">
         {a11yStatus}
