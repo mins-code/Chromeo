@@ -109,6 +109,10 @@ const App: React.FC = () => {
         deleteTask, 
         toggleStatus 
     } = useTasks();
+
+    // ⚡ Bolt Optimization: Create a Map for O(1) lookups in child components (TaskCard)
+    const tasksMap = useMemo(() => new Map(tasks.map(t => [t.id, t])), [tasks]);
+
     const { 
         budget, 
         isLoading: _isBudgetLoading, 
@@ -494,6 +498,15 @@ const App: React.FC = () => {
         await signOut();
     }, [signOut]);
 
+    // ⚡ Bolt Optimization: Pre-calculate scores for all visible tasks using a stable "now" timestamp.
+    // This prevents recalculating dates/scores when filtering/searching (high frequency operations).
+    const taskUrgencyScores = useMemo(() => {
+        const scores = new Map<string, number>();
+        const now = Date.now();
+        visibleTasks.forEach(task => scores.set(task.id, getUrgencyScore(task, now)));
+        return scores;
+    }, [visibleTasks]);
+
     const filteredTasks = useMemo(() => {
         // ⚡ Bolt Optimization: Lift search query processing out of loop
         const query = searchQuery.toLowerCase();
@@ -515,12 +528,9 @@ const App: React.FC = () => {
                 return matchesSearch && matchesStatus;
             });
 
-        // ⚡ Bolt Optimization: Pre-calculate scores to avoid O(N log N) recalculations during sort
-        const scores = new Map<string, number>();
-        filtered.forEach(task => scores.set(task.id, getUrgencyScore(task)));
-
-        return filtered.sort((a, b) => (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0));
-    }, [visibleTasks, searchQuery, filterStatus, currentView]);
+        // Use pre-calculated scores for sorting
+        return filtered.sort((a, b) => (taskUrgencyScores.get(b.id) ?? 0) - (taskUrgencyScores.get(a.id) ?? 0));
+    }, [visibleTasks, searchQuery, filterStatus, currentView, taskUrgencyScores]);
 
     const calendarFilteredTasks = useMemo(() => {
         // ⚡ Bolt Optimization: Use Set for O(1) tag lookup instead of O(K) array includes
@@ -779,7 +789,7 @@ const App: React.FC = () => {
                             <TaskCard
                                 key={task.id}
                                 task={task}
-                                allTasks={tasks}
+                                allTasksMap={tasksMap}
                                 onEdit={handleEditTask}
                                 onToggleStatus={handleToggleStatus}
                                 onAIAnalysis={handleAIAnalysis}

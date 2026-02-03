@@ -11,6 +11,14 @@ const corsHeaders = {
   "X-XSS-Protection": "1; mode=block",
 };
 
+// Custom error class for safe user-facing errors
+class AppError extends Error {
+  constructor(message: string, public status: number = 400, public code?: string) {
+    super(message);
+    this.name = "AppError";
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -21,16 +29,7 @@ serve(async (req) => {
     // Verify authentication - Edge Functions require a valid JWT
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ 
-          error: "Unauthorized - No authentication provided",
-          code: "NO_AUTH_HEADER"
-        }),
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
-        }
-      );
+      throw new AppError("Unauthorized - No authentication provided", 401, "NO_AUTH_HEADER");
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -42,16 +41,7 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ 
-          error: "Unauthorized - Invalid or expired token",
-          code: "INVALID_TOKEN" 
-        }),
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
-        }
-      );
+      throw new AppError("Unauthorized - Invalid or expired token", 401, "INVALID_TOKEN");
     }
 
     // Rate Limiting (Atomic RPC)
@@ -85,20 +75,18 @@ serve(async (req) => {
       userId = requestedUserId;
     }
 
-    // Action: Subscribe
+    // Action: Subscribe - Save push subscription to database
     if (action === "subscribe") {
       if (!subscription || !subscription.endpoint) {
-        throw new Error("Missing subscription or endpoint");
+        throw new AppError("Missing subscription endpoint");
       }
-
-      const endpoint = subscription.endpoint;
 
       // Check if this exact subscription already exists
       const { data: existing } = await supabase
         .from("push_subscriptions")
         .select("id")
         .eq("user_id", userId)
-        .eq("subscription->>endpoint", endpoint)
+        .eq("subscription->>endpoint", subscription.endpoint)
         .single();
 
       if (existing) {
@@ -155,7 +143,22 @@ serve(async (req) => {
     // Action: Schedule
     if (action === "schedule") {
       if (!notification || !notification.scheduledTime) {
-        throw new Error("Missing required fields for scheduling");
+        throw new AppError("Missing required fields for scheduling");
+      }
+
+      // 🛡️ SECURITY: Prevent IDOR - Check if this task ID is already scheduled by another user
+      // Since 'task_id' is UNIQUE, upserting would overwrite the existing owner's notification
+      if (taskId) {
+        const { data: existing } = await supabase
+          .from("scheduled_notifications")
+          .select("user_id")
+          .eq("task_id", taskId)
+          .single();
+
+        if (existing && existing.user_id !== userId) {
+          console.error(`IDOR Attempt: User ${userId} tried to overwrite notification for task ${taskId} owned by ${existing.user_id}`);
+          throw new AppError("You do not have permission to modify this notification", 403);
+        }
       }
 
       const { error } = await supabase
@@ -182,14 +185,14 @@ serve(async (req) => {
     // Action: Cancel
     if (action === "cancel") {
       if (!taskId) {
-        throw new Error("Missing taskId");
+        throw new AppError("Missing taskId");
       }
 
       const { error } = await supabase
         .from("scheduled_notifications")
         .delete()
         .eq("task_id", taskId)
-        .eq("user_id", userId);
+        .eq("user_id", userId); // 🛡️ SECURITY: Prevent IDOR
 
       if (error) throw error;
 
@@ -199,10 +202,10 @@ serve(async (req) => {
       );
     }
 
-    // Action: Send
+    // Action: Send - Send notification immediately (using web-push for encryption)
     if (action === "send") {
       if (!notification) {
-        throw new Error("Missing notification");
+        throw new AppError("Missing notification");
       }
 
       const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY");
@@ -210,12 +213,16 @@ serve(async (req) => {
       const VAPID_EMAIL = Deno.env.get("VAPID_EMAIL") || "mailto:admin@chronodex.app";
 
       if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
-        throw new Error("VAPID keys not configured.");
+        // Internal misconfiguration
+        console.error("VAPID keys not configured");
+        throw new Error("VAPID keys not configured");
       }
 
+      // Configure web-push with VAPID details
       webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
-      // 🛡️ FIX: Fetch ALL subscriptions (handles multi-device users)
+      // Get ALL user's subscriptions
+      // 🛡️ SECURITY: Use .select() instead of .single() to handle multiple devices securely
       const { data: subscriptions, error: subError } = await supabase
         .from("push_subscriptions")
         .select("id, subscription")
@@ -224,10 +231,7 @@ serve(async (req) => {
       if (subError) throw subError;
 
       if (!subscriptions || subscriptions.length === 0) {
-        return new Response(
-            JSON.stringify({ success: false, message: "User has no push subscriptions" }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        throw new AppError("User not subscribed to push notifications", 404);
       }
 
       const payload = JSON.stringify({
@@ -238,51 +242,50 @@ serve(async (req) => {
         data: notification.data || {},
       });
 
-      let sentCount = 0;
-      let failCount = 0;
+      let successCount = 0;
+      const errors = [];
 
+      // Send to all devices using encrypted web-push
       for (const sub of subscriptions) {
         try {
-            // 🛡️ SECURITY: webpush.sendNotification encrypts the payload automatically
             await webpush.sendNotification(sub.subscription, payload);
-            sentCount++;
-
-            // Update activity
-            await supabase.from("push_subscriptions")
-                .update({ last_active: new Date().toISOString() })
-                .eq("id", sub.id);
-
+            successCount++;
         } catch (pushError: any) {
-            failCount++;
-            console.error(`Failed to send to subscription ${sub.id}:`, pushError);
-
-            // Handle expired subscriptions (410 Gone)
-            if (pushError?.statusCode === 410) {
-                console.log(`Removing expired subscription ${sub.id}`);
-                await supabase.from("push_subscriptions").delete().eq("id", sub.id);
-            }
+             console.error(`Push failed for sub ${sub.id}:`, pushError);
+             // Remove expired subscriptions
+             if (pushError.statusCode === 410) {
+                 await supabase.from("push_subscriptions").delete().eq("id", sub.id);
+             }
+             errors.push(pushError.message);
         }
       }
 
+      if (successCount === 0 && errors.length > 0) {
+          // If all failed, return error safely
+          throw new AppError("Failed to send notification to any device", 500);
+      }
+
       return new Response(
-        JSON.stringify({
-            success: sentCount > 0,
-            message: `Notification sent to ${sentCount} devices (${failCount} failed)`,
-            details: { sent: sentCount, failed: failCount }
-        }),
+        JSON.stringify({ success: true, message: `Notification sent to ${successCount} devices` }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    throw new Error(`Unknown action: ${action}`);
+    throw new AppError(`Unknown action: ${action}`);
 
-  } catch (error: any) {
-    console.error("Push notification error:", error);
+  } catch (err: any) {
+    // 🛡️ SECURITY: Log full error internally but return generic message to client
+    console.error("Push notification error:", err);
+
+    const isAppError = err instanceof AppError || err.name === "AppError";
+    const status = isAppError ? err.status : 500;
+    const message = isAppError ? err.message : "An unexpected error occurred processing your request.";
+    const code = isAppError ? err.code : undefined;
 
     return new Response(
-      JSON.stringify({ error: "An unexpected error occurred processing your request." }),
+      JSON.stringify({ error: message, code }),
       { 
-        status: 500,
+        status: status,
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
       }
     );
