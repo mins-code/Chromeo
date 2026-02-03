@@ -52,6 +52,9 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
   const { routines } = useRoutines();
   const { budget } = useBudget();
 
+  // Create Map for O(1) dependency resolution in TaskCards
+  const tasksMap = React.useMemo(() => new Map(tasks.map(t => [t.id, t])), [tasks]);
+
   const today = new Date().toLocaleDateString('en-US', { 
     weekday: 'long', 
     month: 'long', 
@@ -184,7 +187,7 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
             <TaskCard
               key={task.id}
               task={task}
-              allTasks={tasks}
+              allTasksMap={tasksMap}
               onEdit={onEditTask}
               onToggleStatus={handleToggleStatus}
               onAIAnalysis={handleAIAnalysis}
