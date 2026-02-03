@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import Button from './Button';
-import { X, Calendar, RefreshCw } from 'lucide-react';
+import { X, RefreshCw } from 'lucide-react';
 import { RecurrenceConfig } from '../types';
 
 interface RecurringPlanModalProps {
@@ -21,6 +21,15 @@ const RecurringPlanModal: React.FC<RecurringPlanModalProps> = ({
   const [interval, setInterval] = useState(initialConfig?.interval || 1);
   const [selectedDays, setSelectedDays] = useState<number[]>(initialConfig?.days || [1, 2, 3, 4, 5]); // Default Mon-Fri
   
+  // Close on Escape key
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -53,15 +62,27 @@ const RecurringPlanModal: React.FC<RecurringPlanModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl border border-slate-200 dark:border-white/10 overflow-hidden">
+      <div
+        className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl border border-slate-200 dark:border-white/10 overflow-hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="recurring-plan-title"
+      >
         
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/5">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+          <h3
+            id="recurring-plan-title"
+            className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"
+          >
             <RefreshCw size={20} className="text-brand-500" />
             Recurring Plan Settings
           </h3>
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+            aria-label="Close"
+          >
             <X size={20} className="text-slate-500" />
           </button>
         </div>
@@ -103,6 +124,8 @@ const RecurringPlanModal: React.FC<RecurringPlanModalProps> = ({
                     key={day.value}
                     type="button"
                     onClick={() => toggleDay(day.value)}
+                    aria-pressed={selectedDays.includes(day.value)}
+                    aria-label={`Repeat on ${day.label}`}
                     className={`w-10 h-10 rounded-full text-sm font-bold transition-all ${
                       selectedDays.includes(day.value)
                         ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25'
@@ -129,6 +152,7 @@ const RecurringPlanModal: React.FC<RecurringPlanModalProps> = ({
                 max="99"
                 value={interval}
                 onChange={(e) => setInterval(parseInt(e.target.value) || 1)}
+                aria-label="Interval value"
                 className="w-16 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 text-center font-bold outline-none focus:border-brand-500"
               />
               <span className="text-slate-500">
