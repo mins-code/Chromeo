@@ -29,9 +29,10 @@ export const URGENCY_WEIGHTS = {
  * Used for sorting tasks by priority and deadline proximity
  * 
  * @param task - The task to calculate urgency for
+ * @param now - Optional timestamp to use for "now" (defaults to Date.now())
  * @returns Numeric urgency score (higher = more urgent)
  */
-export function getUrgencyScore(task: Task): number {
+export function getUrgencyScore(task: Task, now: number = Date.now()): number {
   let score = 0;
   
   // Priority scoring
@@ -52,7 +53,6 @@ export function getUrgencyScore(task: Task): number {
   const dateStr = task.dueDate || task.reminderTime;
   if (dateStr) {
     const due = new Date(dateStr).getTime();
-    const now = Date.now();
     const diffHours = (due - now) / (1000 * 60 * 60);
     
     if (diffHours < 0) {
