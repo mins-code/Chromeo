@@ -1,6 +1,6 @@
 import React, { memo, useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import { format } from 'date-fns';
+import { format, differenceInCalendarDays } from 'date-fns';
 import { Task, RecurringTransaction } from '../types';
 import DraggableTask from './DraggableTask';
 import { DollarSign, X } from 'lucide-react';
@@ -19,8 +19,8 @@ const CalendarDayCell = memo(({ day, date, tasks, financialItems = [], isToday, 
 
   // ⚡ Bolt Optimization: Calculate dates once per render instead of inside the task loop
   const today = new Date();
-  const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const currentDateOnly = date ? new Date(date.getFullYear(), date.getMonth(), date.getDate()) : null;
+  // Calculate distance of this cell to today once (constant for the cell)
+  const daysFromTodayCurrent = date ? Math.abs(differenceInCalendarDays(today, date)) : 0;
   
   const droppableId = date ? format(date, 'yyyy-MM-dd') : `empty-${day}`;
   const { setNodeRef, isOver } = useDroppable({
@@ -72,16 +72,13 @@ const CalendarDayCell = memo(({ day, date, tasks, financialItems = [], isToday, 
               
               // If recurring, check if this date is the most recent/relevant occurrence
               let isMostRecentOccurrence = true;
-              if (isRecurring && currentDateOnly && (task.dueDate || task.reminderTime)) {
+              if (isRecurring && date && (task.dueDate || task.reminderTime)) {
                 const taskDateStr = (task.dueDate || task.reminderTime) as string;
                 const taskDate = new Date(taskDateStr);
                 
-                // Normalize dates to compare only date parts
-                const taskDateOnly = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
-                
-                // Calculate days from today for both the task's original date and the current occurrence
-                const daysFromTodayOriginal = Math.abs(todayOnly.getTime() - taskDateOnly.getTime());
-                const daysFromTodayCurrent = Math.abs(todayOnly.getTime() - currentDateOnly.getTime());
+                // Calculate days from today for the task's original date
+                // ⚡ Optimization: Use differenceInCalendarDays to avoid creating intermediate Date objects
+                const daysFromTodayOriginal = Math.abs(differenceInCalendarDays(today, taskDate));
                 
                 // The most recent occurrence is the one closest to today
                 // If the current cell's date is farther from today than the original date, dull it
