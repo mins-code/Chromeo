@@ -25,6 +25,15 @@ function generateToken(): string {
   return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+// Helper: Hash token for secure storage
+async function hashToken(token: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(token);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -191,13 +200,14 @@ serve(async (req) => {
 
       // Generate new token and create request
       const confirmToken = generateToken();
+      const hashedToken = await hashToken(confirmToken);
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
       const { error: insertError } = await supabase
         .from("account_deletion_requests")
         .insert({
           user_id: user.id,
-          token: confirmToken,
+          token: hashedToken,
           email: user.email,
           expires_at: expiresAt.toISOString(),
           status: "pending",
@@ -251,8 +261,22 @@ serve(async (req) => {
         throw new AppError("Previous request has expired. Please create a new request.");
       }
 
-      // Resend the email
-      const confirmationUrl = `${appUrl}/confirm-delete?token=${existingRequest.token}`;
+      // Rotate token for security: Generate new token
+      const newToken = generateToken();
+      const newHashedToken = await hashToken(newToken);
+
+      // Update the request with the new token
+      const { error: updateError } = await supabase
+        .from("account_deletion_requests")
+        .update({ token: newHashedToken })
+        .eq("id", existingRequest.id);
+
+      if (updateError) {
+        throw new AppError("Failed to update deletion request", 500);
+      }
+
+      // Resend the email with the NEW token
+      const confirmationUrl = `${appUrl}/confirm-delete?token=${newToken}`;
       console.log(`Resending deletion confirmation URL for ${user.email}: ${confirmationUrl}`);
 
       // 🛡️ SECURITY: Token logged to console for dev, but NOT returned to client
@@ -273,11 +297,14 @@ serve(async (req) => {
         throw new AppError("Missing confirmation token");
       }
 
+      // Hash the provided token to look it up
+      const hashedToken = await hashToken(token);
+
       // Find the deletion request
       const { data: request, error: findError } = await supabase
         .from("account_deletion_requests")
         .select("*")
-        .eq("token", token)
+        .eq("token", hashedToken)
         .eq("status", "pending")
         .single();
 
