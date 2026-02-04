@@ -49,3 +49,7 @@
 ## 2026-02-23 - Color Picker Accessibility
 **Learning:** Interactive color pickers implemented as simple `div`s with `onClick` are completely inaccessible to keyboard users and provide no feedback to screen readers about the selected color.
 **Action:** Convert color swatches to `<button type="button">`, add `aria-label` describing the action and *current* color name (mapping hex to human-readable names), and ensure focus indicators are visible.
+
+## 2026-02-24 - Layout Widget Accessibility
+**Learning:** Layout components like User Profile or Budget widgets implemented as `div`s with `onClick` are inaccessible. They often contain complex content (icons + text) making developers avoid default button styling.
+**Action:** Use `<button type="button">` with `text-left` (or appropriate alignment classes) to wrap complex content. Remove default button styling if needed, but keep semantics and keyboard support.
