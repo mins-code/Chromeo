@@ -303,13 +303,21 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         if (isSameDay) return true;
 
         if (!task.recurrence || task.recurrence.frequency === 'none') return false;
+
+        // ⚡ Bolt Optimization: Early exit if date is past recurrence end date
+        if (endDate && differenceInCalendarDays(date, endDate) > 0) return false;
+
         if (date < taskDate) return false;
+
+        const { frequency, interval } = task.recurrence;
+
+        // ⚡ Bolt Optimization: Daily recurrence with interval 1 matches every day
+        // (after start date and before end date checks above)
+        if (frequency === 'daily' && interval === 1) return true;
 
         // ⚡ Correctness Fix: Use differenceInCalendarDays to correctly handle time-of-day discrepancies and DST
         const diffDays = differenceInCalendarDays(date, taskDate);
         if (diffDays <= 0) return false;
-
-        const { frequency, interval } = task.recurrence;
 
         if (frequency === 'daily') {
             return diffDays % interval === 0;
