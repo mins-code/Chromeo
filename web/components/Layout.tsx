@@ -440,8 +440,12 @@ export const Layout: React.FC<LayoutProps> = ({
                         <div className={`flex items-center ${isExpanded ? 'justify-between' : 'justify-center flex-col gap-4'}`}>
 
                             {/* User Profile */}
-                            <div
-                                className={`flex items-center gap-2 p-1 rounded-xl transition-colors relative cursor-pointer hover:bg-black/5 dark:hover:bg-white/5`}
+                            <button
+                                type="button"
+                                aria-label="User Profile"
+                                aria-haspopup="dialog"
+                                aria-expanded={showProfileStats}
+                                className={`flex items-center gap-2 p-1 rounded-xl transition-colors relative cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 text-left`}
                                 ref={profileRef}
                                 onClick={() => setShowProfileStats(!showProfileStats)}
                                 title="Profile"
@@ -455,7 +459,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                         <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Pro Plan</p>
                                     </div>
                                 )}
-                            </div>
+                            </button>
 
                             {/* Icons Group */}
                             <div className={`flex ${isExpanded ? 'gap-1' : 'flex-col gap-2'}`}>
@@ -728,7 +732,12 @@ export const Layout: React.FC<LayoutProps> = ({
                             )}
 
                             {/* Budget Widget */}
-                            <div className="hidden md:flex items-center gap-3 px-4 py-2 rounded-xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-white/10 transition-colors cursor-pointer shadow-sm" onClick={() => onNavigate('budget')}>
+                            <button
+                                type="button"
+                                aria-label="View Budget"
+                                className="hidden md:flex items-center gap-3 px-4 py-2 rounded-xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-white/10 transition-colors cursor-pointer shadow-sm text-left"
+                                onClick={() => onNavigate('budget')}
+                            >
                                 <div className="p-1.5 bg-brand-500/10 rounded-lg text-brand-600 dark:text-brand-400">
                                     <Wallet size={18} />
                                 </div>
@@ -738,7 +747,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                         {userStats.budgetRemaining.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
                                     </p>
                                 </div>
-                            </div>
+                            </button>
                         </div>
                     </header>
 
