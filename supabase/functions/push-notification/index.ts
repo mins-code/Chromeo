@@ -94,6 +94,26 @@ serve(async (req) => {
         throw new AppError("Missing subscription endpoint");
       }
 
+      // 🛡️ SECURITY: Validate subscription structure to prevent SSRF and invalid data
+      try {
+        const url = new URL(subscription.endpoint);
+        if (url.protocol !== 'https:') {
+            throw new AppError("Endpoint must be HTTPS");
+        }
+        // Block potentially dangerous local endpoints (Defense in Depth)
+        const hostname = url.hostname;
+        if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]' || hostname.startsWith('192.168.') || hostname.startsWith('10.')) {
+            throw new AppError("Invalid endpoint domain");
+        }
+      } catch (e) {
+         if (e instanceof AppError) throw e;
+         throw new AppError("Invalid subscription endpoint URL");
+      }
+
+      if (!subscription.keys || typeof subscription.keys.p256dh !== 'string' || typeof subscription.keys.auth !== 'string') {
+          throw new AppError("Invalid subscription keys");
+      }
+
       // Check if this exact subscription already exists
       const { data: existing } = await supabase
         .from("push_subscriptions")
