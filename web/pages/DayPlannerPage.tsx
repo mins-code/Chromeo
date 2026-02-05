@@ -734,22 +734,22 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
             <span className="hidden sm:inline">Tasks ({unusedTasks.length})</span>
           </Button>
 
-          <Button variant="secondary" size="sm" onClick={() => setIsCloneModalOpen(true)}>
+          <Button variant="secondary" size="sm" onClick={() => setIsCloneModalOpen(true)} aria-label="Clone Plan">
             <Copy size={16} />
             <span className="hidden md:inline">Clone</span>
           </Button>
 
-          <Button variant="secondary" size="sm" onClick={() => setIsTemplatesModalOpen(true)}>
+          <Button variant="secondary" size="sm" onClick={() => setIsTemplatesModalOpen(true)} aria-label="Load Templates">
             <Download size={16} />
             <span className="hidden lg:inline">Templates</span>
           </Button>
 
-          <Button variant="secondary" size="sm" onClick={() => setIsSaveTemplateModalOpen(true)}>
+          <Button variant="secondary" size="sm" onClick={() => setIsSaveTemplateModalOpen(true)} aria-label="Save Template">
             <Save size={16} />
             <span className="hidden lg:inline">Save</span>
           </Button>
 
-      <Button variant="secondary" size="sm" onClick={() => setIsRecurringModalOpen(true)}>
+      <Button variant="secondary" size="sm" onClick={() => setIsRecurringModalOpen(true)} aria-label="Recurring Plan">
             <RefreshCw size={16} />
             <span className="hidden md:inline">Recurring</span>
           </Button>

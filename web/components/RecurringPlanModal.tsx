@@ -51,13 +51,13 @@ const RecurringPlanModal: React.FC<RecurringPlanModalProps> = ({
   };
 
   const weekDays = [
-    { label: 'S', value: 0 },
-    { label: 'M', value: 1 },
-    { label: 'T', value: 2 },
-    { label: 'W', value: 3 },
-    { label: 'T', value: 4 },
-    { label: 'F', value: 5 },
-    { label: 'S', value: 6 },
+    { label: 'S', full: 'Sunday', value: 0 },
+    { label: 'M', full: 'Monday', value: 1 },
+    { label: 'T', full: 'Tuesday', value: 2 },
+    { label: 'W', full: 'Wednesday', value: 3 },
+    { label: 'T', full: 'Thursday', value: 4 },
+    { label: 'F', full: 'Friday', value: 5 },
+    { label: 'S', full: 'Saturday', value: 6 },
   ];
 
   return (
@@ -100,6 +100,7 @@ const RecurringPlanModal: React.FC<RecurringPlanModalProps> = ({
                   key={freq}
                   type="button"
                   onClick={() => setFrequency(freq as any)}
+                  aria-pressed={frequency === freq}
                   className={`px-3 py-2 rounded-lg text-sm font-medium border transition-all ${
                     frequency === freq
                       ? 'bg-brand-500 text-white border-brand-500'
@@ -125,7 +126,7 @@ const RecurringPlanModal: React.FC<RecurringPlanModalProps> = ({
                     type="button"
                     onClick={() => toggleDay(day.value)}
                     aria-pressed={selectedDays.includes(day.value)}
-                    aria-label={`Repeat on ${day.label}`}
+                    aria-label={`Repeat on ${day.full}`}
                     className={`w-10 h-10 rounded-full text-sm font-bold transition-all ${
                       selectedDays.includes(day.value)
                         ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25'
