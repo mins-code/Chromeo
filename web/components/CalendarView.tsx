@@ -80,6 +80,27 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         }
     }, [customIntervalValue, customIntervalUnit]);
 
+    // ⚡ Bolt Optimization: Pre-parse task dates to avoid repetitive new Date() calls
+    const taskDatesMap = useMemo(() => {
+        const map = new Map<string, { start: Date, end: Date | null }>();
+        const tasksToProcess = unfilteredTasks || tasks;
+
+        tasksToProcess.forEach(task => {
+            const dateStr = task.dueDate || task.reminderTime;
+            if (dateStr) {
+                let startStr = dateStr;
+                // Handle partial ISO strings (YYYY-MM-DD) by forcing local midnight
+                if (startStr.length === 10 && !startStr.includes('T')) {
+                    startStr += 'T00:00:00';
+                }
+                const start = new Date(startStr);
+                const end = task.recurrence?.endDate ? new Date(task.recurrence.endDate) : null;
+                map.set(task.id, { start, end });
+            }
+        });
+        return map;
+    }, [tasks, unfilteredTasks]);
+
     // Compute tags visible in the current view period
     const visibleTags = useMemo(() => {
         const tags = new Set<string>();
@@ -114,10 +135,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                 if (task.tags.every(tag => tags.has(tag))) return;
             }
 
-            const taskDateStr = task.dueDate || task.reminderTime;
-            if (!taskDateStr) return;
-            
-            const taskDate = new Date(taskDateStr);
+            const dates = taskDatesMap.get(task.id);
+            if (!dates) return;
+
+            const taskDate = dates.start;
+            const endDate = dates.end;
             
             // Check if task is within range (including recurrence)
             const isInRange = taskDate >= rangeStart && taskDate <= rangeEnd;
@@ -132,7 +154,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                 const recurrenceInterval = interval || 1;
 
                 // Check bounds
-                const endDate = task.recurrence.endDate ? new Date(task.recurrence.endDate) : null;
                 if (endDate && endDate < rangeStart) return; // Recursion ended before this view
                 if (taskDate > rangeEnd) return; // Starts after this view
 
@@ -228,7 +249,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
             if (b === 'Untagged') return 1;
             return a.localeCompare(b);
         });
-    }, [tasks, unfilteredTasks, currentDate, viewMode, customIntervalDays]);
+    }, [tasks, unfilteredTasks, currentDate, viewMode, customIntervalDays, taskDatesMap]);
 
     // Report visible tags to parent component
     const prevVisibleTagsRef = useRef<string[]>([]);
@@ -342,20 +363,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         return false;
     }, []);
 
-    // Wrapper for single date checks (legacy support)
-    const doesTaskOccurOnDate = useCallback((task: Task, date: Date): boolean => {
-        let taskDateStr = task.dueDate || task.reminderTime;
-        if (!taskDateStr) return false;
-
-        if (taskDateStr.length === 10 && !taskDateStr.includes('T')) {
-            taskDateStr += 'T00:00:00';
-        }
-
-        const taskDate = new Date(taskDateStr);
-        const endDate = task.recurrence?.endDate ? new Date(task.recurrence.endDate) : null;
-        return checkRecurrence(task, taskDate, date, endDate);
-    }, [checkRecurrence]);
-
     // Optimized calendar generation: O(Tasks + Days) instead of O(Tasks * Days)
     const calendarDays = useMemo(() => {
         const year = currentMonth.getFullYear();
@@ -390,14 +397,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
 
         // 2. Iterate Tasks Once
         tasks.forEach(task => {
-            let taskDateStr = task.dueDate || task.reminderTime;
-            if (!taskDateStr) return;
+            const dates = taskDatesMap.get(task.id);
+            if (!dates) return;
+            const taskDate = dates.start;
 
-            if (taskDateStr.length === 10 && !taskDateStr.includes('T')) {
-                taskDateStr += 'T00:00:00';
-            }
-
-            const taskDate = new Date(taskDateStr);
             // Normalize task start to midnight for consistent math
             const taskStart = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
 
@@ -415,59 +418,62 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                 const monthStart = new Date(year, month, 1);
                 const monthEnd = new Date(year, month, daysInMonth);
 
-                let currentDate: Date;
+                // If task ends before month, skip
+                if (dates.end && dates.end < monthStart) return;
 
-                // Calculate the first valid occurrence in or after this month
-                if (taskStart >= monthStart) {
-                    // Task starts inside or after this month
-                    if (taskStart > monthEnd) return; // Starts after this month
-                    currentDate = new Date(taskStart);
-                } else {
-                    // Task started before this month. Find first occurrence >= monthStart
-                    const diffDays = differenceInCalendarDays(monthStart, taskStart);
+                // If task starts after month, skip
+                if (taskStart > monthEnd) return;
 
-                    let daysToAdd = 0;
+                let nextDate = new Date(taskStart);
+
+                // Fast forward if needed
+                if (nextDate < monthStart) {
                     if (frequency === 'daily') {
+                        const diffDays = differenceInCalendarDays(monthStart, nextDate);
                         const remainder = diffDays % interval;
-                        daysToAdd = remainder === 0 ? 0 : (interval - remainder);
+                        const daysToAdd = remainder === 0 ? 0 : (interval - remainder);
+                        nextDate = addDays(monthStart, daysToAdd);
                     } else if (frequency === 'weekly') {
+                         const diffDays = differenceInCalendarDays(monthStart, nextDate);
                          const remainder = diffDays % (7 * interval);
-                         daysToAdd = remainder === 0 ? 0 : ((7 * interval) - remainder);
+                         const daysToAdd = remainder === 0 ? 0 : ((7 * interval) - remainder);
+                         nextDate = addDays(monthStart, daysToAdd);
                     } else if (frequency === 'monthly') {
-                         // Check if this month matches interval
-                         const monthDiff = (year - taskStart.getFullYear()) * 12 + (month - taskStart.getMonth());
-                         if (monthDiff % interval === 0) {
-                             // Correct month, now check if day exists (e.g. 31st in Feb)
-                             const targetDay = taskStart.getDate();
-                             if (targetDay <= daysInMonth) {
-                                 // We set currentDate to this month's target day.
-                                 // Note: We don't use 'daysToAdd' for monthly as it's not simply adding days.
-                                 // We jump directly to the specific date.
-                             } else {
-                                 return; // Skip this month (day doesn't exist)
-                             }
-                         } else {
-                             return; // Not this month
+                         // Align month
+                         let candidate = new Date(nextDate);
+                         while (candidate < monthStart) {
+                             candidate = addMonths(candidate, interval);
                          }
+                         nextDate = candidate;
                     } else if (frequency === 'yearly') {
-                        if (taskStart.getMonth() === month) {
-                             const targetDay = taskStart.getDate();
-                             if (targetDay <= daysInMonth) {
-                                  // This shouldn't fail unless leap year 29 Feb -> non leap.
-                                  // JS Date handles that by rolling over to Mar 1, but we usually want strictly same day.
-                                  // Standard behavior:
-                             } else {
-                                 return;
+                         let candidate = new Date(nextDate);
+                         while (candidate < monthStart) {
+                             candidate = new Date(candidate.getFullYear() + interval, candidate.getMonth(), candidate.getDate());
+                         }
+                         nextDate = candidate;
+                    }
+                }
+
+                // Iterate occurrences within the month
+                while (nextDate <= monthEnd) {
+                    if (dates.end && nextDate > dates.end) break;
+
+                    if (nextDate.getMonth() === month && nextDate.getFullYear() === year) {
+                         const day = nextDate.getDate();
+                         // Verify recurrence match (handles strict day checking for monthly/yearly)
+                         if (checkRecurrence(task, taskDate, nextDate, dates.end)) {
+                             if (tasksByDay.has(day)) {
+                                 tasksByDay.get(day)!.push(task);
                              }
-                        } else {
-                            return;
-                        }
+                         }
                     }
 
-                    const currentDayDate = monthDates[day];
-                    if (checkRecurrence(task, taskDate, currentDayDate)) {
-                        tasksByDay.get(day)!.push(task);
-                    }
+                    // Advance
+                    if (frequency === 'daily') nextDate = addDays(nextDate, interval);
+                    else if (frequency === 'weekly') nextDate = addDays(nextDate, 7 * interval);
+                    else if (frequency === 'monthly') nextDate = addMonths(nextDate, interval);
+                    else if (frequency === 'yearly') nextDate = new Date(nextDate.getFullYear() + interval, nextDate.getMonth(), nextDate.getDate());
+                    else break;
                 }
             }
         });
@@ -487,7 +493,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         }
 
         return days;
-    }, [currentMonth, tasks, recurringTransactions]);
+    }, [currentMonth, tasks, recurringTransactions, taskDatesMap, checkRecurrence]);
 
     const handleDayClick = (date: Date) => {
         setSelectedDate(date);
@@ -497,16 +503,20 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
     // Prevents re-filtering the entire task list on every render (e.g. when hovering)
     const selectedDayTasks = useMemo(() =>
         selectedDate
-            ? tasks.filter(task => doesTaskOccurOnDate(task, selectedDate))
+            ? tasks.filter(task => {
+                const dates = taskDatesMap.get(task.id);
+                if (!dates) return false;
+                return checkRecurrence(task, dates.start, selectedDate, dates.end);
+            })
             : []
-    , [selectedDate, tasks, doesTaskOccurOnDate]);
+    , [selectedDate, tasks, taskDatesMap, checkRecurrence]);
 
     // ⚡ Performance Optimization: Memoize filtered Google events
     const selectedDayGoogleEvents = useMemo(() =>
         selectedDate
             ? externalEvents.filter(event => doesEventOccurOnDate(event, selectedDate))
             : []
-    , [selectedDate, externalEvents, doesEventOccurOnDate]);
+    , [selectedDate, externalEvents]);
 
     // Drag and Drop handlers
     const handleDragStart = (event: any) => {
