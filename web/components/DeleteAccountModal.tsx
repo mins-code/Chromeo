@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 import Button from './Button';
 import Input from './Input';
@@ -82,11 +82,25 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
     }
   };
 
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleClose();
+    };
+    if (isOpen) window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isLoading, isDeleted]); // Re-attach if state changes to ensure handleClose has latest scope
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden animate-scale-in border border-slate-200 dark:border-white/10">
+      <div
+        className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden animate-scale-in border border-slate-200 dark:border-white/10"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-account-title"
+      >
         
         {/* Header */}
         <div className="bg-gradient-to-r from-red-500 to-red-600 p-5 text-white">
@@ -94,7 +108,7 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
             <div className="flex items-center gap-3">
               <AlertTriangle size={24} />
               <div>
-                <h2 className="text-xl font-bold">Delete Account</h2>
+                <h2 id="delete-account-title" className="text-xl font-bold">Delete Account</h2>
                 <p className="text-red-100 text-sm">This action is permanent</p>
               </div>
             </div>
@@ -150,6 +164,7 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
+                  autoFocus
                   className="pr-12"
                 />
                 <button
