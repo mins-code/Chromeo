@@ -149,7 +149,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                 const recurrenceInterval = interval || 1;
 
                 // Check bounds
-                const endDate = task.recurrence.endDate ? new Date(task.recurrence.endDate) : null;
                 if (endDate && endDate < rangeStart) return; // Recursion ended before this view
                 if (taskDate > rangeEnd) return; // Starts after this view
 
@@ -436,6 +435,13 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                     if (checkRecurrence(task, taskDate, currentDayDate)) {
                         tasksByDay.get(d)!.push(task);
                     }
+
+                    // Advance
+                    if (frequency === 'daily') nextDate = addDays(nextDate, interval);
+                    else if (frequency === 'weekly') nextDate = addDays(nextDate, 7 * interval);
+                    else if (frequency === 'monthly') nextDate = addMonths(nextDate, interval);
+                    else if (frequency === 'yearly') nextDate = new Date(nextDate.getFullYear() + interval, nextDate.getMonth(), nextDate.getDate());
+                    else break;
                 }
             }
         });
@@ -465,16 +471,20 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
     // Prevents re-filtering the entire task list on every render (e.g. when hovering)
     const selectedDayTasks = useMemo(() =>
         selectedDate
-            ? tasks.filter(task => doesTaskOccurOnDate(task, selectedDate))
+            ? tasks.filter(task => {
+                const dates = taskDatesMap.get(task.id);
+                if (!dates) return false;
+                return checkRecurrence(task, dates.start, selectedDate, dates.end);
+            })
             : []
-    , [selectedDate, tasks, doesTaskOccurOnDate]);
+    , [selectedDate, tasks, taskDatesMap, checkRecurrence]);
 
     // ⚡ Performance Optimization: Memoize filtered Google events
     const selectedDayGoogleEvents = useMemo(() =>
         selectedDate
             ? externalEvents.filter(event => doesEventOccurOnDate(event, selectedDate))
             : []
-    , [selectedDate, externalEvents, doesEventOccurOnDate]);
+    , [selectedDate, externalEvents]);
 
     // Drag and Drop handlers
     const handleDragStart = (event: any) => {
