@@ -1,7 +1,7 @@
 
 import { supabase } from "./supabaseClient";
 import { Task, TaskPriority, TRANSACTION_CATEGORIES, TransactionCategory } from "../types";
-import { validateFile, validateAIMessage, sanitizeJSON } from "../utils/validation";
+import { validateFile, validateAIMessage, sanitizeJSON, sanitizeForPrompt } from "../utils/validation";
 import { logger } from "../utils/logger";
 import { aiCache, generateCacheKey } from "../utils/aiChatCache";
 
@@ -57,9 +57,11 @@ export const categorizeTransaction = async (description: string): Promise<Transa
         }
 
         const categoriesStr = TRANSACTION_CATEGORIES.filter(c => c !== 'Uncategorized').join(', ');
+        // 🛡️ SECURITY: Sanitize description to prevent prompt injection
+        const sanitizedDescription = sanitizeForPrompt(description, 500);
         const prompt = `Categorize the following transaction description into exactly one of these categories: ${categoriesStr}. Return ONLY the category name string, nothing else.
 
-Transaction: "${description}"`;
+Transaction: "${sanitizedDescription}"`;
 
         const { data, error } = await retryWithBackoff(() =>
             supabase.functions.invoke('ai-chat', {
@@ -150,7 +152,9 @@ export const enhanceTaskWithAI = async (taskTitle: string, existingTags: string[
       return cached;
     }
 
-    const message = `Analyze the task "${taskTitle}". Provide a concise 1-sentence description, 3-5 actionable subtasks, a recommended priority level (LOW, MEDIUM, or HIGH), and 2 relevant tags.`;
+    // 🛡️ SECURITY: Sanitize title to prevent prompt injection
+    const sanitizedTitle = sanitizeForPrompt(taskTitle, 500);
+    const message = `Analyze the task "${sanitizedTitle}". Provide a concise 1-sentence description, 3-5 actionable subtasks, a recommended priority level (LOW, MEDIUM, or HIGH), and 2 relevant tags.`;
 
     const { data, error } = await retryWithBackoff(() => 
       supabase.functions.invoke('ai-chat', {
