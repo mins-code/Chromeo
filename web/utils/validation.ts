@@ -211,3 +211,30 @@ export function validateURL(url: string): { valid: boolean; sanitized: string; e
     return { valid: false, sanitized, error: 'Invalid URL format' };
   }
 }
+
+/**
+ * Sanitize input for use in AI prompts to prevent injection
+ * Removes potential breakout characters and control codes
+ */
+export function sanitizeForPrompt(input: string, maxLength: number = 1000): string {
+  if (typeof input !== 'string') return '';
+
+  let sanitized = input.trim();
+
+  // Remove control characters
+  // eslint-disable-next-line no-control-regex
+  sanitized = sanitized.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+
+  // Escape backslashes
+  sanitized = sanitized.replace(/\\/g, '\\\\');
+
+  // Replace quotes and backticks with single quotes to prevent breaking out of "..." or `...`
+  sanitized = sanitized.replace(/["`]/g, "'");
+
+  // Limit length
+  if (sanitized.length > maxLength) {
+    sanitized = sanitized.substring(0, maxLength);
+  }
+
+  return sanitized;
+}
