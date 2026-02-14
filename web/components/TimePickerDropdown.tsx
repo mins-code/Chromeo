@@ -1,6 +1,88 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Clock, ChevronUp, ChevronDown } from 'lucide-react';
 
+interface TimeSpinnerProps {
+  value: number;
+  onChange: (v: number) => void;
+  min: number;
+  max: number;
+  step?: number;
+  display?: (v: number) => string;
+  unitLabel: string;
+}
+
+const TimeSpinner: React.FC<TimeSpinnerProps> = ({
+  value,
+  onChange,
+  min,
+  max,
+  step = 1,
+  display,
+  unitLabel
+}) => {
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      onChange(value >= max ? min : value + step);
+    } else {
+      onChange(value <= min ? max : value - step);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      onChange(value >= max ? min : value + step);
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      onChange(value <= min ? max : value - step);
+    }
+  };
+
+  const displayValue = display ? display(value) : String(value).padStart(2, '0');
+
+  return (
+    <div
+      className="flex flex-col items-center gap-0.5"
+      onWheel={handleWheel}
+      title={`Scroll to change ${unitLabel}`}
+    >
+      <button
+        type="button"
+        onClick={() => onChange(value >= max ? min : value + step)}
+        className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+        aria-label={`Increase ${unitLabel}`}
+        tabIndex={-1}
+      >
+        <ChevronUp size={14} />
+      </button>
+      <div
+        role="spinbutton"
+        aria-valuenow={value}
+        aria-valuetext={displayValue}
+        aria-valuemin={min}
+        aria-valuemax={max}
+        aria-label={unitLabel}
+        tabIndex={0}
+        onKeyDown={handleKeyDown}
+        className="w-8 h-7 flex items-center justify-center text-sm font-semibold text-white bg-white/10 rounded cursor-ns-resize focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      >
+        {displayValue}
+      </div>
+      <button
+        type="button"
+        onClick={() => onChange(value <= min ? max : value - step)}
+        className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+        aria-label={`Decrease ${unitLabel}`}
+        tabIndex={-1}
+      >
+        <ChevronDown size={14} />
+      </button>
+    </div>
+  );
+};
+
 interface TimePickerDropdownProps {
   value: string; // HH:mm format (24-hour)
   onChange: (value: string) => void;
@@ -46,65 +128,6 @@ const TimePickerDropdown: React.FC<TimePickerDropdownProps> = ({
 
   const formatDisplayValue = () => {
     return `${String(hours12).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${isPM ? 'PM' : 'AM'}`;
-  };
-
-  // Time Spinner Component
-  const TimeSpinner = ({ 
-    value, 
-    onChange, 
-    min, 
-    max, 
-    step = 1, 
-    display,
-    unitLabel
-  }: { 
-    value: number; 
-    onChange: (v: number) => void; 
-    min: number; 
-    max: number; 
-    step?: number; 
-    display?: (v: number) => string;
-    unitLabel: string;
-  }) => {
-    const handleWheel = (e: React.WheelEvent) => {
-      e.preventDefault();
-      if (e.deltaY < 0) {
-        onChange(value >= max ? min : value + step);
-      } else {
-        onChange(value <= min ? max : value - step);
-      }
-    };
-
-    return (
-      <div 
-        className="flex flex-col items-center gap-0.5 cursor-ns-resize" 
-        onWheel={handleWheel}
-        title={`Scroll to change ${unitLabel}`}
-      >
-        <button
-          type="button"
-          onClick={() => onChange(value >= max ? min : value + step)}
-          className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-          aria-label={`Increase ${unitLabel}`}
-        >
-          <ChevronUp size={14} />
-        </button>
-        <span
-          className="w-8 h-7 flex items-center justify-center text-sm font-semibold text-white bg-white/10 rounded"
-          aria-hidden="true"
-        >
-          {display ? display(value) : String(value).padStart(2, '0')}
-        </span>
-        <button
-          type="button"
-          onClick={() => onChange(value <= min ? max : value - step)}
-          className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-          aria-label={`Decrease ${unitLabel}`}
-        >
-          <ChevronDown size={14} />
-        </button>
-      </div>
-    );
   };
 
   return (
@@ -159,7 +182,7 @@ const TimePickerDropdown: React.FC<TimePickerDropdownProps> = ({
             <button
               type="button"
               onClick={() => handleTimeChange(hours12, minutes, !isPM)}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-500 text-slate-900 hover:bg-emerald-600"
+              className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-500 text-slate-900 hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               aria-label={`Switch to ${!isPM ? 'PM' : 'AM'}`}
             >
               {isPM ? 'PM' : 'AM'}
