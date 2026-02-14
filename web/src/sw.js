@@ -214,6 +214,32 @@ self.addEventListener('push', (event) => {
 });
 
 /**
+ * Validates a URL to prevent open redirects.
+ * Ensures the URL is either relative or points to the same origin.
+ * @param {string} url - The URL to validate
+ * @returns {string|null} - The valid URL path or null if invalid
+ */
+const validateUrl = (url) => {
+  if (!url) return null;
+
+  try {
+    const urlObj = new URL(url, self.location.origin);
+
+    // Check if the origin matches our app's origin
+    if (urlObj.origin !== self.location.origin) {
+      console.warn('[SW] Blocked potential open redirect to:', url);
+      return null;
+    }
+
+    // Return the pathname + search + hash
+    return urlObj.pathname + urlObj.search + urlObj.hash;
+  } catch (e) {
+    console.warn('[SW] Invalid URL in notification:', url);
+    return null;
+  }
+};
+
+/**
  * Notification Click Handler
  * Opens the app when user taps on a notification
  */
@@ -226,7 +252,9 @@ self.addEventListener('notificationclick', (event) => {
     return;
   }
 
-  const urlToOpen = event.notification.data?.url || '/activities';
+  // 🛡️ SECURITY: Validate URL to prevent open redirects
+  const rawUrl = event.notification.data?.url;
+  const urlToOpen = validateUrl(rawUrl) || '/activities';
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true })
@@ -340,4 +368,3 @@ self.addEventListener('activate', (event) => {
 });
 
 console.log('[SW] ChronoDeX Service Worker loaded successfully');
-
