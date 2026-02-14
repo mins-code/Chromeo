@@ -418,30 +418,106 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                     }
                 }
             } else {
-                // Recurring: Check days in month
-                // ⚡ Bolt Optimization: We used to have a complex "jump" logic here that was buggy/incomplete.
-                // Reverting to a simple loop which is now fast because checkRecurrence uses our pre-parsed taskDate.
+                // Recurring: Optimized check
+                const { frequency, interval = 1 } = task.recurrence;
+                const endDate = task.recurrence.endDate ? new Date(task.recurrence.endDate) : null;
 
-                let startDay = 1;
-                // If task starts in this month, start checking from that day
-                if (taskStart.getFullYear() === year && taskStart.getMonth() === month) {
-                    startDay = taskStart.getDate();
-                } else if (taskStart > new Date(year, month + 1, 0)) {
-                    return; // Starts after this month
-                }
+                // If task ended before this month, skip
+                if (endDate && endDate < monthDates[1]) return;
 
-                for (let d = startDay; d <= daysInMonth; d++) {
-                    const currentDayDate = monthDates[d];
-                    if (checkRecurrence(task, taskDate, currentDayDate)) {
-                        tasksByDay.get(d)!.push(task);
+                // If task starts after this month, skip
+                // (Note: taskStart is already normalized to midnight)
+                if (taskStart > monthDates[daysInMonth]) return;
+
+                // ⚡ Bolt Optimization: Special case for Daily (Interval 1)
+                // This is the most common recurrence and we can fill it with a simple loop
+                if (frequency === 'daily' && interval === 1) {
+                    let startDay = 1;
+                    if (taskStart.getFullYear() === year && taskStart.getMonth() === month) {
+                        startDay = taskStart.getDate();
                     }
 
-                    // Advance
-                    if (frequency === 'daily') nextDate = addDays(nextDate, interval);
-                    else if (frequency === 'weekly') nextDate = addDays(nextDate, 7 * interval);
-                    else if (frequency === 'monthly') nextDate = addMonths(nextDate, interval);
-                    else if (frequency === 'yearly') nextDate = new Date(nextDate.getFullYear() + interval, nextDate.getMonth(), nextDate.getDate());
-                    else break;
+                    let endDay = daysInMonth;
+                    if (endDate && endDate.getFullYear() === year && endDate.getMonth() === month) {
+                        endDay = endDate.getDate();
+                    }
+
+                    for (let d = startDay; d <= endDay; d++) {
+                        tasksByDay.get(d)!.push(task);
+                    }
+                    return;
+                }
+
+                // For other frequencies, we "jump" to valid occurrences
+                if (frequency === 'daily' || frequency === 'weekly') {
+                    let current = new Date(taskStart);
+
+                    // Fast-forward if start is before this month
+                    if (current < monthDates[1]) {
+                        const diffDays = differenceInCalendarDays(monthDates[1], current);
+                        const period = frequency === 'weekly' ? 7 * interval : interval;
+
+                        // Calculate days to add to land on or after month start
+                        // We need (diff + correction) % period === 0
+                        // actually: we want (current + X) >= monthStart
+                        // and (current + X - start) % period === 0
+                        // so X % period === 0
+                        // We want smallest X >= diffDays such that X % period === 0
+                        // X = ceil(diffDays / period) * period
+                        // But wait, differenceInCalendarDays might be slightly off due to DST?
+                        // Let's rely on standard modulo arithmetic on 'diffDays'
+
+                        // If diffDays is positive (current < monthStart)
+                        const remainder = diffDays % period;
+                        const toAdd = remainder === 0 ? 0 : (period - remainder);
+                        current = addDays(monthDates[1], toAdd);
+                    }
+
+                    // Iterate while in month
+                    while (current <= monthDates[daysInMonth]) {
+                         if (endDate && current > endDate) break;
+
+                         // Valid occurrence? Check if it falls in the current month view
+                         if (current >= monthDates[1]) {
+                             const day = current.getDate();
+                             if (tasksByDay.has(day)) {
+                                 tasksByDay.get(day)!.push(task);
+                             }
+                         }
+
+                         // Advance
+                         const step = frequency === 'weekly' ? 7 * interval : interval;
+                         current = addDays(current, step);
+                    }
+                } else if (frequency === 'monthly') {
+                    // Check if this month aligns with start month
+                    const monthsDiff = (year - taskStart.getFullYear()) * 12 + (month - taskStart.getMonth());
+
+                    if (monthsDiff >= 0 && monthsDiff % interval === 0) {
+                        // This month is a candidate. Day is taskStart.getDate()
+                        const targetDay = taskStart.getDate();
+                        // Check if day exists in this month
+                        if (targetDay <= daysInMonth) {
+                             const candidate = new Date(year, month, targetDay);
+                             if ((!endDate || candidate <= endDate) && candidate >= taskStart) {
+                                  tasksByDay.get(targetDay)!.push(task);
+                             }
+                        }
+                    }
+                } else if (frequency === 'yearly') {
+                     // Check if month matches
+                     if (taskStart.getMonth() === month) {
+                         const yearsDiff = year - taskStart.getFullYear();
+                         if (yearsDiff >= 0 && yearsDiff % interval === 0) {
+                             const targetDay = taskStart.getDate();
+                             if (targetDay <= daysInMonth) {
+                                 const candidate = new Date(year, month, targetDay);
+                                 if ((!endDate || candidate <= endDate) && candidate >= taskStart) {
+                                     tasksByDay.get(targetDay)!.push(task);
+                                 }
+                             }
+                         }
+                     }
                 }
             }
         });
