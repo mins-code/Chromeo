@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Transaction, TRANSACTION_CATEGORIES } from '../types';
 import { ArrowUpRight, ArrowDownLeft, Calendar, Search, Edit2, Trash2, Check, X, Repeat, ChevronLeft, ChevronRight, Tag } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, addWeeks, subWeeks, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
@@ -23,7 +22,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
     const [viewMode, setViewMode] = useState<'all' | 'month' | 'week'>('month');
     const [currentDate, setCurrentDate] = useState(new Date());
 
-    const getDateRange = () => {
+    const range = useMemo(() => {
         if (viewMode === 'month') {
             return { start: startOfMonth(currentDate), end: endOfMonth(currentDate) };
         }
@@ -31,34 +30,35 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
             return { start: startOfWeek(currentDate, { weekStartsOn: 1 }), end: endOfWeek(currentDate, { weekStartsOn: 1 }) };
         }
         return null; // For 'all' view
-    };
+    }, [viewMode, currentDate]);
 
     const navigate = (dir: -1 | 1) => {
         if (viewMode === 'month') setCurrentDate(d => dir === 1 ? addMonths(d, 1) : subMonths(d, 1));
         if (viewMode === 'week') setCurrentDate(d => dir === 1 ? addWeeks(d, 1) : subWeeks(d, 1));
     };
 
-    const periodLabel = () => {
+    const periodLabel = useMemo(() => {
         if (viewMode === 'month') return format(currentDate, 'MMMM yyyy');
         if (viewMode === 'week') {
-            const range = getDateRange();
             if (!range) return '';
             return `${format(range.start, 'd MMM')} - ${format(range.end, 'd MMM')}`;
         }
         return 'All Time';
-    };
+    }, [viewMode, currentDate, range]);
 
-    const filteredTransactions = transactions.filter(t => {
-        const matchesSearch = t.description.toLowerCase().includes(searchTerm.toLowerCase());
-        
-        if (viewMode === 'all') return matchesSearch;
+    const filteredTransactions = useMemo(() => {
+        const searchLower = searchTerm.toLowerCase();
 
-        const range = getDateRange();
-        if (!range) return matchesSearch;
+        return transactions.filter(t => {
+            const matchesSearch = t.description.toLowerCase().includes(searchLower);
 
-        const matchesDate = isWithinInterval(new Date(t.date), range);
-        return matchesSearch && matchesDate;
-    });
+            if (viewMode === 'all') return matchesSearch;
+            if (!range) return matchesSearch;
+
+            // date-fns isWithinInterval supports timestamp numbers directly, avoiding new Date() creation
+            return matchesSearch && isWithinInterval(t.date, range);
+        });
+    }, [transactions, searchTerm, viewMode, range]);
 
     const startEdit = (transaction: Transaction) => {
         setEditingId(transaction.id);
@@ -89,7 +89,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
             await onEdit({ id, description: editDesc, amount, type: editType, category: editCategory });
             cancelEdit();
         } catch (error) {
-            logger.error('Failed to update transaction', error);
+            logger.error('Failed to update transaction', error as Error);
             alert('Failed to update transaction');
         }
     };
@@ -101,7 +101,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
             try {
                 await onDelete(id);
             } catch (error) {
-                logger.error('Failed to delete transaction', error);
+                logger.error('Failed to delete transaction', error as Error);
                 alert('Failed to delete transaction');
             }
         }
@@ -147,7 +147,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                                 <ChevronLeft size={16} />
                             </button>
                             <span className="text-xs font-mono font-bold text-slate-600 dark:text-slate-300 min-w-[120px] text-center">
-                                {periodLabel()}
+                                {periodLabel}
                             </span>
                             <button 
                                 onClick={() => navigate(1)}
@@ -265,7 +265,9 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                                                         {t.description.replace(/\s*\(Recurring\)\s*/i, '')}
                                                     </p>
                                                     {t.description.toLowerCase().includes('(recurring)') && (
-                                                        <Repeat size={12} className="text-slate-400 shrink-0" title="Recurring Transaction" />
+                                                        <span title="Recurring Transaction" className="flex items-center">
+                                                            <Repeat size={12} className="text-slate-400 shrink-0" />
+                                                        </span>
                                                     )}
                                                 </div>
                                                 {(onEdit || onDelete) && (
