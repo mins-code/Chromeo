@@ -53,3 +53,7 @@
 ## 2026-02-24 - Layout Widget Accessibility
 **Learning:** Layout components like User Profile or Budget widgets implemented as `div`s with `onClick` are inaccessible. They often contain complex content (icons + text) making developers avoid default button styling.
 **Action:** Use `<button type="button">` with `text-left` (or appropriate alignment classes) to wrap complex content. Remove default button styling if needed, but keep semantics and keyboard support.
+
+## 2026-03-03 - Segmented Control Accessibility
+**Learning:** Groups of buttons that act as mutually exclusive options (like "Task Type: Task | Reminder | Event") are often implemented as sibling buttons, which fails to convey their relationship or selected state to screen readers.
+**Action:** Wrap the button group in `role="radiogroup"` with an accessible label, and use `role="radio"` with `aria-checked` on the individual buttons to properly communicate the selection semantics.

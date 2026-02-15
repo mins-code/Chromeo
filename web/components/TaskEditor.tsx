@@ -2,7 +2,7 @@ import React, { useState, useEffect, useId } from 'react';
 import { Task, TaskPriority, TaskStatus, SubTask, RecurrenceConfig, TaskType, NotificationSettings } from '../types';
 import Button from './Button';
 import Input from './Input';
-import { X, Plus, Trash2, Wand2, Bell, Link as LinkIcon, Users, Check, Repeat, Calendar, MapPin, Clock, Play } from 'lucide-react';
+import { X, Plus, Trash2, Wand2, Bell, Link as LinkIcon, Users, Check, Repeat, MapPin, Clock, Play } from 'lucide-react';
 import { enhanceTaskWithAI } from '../services/geminiService';
 import { logger } from '../utils/logger';
 import DateTimePicker from './DateTimePicker';
@@ -199,6 +199,15 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
     }
   }, [task, isOpen, initialDate, initialType]);
 
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleSave = () => {
@@ -361,32 +370,49 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6 transition-all duration-300">
       <div className="absolute inset-0 bg-black/60 dark:bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
-      <div className="relative glass rounded-2xl w-full max-w-xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl animate-scale-in">
+      <div
+        className="relative glass rounded-2xl w-full max-w-xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl animate-scale-in"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="task-editor-title"
+      >
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-white/5 bg-white/50 dark:bg-slate-900/50">
           <div className="flex items-center gap-3">
-             <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 tracking-tight">{task ? 'Edit' : 'Create New'}</h2>
-             <div className="flex bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg p-0.5">
+             <h2 id="task-editor-title" className="text-lg font-semibold text-slate-800 dark:text-slate-100 tracking-tight">{task ? 'Edit' : 'Create New'}</h2>
+             <div
+                role="radiogroup"
+                aria-label="Task Type"
+                className="flex bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg p-0.5"
+             >
                  <button 
+                    role="radio"
+                    aria-checked={type === 'TASK'}
                     onClick={() => setType('TASK')}
                     className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${type === 'TASK' ? 'bg-blue-500 text-white shadow' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                  >
                      Task
                  </button>
                  <button 
+                    role="radio"
+                    aria-checked={type === 'REMINDER'}
                     onClick={() => setType('REMINDER')}
                     className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${type === 'REMINDER' ? 'bg-yellow-500 text-white shadow' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                  >
                      Reminder
                  </button>
                  <button 
+                    role="radio"
+                    aria-checked={type === 'EVENT'}
                     onClick={() => setType('EVENT')}
                     className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${type === 'EVENT' ? 'bg-brand-500 text-white shadow' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                  >
                      Event
                  </button>
                  <button 
+                    role="radio"
+                    aria-checked={type === 'APPOINTMENT'}
                     onClick={() => setType('APPOINTMENT')}
                     className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${type === 'APPOINTMENT' ? 'bg-purple-500 text-white shadow' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                  >
