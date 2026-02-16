@@ -117,11 +117,18 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasksMap, onEdit, onToggle
           {/* Subtask Progress Bar */}
           {totalSub > 0 && !isDone && (
             <div className="mb-3">
-              <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-wider font-semibold">
+              <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-wider font-semibold" aria-hidden="true">
                 <span>Progress</span>
                 <span>{Math.round(progressPercent)}%</span>
               </div>
-              <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-700/50 rounded-full overflow-hidden">
+              <div
+                role="progressbar"
+                aria-valuenow={Math.round(progressPercent)}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Task progress"
+                className="h-1.5 w-full bg-slate-200 dark:bg-slate-700/50 rounded-full overflow-hidden"
+              >
                 <div
                   className="h-full bg-brand-500 rounded-full transition-all duration-500 ease-out"
                   style={{ width: `${progressPercent}%` }}

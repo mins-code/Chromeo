@@ -57,3 +57,7 @@
 ## 2026-03-03 - Segmented Control Accessibility
 **Learning:** Groups of buttons that act as mutually exclusive options (like "Task Type: Task | Reminder | Event") are often implemented as sibling buttons, which fails to convey their relationship or selected state to screen readers.
 **Action:** Wrap the button group in `role="radiogroup"` with an accessible label, and use `role="radio"` with `aria-checked` on the individual buttons to properly communicate the selection semantics.
+
+## 2026-03-04 - Invisible Progress Bars
+**Learning:** Progress bars implemented as purely visual `div`s with width percentages are invisible to screen readers, leaving users unaware of completion status.
+**Action:** Use `role="progressbar"` with `aria-valuenow`, `aria-valuemin`, and `aria-valuemax` on the container. Add an `aria-label` describing what is being measured (e.g., "Task progress").
