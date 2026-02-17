@@ -3,8 +3,8 @@ import { createClient } from "npm:@supabase/supabase-js@2.45.4"
 import { GoogleGenerativeAI } from "npm:@google/generative-ai@^0.21.0"
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Vary': 'Origin',
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
   'X-XSS-Protection': '1; mode=block',
@@ -148,8 +148,23 @@ Output Format (JSON array):
 `;
 
 serve(async (req) => {
+  // 🛡️ SECURITY: Dynamic CORS to allow only specific origins
+  const origin = req.headers.get("Origin") || "";
+  const allowedOrigins = [
+    Deno.env.get("APP_URL"),
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+  ].filter(Boolean);
+
+  // Strictly check origin. Default to first allowed if match, else null (block)
+  // We default to the first allowed origin if no match found, which effectively blocks
+  // the browser from reading the response if the origin doesn't match what the server sends back.
+  const allowOrigin = allowedOrigins.includes(origin) ? origin : (allowedOrigins[0] || "http://localhost:3000");
+
+  const headers = { ...corsHeaders, "Access-Control-Allow-Origin": allowOrigin };
+
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers })
   }
 
   try {
@@ -169,7 +184,7 @@ serve(async (req) => {
     if (authError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...headers, 'Content-Type': 'application/json' },
       })
     }
 
@@ -262,14 +277,14 @@ serve(async (req) => {
         // Fail securely: if rate limiting is unavailable, prevent potential abuse of expensive API
         return new Response(
             JSON.stringify({ error: 'Service temporarily unavailable. Please try again later.' }),
-            { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 503, headers: { ...headers, "Content-Type": "application/json" } }
         )
     }
 
     if (typeof currentCount === 'number' && currentCount > MAX_REQUESTS) {
         return new Response(
             JSON.stringify({ error: 'Too many requests. Please try again later.' }),
-            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 429, headers: { ...headers, "Content-Type": "application/json" } }
         )
     }
 
@@ -432,7 +447,7 @@ Return ONLY a JSON object (no markdown, no explanation):
     }
 
     return new Response(JSON.stringify({ text: responseText }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...headers, 'Content-Type': 'application/json' },
     })
 
   } catch (err) {
@@ -470,7 +485,7 @@ Return ONLY a JSON object (no markdown, no explanation):
       code: error.code || 'UNKNOWN_ERROR'
     }), {
       status: statusCode,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...headers, 'Content-Type': 'application/json' },
     })
   }
 })
