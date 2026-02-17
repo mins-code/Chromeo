@@ -561,7 +561,12 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+      <div
+        className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar"
+        role="log"
+        aria-live="polite"
+        aria-atomic="false"
+      >
         {messages.length === 1 && (
           <div className="mb-4 flex flex-wrap gap-2">
             {SUGGESTED_PROMPTS.map((prompt, idx) => (
@@ -590,7 +595,7 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
           />
         ))}
         {isLoading && (
-          <div className="flex items-center gap-3 ml-14 animate-slide-up">
+          <div className="flex items-center gap-3 ml-14 animate-slide-up" role="status">
             <div className="w-8 h-8 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
             <span className="text-sm text-slate-500 dark:text-slate-400 animate-pulse">AI is thinking...</span>
           </div>
@@ -662,7 +667,7 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
           </div>
         )}
         {input.length > 400 && (
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-right">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-right" aria-live="polite">
             {500 - input.length} characters remaining
           </p>
         )}
