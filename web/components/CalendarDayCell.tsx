@@ -12,9 +12,10 @@ interface CalendarDayCellProps {
   financialItems?: RecurringTransaction[];
   isToday: boolean;
   onClick: () => void;
+  taskDatesMap?: Map<string, { start: Date; end?: Date }>;
 }
 
-const CalendarDayCell = memo(({ day, date, tasks, financialItems = [], isToday, onClick }: CalendarDayCellProps) => {
+const CalendarDayCell = memo(({ day, date, tasks, financialItems = [], isToday, onClick, taskDatesMap }: CalendarDayCellProps) => {
   const [showFinancialPopup, setShowFinancialPopup] = useState(false);
 
   // ⚡ Bolt Optimization: Calculate dates once per render instead of inside the task loop
@@ -73,8 +74,14 @@ const CalendarDayCell = memo(({ day, date, tasks, financialItems = [], isToday, 
               // If recurring, check if this date is the most recent/relevant occurrence
               let isMostRecentOccurrence = true;
               if (isRecurring && date && (task.dueDate || task.reminderTime)) {
-                const taskDateStr = (task.dueDate || task.reminderTime) as string;
-                const taskDate = new Date(taskDateStr);
+                let taskDate: Date;
+                // ⚡ Bolt Optimization: Use pre-parsed date from map if available
+                if (taskDatesMap?.has(task.id)) {
+                  taskDate = taskDatesMap.get(task.id)!.start;
+                } else {
+                  const taskDateStr = (task.dueDate || task.reminderTime) as string;
+                  taskDate = new Date(taskDateStr);
+                }
                 
                 // Calculate days from today for the task's original date
                 // ⚡ Optimization: Use differenceInCalendarDays to avoid creating intermediate Date objects

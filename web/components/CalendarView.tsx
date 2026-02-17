@@ -780,6 +780,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                     financialItems={cell.financialItems || []}
                                     isToday={cell.date?.toDateString() === todayStr}
                                     onClick={() => cell.date && handleDayClick(cell.date)}
+                                    taskDatesMap={taskDatesMap}
                                 />
                             ))}
                         </div>
