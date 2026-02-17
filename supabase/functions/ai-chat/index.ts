@@ -300,6 +300,11 @@ serve(async (req) => {
       throw new Error(`Message exceeds maximum length of ${MAX_MESSAGE_LENGTH} characters`);
     }
 
+    // 🛡️ SECURITY: Sanitize the main message input to prevent prompt injection and control character attacks
+    // We allow newlines because chat messages and task descriptions often contain them.
+    // However, sanitizeInput() still strips other control characters and normalizes quotes.
+    const cleanMessage = message ? sanitizeInput(message, MAX_MESSAGE_LENGTH, true) : "";
+
     if (image) {
       // Validate base64 image size (rough estimate: base64 is ~1.37x original size)
       const estimatedSize = (image.length * 3) / 4;
@@ -412,7 +417,7 @@ Return ONLY a JSON object (no markdown, no explanation):
         history: filteredHistory,
       })
 
-      const result = await chat.sendMessage(message)
+      const result = await chat.sendMessage(cleanMessage)
       responseText = result.response.text()
 
     } else if (mode === 'parse-image' && image) {
@@ -430,7 +435,7 @@ Return ONLY a JSON object (no markdown, no explanation):
             data: image
           }
         },
-        { text: message || "Extract all transactions from this image." }
+        { text: cleanMessage || "Extract all transactions from this image." }
       ])
       responseText = result.response.text()
 
@@ -442,7 +447,7 @@ Return ONLY a JSON object (no markdown, no explanation):
         generationConfig: { responseMimeType: "application/json" }
       })
 
-      const result = await model.generateContent(message)
+      const result = await model.generateContent(cleanMessage)
       responseText = result.response.text()
     }
 
