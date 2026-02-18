@@ -60,6 +60,24 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // Handle Escape key to close modals
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                if (selectedGoogleEvent) {
+                    setSelectedGoogleEvent(null);
+                } else if (selectedDate) {
+                    setSelectedDate(null);
+                }
+            }
+        };
+
+        if (selectedDate || selectedGoogleEvent) {
+            window.addEventListener('keydown', handleKeyDown);
+        }
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [selectedDate, selectedGoogleEvent]);
+
 
     const currentMonth = useMemo(() => new Date(currentDate.getFullYear(), currentDate.getMonth(), 1), [currentDate]);
 
@@ -870,7 +888,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                                 )}
                                                 
                                                 {/* Task Content */}
-                                                <div className="flex-1 min-w-0" onClick={() => onEditTask(task)}>
+                                                <button
+                                                    type="button"
+                                                    className="flex-1 min-w-0 text-left focus:outline-none focus:ring-2 focus:ring-brand-500 rounded-sm"
+                                                    onClick={() => onEditTask(task)}
+                                                >
                                                     <h4 className={`font-semibold text-sm ${isDone ? 'line-through text-slate-400 dark:text-slate-500' : ''}`}>{task.title}</h4>
                                                     <div className="flex items-center gap-3 text-xs opacity-75 mt-1">
                                                         {task.reminderTime && (
@@ -888,7 +910,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                                             <span className="text-emerald-500 font-medium">✓ Done</span>
                                                         )}
                                                     </div>
-                                                </div>
+                                                </button>
                                             </div>
                                         </div>
                                     );
@@ -896,10 +918,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
 
                                 {/* Google Calendar Events */}
                                 {selectedDayGoogleEvents.map(event => (
-                                    <div
+                                    <button
+                                        type="button"
                                         key={event.id}
                                         onClick={() => setSelectedGoogleEvent(event)}
-                                        className="group p-3 rounded-xl border-l-4 border-l-blue-500 cursor-pointer transition-all bg-blue-50 dark:bg-blue-500/10 hover:shadow-md hover:bg-blue-100 dark:hover:bg-blue-500/20"
+                                        className="group w-full text-left p-3 rounded-xl border-l-4 border-l-blue-500 cursor-pointer transition-all bg-blue-50 dark:bg-blue-500/10 hover:shadow-md hover:bg-blue-100 dark:hover:bg-blue-500/20 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     >
                                         <div className="flex items-start gap-3">
                                             {/* Google Icon */}
@@ -926,7 +949,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                             
                                             <ExternalLink size={14} className="text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                         </div>
-                                    </div>
+                                    </button>
                                 ))}
                             </div>
 
