@@ -82,7 +82,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
 
     // ⚡ Bolt Optimization: Pre-parse dates to avoid repeated new Date() calls during navigation/filtering
     const taskDatesMap = useMemo(() => {
-        const map = new Map<string, { start: Date; end?: Date }>();
+        const map = new Map<string, { start: Date; startNormalized: Date; end?: Date }>();
         // Use unfilteredTasks if available, otherwise tasks.
         // This ensures we cover all potential tasks that might be visible.
         (unfilteredTasks || tasks).forEach(task => {
@@ -93,8 +93,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                     dateStr += 'T00:00:00';
                  }
                  const start = new Date(dateStr);
+                 // Pre-calculate midnight normalized date for consistent math without repeated allocations
+                 const startNormalized = new Date(start.getFullYear(), start.getMonth(), start.getDate());
                  const end = task.recurrence?.endDate ? new Date(task.recurrence.endDate) : undefined;
-                 map.set(task.id, { start, end });
+                 map.set(task.id, { start, startNormalized, end });
             }
         });
         return map;
@@ -399,10 +401,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
             // ⚡ Bolt Optimization: Use pre-parsed date
             const dates = taskDatesMap.get(task.id);
             if (!dates) return;
-            const { start: taskDate, end: taskEndDate } = dates;
+            const { start: taskDate, startNormalized, end: taskEndDate } = dates;
 
             // Normalize task start to midnight for consistent math
-            const taskStart = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
+            // ⚡ Bolt Optimization: Use pre-calculated normalized date
+            const taskStart = startNormalized;
 
             // Optimization for non-recurring (O(1) insertion)
             if (!task.recurrence || task.recurrence.frequency === 'none') {
