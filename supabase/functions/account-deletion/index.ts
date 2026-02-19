@@ -179,12 +179,13 @@ serve(async (req) => {
         // If request exists and not expired, inform user
         const expiresAt = new Date(existingRequest.expires_at);
         if (expiresAt > new Date()) {
-          const confirmationUrl = `${appUrl}/confirm-delete?token=${existingRequest.token}`;
+          // 🛡️ SECURITY: Do NOT return the confirmation URL with the hashed token.
+          // The token in DB is hashed, so it's useless for the user anyway.
+          // Returning it would leak the hash.
           return new Response(
             JSON.stringify({ 
               success: false, 
-              message: "A deletion request is already pending. Use the confirmation URL to complete deletion.",
-              confirmationUrl: confirmationUrl, // Return URL directly
+              message: "A deletion request is already pending. Please check your email for the confirmation link.",
               expiresAt: existingRequest.expires_at
             }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" } }

@@ -1,9 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Routine, RoutinePattern, WeekdayPattern, IntervalPattern, CyclePattern, CycleItem } from '../types';
+import {
+  Routine,
+  RoutinePattern,
+  WeekdayPattern,
+  IntervalPattern,
+  CyclePattern,
+  CycleItem,
+} from '../types';
 import Button from './Button';
 import Input from './Input';
 import TimePickerDropdown from './TimePickerDropdown';
-import { X, Plus, Trash2, GripVertical, Clock, Bell, Calendar, Repeat, CheckCircle2 } from 'lucide-react';
+import {
+  X,
+  Plus,
+  Trash2,
+  GripVertical,
+  Clock,
+  Bell,
+  Calendar,
+  Repeat,
+  CheckCircle2,
+} from 'lucide-react';
 import * as RoutineService from '../services/routineService';
 
 interface RoutineEditorProps {
@@ -15,11 +32,27 @@ interface RoutineEditorProps {
 }
 
 const DAY_NAMES = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-const FULL_DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const FULL_DAY_NAMES = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+];
 
 const CYCLE_COLORS = [
-  '#EF4444', '#F97316', '#F59E0B', '#84CC16', '#10B981', 
-  '#06B6D4', '#3B82F6', '#8B5CF6', '#EC4899', '#6B7280'
+  '#EF4444',
+  '#F97316',
+  '#F59E0B',
+  '#84CC16',
+  '#10B981',
+  '#06B6D4',
+  '#3B82F6',
+  '#8B5CF6',
+  '#EC4899',
+  '#6B7280',
 ];
 
 const COLOR_NAMES: Record<string, string> = {
@@ -32,35 +65,43 @@ const COLOR_NAMES: Record<string, string> = {
   '#3B82F6': 'Blue',
   '#8B5CF6': 'Violet',
   '#EC4899': 'Pink',
-  '#6B7280': 'Gray'
+  '#6B7280': 'Gray',
 };
 
-const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose, onSave, onDelete }) => {
+const RoutineEditor: React.FC<RoutineEditorProps> = ({
+  routine,
+  isOpen,
+  onClose,
+  onSave,
+  onDelete,
+}) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [patternType, setPatternType] = useState<'weekday' | 'interval' | 'cycle'>('weekday');
-  
+
   // Weekday pattern state
   const [selectedDays, setSelectedDays] = useState<number[]>([1, 2, 3, 4, 5]);
-  
+
   // Interval pattern state
   const [intervalEvery, setIntervalEvery] = useState(2);
   const [intervalStartDate, setIntervalStartDate] = useState(new Date().toISOString().slice(0, 10));
-  
+
   // Cycle pattern state
   const [cycleItems, setCycleItems] = useState<CycleItem[]>([
     { name: 'Day 1', color: CYCLE_COLORS[0] },
-    { name: 'Day 2', color: CYCLE_COLORS[1] }
+    { name: 'Day 2', color: CYCLE_COLORS[1] },
   ]);
   const [cycleStartDate, setCycleStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [newCycleItemName, setNewCycleItemName] = useState('');
-  
+
   // Time and notification
   const [time, setTime] = useState('09:00');
   const [duration, setDuration] = useState<number | ''>(60);
   const [isActive, setIsActive] = useState(true);
   const [notificationEnabled, setNotificationEnabled] = useState<boolean | undefined>(undefined);
-  const [notificationMinutesBefore, setNotificationMinutesBefore] = useState<number | undefined>(undefined);
+  const [notificationMinutesBefore, setNotificationMinutesBefore] = useState<number | undefined>(
+    undefined
+  );
 
   // Load routine data
   useEffect(() => {
@@ -73,7 +114,7 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
       setIsActive(routine.isActive);
       setNotificationEnabled(routine.notificationEnabled);
       setNotificationMinutesBefore(routine.notificationMinutesBefore);
-      
+
       if (routine.pattern.type === 'weekday') {
         setSelectedDays((routine.pattern as WeekdayPattern).days);
       } else if (routine.pattern.type === 'interval') {
@@ -95,7 +136,7 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
       setIntervalStartDate(new Date().toISOString().slice(0, 10));
       setCycleItems([
         { name: 'Day 1', color: CYCLE_COLORS[0] },
-        { name: 'Day 2', color: CYCLE_COLORS[1] }
+        { name: 'Day 2', color: CYCLE_COLORS[1] },
       ]);
       setCycleStartDate(new Date().toISOString().slice(0, 10));
       setTime('09:00');
@@ -118,17 +159,20 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
   if (!isOpen) return null;
 
   const toggleDay = (day: number) => {
-    setSelectedDays(prev => 
-      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day].sort()
+    setSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort()
     );
   };
 
   const addCycleItem = () => {
     if (newCycleItemName.trim()) {
-      setCycleItems([...cycleItems, { 
-        name: newCycleItemName.trim(), 
-        color: CYCLE_COLORS[cycleItems.length % CYCLE_COLORS.length] 
-      }]);
+      setCycleItems([
+        ...cycleItems,
+        {
+          name: newCycleItemName.trim(),
+          color: CYCLE_COLORS[cycleItems.length % CYCLE_COLORS.length],
+        },
+      ]);
       setNewCycleItemName('');
     }
   };
@@ -138,21 +182,17 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
   };
 
   const updateCycleItemName = (index: number, newName: string) => {
-    setCycleItems(cycleItems.map((item, i) => 
-      i === index ? { ...item, name: newName } : item
-    ));
+    setCycleItems(cycleItems.map((item, i) => (i === index ? { ...item, name: newName } : item)));
   };
 
   const updateCycleItemColor = (index: number, newColor: string) => {
-    setCycleItems(cycleItems.map((item, i) => 
-      i === index ? { ...item, color: newColor } : item
-    ));
+    setCycleItems(cycleItems.map((item, i) => (i === index ? { ...item, color: newColor } : item)));
   };
 
   const applyPreset = (preset: { name: string; pattern: RoutinePattern }) => {
     setName(preset.name);
     setPatternType(preset.pattern.type);
-    
+
     if (preset.pattern.type === 'weekday') {
       setSelectedDays((preset.pattern as WeekdayPattern).days);
     } else if (preset.pattern.type === 'interval') {
@@ -164,25 +204,25 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
 
   const handleSave = () => {
     if (!name.trim()) return;
-    
+
     let pattern: RoutinePattern;
-    
+
     if (patternType === 'weekday') {
       pattern = { type: 'weekday', days: selectedDays };
     } else if (patternType === 'interval') {
-      pattern = { 
-        type: 'interval', 
-        every: intervalEvery, 
-        startDate: new Date(intervalStartDate).toISOString() 
+      pattern = {
+        type: 'interval',
+        every: intervalEvery,
+        startDate: new Date(intervalStartDate).toISOString(),
       };
     } else {
-      pattern = { 
-        type: 'cycle', 
-        items: cycleItems, 
-        startDate: new Date(cycleStartDate).toISOString() 
+      pattern = {
+        type: 'cycle',
+        items: cycleItems,
+        startDate: new Date(cycleStartDate).toISOString(),
       };
     }
-    
+
     const now = new Date().toISOString();
     const routineData: Routine = {
       id: routine?.id || crypto.randomUUID(),
@@ -195,23 +235,25 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
       notificationEnabled,
       notificationMinutesBefore,
       createdAt: routine?.createdAt || now,
-      updatedAt: now
+      updatedAt: now,
     };
-    
+
     onSave(routineData);
     onClose();
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 transition-all duration-300">
-      <div className="absolute inset-0 bg-black/60 dark:bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/60 dark:bg-black/60 backdrop-blur-sm transition-opacity"
+        onClick={onClose}
+      />
       <div
         className="relative glass rounded-2xl w-full max-w-xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl animate-scale-in"
         role="dialog"
         aria-modal="true"
         aria-labelledby="routine-editor-title"
       >
-        
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-white/5 bg-white/50 dark:bg-slate-900/50">
           <div className="flex items-center gap-3">
@@ -223,18 +265,23 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
               {routine ? 'Edit Routine' : 'New Routine'}
             </h2>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5" aria-label="Close editor">
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5"
+            aria-label="Close editor"
+          >
             <X size={20} />
           </button>
         </div>
 
         {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-          
           {/* Presets */}
           {!routine && (
             <div className="space-y-2">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1">Quick Presets</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1">
+                Quick Presets
+              </label>
               <div className="flex flex-wrap gap-2">
                 {RoutineService.PRESET_PATTERNS.slice(0, 4).map((preset) => (
                   <button
@@ -250,42 +297,56 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
           )}
 
           {/* Name */}
-          <Input 
-            label="ROUTINE NAME" 
-            placeholder="E.g. Morning Workout, Work Hours" 
-            value={name} 
-            onChange={e => setName(e.target.value)} 
+          <Input
+            label="ROUTINE NAME"
+            placeholder="E.g. Morning Workout, Work Hours"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             autoFocus
           />
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 ml-1">Description (Optional)</label>
-            <textarea 
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 ml-1">
+              Description (Optional)
+            </label>
+            <textarea
               className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 min-h-[60px] resize-none transition-all hover:border-slate-400 dark:hover:border-slate-500"
               placeholder="What's this routine for?"
               value={description}
-              onChange={e => setDescription(e.target.value)}
+              onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 
           {/* Pattern Type Selector */}
           <div className="space-y-3">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1">Pattern Type</label>
-            <div className="flex bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl p-1">
-              <button 
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1">
+              Pattern Type
+            </label>
+            <div
+              role="radiogroup"
+              aria-label="Pattern Type"
+              className="flex bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl p-1"
+            >
+              <button
+                role="radio"
+                aria-checked={patternType === 'weekday'}
                 onClick={() => setPatternType('weekday')}
                 className={`flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${patternType === 'weekday' ? 'bg-emerald-500 text-white shadow' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
               >
                 Weekdays
               </button>
-              <button 
+              <button
+                role="radio"
+                aria-checked={patternType === 'interval'}
                 onClick={() => setPatternType('interval')}
                 className={`flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${patternType === 'interval' ? 'bg-emerald-500 text-white shadow' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
               >
                 Interval
               </button>
-              <button 
+              <button
+                role="radio"
+                aria-checked={patternType === 'cycle'}
                 onClick={() => setPatternType('cycle')}
                 className={`flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${patternType === 'cycle' ? 'bg-emerald-500 text-white shadow' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
               >
@@ -297,7 +358,9 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
           {/* Weekday Pattern */}
           {patternType === 'weekday' && (
             <div className="bg-slate-50 dark:bg-black/20 p-4 rounded-2xl border border-slate-200 dark:border-white/5 space-y-3">
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">Select Days</label>
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                Select Days
+              </label>
               <div className="flex gap-2">
                 {DAY_NAMES.map((day, index) => (
                   <button
@@ -351,17 +414,19 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
                   min="1"
                   max="365"
                   value={intervalEvery}
-                  onChange={e => setIntervalEvery(parseInt(e.target.value) || 1)}
+                  onChange={(e) => setIntervalEvery(parseInt(e.target.value) || 1)}
                   className="w-20 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-center text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                 />
                 <span className="text-sm text-slate-600 dark:text-slate-300">day(s)</span>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">Starting from</label>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                  Starting from
+                </label>
                 <input
                   type="date"
                   value={intervalStartDate}
-                  onChange={e => setIntervalStartDate(e.target.value)}
+                  onChange={(e) => setIntervalStartDate(e.target.value)}
                   className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 [color-scheme:light] dark:[color-scheme:dark]"
                 />
               </div>
@@ -371,11 +436,16 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
           {/* Cycle Pattern */}
           {patternType === 'cycle' && (
             <div className="bg-slate-50 dark:bg-black/20 p-4 rounded-2xl border border-slate-200 dark:border-white/5 space-y-4">
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">Cycle Items (in order)</label>
-              
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                Cycle Items (in order)
+              </label>
+
               <div className="space-y-2">
                 {cycleItems.map((item, index) => (
-                  <div key={index} className="flex items-center gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg border border-slate-200 dark:border-slate-600">
+                  <div
+                    key={index}
+                    className="flex items-center gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg border border-slate-200 dark:border-slate-600"
+                  >
                     <GripVertical size={14} className="text-slate-400" />
                     <button
                       type="button"
@@ -392,14 +462,18 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
                     <input
                       type="text"
                       value={item.name}
-                      onChange={e => updateCycleItemName(index, e.target.value)}
+                      onChange={(e) => updateCycleItemName(index, e.target.value)}
                       className="flex-1 bg-transparent border-none focus:ring-0 p-0 text-sm text-slate-800 dark:text-slate-200"
                       placeholder="Item name"
                       aria-label={`Name for cycle item ${index + 1}`}
                     />
                     <span className="text-xs text-slate-400">Day {index + 1}</span>
                     {cycleItems.length > 2 && (
-                      <button onClick={() => removeCycleItem(index)} className="text-slate-400 hover:text-red-500 p-1" aria-label="Remove cycle item">
+                      <button
+                        onClick={() => removeCycleItem(index)}
+                        className="text-slate-400 hover:text-red-500 p-1"
+                        aria-label="Remove cycle item"
+                      >
                         <Trash2 size={14} />
                       </button>
                     )}
@@ -411,8 +485,8 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
                 <input
                   type="text"
                   value={newCycleItemName}
-                  onChange={e => setNewCycleItemName(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && addCycleItem()}
+                  onChange={(e) => setNewCycleItemName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addCycleItem()}
                   placeholder="Add cycle item..."
                   className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                 />
@@ -422,11 +496,13 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">Cycle starts from</label>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                  Cycle starts from
+                </label>
                 <input
                   type="date"
                   value={cycleStartDate}
-                  onChange={e => setCycleStartDate(e.target.value)}
+                  onChange={(e) => setCycleStartDate(e.target.value)}
                   className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 [color-scheme:light] dark:[color-scheme:dark]"
                 />
               </div>
@@ -435,19 +511,21 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
               <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
                 <p className="text-xs text-slate-500 mb-2">Quick presets:</p>
                 <div className="flex flex-wrap gap-2">
-                  {RoutineService.PRESET_PATTERNS.filter(p => p.pattern.type === 'cycle').map((preset) => (
-                    <button
-                      key={preset.name}
-                      onClick={() => {
-                        const p = preset.pattern as CyclePattern;
-                        setCycleItems(p.items);
-                        setName(preset.name);
-                      }}
-                      className="px-2 py-1 rounded text-xs font-medium bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
-                    >
-                      {preset.name}
-                    </button>
-                  ))}
+                  {RoutineService.PRESET_PATTERNS.filter((p) => p.pattern.type === 'cycle').map(
+                    (preset) => (
+                      <button
+                        key={preset.name}
+                        onClick={() => {
+                          const p = preset.pattern as CyclePattern;
+                          setCycleItems(p.items);
+                          setName(preset.name);
+                        }}
+                        className="px-2 py-1 rounded text-xs font-medium bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
+                      >
+                        {preset.name}
+                      </button>
+                    )
+                  )}
                 </div>
               </div>
             </div>
@@ -455,11 +533,7 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
 
           {/* Time & Duration */}
           <div className="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-black/20 p-4 rounded-2xl border border-slate-200 dark:border-white/5">
-            <TimePickerDropdown
-              label="Time"
-              value={time}
-              onChange={setTime}
-            />
+            <TimePickerDropdown label="Time" value={time} onChange={setTime} />
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 Duration (min)
@@ -469,7 +543,7 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
                 min="0"
                 placeholder="60"
                 value={duration}
-                onChange={e => setDuration(e.target.value === '' ? '' : parseInt(e.target.value))}
+                onChange={(e) => setDuration(e.target.value === '' ? '' : parseInt(e.target.value))}
                 className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
               />
             </div>
@@ -478,7 +552,10 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
           {/* Active Toggle */}
           <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-black/20 rounded-2xl border border-slate-200 dark:border-white/5">
             <div className="flex items-center gap-3">
-              <CheckCircle2 size={20} className={isActive ? 'text-emerald-500' : 'text-slate-400'} />
+              <CheckCircle2
+                size={20}
+                className={isActive ? 'text-emerald-500' : 'text-slate-400'}
+              />
               <div>
                 <p className="font-medium text-slate-800 dark:text-slate-200">Active</p>
                 <p className="text-xs text-slate-500">Show this routine on calendar</p>
@@ -489,7 +566,9 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
               className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${isActive ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}
               aria-label={isActive ? 'Deactivate routine' : 'Activate routine'}
             >
-              <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${isActive ? 'translate-x-6' : 'translate-x-0'}`} />
+              <div
+                className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${isActive ? 'translate-x-6' : 'translate-x-0'}`}
+              />
             </button>
           </div>
 
@@ -497,32 +576,55 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
           <div className="bg-slate-50 dark:bg-black/20 rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden">
             <div className="flex items-center justify-between p-4">
               <div className="flex items-center gap-3">
-                <Bell size={20} className={notificationEnabled ? 'text-amber-500' : 'text-slate-400'} />
+                <Bell
+                  size={20}
+                  className={notificationEnabled ? 'text-amber-500' : 'text-slate-400'}
+                />
                 <div>
                   <p className="font-medium text-slate-800 dark:text-slate-200">Notification</p>
                   <p className="text-xs text-slate-500">
-                    {notificationEnabled === undefined ? 'Use global settings' :
-                     notificationEnabled ? 'Enabled' : 'Disabled'}
+                    {notificationEnabled === undefined
+                      ? 'Use global settings'
+                      : notificationEnabled
+                        ? 'Enabled'
+                        : 'Disabled'}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => {
-                  const newValue = notificationEnabled === undefined ? true : notificationEnabled === true ? false : undefined;
+                  const newValue =
+                    notificationEnabled === undefined
+                      ? true
+                      : notificationEnabled === true
+                        ? false
+                        : undefined;
                   setNotificationEnabled(newValue);
                 }}
                 className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${
-                  notificationEnabled === true ? 'bg-amber-500' : 
-                  notificationEnabled === false ? 'bg-slate-300 dark:bg-slate-600' :
-                  'bg-gradient-to-r from-slate-300 to-amber-400 dark:from-slate-600 dark:to-amber-500'
+                  notificationEnabled === true
+                    ? 'bg-amber-500'
+                    : notificationEnabled === false
+                      ? 'bg-slate-300 dark:bg-slate-600'
+                      : 'bg-gradient-to-r from-slate-300 to-amber-400 dark:from-slate-600 dark:to-amber-500'
                 }`}
-                aria-label={notificationEnabled === true ? 'Disable notification' : notificationEnabled === false ? 'Use global settings' : 'Enable notification'}
+                aria-label={
+                  notificationEnabled === true
+                    ? 'Disable notification'
+                    : notificationEnabled === false
+                      ? 'Use global settings'
+                      : 'Enable notification'
+                }
               >
-                <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${
-                  notificationEnabled === true ? 'translate-x-6' : 
-                  notificationEnabled === false ? 'translate-x-0' :
-                  'translate-x-3'
-                }`} />
+                <div
+                  className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${
+                    notificationEnabled === true
+                      ? 'translate-x-6'
+                      : notificationEnabled === false
+                        ? 'translate-x-0'
+                        : 'translate-x-3'
+                  }`}
+                />
               </button>
             </div>
 
@@ -546,23 +648,41 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({ routine, isOpen, onClose,
               </div>
             )}
           </div>
-
         </div>
 
         {/* Footer */}
         <div className="p-6 border-t border-slate-200 dark:border-white/5 bg-white/80 dark:bg-slate-900/80 flex justify-between items-center z-10">
           {routine && onDelete ? (
-            <Button variant="danger" size="icon" onClick={() => onDelete(routine.id)} className="bg-red-500/10 hover:bg-red-500/20 text-red-500 dark:text-red-400" aria-label="Delete routine">
+            <Button
+              variant="danger"
+              size="icon"
+              onClick={() => onDelete(routine.id)}
+              className="bg-red-500/10 hover:bg-red-500/20 text-red-500 dark:text-red-400"
+              aria-label="Delete routine"
+            >
               <Trash2 size={18} />
             </Button>
-          ) : <div />}
-          
+          ) : (
+            <div />
+          )}
+
           <div className="flex gap-3">
-            <Button variant="ghost" onClick={onClose} className="hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400">Cancel</Button>
-            <Button variant="primary" onClick={handleSave} className="shadow-lg shadow-emerald-500/25 bg-emerald-500 hover:bg-emerald-600">Save Routine</Button>
+            <Button
+              variant="ghost"
+              onClick={onClose}
+              className="hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleSave}
+              className="shadow-lg shadow-emerald-500/25 bg-emerald-500 hover:bg-emerald-600"
+            >
+              Save Routine
+            </Button>
           </div>
         </div>
-
       </div>
     </div>
   );
