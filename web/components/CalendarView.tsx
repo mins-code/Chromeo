@@ -81,8 +81,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
     }, [customIntervalValue, customIntervalUnit]);
 
     // ⚡ Bolt Optimization: Pre-parse dates to avoid repeated new Date() calls during navigation/filtering
+    // Also store startNormalized (midnight) to prevent creating new Date() objects inside calendarDays loop
     const taskDatesMap = useMemo(() => {
-        const map = new Map<string, { start: Date; end?: Date }>();
+        const map = new Map<string, { start: Date; startNormalized: Date; end?: Date }>();
         // Use unfilteredTasks if available, otherwise tasks.
         // This ensures we cover all potential tasks that might be visible.
         (unfilteredTasks || tasks).forEach(task => {
@@ -93,8 +94,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                     dateStr += 'T00:00:00';
                  }
                  const start = new Date(dateStr);
+                 // ⚡ Optimization: Pre-calculate normalized start (midnight) once here
+                 // instead of recalculating it for every task on every month navigation
+                 const startNormalized = new Date(start.getFullYear(), start.getMonth(), start.getDate());
                  const end = task.recurrence?.endDate ? new Date(task.recurrence.endDate) : undefined;
-                 map.set(task.id, { start, end });
+                 map.set(task.id, { start, startNormalized, end });
             }
         });
         return map;
@@ -399,10 +403,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
             // ⚡ Bolt Optimization: Use pre-parsed date
             const dates = taskDatesMap.get(task.id);
             if (!dates) return;
-            const { start: taskDate, end: taskEndDate } = dates;
+            const { start: taskDate, startNormalized, end: taskEndDate } = dates;
 
-            // Normalize task start to midnight for consistent math
-            const taskStart = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
+            // ⚡ Bolt Optimization: Use cached normalized start date
+            // Avoids calling new Date() for every task when navigating months
+            const taskStart = startNormalized;
 
             // Optimization for non-recurring (O(1) insertion)
             if (!task.recurrence || task.recurrence.frequency === 'none') {
