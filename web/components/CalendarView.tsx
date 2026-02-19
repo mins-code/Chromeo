@@ -112,6 +112,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                     dateStr += 'T00:00:00';
                  }
                  const start = new Date(dateStr);
+                 // Pre-calculate midnight normalized date for consistent math without repeated allocations
                  // ⚡ Optimization: Pre-calculate normalized start (midnight) once here
                  // instead of recalculating it for every task on every month navigation
                  const startNormalized = new Date(start.getFullYear(), start.getMonth(), start.getDate());
@@ -423,6 +424,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
             if (!dates) return;
             const { start: taskDate, startNormalized, end: taskEndDate } = dates;
 
+            // Normalize task start to midnight for consistent math
+            // ⚡ Bolt Optimization: Use pre-calculated normalized date
             // ⚡ Bolt Optimization: Use cached normalized start date
             // Avoids calling new Date() for every task when navigating months
             const taskStart = startNormalized;

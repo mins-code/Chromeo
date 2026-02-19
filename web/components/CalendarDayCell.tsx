@@ -12,7 +12,7 @@ interface CalendarDayCellProps {
   financialItems?: RecurringTransaction[];
   isToday: boolean;
   onClick: () => void;
-  taskDatesMap?: Map<string, { start: Date; end?: Date }>;
+  taskDatesMap?: Map<string, { start: Date; startNormalized: Date; end?: Date }>;
 }
 
 const CalendarDayCell = memo(({ day, date, tasks, financialItems = [], isToday, onClick, taskDatesMap }: CalendarDayCellProps) => {
