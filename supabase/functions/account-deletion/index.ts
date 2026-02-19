@@ -179,11 +179,9 @@ serve(async (req) => {
         // If request exists and not expired, inform user
         const expiresAt = new Date(existingRequest.expires_at);
         if (expiresAt > new Date()) {
-          // 🛡️ SECURITY: Do NOT return the confirmation URL to the client.
-          // This prevents information leakage and potential bypass if the token logic were different.
-          // The user must check their email.
-          console.log(`Pending deletion request found. Token hash: ${existingRequest.token.substring(0, 10)}...`);
-
+          // 🛡️ SECURITY: Do NOT return the confirmation URL with the hashed token.
+          // The token in DB is hashed, so it's useless for the user anyway.
+          // Returning it would leak the hash.
           return new Response(
             JSON.stringify({ 
               success: false, 
