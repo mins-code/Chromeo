@@ -88,3 +88,8 @@
 **Prevention:**
 1. Prefer using a user-scoped client (passed with the user's JWT) for user-initiated actions so RLS policies are enforced.
 2. If a Service Role client is necessary, explicitly query and verify ownership of the resource (`user_id` match) before performing updates or deletes.
+
+## 2026-01-29 - Account Deletion Token Leak in Pending Request
+**Vulnerability:** When a user with a pending account deletion request tried to request deletion again, the API returned the existing confirmation token (hash) and constructed URL in the JSON response.
+**Learning:** Inconsistent security logic across different states of the same workflow (new request vs. pending request) can leave gaps. Developers might secure the "happy path" but forget edge cases.
+**Prevention:** Ensure that sensitive data (tokens, secrets) is NEVER returned to the client in any state. Audit all exit points of an API function, not just the main success path.
