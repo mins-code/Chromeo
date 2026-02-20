@@ -1,13 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { Transaction, TRANSACTION_CATEGORIES } from '../types';
-import { ArrowUpRight, ArrowDownLeft, Calendar, Search, Edit2, Trash2, Check, X, Repeat, ChevronLeft, ChevronRight, Tag } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Calendar, Search, Edit2, Trash2, Check, X, Repeat, ChevronLeft, ChevronRight, Tag, Receipt, SearchX } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, addWeeks, subWeeks, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { logger } from '../utils/logger';
 
 interface TransactionListProps {
     transactions: Transaction[];
     className?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onEdit?: (params: { id: string; description: string; amount: number; type: 'income' | 'expense'; category?: string }) => Promise<any>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onDelete?: (id: string) => Promise<any>;
 }
 
@@ -107,9 +109,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
         }
     };
 
-    if (!transactions.length) {
-        return null;
-    }
+    // Removed early return to keep UI persistent
 
     return (
         <div className={`glass-panel p-6 rounded-3xl space-y-4 ${className}`}>
@@ -174,8 +174,26 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
 
             <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {filteredTransactions.length === 0 ? (
-                    <div className="text-center py-8 text-slate-400 text-sm">
-                        No transactions found
+                    <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                        {transactions.length === 0 ? (
+                            <>
+                                <Receipt size={48} className="mb-4 opacity-20" />
+                                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No transactions yet</p>
+                                <p className="text-xs opacity-75 mt-1">Start logging your expenses above</p>
+                            </>
+                        ) : searchTerm ? (
+                            <>
+                                <SearchX size={48} className="mb-4 opacity-20" />
+                                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No matching transactions</p>
+                                <p className="text-xs opacity-75 mt-1">Try adjusting your filters or search term</p>
+                            </>
+                        ) : (
+                            <>
+                                <Calendar size={48} className="mb-4 opacity-20" />
+                                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No transactions in this period</p>
+                                <p className="text-xs opacity-75 mt-1">Try selecting a different date range</p>
+                            </>
+                        )}
                     </div>
                 ) : (
                     filteredTransactions.map((t) => {
