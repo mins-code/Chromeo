@@ -93,3 +93,11 @@
 **Vulnerability:** When a user with a pending account deletion request tried to request deletion again, the API returned the existing confirmation token (hash) and constructed URL in the JSON response.
 **Learning:** Inconsistent security logic across different states of the same workflow (new request vs. pending request) can leave gaps. Developers might secure the "happy path" but forget edge cases.
 **Prevention:** Ensure that sensitive data (tokens, secrets) is NEVER returned to the client in any state. Audit all exit points of an API function, not just the main success path.
+
+## 2026-01-30 - DoS and Data Integrity in Batch Processing
+**Vulnerability:** The `process-recurring` function iterated over recurring items without a try/catch block for individual items. A single malformed record (e.g., invalid date) would crash the entire function (DoS). Additionally, the logic updated the "next due date" *after* insertion without checking for errors; if the update failed, the next run would duplicate the insertion (Infinite Loop).
+**Learning:** Batch processing systems must be resilient to partial failures ("Poison Pills"). Also, when "check-then-act" or "insert-then-update" patterns are used without database transactions, the code must handle the "middle state" failure scenario explicitly.
+**Prevention:**
+1. Wrap each item in a loop with its own `try/catch` block.
+2. Calculate derived values (like dates) *before* performing any side effects (inserts).
+3. Explicitly handle errors in secondary operations (updates) and log them as critical integrity risks.
