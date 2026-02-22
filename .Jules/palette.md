@@ -61,3 +61,7 @@
 ## 2026-03-04 - Invisible Progress Bars
 **Learning:** Progress bars implemented as purely visual `div`s with width percentages are invisible to screen readers, leaving users unaware of completion status.
 **Action:** Use `role="progressbar"` with `aria-valuenow`, `aria-valuemin`, and `aria-valuemax` on the container. Add an `aria-label` describing what is being measured (e.g., "Task progress").
+
+## 2026-03-07 - Modal Input Labeling
+**Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
+**Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
