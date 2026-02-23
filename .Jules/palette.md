@@ -61,3 +61,7 @@
 ## 2026-03-04 - Invisible Progress Bars
 **Learning:** Progress bars implemented as purely visual `div`s with width percentages are invisible to screen readers, leaving users unaware of completion status.
 **Action:** Use `role="progressbar"` with `aria-valuenow`, `aria-valuemin`, and `aria-valuemax` on the container. Add an `aria-label` describing what is being measured (e.g., "Task progress").
+
+## 2026-03-05 - Segmented Control ARIA
+**Learning:** Segmented controls (e.g., "View Mode: Month | Week | Day") implemented as buttons often lack semantic structure, leaving screen readers unaware of the relationship or selected state.
+**Action:** Wrap the button group in `role="radiogroup"` with an accessible label, and use `role="radio"` with `aria-checked` on the individual buttons to properly communicate the selection semantics. Ideally, implement arrow key navigation, but even without it, the semantic roles provide significant value.
