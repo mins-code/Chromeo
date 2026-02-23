@@ -20,3 +20,7 @@
 ## 2026-02-14 - Recurrence Calculation Accuracy vs Performance
 **Learning:** Using simple math (e.g. `Math.ceil(diff / 24h)`) for date recurrence is fast but error-prone (e.g. DST transitions or same-day time differences), leading to bugs where tasks don't appear. `date-fns` `differenceInCalendarDays` is robust but slightly slower.
 **Action:** Prioritize correctness for core logic like calendar recurrence. Mitigate performance cost by optimizing the algorithm structure (e.g., "jumping" to valid days using `addDays` instead of iterating every day) rather than using unsafe micro-optimizations.
+
+## 2026-03-01 - Optimizing Date Formatting in Lists
+**Learning:** `new Date().toLocaleDateString()` and `toLocaleTimeString()` are significantly slower (6.3x in benchmark) than `date-fns` `format()` for standard formats, due to `Intl` overhead and object creation. In long lists like `TransactionList`, this adds up to measurable lag.
+**Action:** Prefer `date-fns` `format` for list items where locale-specific flexibility is not critical, or cache `Intl` formatters if locale support is needed.
