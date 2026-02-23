@@ -100,9 +100,24 @@ serve(async (req) => {
         if (url.protocol !== 'https:') {
             throw new AppError("Endpoint must be HTTPS");
         }
-        // Block potentially dangerous local endpoints (Defense in Depth)
+
+        // STRICT WHITELIST for Push Service Domains
+        // We only allow known, trusted push notification services.
+        // This prevents SSRF attacks against internal networks (0.0.0.0, 169.254.x.x, etc.)
+        const allowedSuffixes = [
+            '.googleapis.com', // FCM (Chrome, Android, Samsung)
+            '.push.services.mozilla.com', // Firefox
+            '.notify.windows.com', // Edge
+            '.push.apple.com' // Safari
+        ];
+
         const hostname = url.hostname;
-        if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]' || hostname.startsWith('192.168.') || hostname.startsWith('10.')) {
+        const isAllowed = allowedSuffixes.some(suffix =>
+            hostname.endsWith(suffix) || hostname === suffix.slice(1)
+        );
+
+        if (!isAllowed) {
+            console.warn(`Blocked suspicious push endpoint: ${hostname}`);
             throw new AppError("Invalid endpoint domain");
         }
       } catch (e) {
