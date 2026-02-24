@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Transaction, TRANSACTION_CATEGORIES } from '../types';
-import { ArrowUpRight, ArrowDownLeft, Calendar, Search, Edit2, Trash2, Check, X, Repeat, ChevronLeft, ChevronRight, Tag, Receipt, SearchX } from 'lucide-react';
+import { Transaction } from '../types';
+import { Calendar, Search, ChevronLeft, ChevronRight, Receipt, SearchX } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, addWeeks, subWeeks, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { logger } from '../utils/logger';
 import TransactionItem from './TransactionItem';
+import TransactionEditRow from './TransactionEditRow';
 
 interface TransactionListProps {
     transactions: Transaction[];
@@ -17,10 +18,6 @@ interface TransactionListProps {
 const TransactionList: React.FC<TransactionListProps> = ({ transactions, className = '', onEdit, onDelete }) => {
     const [searchTerm, setSearchTerm] = React.useState('');
     const [editingId, setEditingId] = useState<string | null>(null);
-    const [editDesc, setEditDesc] = useState('');
-    const [editAmount, setEditAmount] = useState('');
-    const [editType, setEditType] = useState<'income' | 'expense'>('expense');
-    const [editCategory, setEditCategory] = useState<string>('Uncategorized');
 
     const [viewMode, setViewMode] = useState<'all' | 'month' | 'week'>('month');
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -65,37 +62,14 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
 
     const startEdit = useCallback((transaction: Transaction) => {
         setEditingId(transaction.id);
-        setEditDesc(transaction.description);
-        setEditAmount(transaction.amount.toString());
-        setEditType(transaction.type);
-        setEditCategory(transaction.category || 'Uncategorized');
     }, []);
 
-    const cancelEdit = () => {
-        setEditingId(null);
-        setEditDesc('');
-        setEditAmount('');
-        setEditType('expense');
-        setEditCategory('Uncategorized');
-    };
-
-    const saveEdit = async (id: string) => {
+    const handleSave = useCallback(async (id: string, updates: { description: string; amount: number; type: 'income' | 'expense'; category?: string }) => {
         if (!onEdit) return;
-        
-        const amount = parseFloat(editAmount);
-        if (!editDesc.trim() || isNaN(amount) || amount <= 0) {
-            alert('Please enter valid description and amount');
-            return;
-        }
-
-        try {
-            await onEdit({ id, description: editDesc, amount, type: editType, category: editCategory });
-            cancelEdit();
-        } catch (error) {
-            logger.error('Failed to update transaction', error as Error);
-            alert('Failed to update transaction');
-        }
-    };
+        // Let the child component handle the error to update its UI state
+        await onEdit({ id, ...updates });
+        setEditingId(null);
+    }, [onEdit]);
 
     const handleDelete = useCallback(async (id: string) => {
         if (!onDelete) return;
@@ -201,80 +175,23 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                         const isEditing = editingId === t.id;
 
                         return (
-                            <div key={t.id} className={`p-3 rounded-xl border transition-colors group ${
-                                isEditing 
-                                    ? 'bg-brand-500/5 border-brand-500/30' 
-                                    : 'bg-slate-50/50 dark:bg-white/5 border-slate-100 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/10'
-                            }`}>
+                            <div key={t.id}>
                                 {isEditing ? (
-                                    /* Edit Mode - Mobile Friendly Vertical Layout */
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-3">
-                                            <button
-                                                onClick={() => setEditType(editType === 'expense' ? 'income' : 'expense')}
-                                                className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${
-                                                    editType === 'income' 
-                                                        ? 'bg-emerald-500/10 text-emerald-500' 
-                                                        : 'bg-red-500/10 text-red-500'
-                                                }`}
-                                                title="Toggle type"
-                                                aria-label={editType === 'income' ? 'Switch to expense' : 'Switch to income'}
-                                            >
-                                                {editType === 'income' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
-                                            </button>
-                                            <input
-                                                type="text"
-                                                value={editDesc}
-                                                onChange={(e) => setEditDesc(e.target.value)}
-                                                className="flex-1 min-w-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
-                                                placeholder="Description"
-                                            />
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <select
-                                                value={editCategory}
-                                                onChange={(e) => setEditCategory(e.target.value)}
-                                                className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
-                                            >
-                                                {TRANSACTION_CATEGORIES.map((cat) => (
-                                                    <option key={cat} value={cat}>{cat}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                type="number"
-                                                value={editAmount}
-                                                onChange={(e) => setEditAmount(e.target.value)}
-                                                className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
-                                                placeholder="Amount"
-                                            />
-                                            <button
-                                                onClick={() => saveEdit(t.id)}
-                                                className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors"
-                                                title="Save"
-                                                aria-label="Save changes"
-                                            >
-                                                <Check size={18} />
-                                            </button>
-                                            <button
-                                                onClick={cancelEdit}
-                                                className="p-2.5 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
-                                                title="Cancel"
-                                                aria-label="Cancel editing"
-                                            >
-                                                <X size={18} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <TransactionItem
+                                    <TransactionEditRow
                                         transaction={t}
-                                        onEdit={startEdit}
-                                        onDelete={handleDelete}
-                                        canEdit={!!onEdit}
-                                        canDelete={!!onDelete}
+                                        onSave={(updates) => handleSave(t.id, updates)}
+                                        onCancel={() => setEditingId(null)}
                                     />
+                                ) : (
+                                    <div className="bg-slate-50/50 dark:bg-white/5 border-slate-100 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/10 p-3 rounded-xl border transition-colors group">
+                                        <TransactionItem
+                                            transaction={t}
+                                            onEdit={startEdit}
+                                            onDelete={handleDelete}
+                                            canEdit={!!onEdit}
+                                            canDelete={!!onDelete}
+                                        />
+                                    </div>
                                 )}
                             </div>
                         );
