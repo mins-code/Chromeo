@@ -101,3 +101,8 @@
 1. Wrap each item in a loop with its own `try/catch` block.
 2. Calculate derived values (like dates) *before* performing any side effects (inserts).
 3. Explicitly handle errors in secondary operations (updates) and log them as critical integrity risks.
+
+## 2026-02-01 - SSRF Protection via Domain Whitelisting
+**Vulnerability:** The `push-notification` function relied on a blacklist to prevent Server-Side Request Forgery (SSRF), blocking `localhost` and some private IPs. This allowed attackers to potentially target other internal services or arbitrary external endpoints by using unblocked private ranges or DNS rebinding.
+**Learning:** Blacklists are inherently incomplete. Security controls based on "what is known bad" often fail against novel or obscure vectors.
+**Prevention:** Use a whitelist of "known good" values whenever possible. For Web Push, restricting endpoints to a small list of trusted browser vendors (Google, Mozilla, Apple, Microsoft) eliminates the risk of SSRF without compromising functionality.

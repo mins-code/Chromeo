@@ -100,8 +100,29 @@ serve(async (req) => {
         if (url.protocol !== 'https:') {
             throw new AppError("Endpoint must be HTTPS");
         }
-        // Block potentially dangerous local endpoints (Defense in Depth)
+
         const hostname = url.hostname;
+
+        // Whitelist of trusted push service providers (Google, Mozilla, Apple, Microsoft)
+        // We only allow endpoints from known major browser vendors to prevent SSRF
+        const allowedDomains = [
+            '.googleapis.com',
+            '.google.com',
+            '.push.services.mozilla.com',
+            '.push.apple.com',
+            '.notify.windows.com'
+        ];
+
+        const isTrusted = allowedDomains.some(domain =>
+            hostname.endsWith(domain) || hostname === domain.substring(1)
+        );
+
+        if (!isTrusted) {
+            console.error(`Blocked untrusted push endpoint: ${hostname}`);
+            throw new AppError("Untrusted push service provider");
+        }
+
+        // Block potentially dangerous local endpoints (Defense in Depth - redundant with whitelist but good practice)
         if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]' || hostname.startsWith('192.168.') || hostname.startsWith('10.')) {
             throw new AppError("Invalid endpoint domain");
         }
