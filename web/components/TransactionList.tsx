@@ -161,14 +161,24 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                     )}
                     
                     <div className={`relative ${viewMode === 'all' ? 'w-full' : 'flex-1 min-w-[150px]'}`}>
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
                         <input 
                             type="text" 
-                            placeholder="Search transactions..." 
+                            placeholder="Search transactions..."
+                            aria-label="Search transactions"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="bg-slate-100 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-full pl-9 pr-4 py-1.5 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500/50 w-full"
+                            className={`bg-slate-100 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-full pl-9 ${searchTerm ? 'pr-9' : 'pr-4'} py-1.5 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500/50 w-full transition-all`}
                         />
+                        {searchTerm && (
+                            <button
+                                onClick={() => setSearchTerm('')}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+                                aria-label="Clear search"
+                            >
+                                <X size={14} />
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
