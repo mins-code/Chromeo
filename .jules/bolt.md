@@ -20,3 +20,7 @@
 ## 2026-02-14 - Recurrence Calculation Accuracy vs Performance
 **Learning:** Using simple math (e.g. `Math.ceil(diff / 24h)`) for date recurrence is fast but error-prone (e.g. DST transitions or same-day time differences), leading to bugs where tasks don't appear. `date-fns` `differenceInCalendarDays` is robust but slightly slower.
 **Action:** Prioritize correctness for core logic like calendar recurrence. Mitigate performance cost by optimizing the algorithm structure (e.g., "jumping" to valid days using `addDays` instead of iterating every day) rather than using unsafe micro-optimizations.
+
+## 2026-02-17 - Inline Edit Form Performance
+**Learning:** Storing form state (e.g. `editDesc`, `editAmount`) in a parent list component triggers a re-render of the entire list (and all children) on every keystroke. This O(N) re-render cost makes typing laggy in large lists.
+**Action:** Extract the edit form into a separate component (`TransactionEditRow`) that manages its own local state. The parent list only tracks *which* item is being edited, so typing only re-renders the single row being modified.
