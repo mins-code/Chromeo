@@ -61,3 +61,7 @@
 ## 2026-03-04 - Invisible Progress Bars
 **Learning:** Progress bars implemented as purely visual `div`s with width percentages are invisible to screen readers, leaving users unaware of completion status.
 **Action:** Use `role="progressbar"` with `aria-valuenow`, `aria-valuemin`, and `aria-valuemax` on the container. Add an `aria-label` describing what is being measured (e.g., "Task progress").
+
+## 2026-03-05 - Search Input Accessibility
+**Learning:** Search inputs often rely on placeholders for labeling, which is insufficient for accessibility. Decorative search icons can also add noise if not hidden.
+**Action:** Always add `aria-label` to search inputs. Mark decorative icons with `aria-hidden="true"`. Implement clear buttons as interactive elements (`<button>`) with proper labels, not just clickable icons.
