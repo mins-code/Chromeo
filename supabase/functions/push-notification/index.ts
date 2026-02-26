@@ -194,19 +194,27 @@ serve(async (req) => {
         throw new AppError("Missing required fields for scheduling");
       }
 
-      // 🛡️ SECURITY: Prevent IDOR - Check if this task ID is already scheduled by another user
-      // Since 'task_id' is UNIQUE, upserting would overwrite the existing owner's notification
+      // 🛡️ SECURITY: Prevent IDOR - Verify task ownership
+      // We must ensure the task actually belongs to the user requesting the notification
       if (taskId) {
-        const { data: existing } = await supabase
-          .from("scheduled_notifications")
+        const { data: task, error: taskError } = await supabase
+          .from("tasks")
           .select("user_id")
-          .eq("task_id", taskId)
+          .eq("id", taskId)
           .single();
 
-        if (existing && existing.user_id !== userId) {
-          console.error(`IDOR Attempt: User ${userId} tried to overwrite notification for task ${taskId} owned by ${existing.user_id}`);
-          throw new AppError("You do not have permission to modify this notification", 403);
+        if (taskError || !task) {
+           throw new AppError("Task not found", 404);
         }
+
+        if (task.user_id !== userId) {
+           console.error(`IDOR Attempt: User ${userId} tried to schedule notification for task ${taskId} owned by ${task.user_id}`);
+           throw new AppError("You do not have permission to schedule notifications for this task", 403);
+        }
+
+        // Note: We don't need to check scheduled_notifications ownership because
+        // if the user owns the task, they have the right to overwrite any existing notification
+        // (even if it was created by an attacker exploiting the previous vulnerability).
       }
 
       const { error } = await supabase
