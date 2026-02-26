@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Transaction } from '../types';
-import { Calendar, Search, ChevronLeft, ChevronRight, Receipt, SearchX } from 'lucide-react';
+import { Transaction, TRANSACTION_CATEGORIES } from '../types';
+import { ArrowUpRight, ArrowDownLeft, Calendar, Search, Check, X, ChevronLeft, ChevronRight, Receipt, SearchX } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, addWeeks, subWeeks, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { logger } from '../utils/logger';
 import TransactionItem from './TransactionItem';
@@ -16,7 +16,7 @@ interface TransactionListProps {
 }
 
 const TransactionList: React.FC<TransactionListProps> = ({ transactions, className = '', onEdit, onDelete }) => {
-    const [searchTerm, setSearchTerm] = React.useState('');
+    const [searchTerm, setSearchTerm] = useState('');
     const [editingId, setEditingId] = useState<string | null>(null);
 
     const [viewMode, setViewMode] = useState<'all' | 'month' | 'week'>('month');
@@ -142,19 +142,19 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                     )}
                     
                     <div className={`relative ${viewMode === 'all' ? 'w-full' : 'flex-1 min-w-[150px]'}`}>
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                        <Search size={14} aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input 
                             type="text" 
-                            placeholder="Search transactions..."
+                            placeholder="Search transactions..." 
                             aria-label="Search transactions"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className={`bg-slate-100 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-full pl-9 ${searchTerm ? 'pr-9' : 'pr-4'} py-1.5 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500/50 w-full transition-all`}
+                            className={`bg-slate-100 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-full pl-9 py-1.5 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500/50 w-full transition-all ${searchTerm ? 'pr-9' : 'pr-4'}`}
                         />
                         {searchTerm && (
                             <button
                                 onClick={() => setSearchTerm('')}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
                                 aria-label="Clear search"
                             >
                                 <X size={14} />
