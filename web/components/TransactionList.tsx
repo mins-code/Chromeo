@@ -16,7 +16,7 @@ interface TransactionListProps {
 }
 
 const TransactionList: React.FC<TransactionListProps> = ({ transactions, className = '', onEdit, onDelete }) => {
-    const [searchTerm, setSearchTerm] = React.useState('');
+    const [searchTerm, setSearchTerm] = useState('');
     const [editingId, setEditingId] = useState<string | null>(null);
 
     const [viewMode, setViewMode] = useState<'all' | 'month' | 'week'>('month');
@@ -64,17 +64,12 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
         setEditingId(transaction.id);
     }, []);
 
-    const handleSave = async (data: { id: string; description: string; amount: number; type: 'income' | 'expense'; category?: string }) => {
+    const handleSave = useCallback(async (id: string, updates: { description: string; amount: number; type: 'income' | 'expense'; category?: string }) => {
         if (!onEdit) return;
-
-        try {
-            await onEdit(data);
-            setEditingId(null);
-        } catch (error) {
-            logger.error('Failed to update transaction', error as Error);
-            alert('Failed to update transaction');
-        }
-    };
+        // Let the child component handle the error to update its UI state
+        await onEdit({ id, ...updates });
+        setEditingId(null);
+    }, [onEdit]);
 
     const handleDelete = useCallback(async (id: string) => {
         if (!onDelete) return;
@@ -99,10 +94,17 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                         <Calendar size={14} />
                         Transactions History
                     </h3>
-                    <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-lg">
+                <div
+                    className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-lg"
+                    role="radiogroup"
+                    aria-label="Transaction view mode"
+                >
                         {(['all', 'month', 'week'] as const).map((mode) => (
                             <button
                                 key={mode}
+                            type="button"
+                            role="radio"
+                            aria-checked={viewMode === mode}
                                 onClick={() => setViewMode(mode)}
                                 className={`px-3 py-1 text-xs rounded-md capitalize transition-colors ${
                                     viewMode === mode
@@ -140,14 +142,24 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                     )}
                     
                     <div className={`relative ${viewMode === 'all' ? 'w-full' : 'flex-1 min-w-[150px]'}`}>
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Search size={14} aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input 
                             type="text" 
                             placeholder="Search transactions..." 
+                            aria-label="Search transactions"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="bg-slate-100 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-full pl-9 pr-4 py-1.5 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500/50 w-full"
+                            className={`bg-slate-100 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-full pl-9 py-1.5 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500/50 w-full transition-all ${searchTerm ? 'pr-9' : 'pr-4'}`}
                         />
+                        {searchTerm && (
+                            <button
+                                onClick={() => setSearchTerm('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+                                aria-label="Clear search"
+                            >
+                                <X size={14} />
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -180,11 +192,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                         const isEditing = editingId === t.id;
 
                         return (
-                            <div key={t.id} className={`p-3 rounded-xl border transition-colors group ${
-                                isEditing 
-                                    ? 'bg-brand-500/5 border-brand-500/30' 
-                                    : 'bg-slate-50/50 dark:bg-white/5 border-slate-100 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/10'
-                            }`}>
+                            <div key={t.id}>
                                 {isEditing ? (
                                     <TransactionEditRow
                                         transaction={t}
@@ -194,11 +202,19 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                                 ) : (
                                     <TransactionItem
                                         transaction={t}
-                                        onEdit={startEdit}
-                                        onDelete={handleDelete}
-                                        canEdit={!!onEdit}
-                                        canDelete={!!onDelete}
+                                        onSave={(updates) => handleSave(t.id, updates)}
+                                        onCancel={() => setEditingId(null)}
                                     />
+                                ) : (
+                                    <div className="bg-slate-50/50 dark:bg-white/5 border-slate-100 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/10 p-3 rounded-xl border transition-colors group">
+                                        <TransactionItem
+                                            transaction={t}
+                                            onEdit={startEdit}
+                                            onDelete={handleDelete}
+                                            canEdit={!!onEdit}
+                                            canDelete={!!onDelete}
+                                        />
+                                    </div>
                                 )}
                             </div>
                         );

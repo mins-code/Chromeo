@@ -66,7 +66,7 @@
 **Prevention:** Use atomic Database RPC functions (like `increment_rate_limit` with `ON CONFLICT DO UPDATE`) to handle the check-and-increment logic in a single transaction, ensuring strict serialization of counter updates.
 
 ## 2025-05-27 - Loose Token Validation in Edge Functions
-**Vulnerability:** The `notification-scheduler` function allowed any user with a valid JWT to trigger the notification process because it only validated the token format (`startsWith('eyJ')`), not its identity or role.
+**Vulnerability:** The `notification-scheduler` function allowed any user with a valid JWT to trigger the notification process because it only validated the token format (`startsWith('eyJ')`) and used a fallback key from the request if the environment variable wasn't matched.
 **Learning:** Validating that a token *exists* and *looks like* a JWT is not the same as validating *authorization*. Using a fallback like `Deno.env.get('KEY') || token` essentially allows the user-provided token to bypass the requirement for the environment key if the logic isn't strict.
 **Prevention:** For system-only functions, strictly compare `req.headers.get('Authorization')` against `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`. Do not accept user tokens as a fallback.
 ## 2026-01-25 - Notification Scheduler Auth Bypass
@@ -101,3 +101,19 @@
 1. Wrap each item in a loop with its own `try/catch` block.
 2. Calculate derived values (like dates) *before* performing any side effects (inserts).
 3. Explicitly handle errors in secondary operations (updates) and log them as critical integrity risks.
+
+## 2026-02-01 - SSRF Protection via Domain Whitelisting
+**Vulnerability:** The `push-notification` function relied on a blacklist to prevent Server-Side Request Forgery (SSRF), blocking `localhost` and some private IPs. This allowed attackers to potentially target other internal services or arbitrary external endpoints by using unblocked private ranges or DNS rebinding.
+**Learning:** Blacklists are inherently incomplete. Security controls based on "what is known bad" often fail against novel or obscure vectors.
+**Prevention:** Use a whitelist of "known good" values whenever possible. For Web Push, restricting endpoints to a small list of trusted browser vendors (Google, Mozilla, Apple, Microsoft) eliminates the risk of SSRF without compromising functionality.
+## 2025-05-28 - Prompt Injection via Conversation History
+**Vulnerability:** The `ai-chat` Edge Function constructed the conversation history for the LLM by directly trusting the content of previous messages provided by the client. A malicious user could craft a request with a fake "model" message containing instructions to ignore previous rules or reveal secrets, effectively forging the conversation context.
+**Learning:** LLMs treat the entire context window (including "history") as ground truth. If the application blindly trusts the client to provide the history, the client can rewrite the "past" to influence the "future" behavior of the model.
+**Prevention:**
+1. Treat conversation history as untrusted user input.
+2. Sanitize the content of *all* messages in the history, not just the current message.
+3. Ideally, store conversation history on the server and retrieve it by session ID, rather than accepting it from the client (though this requires stateful backend). If client-side history is necessary, it must be strictly validated and sanitized.
+## 2026-02-21 - IDOR in Notification Scheduling
+**Vulnerability:** The `push-notification` Edge Function used a `service_role` client to schedule notifications. It allowed any authenticated user to schedule a notification for ANY task ID, regardless of ownership. Since notifications are unique per task, this allowed an attacker to "lock" the notification slot for a victim's task, preventing the victim from scheduling their own notification (DoS).
+**Learning:** Using `service_role` clients in user-facing functions bypasses RLS. You cannot rely on "implied" permissions.
+**Prevention:** Always verify resource ownership (e.g., `task.user_id === userId`) explicitly when performing operations on behalf of a user using a privileged client.

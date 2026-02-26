@@ -100,8 +100,29 @@ serve(async (req) => {
         if (url.protocol !== 'https:') {
             throw new AppError("Endpoint must be HTTPS");
         }
-        // Block potentially dangerous local endpoints (Defense in Depth)
+
         const hostname = url.hostname;
+
+        // Whitelist of trusted push service providers (Google, Mozilla, Apple, Microsoft)
+        // We only allow endpoints from known major browser vendors to prevent SSRF
+        const allowedDomains = [
+            '.googleapis.com',
+            '.google.com',
+            '.push.services.mozilla.com',
+            '.push.apple.com',
+            '.notify.windows.com'
+        ];
+
+        const isTrusted = allowedDomains.some(domain =>
+            hostname.endsWith(domain) || hostname === domain.substring(1)
+        );
+
+        if (!isTrusted) {
+            console.error(`Blocked untrusted push endpoint: ${hostname}`);
+            throw new AppError("Untrusted push service provider");
+        }
+
+        // Block potentially dangerous local endpoints (Defense in Depth - redundant with whitelist but good practice)
         if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]' || hostname.startsWith('192.168.') || hostname.startsWith('10.')) {
             throw new AppError("Invalid endpoint domain");
         }
@@ -179,19 +200,27 @@ serve(async (req) => {
         throw new AppError("Missing required fields for scheduling");
       }
 
-      // 🛡️ SECURITY: Prevent IDOR - Check if this task ID is already scheduled by another user
-      // Since 'task_id' is UNIQUE, upserting would overwrite the existing owner's notification
+      // 🛡️ SECURITY: Prevent IDOR - Verify task ownership
+      // We must ensure the task actually belongs to the user requesting the notification
       if (taskId) {
-        const { data: existing } = await supabase
-          .from("scheduled_notifications")
+        const { data: task, error: taskError } = await supabase
+          .from("tasks")
           .select("user_id")
-          .eq("task_id", taskId)
+          .eq("id", taskId)
           .single();
 
-        if (existing && existing.user_id !== userId) {
-          console.error(`IDOR Attempt: User ${userId} tried to overwrite notification for task ${taskId} owned by ${existing.user_id}`);
-          throw new AppError("You do not have permission to modify this notification", 403);
+        if (taskError || !task) {
+           throw new AppError("Task not found", 404);
         }
+
+        if (task.user_id !== userId) {
+           console.error(`IDOR Attempt: User ${userId} tried to schedule notification for task ${taskId} owned by ${task.user_id}`);
+           throw new AppError("You do not have permission to schedule notifications for this task", 403);
+        }
+
+        // Note: We don't need to check scheduled_notifications ownership because
+        // if the user owns the task, they have the right to overwrite any existing notification
+        // (even if it was created by an attacker exploiting the previous vulnerability).
       }
 
       const { error } = await supabase

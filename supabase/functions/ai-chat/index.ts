@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "npm:@supabase/supabase-js@2.45.4"
 import { GoogleGenerativeAI } from "npm:@google/generative-ai@^0.21.0"
+import { sanitizeInput, processHistory } from "./utils.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -203,27 +204,6 @@ serve(async (req) => {
       mimeType
     } = await req.json()
 
-    // 🛡️ SECURITY: Sanitize Inputs (Prevent Prompt Injection)
-    const sanitizeInput = (input: any, maxLength: number = 100, allowNewlines: boolean = false): string => {
-      if (!input || typeof input !== 'string') return '';
-
-      // Remove potentially dangerous control characters
-      let sanitized = input.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
-
-      // Escape backslashes to prevent escape sequence attacks (e.g. escaping the quote that encloses this string)
-      // This neutralizes attacks like: myname\" -> "myname\"" which might confuse the LLM parser
-      sanitized = sanitized.replace(/\\/g, '\\\\');
-
-      // Replace quotes and backticks to prevent string breakouts
-      sanitized = sanitized.replace(/["`]/g, "'");
-
-      if (!allowNewlines) {
-        sanitized = sanitized.replace(/[\r\n]+/g, ' ');
-      }
-
-      return sanitized.substring(0, maxLength);
-    };
-
     // Allow Unicode names but no newlines
     const cleanUserName = sanitizeInput(userName, 50, false) || 'User';
 
@@ -396,22 +376,8 @@ Return ONLY a JSON object (no markdown, no explanation):
         systemInstruction: systemInstruction 
       })
 
-      // Filter history: Gemini requires first message to be 'user', not 'model'
-      // Skip any leading 'model' messages (like welcome messages)
-      let filteredHistory = history.map((h: any) => ({
-        role: h.role === 'model' ? 'model' : 'user',
-        parts: h.parts
-      }));
-      
-      // Find first 'user' message and start from there
-      const firstUserIndex = filteredHistory.findIndex((h: any) => h.role === 'user');
-      if (firstUserIndex === -1) {
-        // No user messages in history, start with empty history
-        filteredHistory = [];
-      } else if (firstUserIndex > 0) {
-        // Skip leading model messages
-        filteredHistory = filteredHistory.slice(firstUserIndex);
-      }
+      // 🛡️ SECURITY: Process history securely (sanitization & role filtering)
+      const filteredHistory = processHistory(history);
 
       const chat = model.startChat({
         history: filteredHistory,

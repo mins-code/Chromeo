@@ -179,10 +179,14 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
 
               {/* Confirmation Text */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                <label
+                  htmlFor="confirm-delete"
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+                >
                   Type <span className="font-bold text-red-500">DELETE</span> to confirm
                 </label>
                 <input
+                  id="confirm-delete"
                   type="text"
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value.toUpperCase())}
