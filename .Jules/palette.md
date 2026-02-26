@@ -65,3 +65,9 @@
 ## 2026-03-05 - Search Input Accessibility
 **Learning:** Search inputs often rely on placeholders for labeling, which is insufficient for accessibility. Decorative search icons can also add noise if not hidden.
 **Action:** Always add `aria-label` to search inputs. Mark decorative icons with `aria-hidden="true"`. Implement clear buttons as interactive elements (`<button>`) with proper labels, not just clickable icons.
+## 2026-03-05 - Segmented Control ARIA
+**Learning:** Segmented controls (e.g., "View Mode: Month | Week | Day") implemented as buttons often lack semantic structure, leaving screen readers unaware of the relationship or selected state.
+**Action:** Wrap the button group in `role="radiogroup"` with an accessible label, and use `role="radio"` with `aria-checked` on the individual buttons to properly communicate the selection semantics. Ideally, implement arrow key navigation, but even without it, the semantic roles provide significant value.
+## 2026-03-07 - Modal Input Labeling
+**Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
+**Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.

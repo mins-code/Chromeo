@@ -2,6 +2,11 @@ import React from 'react';
 import { Transaction } from '../types';
 import { ArrowUpRight, ArrowDownLeft, Calendar, Edit2, Trash2, Repeat, Tag } from 'lucide-react';
 
+// Create formatters outside component to avoid re-creation on every render.
+// Uses default locale to match previous behavior of toLocaleDateString().
+const dateFormatter = new Intl.DateTimeFormat();
+const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
+
 interface TransactionItemProps {
     transaction: Transaction;
     onEdit?: (transaction: Transaction) => void;
@@ -67,9 +72,9 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
                         <div className="flex items-center gap-1.5 text-xs text-slate-500">
                             <Calendar size={11} />
-                            <span>{new Date(t.date).toLocaleDateString()}</span>
+                            <span>{dateFormatter.format(t.date)}</span>
                             <span>•</span>
-                            <span>{new Date(t.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <span>{timeFormatter.format(t.date)}</span>
                         </div>
                         <span className={`font-bold font-mono text-sm ${
                             t.type === 'income' ? 'text-emerald-500' : 'text-red-500'

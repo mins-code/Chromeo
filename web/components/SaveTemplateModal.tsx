@@ -45,10 +45,14 @@ const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
         {/* Content */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            <label
+              htmlFor="template-name"
+              className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
               Template Name
             </label>
             <input
+              id="template-name"
               type="text"
               required
               value={name}
@@ -60,10 +64,14 @@ const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
           </div>
 
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            <label
+              htmlFor="template-description"
+              className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
               Description (Optional)
             </label>
             <textarea
+              id="template-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Brief description of when to use this template..."
