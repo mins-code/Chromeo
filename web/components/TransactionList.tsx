@@ -200,12 +200,6 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                                         onCancel={() => setEditingId(null)}
                                     />
                                 ) : (
-                                    <TransactionItem
-                                        transaction={t}
-                                        onSave={(updates) => handleSave(t.id, updates)}
-                                        onCancel={() => setEditingId(null)}
-                                    />
-                                ) : (
                                     <div className="bg-slate-50/50 dark:bg-white/5 border-slate-100 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/10 p-3 rounded-xl border transition-colors group">
                                         <TransactionItem
                                             transaction={t}
