@@ -64,12 +64,17 @@ const CloneDayModal: React.FC<CloneDayModalProps> = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Target Date */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            <label
+              htmlFor="target-date"
+              className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
               Target Date
             </label>
             <input
+              id="target-date"
               type="date"
               required
+              autoFocus
               value={targetDate}
               onChange={(e) => setTargetDate(e.target.value)}
               className="w-full px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-800 dark:text-slate-100"
@@ -95,7 +100,7 @@ const CloneDayModal: React.FC<CloneDayModalProps> = ({
                   checked={adjustTime}
                   onChange={(e) => setAdjustTime(e.target.checked)}
                   className="sr-only peer"
-                  aria-label="Shift task times"
+                  aria-label="Shift Times"
                 />
                 <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-300 dark:peer-focus:ring-brand-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-brand-600"></div>
               </label>
@@ -103,17 +108,20 @@ const CloneDayModal: React.FC<CloneDayModalProps> = ({
 
             {adjustTime && (
               <div className="animate-fade-in">
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5">
+                <label
+                  htmlFor="time-offset"
+                  className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5"
+                >
                   Shift tasks by (minutes)
                 </label>
                 <div className="flex items-center gap-2">
                   <input
+                    id="time-offset"
                     type="number"
                     value={timeOffset}
                     onChange={(e) => setTimeOffset(Number(e.target.value))}
                     className="flex-1 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-sm"
                     placeholder="0"
-                    aria-label="Shift tasks by minutes"
                   />
                   <div className="text-xs text-slate-400">
                     Use negative for earlier

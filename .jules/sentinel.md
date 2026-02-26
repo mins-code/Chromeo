@@ -101,3 +101,8 @@
 1. Wrap each item in a loop with its own `try/catch` block.
 2. Calculate derived values (like dates) *before* performing any side effects (inserts).
 3. Explicitly handle errors in secondary operations (updates) and log them as critical integrity risks.
+
+## 2026-02-21 - IDOR in Notification Scheduling
+**Vulnerability:** The `push-notification` Edge Function used a `service_role` client to schedule notifications. It allowed any authenticated user to schedule a notification for ANY task ID, regardless of ownership. Since notifications are unique per task, this allowed an attacker to "lock" the notification slot for a victim's task, preventing the victim from scheduling their own notification (DoS).
+**Learning:** Using `service_role` clients in user-facing functions bypasses RLS. You cannot rely on "implied" permissions.
+**Prevention:** Always verify resource ownership (e.g., `task.user_id === userId`) explicitly when performing operations on behalf of a user using a privileged client.
