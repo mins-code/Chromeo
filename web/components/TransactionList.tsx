@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Transaction } from '../types';
-import { Calendar, Search, ChevronLeft, ChevronRight, Receipt, SearchX } from 'lucide-react';
+import { Calendar, Search, ChevronLeft, ChevronRight, Receipt, SearchX, X } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, addWeeks, subWeeks, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { logger } from '../utils/logger';
 import TransactionItem from './TransactionItem';
@@ -195,12 +195,6 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                             <div key={t.id}>
                                 {isEditing ? (
                                     <TransactionEditRow
-                                        transaction={t}
-                                        onSave={handleSave}
-                                        onCancel={() => setEditingId(null)}
-                                    />
-                                ) : (
-                                    <TransactionItem
                                         transaction={t}
                                         onSave={(updates) => handleSave(t.id, updates)}
                                         onCancel={() => setEditingId(null)}

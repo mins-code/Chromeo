@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Plus, X, Clock, Repeat, Calendar, CalendarDays, CalendarClock, Settings2, CheckCircle2, Circle, ExternalLink, MapPin } from 'lucide-react';
 import { DndContext, DragEndEvent, DragOverlay, pointerWithin } from '@dnd-kit/core';
-import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, addMonths, subMonths, addDays, subDays, startOfMonth, endOfMonth, differenceInCalendarDays } from 'date-fns';
+import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, addMonths, subMonths, addDays, subDays, startOfMonth, endOfMonth, differenceInCalendarDays, startOfDay } from 'date-fns';
 import { formatDateWithWeekday } from '../utils/date';
 import { Task, TaskStatus, RecurringTransaction, ThemeOption } from '../types';
 import { CalendarEvent, formatEventTime, doesEventOccurOnDate } from '../services/googleCalendarService';
@@ -658,9 +658,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         }
     };
 
-    // ⚡ Bolt Optimization: Calculate today string once per render
-    // instead of re-calculating it for every cell in the loop.
-    const todayStr = new Date().toDateString();
+    // ⚡ Bolt Optimization: Calculate today (normalized to midnight) once per render
+    // Avoids creating new Date() in every cell and allows passing stable date object
+    const today = startOfDay(new Date());
 
     return (
         <DndContext
@@ -813,7 +813,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                     date={cell.date || null}
                                     tasks={cell.tasks || []}
                                     financialItems={cell.financialItems || []}
-                                    isToday={cell.date?.toDateString() === todayStr}
+                                    today={today}
                                     onClick={() => cell.date && handleDayClick(cell.date)}
                                     taskDatesMap={taskDatesMap}
                                 />

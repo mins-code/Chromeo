@@ -1,6 +1,6 @@
 import React, { memo, useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import { format, differenceInCalendarDays } from 'date-fns';
+import { format, differenceInCalendarDays, isSameDay } from 'date-fns';
 import { Task, RecurringTransaction } from '../types';
 import DraggableTask from './DraggableTask';
 import { DollarSign, X } from 'lucide-react';
@@ -10,16 +10,18 @@ interface CalendarDayCellProps {
   date: Date | null;
   tasks: Task[];
   financialItems?: RecurringTransaction[];
-  isToday: boolean;
+  today: Date;
   onClick: () => void;
   taskDatesMap?: Map<string, { start: Date; startNormalized: Date; end?: Date }>;
 }
 
-const CalendarDayCell = memo(({ day, date, tasks, financialItems = [], isToday, onClick, taskDatesMap }: CalendarDayCellProps) => {
+const CalendarDayCell = memo(({ day, date, tasks, financialItems = [], today, onClick, taskDatesMap }: CalendarDayCellProps) => {
   const [showFinancialPopup, setShowFinancialPopup] = useState(false);
 
-  // ⚡ Bolt Optimization: Calculate dates once per render instead of inside the task loop
-  const today = new Date();
+  // ⚡ Bolt Optimization: Received today from parent to avoid new Date() on every cell render
+  // Use isSameDay for robust comparison (handles slight time differences if any, though we expect normalized dates)
+  const isToday = date && today && isSameDay(date, today);
+
   // Calculate distance of this cell to today once (constant for the cell)
   const daysFromTodayCurrent = date ? Math.abs(differenceInCalendarDays(today, date)) : 0;
   
@@ -155,7 +157,7 @@ const CalendarDayCell = memo(({ day, date, tasks, financialItems = [], isToday, 
   );
 }, (prev, next) => {
   if (prev.day !== next.day) return false;
-  if (prev.isToday !== next.isToday) return false;
+  if (prev.today.getTime() !== next.today.getTime()) return false;
   if (prev.date?.getTime() !== next.date?.getTime()) return false;
   if (prev.financialItems?.length !== next.financialItems?.length) return false;
   if (prev.tasks === next.tasks && prev.financialItems === next.financialItems) return true;
