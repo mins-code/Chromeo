@@ -220,10 +220,11 @@ serve(async (req) => {
       }
 
       // Build confirmation URL
-      const confirmationUrl = `${appUrl}/confirm-delete?token=${confirmToken}`;
-      console.log(`Deletion confirmation URL for ${user.email}: ${confirmationUrl}`);
+      // 🛡️ SECURITY: [CWE-532] Do not log sensitive tokens.
+      // const confirmationUrl = `${appUrl}/confirm-delete?token=${confirmToken}`;
+      console.log(`Deletion confirmation email sent to ${user.email} (Token redacted for security)`);
 
-      // 🛡️ SECURITY: Token logged to console for dev, but NOT returned to client
+      // 🛡️ SECURITY: Token NOT returned to client
       // User must verify via the link (simulated email)
       let emailSent = true;
 
@@ -277,10 +278,11 @@ serve(async (req) => {
       }
 
       // Resend the email with the NEW token
-      const confirmationUrl = `${appUrl}/confirm-delete?token=${newToken}`;
-      console.log(`Resending deletion confirmation URL for ${user.email}: ${confirmationUrl}`);
+      // 🛡️ SECURITY: [CWE-532] Do not log sensitive tokens.
+      // const confirmationUrl = `${appUrl}/confirm-delete?token=${newToken}`;
+      console.log(`Resending deletion confirmation email to ${user.email} (Token redacted for security)`);
 
-      // 🛡️ SECURITY: Token logged to console for dev, but NOT returned to client
+      // 🛡️ SECURITY: Token NOT returned to client
       return new Response(
         JSON.stringify({ 
           success: true, 

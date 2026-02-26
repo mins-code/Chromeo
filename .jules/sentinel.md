@@ -109,3 +109,7 @@
 1. Treat conversation history as untrusted user input.
 2. Sanitize the content of *all* messages in the history, not just the current message.
 3. Ideally, store conversation history on the server and retrieve it by session ID, rather than accepting it from the client (though this requires stateful backend). If client-side history is necessary, it must be strictly validated and sanitized.
+## 2026-02-21 - IDOR in Notification Scheduling
+**Vulnerability:** The `push-notification` Edge Function used a `service_role` client to schedule notifications. It allowed any authenticated user to schedule a notification for ANY task ID, regardless of ownership. Since notifications are unique per task, this allowed an attacker to "lock" the notification slot for a victim's task, preventing the victim from scheduling their own notification (DoS).
+**Learning:** Using `service_role` clients in user-facing functions bypasses RLS. You cannot rely on "implied" permissions.
+**Prevention:** Always verify resource ownership (e.g., `task.user_id === userId`) explicitly when performing operations on behalf of a user using a privileged client.
