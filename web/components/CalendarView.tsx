@@ -387,6 +387,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
 
     // Optimized calendar generation: O(Tasks + Days) instead of O(Tasks * Days)
     const calendarDays = useMemo(() => {
+        // ⚡ Bolt Optimization: Skip expensive calculation if not in month view
+        if (viewMode !== 'month') return [];
+
         const year = currentMonth.getFullYear();
         const month = currentMonth.getMonth();
         const daysInMonth = getDaysInMonth(year, month);
@@ -478,36 +481,42 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                         const period = frequency === 'weekly' ? 7 * interval : interval;
 
                         // Calculate days to add to land on or after month start
-                        // We need (diff + correction) % period === 0
-                        // actually: we want (current + X) >= monthStart
-                        // and (current + X - start) % period === 0
-                        // so X % period === 0
-                        // We want smallest X >= diffDays such that X % period === 0
-                        // X = ceil(diffDays / period) * period
-                        // But wait, differenceInCalendarDays might be slightly off due to DST?
-                        // Let's rely on standard modulo arithmetic on 'diffDays'
-
-                        // If diffDays is positive (current < monthStart)
                         const remainder = diffDays % period;
                         const toAdd = remainder === 0 ? 0 : (period - remainder);
                         current = addDays(monthDates[1], toAdd);
                     }
 
-                    // Iterate while in month
-                    while (current <= monthDates[daysInMonth]) {
-                         if (taskEndDate && current > taskEndDate) break;
+                    // ⚡ Bolt Optimization: Integer-based loop instead of recurring Date object creation
+                    // Once we are inside the month, we can rely on simple integer addition
+                    // This avoids thousands of Date allocations for recurring tasks
 
-                         // Valid occurrence? Check if it falls in the current month view
-                         if (current >= monthDates[1]) {
-                             const day = current.getDate();
-                             if (tasksByDay.has(day)) {
-                                 tasksByDay.get(day)!.push(task);
-                             }
-                         }
+                    // First, ensure current is strictly within or past month start
+                    // (Jump logic above ensures it's >= monthDates[1], but addDays might overshoot if toAdd is huge)
+                    if (current > monthDates[daysInMonth]) return;
 
-                         // Advance
+                    // If for some reason current is still before month start (shouldn't happen with correct jump logic), forward it
+                    while (current < monthDates[1]) {
                          const step = frequency === 'weekly' ? 7 * interval : interval;
                          current = addDays(current, step);
+                    }
+
+                    // Check bounds again
+                    if (current > monthDates[daysInMonth]) return;
+
+                    let day = current.getDate();
+                    const step = frequency === 'weekly' ? 7 * interval : interval;
+
+                    // Determine strict end limit for this task in this month
+                    let endLimit = daysInMonth;
+                    if (taskEndDate && taskEndDate.getFullYear() === year && taskEndDate.getMonth() === month) {
+                        endLimit = Math.min(endLimit, taskEndDate.getDate());
+                    }
+
+                    while (day <= endLimit) {
+                         if (tasksByDay.has(day)) {
+                             tasksByDay.get(day)!.push(task);
+                         }
+                         day += step;
                     }
                 } else if (frequency === 'monthly') {
                     // Check if this month aligns with start month
@@ -557,7 +566,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
         }
 
         return days;
-    }, [currentMonth, tasks, recurringTransactions, taskDatesMap]);
+    }, [currentMonth, tasks, recurringTransactions, taskDatesMap, viewMode]);
 
     const handleDayClick = (date: Date) => {
         setSelectedDate(date);
