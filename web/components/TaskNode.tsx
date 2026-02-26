@@ -142,7 +142,12 @@ const TaskNode: React.FC<TaskNodeProps> = ({ data }) => {
             {task.priority}
           </span>
         </div>
-        <StatusIcon size={14} className={`${config.text}`} />
+        <StatusIcon
+          size={14}
+          className={`${config.text}`}
+          aria-label={`Status: ${task.status.replace(/_/g, ' ').toLowerCase()}`}
+          role="img"
+        />
       </div>
 
       {/* Content */}
@@ -151,7 +156,13 @@ const TaskNode: React.FC<TaskNodeProps> = ({ data }) => {
         <h4 className={`font-semibold text-slate-800 dark:text-slate-100 line-clamp-2 ${
           task.status === 'DONE' ? 'line-through opacity-60' : ''
         }`}>
-          {task.title}
+          <button
+            type="button"
+            className="nodrag text-left w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-sm hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+            aria-label={`View task: ${task.title}`}
+          >
+            {task.title}
+          </button>
         </h4>
 
         {/* Time and Duration */}
@@ -193,9 +204,18 @@ const TaskNode: React.FC<TaskNodeProps> = ({ data }) => {
         {task.subtasks.length > 0 && (
           <div className="mt-2">
             <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
-              <span>{task.subtasks.filter(s => s.isCompleted).length}/{task.subtasks.length} subtasks</span>
+              <span id={`progress-label-${task.id}`}>
+                {task.subtasks.filter(s => s.isCompleted).length}/{task.subtasks.length} subtasks
+              </span>
             </div>
-            <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div
+              role="progressbar"
+              aria-valuenow={task.subtasks.filter(s => s.isCompleted).length}
+              aria-valuemin={0}
+              aria-valuemax={task.subtasks.length}
+              aria-labelledby={`progress-label-${task.id}`}
+              className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden"
+            >
               <div 
                 className="h-full bg-indigo-500 rounded-full transition-all"
                 style={{ 
