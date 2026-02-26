@@ -102,6 +102,10 @@
 2. Calculate derived values (like dates) *before* performing any side effects (inserts).
 3. Explicitly handle errors in secondary operations (updates) and log them as critical integrity risks.
 
+## 2026-02-01 - SSRF Protection via Domain Whitelisting
+**Vulnerability:** The `push-notification` function relied on a blacklist to prevent Server-Side Request Forgery (SSRF), blocking `localhost` and some private IPs. This allowed attackers to potentially target other internal services or arbitrary external endpoints by using unblocked private ranges or DNS rebinding.
+**Learning:** Blacklists are inherently incomplete. Security controls based on "what is known bad" often fail against novel or obscure vectors.
+**Prevention:** Use a whitelist of "known good" values whenever possible. For Web Push, restricting endpoints to a small list of trusted browser vendors (Google, Mozilla, Apple, Microsoft) eliminates the risk of SSRF without compromising functionality.
 ## 2025-05-28 - Prompt Injection via Conversation History
 **Vulnerability:** The `ai-chat` Edge Function constructed the conversation history for the LLM by directly trusting the content of previous messages provided by the client. A malicious user could craft a request with a fake "model" message containing instructions to ignore previous rules or reveal secrets, effectively forging the conversation context.
 **Learning:** LLMs treat the entire context window (including "history") as ground truth. If the application blindly trusts the client to provide the history, the client can rewrite the "past" to influence the "future" behavior of the model.

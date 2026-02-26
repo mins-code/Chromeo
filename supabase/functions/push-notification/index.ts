@@ -101,23 +101,29 @@ serve(async (req) => {
             throw new AppError("Endpoint must be HTTPS");
         }
 
-        // STRICT WHITELIST for Push Service Domains
-        // We only allow known, trusted push notification services.
-        // This prevents SSRF attacks against internal networks (0.0.0.0, 169.254.x.x, etc.)
-        const allowedSuffixes = [
-            '.googleapis.com', // FCM (Chrome, Android, Samsung)
-            '.push.services.mozilla.com', // Firefox
-            '.notify.windows.com', // Edge
-            '.push.apple.com' // Safari
+        const hostname = url.hostname;
+
+        // Whitelist of trusted push service providers (Google, Mozilla, Apple, Microsoft)
+        // We only allow endpoints from known major browser vendors to prevent SSRF
+        const allowedDomains = [
+            '.googleapis.com',
+            '.google.com',
+            '.push.services.mozilla.com',
+            '.push.apple.com',
+            '.notify.windows.com'
         ];
 
-        const hostname = url.hostname;
-        const isAllowed = allowedSuffixes.some(suffix =>
-            hostname.endsWith(suffix) || hostname === suffix.slice(1)
+        const isTrusted = allowedDomains.some(domain =>
+            hostname.endsWith(domain) || hostname === domain.substring(1)
         );
 
-        if (!isAllowed) {
-            console.warn(`Blocked suspicious push endpoint: ${hostname}`);
+        if (!isTrusted) {
+            console.error(`Blocked untrusted push endpoint: ${hostname}`);
+            throw new AppError("Untrusted push service provider");
+        }
+
+        // Block potentially dangerous local endpoints (Defense in Depth - redundant with whitelist but good practice)
+        if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]' || hostname.startsWith('192.168.') || hostname.startsWith('10.')) {
             throw new AppError("Invalid endpoint domain");
         }
       } catch (e) {
