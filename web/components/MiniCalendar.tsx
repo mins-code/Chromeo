@@ -303,7 +303,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
 
       {/* Calendar Grid */}
       <div className="grid grid-cols-7 gap-0.5">
-        {calendarDays.slice(0, 35).map((dayInfo, index) => (
+        {calendarDays.map((dayInfo, index) => (
           <button
             key={index}
             onClick={() => dayInfo.isCurrentMonth && handleDateClick(dayInfo.day)}
