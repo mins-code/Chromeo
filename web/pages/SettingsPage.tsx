@@ -193,22 +193,22 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                   Get notified about tasks, events, and budget alerts
                 </p>
               </div>
-              <button
-                onClick={() => onNotificationToggle(!notificationSettings.enabled)}
-                style={{ background: notificationSettings.enabled ? 'var(--brand-500)' : undefined }}
-                className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${
-                  notificationSettings.enabled ? '' : 'bg-slate-300 dark:bg-slate-600'
-                }`}
-                disabled={notificationPermission === 'denied'}
-                aria-checked={notificationSettings.enabled}
+              <div
+                onClick={() => notificationPermission !== 'denied' && onNotificationToggle(!notificationSettings.enabled)}
+                className={`relative w-14 h-7 rounded-full transition-colors duration-200 cursor-pointer select-none ${
+                  notificationSettings.enabled ? 'bg-brand-500' : 'bg-slate-300 dark:bg-slate-600'
+                } ${notificationPermission === 'denied' ? 'opacity-50 cursor-not-allowed' : ''}`}
                 role="switch"
+                aria-checked={notificationSettings.enabled}
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' || e.key === ' ' ? onNotificationToggle(!notificationSettings.enabled) : null}
               >
                 <div
                   className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
                     notificationSettings.enabled ? 'translate-x-7' : 'translate-x-0'
                   }`}
                 />
-              </button>
+              </div>
             </div>
 
             {/* Permission Status */}
@@ -451,21 +451,22 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 </div>
               </div>
               {onGoogleCalendarToggle && (
-                <button
+                <div
                   onClick={() => onGoogleCalendarToggle(!googleCalendarEnabled)}
-                  style={{ background: googleCalendarEnabled ? '#3b82f6' : undefined }}
-                  className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${
-                    googleCalendarEnabled ? '' : 'bg-slate-300 dark:bg-slate-600'
+                  className={`relative w-14 h-7 rounded-full transition-colors duration-200 cursor-pointer select-none ${
+                    googleCalendarEnabled ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'
                   }`}
-                  aria-checked={googleCalendarEnabled}
                   role="switch"
+                  aria-checked={googleCalendarEnabled}
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' || e.key === ' ' ? onGoogleCalendarToggle(!googleCalendarEnabled) : null}
                 >
                   <div
                     className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
                       googleCalendarEnabled ? 'translate-x-7' : 'translate-x-0'
                     }`}
                   />
-                </button>
+                </div>
               )}
             </div>
 
