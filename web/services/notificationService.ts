@@ -764,7 +764,7 @@ export const initializePushNotifications = async (): Promise<boolean> => {
   
   if (!settings.enabled) return false;
   
-  if (Notification.permission !== 'granted') {
+  if (getPermissionStatus() !== 'granted') {
     return false;
   }
 
