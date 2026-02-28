@@ -856,7 +856,7 @@ export const Layout: React.FC<LayoutProps> = ({
 
                     {/* Content Scroll Container */}
                     <main className="flex-1 overflow-y-auto no-scrollbar pb-mobile-nav md:pb-0 relative scroll-smooth scroll-touch">
-                        <div className="container mx-auto max-w-6xl p-4 sm:p-5 md:p-8 lg:p-10 space-y-6 md:space-y-8">
+                        <div className="container mx-auto max-w-6xl px-4 pt-8 pb-4 sm:px-5 sm:pt-8 sm:pb-5 md:p-8 lg:p-10 space-y-6 md:space-y-8">
                             {children}
                         </div>
                     </main>
