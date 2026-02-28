@@ -659,8 +659,14 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                 {(notificationEnabled === undefined || notificationEnabled === true) && (
                   <div className="space-y-3">
                     {/* Notification Mode Toggle */}
-                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg w-fit">
+                    <div
+                        className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg w-fit"
+                        role="radiogroup"
+                        aria-label="Notification Mode"
+                    >
                         <button
+                            role="radio"
+                            aria-checked={notificationMode === 'relative'}
                             onClick={() => {
                               setNotificationMode('relative');
                               // Auto-switch to custom if in default mode
@@ -675,6 +681,8 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                             Time Before
                         </button>
                         <button
+                            role="radio"
+                            aria-checked={notificationMode === 'absolute'}
                             onClick={() => {
                                 setNotificationMode('absolute');
                                 // Auto-switch to custom if in default mode
@@ -699,7 +707,11 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                             <label className="block text-xs font-semibold text-amber-700 dark:text-amber-300">
                               Notify me before
                             </label>
-                            <div className="flex flex-wrap gap-2">
+                            <div
+                                className="flex flex-wrap gap-2"
+                                role="radiogroup"
+                                aria-label="Notification Time"
+                            >
                               {[
                                 { value: undefined, label: 'Default' },
                                 { value: 5, label: '5 min' },
@@ -710,6 +722,8 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                               ].map((option) => (
                                 <button
                                   key={option.label}
+                                  role="radio"
+                                  aria-checked={!showCustomNotification && notificationMinutesBefore === option.value}
                                   onClick={() => {
                                     // Auto-switch to custom if in default mode and selecting non-default option
                                     if (notificationEnabled === undefined && option.value !== undefined) {
@@ -728,6 +742,8 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                                 </button>
                               ))}
                               <button
+                                role="radio"
+                                aria-checked={showCustomNotification}
                                 onClick={() => {
                                   // Auto-switch to custom if in default mode
                                   if (notificationEnabled === undefined) setNotificationEnabled(true);
