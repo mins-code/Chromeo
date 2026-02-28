@@ -812,11 +812,12 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                                 placeholder="Select notification time"
                             />
                              <p className="mt-2 text-xs text-amber-600/80 dark:text-amber-400/80">
-                                This notification time is fixed and won't change even if you reschedule the task.
+                                This notification time is fixed and won&apos;t change even if you reschedule the task.
                             </p>
                         </div>
                     )}
                   </div>
+                )}
                 </div>
             )}
 
