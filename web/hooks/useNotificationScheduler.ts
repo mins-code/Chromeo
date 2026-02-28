@@ -170,7 +170,7 @@ export const useNotificationScheduler = (
   // Handle notification preference changes
   const handleNotificationPreferenceChange = (
     key: keyof NotificationSettings,
-    value: boolean | number
+    value: boolean | number | string
   ) => {
     const newSettings = { ...notificationSettings, [key]: value };
     setNotificationSettings(newSettings);

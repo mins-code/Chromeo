@@ -901,7 +901,7 @@ const App: React.FC = () => {
                     notificationPermission={notificationPermission}
                     onNotificationToggle={handleNotificationToggle}
                     onNotificationPreferenceChange={handleNotificationPreferenceChange}
-                    onNavigate={(path) => navigate(path)}
+                    onNavigate={(view) => navigate(viewModeToPath[view as ViewMode] ?? `/${view}`)}
                     googleCalendarEnabled={googleCalendarEnabled}
                     hasGoogleToken={hasGoogleToken}
                     onGoogleCalendarToggle={handleGoogleCalendarToggle}
