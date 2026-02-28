@@ -1,7 +1,0 @@
-﻿components/ErrorBoundary.tsx(34,10): error TS2339: Property 'setState' does not exist on type 'ErrorBoundary'.
-components/ErrorBoundary.tsx(42,10): error TS2339: Property 'setState' does not exist on type 'ErrorBoundary'.
-components/ErrorBoundary.tsx(52,16): error TS2339: Property 'props' does not exist on type 'ErrorBoundary'.
-components/ErrorBoundary.tsx(53,21): error TS2339: Property 'props' does not exist on type 'ErrorBoundary'.
-components/ErrorBoundary.tsx(98,17): error TS2339: Property 'props' does not exist on type 'ErrorBoundary'.
-pages/ActivitiesPage.tsx(15,7): error TS2739: Type '{ dashboard: string; activities: string; 'all-activities': string; tasks: string; reminders: string; events: string; appointments: string; calendar: string; budget: string; 'ai-chat': string; settings: string; routines: string; }' is missing the following properties from type 'Record<ViewMode, string>': "day-planner", notes
-services/notificationService.ts(265,9): error TS2353: Object literal may only specify known properties, and 'vibrate' does not exist in type 'NotificationOptions'.
