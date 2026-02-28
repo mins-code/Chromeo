@@ -204,8 +204,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 onKeyDown={(e) => e.key === 'Enter' || e.key === ' ' ? onNotificationToggle(!notificationSettings.enabled) : null}
               >
                 <div
-                  className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
-                    notificationSettings.enabled ? 'translate-x-7' : 'translate-x-0'
+                  className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow-md transition-all duration-200 ${
+                    notificationSettings.enabled ? 'left-8' : 'left-1'
                   }`}
                 />
               </div>
@@ -462,8 +462,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                   onKeyDown={(e) => e.key === 'Enter' || e.key === ' ' ? onGoogleCalendarToggle(!googleCalendarEnabled) : null}
                 >
                   <div
-                    className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
-                      googleCalendarEnabled ? 'translate-x-7' : 'translate-x-0'
+                    className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow-md transition-all duration-200 ${
+                      googleCalendarEnabled ? 'left-8' : 'left-1'
                     }`}
                   />
                 </div>

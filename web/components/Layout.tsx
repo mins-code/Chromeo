@@ -545,7 +545,7 @@ export const Layout: React.FC<LayoutProps> = ({
                 <div className="flex-1 flex flex-col h-full overflow-hidden relative">
 
                     {/* TOP Header */}
-                    <header className="min-h-20 glass border-b border-slate-200 dark:border-white/5 flex items-center justify-between px-6 z-30 shrink-0 pt-safe-area">
+                    <header className="min-h-28 md:min-h-20 glass border-b border-slate-200 dark:border-white/5 flex items-center justify-between px-6 pb-3 md:pb-0 z-30 shrink-0 pt-safe-area">
                         {/* Brand */}
                         <div className="flex items-center gap-6">
                             {/* Mobile Menu Trigger (Visible only on mobile) */}
@@ -762,7 +762,7 @@ export const Layout: React.FC<LayoutProps> = ({
                             {/* Drawer */}
                             <aside className="absolute left-0 top-0 h-full w-72 glass shadow-2xl border-r border-slate-200 dark:border-white/5 flex flex-col animate-slide-in-left">
                                 {/* Drawer Header */}
-                                <div className="min-h-20 flex items-end justify-between px-6 pb-4 border-b border-slate-200 dark:border-white/5 shrink-0 pt-safe-area">
+                                <div className="min-h-28 flex items-end justify-between px-6 pb-4 border-b border-slate-200 dark:border-white/5 shrink-0 pt-safe-area">
                                     <div 
                                         className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                                         onClick={() => { onNavigate('calendar'); setIsMobileSidebarOpen(false); }}
