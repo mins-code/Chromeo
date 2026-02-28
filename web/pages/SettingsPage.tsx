@@ -195,13 +195,16 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               </div>
               <button
                 onClick={() => onNotificationToggle(!notificationSettings.enabled)}
-                className={`relative w-14 h-7 rounded-[9999px] transition-colors duration-200 ${
-                  notificationSettings.enabled ? 'bg-brand-500' : 'bg-slate-300 dark:bg-slate-600'
+                style={{ background: notificationSettings.enabled ? 'var(--brand-500)' : undefined }}
+                className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${
+                  notificationSettings.enabled ? '' : 'bg-slate-300 dark:bg-slate-600'
                 }`}
                 disabled={notificationPermission === 'denied'}
+                aria-checked={notificationSettings.enabled}
+                role="switch"
               >
                 <div
-                  className={`absolute top-1 left-1 w-5 h-5 rounded-[9999px] bg-white shadow-md transition-transform duration-200 ${
+                  className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
                     notificationSettings.enabled ? 'translate-x-7' : 'translate-x-0'
                   }`}
                 />
@@ -450,9 +453,12 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               {onGoogleCalendarToggle && (
                 <button
                   onClick={() => onGoogleCalendarToggle(!googleCalendarEnabled)}
+                  style={{ background: googleCalendarEnabled ? '#3b82f6' : undefined }}
                   className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${
-                    googleCalendarEnabled ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'
+                    googleCalendarEnabled ? '' : 'bg-slate-300 dark:bg-slate-600'
                   }`}
+                  aria-checked={googleCalendarEnabled}
+                  role="switch"
                 >
                   <div
                     className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
@@ -498,10 +504,12 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
 
         {/* Collaboration Section */}
-        <CollaborationSettings
-          currentUserId={session?.user?.id}
-          currentUserEmail={session?.user?.email}
-        />
+        <div className="col-span-1 lg:col-span-2 pt-6">
+          <CollaborationSettings
+            currentUserId={session?.user?.id}
+            currentUserEmail={session?.user?.email}
+          />
+        </div>
 
         {/* Advanced Section */}
         <div className="col-span-1 lg:col-span-2 space-y-4 pt-6">
