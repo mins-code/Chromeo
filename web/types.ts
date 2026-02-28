@@ -29,6 +29,20 @@ export enum TaskPriority {
 
 export type TaskType = 'TASK' | 'EVENT' | 'APPOINTMENT' | 'REMINDER';
 
+/**
+ * Maps to an Android notification channel ID.
+ * - sound_default: Standard device default sound
+ * - sound_chime/beep/synth/alarm: Bundled audio files in the APK
+ * - sound_custom_os: A channel the user can configure via Android OS settings
+ */
+export type NotificationSound =
+  | 'sound_default'
+  | 'sound_chime'
+  | 'sound_beep'
+  | 'sound_synth'
+  | 'sound_alarm'
+  | 'sound_custom_os';
+
 export type ThemeOption = 'light' | 'dark' | 'cyberpunk' | 'sunset' | 'onepiece';
 
 export interface SubTask {
@@ -69,6 +83,7 @@ export interface Task {
   notificationEnabled?: boolean; // undefined = use global, true/false = override
   notificationMinutesBefore?: number; // Custom lead time for this task
   notificationTime?: string; // Absolute notification time (ISO date string)
+  notificationSoundId?: NotificationSound; // Android notification channel / sound
 }
 
 
@@ -208,6 +223,7 @@ export interface NotificationSettings {
   eventReminders: boolean;
   budgetAlerts: boolean;
   reminderMinutesBefore: number;
+  defaultNotificationSound?: NotificationSound; // Default Android channel for all tasks
 }
 
 // Routine Pattern Types
@@ -322,6 +338,7 @@ export interface DbTask {
   notification_enabled?: boolean;
   notification_minutes_before?: number;
   notification_time?: string;
+  notification_sound_id?: NotificationSound;
 }
 
 /** Database response for transactions table */

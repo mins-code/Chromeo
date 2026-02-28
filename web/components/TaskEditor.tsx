@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useId } from 'react';
-import { Task, TaskPriority, TaskStatus, SubTask, RecurrenceConfig, TaskType, NotificationSettings } from '../types';
+import { Task, TaskPriority, TaskStatus, SubTask, RecurrenceConfig, TaskType, NotificationSettings, NotificationSound } from '../types';
 import Button from './Button';
 import Input from './Input';
-import { X, Plus, Trash2, Wand2, Bell, Link as LinkIcon, Users, Check, Repeat, MapPin, Clock, Play } from 'lucide-react';
+import { X, Plus, Trash2, Wand2, Bell, Link as LinkIcon, Users, Check, Repeat, MapPin, Clock, Play, Settings } from 'lucide-react';
 import { enhanceTaskWithAI } from '../services/geminiService';
 import { logger } from '../utils/logger';
 import DateTimePicker from './DateTimePicker';
 import Select from './Select';
 import { useTheme } from '../context/ThemeContext';
+import { isNativePlatform, openNativeAppSettings } from '../utils/device';
 
 interface TaskEditorProps {
   task?: Task;
@@ -78,6 +79,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
   const [showCustomNotification, setShowCustomNotification] = useState(false);
   const [customNotificationValue, setCustomNotificationValue] = useState(30);
   const [customNotificationUnit, setCustomNotificationUnit] = useState<'minutes' | 'hours' | 'days'>('minutes');
+  const [notificationSoundId, setNotificationSoundId] = useState<NotificationSound | undefined>(undefined);
 
   const [isEnhancing, setIsEnhancing] = useState(false);
 
@@ -143,6 +145,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
       // Load notification settings
       // Load notification settings
       setNotificationEnabled(task.notificationEnabled);
+      setNotificationSoundId(task.notificationSoundId);
       if (task.notificationTime) {
           setNotificationMode('absolute');
           setNotificationTime(formatDateTimeLocal(task.notificationTime));
@@ -190,6 +193,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
         // Reset notification settings
         // Reset notification settings
         setNotificationEnabled(undefined);
+        setNotificationSoundId(undefined);
         setNotificationMode('relative');
         setNotificationTime('');
         setNotificationMinutesBefore(undefined);
@@ -242,7 +246,8 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
 
       notificationEnabled,
       notificationMinutesBefore: notificationMode === 'relative' ? notificationMinutesBefore : undefined,
-      notificationTime: notificationMode === 'absolute' && notificationTime ? new Date(notificationTime).toISOString() : undefined
+      notificationTime: notificationMode === 'absolute' && notificationTime ? new Date(notificationTime).toISOString() : undefined,
+      notificationSoundId,
     });
     onClose();
   };
@@ -811,6 +816,45 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                             </p>
                         </div>
                     )}
+                  </div>
+                </div>
+            )}
+
+            {/* Notification Sound (Android channels) */}
+            {reminderTime && (notificationEnabled === undefined || notificationEnabled === true) && (
+              <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-2xl border border-amber-200 dark:border-amber-500/20 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-amber-700 dark:text-amber-300">
+                  <Bell size={16} className="text-amber-500" />
+                  Notification Sound
+                  <span className="text-[10px] font-normal text-amber-500/70 dark:text-amber-400/60">Android</span>
+                </div>
+                <Select
+                  value={notificationSoundId || 'sound_default'}
+                  onChange={(value) => setNotificationSoundId(value as NotificationSound)}
+                  options={[
+                    { value: 'sound_default', label: '🔔 Default' },
+                    { value: 'sound_chime',   label: '🎵 Chime' },
+                    { value: 'sound_beep',    label: '📡 Digital Beep' },
+                    { value: 'sound_synth',   label: '🎹 Synth' },
+                    { value: 'sound_alarm',   label: '🚨 Loud Alarm' },
+                    { value: 'sound_custom_os', label: '⚙️ Custom OS Alert' },
+                  ]}
+                  currentTheme={theme}
+                  className="w-full"
+                />
+                {(notificationSoundId === 'sound_custom_os') && isNativePlatform() && (
+                  <div className="mt-2 space-y-2">
+                    <Button
+                      variant="secondary"
+                      onClick={openNativeAppSettings}
+                      className="w-full flex items-center justify-center gap-2 border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40"
+                    >
+                      <Settings size={14} />
+                      Configure Custom Sound in OS Settings
+                    </Button>
+                    <p className="text-xs text-amber-600/80 dark:text-amber-400/80 text-center">
+                      Tap this, select &apos;Notifications&apos;, tap &apos;Custom OS Alert&apos;, and choose your preferred sound.
+                    </p>
                   </div>
                 )}
               </div>

@@ -545,7 +545,8 @@ export const scheduleTaskReminder = async (
   title: string,
   reminderTime: Date,
   taskType: 'TASK' | 'EVENT' | 'APPOINTMENT' | 'REMINDER',
-  minutesBefore?: number
+  minutesBefore?: number,
+  soundId?: string
 ): Promise<void> => {
   const settings = getSettings();
   
@@ -568,6 +569,10 @@ export const scheduleTaskReminder = async (
 
   const notificationTitle = typeLabels[taskType] || 'Reminder';
 
+  // Resolve the final channel/sound to use.
+  // Priority: per-task soundId → global default → 'sound_default'
+  const resolvedSoundId = soundId || (settings as any).defaultNotificationSound || 'sound_default';
+
   // Use native local notifications on Android/iOS (works offline!)
   if (nativeNotifications.isNative()) {
     await nativeNotifications.scheduleLocal({
@@ -576,8 +581,9 @@ export const scheduleTaskReminder = async (
       body: title,
       scheduledAt: notifyTime,
       data: { taskId, url: '/activities' },
+      soundId: resolvedSoundId,
     });
-    logger.debug(`[Notifications] Scheduled native notification for ${notifyTime.toISOString()}`);
+    logger.debug(`[Notifications] Scheduled native notification for ${notifyTime.toISOString()} with sound: ${resolvedSoundId}`);
     return;
   }
 
@@ -592,6 +598,7 @@ export const scheduleTaskReminder = async (
     }
   );
 };
+
 
 /**
  * Send budget alert notification

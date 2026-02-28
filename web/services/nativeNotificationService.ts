@@ -18,6 +18,15 @@ type LocalNotificationsPlugin = {
   cancel(options: { notifications: { id: number }[] }): Promise<void>;
   getPending(): Promise<{ notifications: { id: number }[] }>;
   addListener(event: string, callback: (data: unknown) => void): Promise<{ remove: () => void }>;
+  createChannel(channel: {
+    id: string;
+    name: string;
+    importance?: number;
+    description?: string;
+    sound?: string;
+    visibility?: number;
+    vibration?: boolean;
+  }): Promise<void>;
 };
 
 type PushNotificationsPlugin = {
@@ -51,6 +60,8 @@ interface NotificationPayload {
   body: string;
   scheduledAt?: Date;
   data?: Record<string, unknown>;
+  /** Android notification channel ID — maps to a specific sound/importance */
+  soundId?: string;
 }
 
 interface TokenData {
@@ -216,15 +227,72 @@ class NativeNotificationService {
   }
 
   /**
-   * Create notification channel for Android (required for Android 8+)
+   * Create the 6 Android notification channels for the hybrid sound system.
+   *
+   * Channel importance levels:
+   *   3 = IMPORTANCE_DEFAULT (shows notification, plays sound)
+   *   4 = IMPORTANCE_HIGH    (makes noise, pops on screen)
+   *   5 = IMPORTANCE_MAX     (urgent, uses full-screen intent)
+   *
+   * The `sound_custom_os` channel has no bundled sound so the user can choose
+   * their own via Android System Settings → App → Notifications.
    */
   private async createNotificationChannel(): Promise<void> {
+    if (!this.LocalNotifications) return;
     try {
-      // Channels are created via android configuration
-      // This is a placeholder for any runtime channel creation
-      logger.debug('[NativeNotifications] Using default notification channel');
+      const channels: Parameters<LocalNotificationsPlugin['createChannel']>[0][] = [
+        {
+          id: 'sound_default',
+          name: 'Default Sound',
+          importance: 3,
+          vibration: true,
+        },
+        {
+          id: 'sound_chime',
+          name: 'Chime',
+          importance: 4,
+          sound: 'chime.mp3',
+          vibration: true,
+        },
+        {
+          id: 'sound_beep',
+          name: 'Digital Beep',
+          importance: 4,
+          sound: 'beep.mp3',
+          vibration: true,
+        },
+        {
+          id: 'sound_synth',
+          name: 'Synth',
+          importance: 4,
+          sound: 'synth.mp3',
+          vibration: true,
+        },
+        {
+          id: 'sound_alarm',
+          name: 'Loud Alarm',
+          importance: 5,
+          sound: 'alarm.mp3',
+          visibility: 1,
+          vibration: true,
+        },
+        {
+          id: 'sound_custom_os',
+          name: 'Custom OS Alert',
+          importance: 5,
+          description: 'Change this sound in your phone settings to customize it.',
+          vibration: true,
+        },
+      ];
+
+      for (const channel of channels) {
+        await this.LocalNotifications.createChannel(channel);
+        logger.debug(`[NativeNotifications] Created channel: ${channel.id}`);
+      }
+
+      logger.info('[NativeNotifications] All 6 notification channels created');
     } catch (error) {
-      logger.error('[NativeNotifications] Failed to create channel', error as Error);
+      logger.error('[NativeNotifications] Failed to create notification channels', error as Error);
     }
   }
 
@@ -300,8 +368,9 @@ class NativeNotificationService {
           extra: notification.data,
           smallIcon: 'ic_stat_icon',
           largeIcon: 'ic_launcher',
-          sound: 'default',
-          channelId: 'chronodex-reminders',
+          // Use the task-specific channel (sound). Falls back to 'sound_default'
+          // which maps to the standard device notification sound.
+          channelId: notification.soundId || 'sound_default',
         }],
       });
 

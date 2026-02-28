@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Session } from '@supabase/supabase-js';
-import { ThemeOption, NotificationSettings } from '../types';
+import { ThemeOption, NotificationSettings, NotificationSound } from '../types';
 import { useTheme } from '../context/ThemeContext';
 import Input from '../components/Input';
 import Button from '../components/Button';
@@ -8,6 +8,7 @@ import Select from '../components/Select';
 import CollaborationSettings from '../components/CollaborationSettings';
 import DeleteAccountModal from '../components/DeleteAccountModal';
 import * as NotificationService from '../services/notificationService';
+import { isNativePlatform, openNativeAppSettings } from '../utils/device';
 import {
   User,
   Palette,
@@ -26,6 +27,7 @@ import {
   Link2,
   ExternalLink,
   Terminal,
+  Settings,
 } from 'lucide-react';
 
 interface SettingsPageProps {
@@ -36,7 +38,7 @@ interface SettingsPageProps {
   notificationSettings: NotificationSettings;
   notificationPermission: NotificationPermission | 'unsupported';
   onNotificationToggle: (enabled: boolean) => void;
-  onNotificationPreferenceChange: (key: keyof NotificationSettings, value: boolean | number) => void;
+  onNotificationPreferenceChange: (key: keyof NotificationSettings, value: boolean | number | string) => void;
   onNavigate: (path: string) => void;
   // Google Calendar Integration
   googleCalendarEnabled?: boolean;
@@ -373,6 +375,50 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                     <Bell size={16} />
                     Send Test Notification
                   </Button>
+                </div>
+
+                {/* Default Notification Sound */}
+                <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
+                  <label className="block text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    Default Notification Sound
+                    <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">
+                      Android only
+                    </span>
+                  </label>
+                  <Select
+                    value={notificationSettings.defaultNotificationSound || 'sound_default'}
+                    onChange={(value) =>
+                      onNotificationPreferenceChange(
+                        'defaultNotificationSound',
+                        value as NotificationSound
+                      )
+                    }
+                    options={[
+                      { value: 'sound_default',   label: '🔔 Default' },
+                      { value: 'sound_chime',     label: '🎵 Chime' },
+                      { value: 'sound_beep',      label: '📡 Digital Beep' },
+                      { value: 'sound_synth',     label: '🎹 Synth' },
+                      { value: 'sound_alarm',     label: '🚨 Loud Alarm' },
+                      { value: 'sound_custom_os', label: '⚙️ Custom OS Alert' },
+                    ]}
+                    currentTheme={theme}
+                    className="w-full"
+                  />
+                  {(notificationSettings.defaultNotificationSound === 'sound_custom_os') && isNativePlatform() && (
+                    <div className="space-y-2">
+                      <Button
+                        variant="secondary"
+                        onClick={openNativeAppSettings}
+                        className="w-full flex items-center justify-center gap-2"
+                      >
+                        <Settings size={14} />
+                        Configure Custom Sound in OS Settings
+                      </Button>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+                        Tap this, select &apos;Notifications&apos;, tap &apos;Custom OS Alert&apos;, and choose your preferred sound.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
