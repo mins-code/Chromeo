@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, Suspense, lazy } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { App as CapacitorApp } from '@capacitor/app';
 import { Layout } from './components/Layout';
 import { Task, ViewMode, TaskStatus, Partner, TaskPriority, TaskType, ViewSourceMode } from './types';
 import { getUrgencyScore } from './utils/taskScoring';
@@ -275,6 +276,35 @@ const App: React.FC = () => {
         window.addEventListener('unhandledrejection', handleUnhandledRejection);
         return () => window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     }, []);
+
+    // Android hardware back button: navigate back instead of exiting
+    useEffect(() => {
+        const setupBackButton = async () => {
+            const handler = await CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+                if (isEditorOpen) {
+                    setIsEditorOpen(false);
+                } else if (isRoutineEditorOpen) {
+                    setIsRoutineEditorOpen(false);
+                } else if (isFocusModeOpen) {
+                    setIsFocusModeOpen(false);
+                } else if (isAIChatOpen) {
+                    setIsAIChatOpen(false);
+                } else if (canGoBack) {
+                    navigate(-1);
+                } else {
+                    CapacitorApp.exitApp();
+                }
+            });
+            return handler;
+        };
+
+        let handlerRef: Awaited<ReturnType<typeof CapacitorApp.addListener>> | null = null;
+        setupBackButton().then(h => { handlerRef = h; });
+
+        return () => {
+            handlerRef?.remove();
+        };
+    }, [navigate, isEditorOpen, isRoutineEditorOpen, isFocusModeOpen, isAIChatOpen]);
 
     // System Notifications initialized by hook
 
