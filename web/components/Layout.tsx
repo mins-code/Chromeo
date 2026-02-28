@@ -762,7 +762,7 @@ export const Layout: React.FC<LayoutProps> = ({
                             {/* Drawer */}
                             <aside className="absolute left-0 top-0 h-full w-72 glass shadow-2xl border-r border-slate-200 dark:border-white/5 flex flex-col animate-slide-in-left">
                                 {/* Drawer Header */}
-                                <div className="h-20 flex items-center justify-between px-6 border-b border-slate-200 dark:border-white/5 shrink-0">
+                                <div className="min-h-20 flex items-end justify-between px-6 pb-4 border-b border-slate-200 dark:border-white/5 shrink-0 pt-safe-area">
                                     <div 
                                         className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                                         onClick={() => { onNavigate('calendar'); setIsMobileSidebarOpen(false); }}
@@ -856,7 +856,7 @@ export const Layout: React.FC<LayoutProps> = ({
 
                     {/* Content Scroll Container */}
                     <main className="flex-1 overflow-y-auto no-scrollbar pb-mobile-nav md:pb-0 relative scroll-smooth scroll-touch">
-                        <div className="container mx-auto max-w-6xl p-3 sm:p-4 md:p-8 lg:p-10 space-y-6 md:space-y-8">
+                        <div className="container mx-auto max-w-6xl p-4 sm:p-5 md:p-8 lg:p-10 space-y-6 md:space-y-8">
                             {children}
                         </div>
                     </main>
