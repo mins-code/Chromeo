@@ -157,9 +157,52 @@ const startNotificationChecker = () => {
 };
 
 /**
+ * Notify all open window clients to flush their sync queue.
+ * Called by the Background Sync handler so the main thread can drain
+ * any pending Supabase Edge Function calls that were queued offline.
+ */
+const notifyClientsToFlush = async () => {
+  const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  if (clients.length === 0) {
+    console.log('[SW] Background sync: no active clients to notify');
+    return;
+  }
+  clients.forEach(client => {
+    client.postMessage({ type: 'FLUSH_SYNC_QUEUE' });
+  });
+  console.log(`[SW] Background sync: notified ${clients.length} client(s) to flush queue`);
+};
+
+/**
+ * Background Sync Event Handler
+ * Triggered by the browser when connectivity is restored (or immediately
+ * if already online). Tells the main thread to flush its pending sync queue
+ * so any queued Supabase/IndexedDB writes are replayed.
+ */
+self.addEventListener('sync', (event) => {
+  console.log(`[SW] Background sync event: ${event.tag}`);
+  if (event.tag === 'sync-notifications') {
+    event.waitUntil(notifyClientsToFlush());
+  }
+});
+
+/**
+ * Periodic Background Sync (Chrome / supported browsers only)
+ * Falls back silently on unsupported browsers.
+ */
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'check-notifications') {
+    console.log('[SW] Periodic sync: checking notifications');
+    event.waitUntil(checkOfflineNotifications());
+  }
+});
+
+/**
  * Push Event Handler
- * This is the core of background notifications - it's triggered by the browser
- * when a push message is received from the server, even when the app is closed.
+ * Triggered by the browser when a push message arrives from the server,
+ * even when the app is closed. `event.waitUntil` wraps the entire async
+ * notification-building pipeline so the browser cannot kill the worker
+ * before `showNotification` resolves.
  */
 self.addEventListener('push', (event) => {
   console.log('[SW] Push notification received');

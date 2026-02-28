@@ -462,6 +462,56 @@ export const cancelNotification = async (taskId: string): Promise<boolean> => {
 };
 
 /**
+ * Add a notification to the offline sync queue.
+ *
+ * - Persists the notification to IndexedDB via OfflineNotifications so it
+ *   survives browser restarts.
+ * - Registers a Background Sync event (`sync-notifications`) so the browser
+ *   wakes the service worker when connectivity is restored, which in turn
+ *   posts `FLUSH_SYNC_QUEUE` back to the main thread to drain the queue.
+ *
+ * Falls back gracefully when Background Sync (SyncManager) is not available,
+ * e.g. on Firefox or Safari where the API is not yet standardised.
+ */
+export const addToSyncQueue = async (
+  id: string,
+  title: string,
+  scheduledTime: Date,
+  options?: {
+    body?: string;
+    taskId?: string;
+  }
+): Promise<void> => {
+  // 1. Persist to IndexedDB so the notification survives offline periods.
+  try {
+    await OfflineNotifications.cacheNotification({
+      id,
+      taskId: options?.taskId || id,
+      title,
+      body: options?.body || '',
+      scheduledTime: scheduledTime.getTime(),
+    });
+    logger.debug(`[Notifications] Queued notification for background sync: ${id}`);
+  } catch (cacheError) {
+    logger.error('[Notifications] Failed to add notification to sync queue', cacheError as Error);
+  }
+
+  // 2. Ask the browser to wake the service worker when connectivity returns.
+  //    SyncManager is a Chrome/Edge extension; gracefully skip on unsupported browsers.
+  if ('serviceWorker' in navigator && 'SyncManager' in window) {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      await reg.sync.register('sync-notifications');
+      logger.debug('[Notifications] Background sync event registered: sync-notifications');
+    } catch (syncError) {
+      // Non-fatal: the notification is already in IndexedDB and will fire
+      // the next time checkOfflineNotifications runs via the SW interval.
+      logger.warn('[Notifications] Background sync registration failed (may not be supported)', syncError as Error);
+    }
+  }
+};
+
+/**
  * Cancel all scheduled notifications for a user
  */
 export const cancelAllNotifications = async (): Promise<void> => {
