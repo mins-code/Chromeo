@@ -589,8 +589,37 @@ export const cancelAllNotifications = async (): Promise<void> => {
 
 /**
  * Send a test notification
+ * On native Android/iOS, uses Capacitor LocalNotifications (scheduled 5 s ahead).
+ * On web, falls back to the standard Web Notification / Service Worker path.
  */
 export const sendTestNotification = async (): Promise<boolean> => {
+  // Native path — Web Notification API is not reliable inside the Capacitor WebView
+  if (nativeNotifications.isNative()) {
+    try {
+      // Ensure the plugin is ready and permissions are granted
+      const initialized = await nativeNotifications.initialize();
+      if (!initialized) {
+        logger.warn('[Notifications] sendTestNotification: native init failed (permission denied?)');
+        return false;
+      }
+      // Capacitor LocalNotifications requires a future scheduledAt date.
+      // 5 seconds is enough time for the system to register and display it.
+      const fiveSecondsFromNow = new Date(Date.now() + 5_000);
+      const scheduled = await nativeNotifications.scheduleLocal({
+        id: 'test-notification',
+        title: 'ChronoDeX Notifications Enabled! 🎉',
+        body: 'You will now receive reminders for your tasks, events, and budget alerts.',
+        scheduledAt: fiveSecondsFromNow,
+      });
+      logger.info('[Notifications] Test notification scheduled via native LocalNotifications');
+      return scheduled;
+    } catch (error) {
+      logger.error('[Notifications] Native test notification failed', error as Error);
+      return false;
+    }
+  }
+
+  // Web fallback — uses Web Notification API / Service Worker
   return sendNotification('ChronoDeX Notifications Enabled! 🎉', {
     body: 'You will now receive reminders for your tasks, events, and budget alerts.',
     tag: 'test-notification',
