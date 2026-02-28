@@ -193,22 +193,24 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                   Get notified about tasks, events, and budget alerts
                 </p>
               </div>
-              <div
+              <button
+                type="button"
                 onClick={() => notificationPermission !== 'denied' && onNotificationToggle(!notificationSettings.enabled)}
-                className={`relative w-14 h-7 rounded-full transition-colors duration-200 cursor-pointer select-none ${
+                disabled={notificationPermission === 'denied'}
+                className={`relative w-14 h-7 rounded-full transition-colors duration-200 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
                   notificationSettings.enabled ? 'bg-brand-500' : 'bg-slate-300 dark:bg-slate-600'
                 } ${notificationPermission === 'denied' ? 'opacity-50 cursor-not-allowed' : ''}`}
                 role="switch"
                 aria-checked={notificationSettings.enabled}
-                tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' || e.key === ' ' ? onNotificationToggle(!notificationSettings.enabled) : null}
               >
-                <div
-                  className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow-md transition-all duration-200 ${
-                    notificationSettings.enabled ? 'left-8' : 'left-1'
+                <span className="sr-only">Toggle notifications</span>
+                <span
+                  aria-hidden="true"
+                  className={`pointer-events-none absolute top-1 left-1 w-5 h-5 transform rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
+                    notificationSettings.enabled ? 'translate-x-7' : 'translate-x-0'
                   }`}
                 />
-              </div>
+              </button>
             </div>
 
             {/* Permission Status */}
@@ -451,22 +453,23 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 </div>
               </div>
               {onGoogleCalendarToggle && (
-                <div
+                <button
+                  type="button"
                   onClick={() => onGoogleCalendarToggle(!googleCalendarEnabled)}
-                  className={`relative w-14 h-7 rounded-full transition-colors duration-200 cursor-pointer select-none ${
+                  className={`relative w-14 h-7 rounded-full transition-colors duration-200 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
                     googleCalendarEnabled ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'
                   }`}
                   role="switch"
                   aria-checked={googleCalendarEnabled}
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' || e.key === ' ' ? onGoogleCalendarToggle(!googleCalendarEnabled) : null}
                 >
-                  <div
-                    className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow-md transition-all duration-200 ${
-                      googleCalendarEnabled ? 'left-8' : 'left-1'
+                  <span className="sr-only">Toggle Google Calendar</span>
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none absolute top-1 left-1 w-5 h-5 transform rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
+                      googleCalendarEnabled ? 'translate-x-7' : 'translate-x-0'
                     }`}
                   />
-                </div>
+                </button>
               )}
             </div>
 
