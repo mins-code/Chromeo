@@ -195,13 +195,13 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               </div>
               <button
                 onClick={() => onNotificationToggle(!notificationSettings.enabled)}
-                className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${
+                className={`relative w-14 h-7 rounded-[9999px] transition-colors duration-200 ${
                   notificationSettings.enabled ? 'bg-brand-500' : 'bg-slate-300 dark:bg-slate-600'
                 }`}
                 disabled={notificationPermission === 'denied'}
               >
                 <div
-                  className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
+                  className={`absolute top-1 left-1 w-5 h-5 rounded-[9999px] bg-white shadow-md transition-transform duration-200 ${
                     notificationSettings.enabled ? 'translate-x-7' : 'translate-x-0'
                   }`}
                 />
