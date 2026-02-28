@@ -591,35 +591,52 @@ export const cancelAllNotifications = async (): Promise<void> => {
  * Send a test notification
  * On native Android/iOS, uses Capacitor LocalNotifications (scheduled 5 s ahead).
  * On web, falls back to the standard Web Notification / Service Worker path.
+ *
+ * IMPORTANT: initialize() MUST be called before isNative() because the platform
+ * defaults to 'web' until detectPlatform() runs inside initialize().
  */
 export const sendTestNotification = async (): Promise<boolean> => {
-  // Native path — Web Notification API is not reliable inside the Capacitor WebView
+  logger.info('[Notifications] sendTestNotification: starting...');
+
+  // Always initialize first — this detects the platform (android/ios/web)
+  // and requests permission. isNative() returns false until this runs.
+  let initialized = false;
+  try {
+    initialized = await nativeNotifications.initialize();
+  } catch (e) {
+    logger.error('[Notifications] sendTestNotification: initialize() threw', e as Error);
+  }
+
+  const platform = nativeNotifications.getPlatform();
+  logger.info(`[Notifications] sendTestNotification: platform="${platform}", initialized=${initialized}`);
+
+  // Native path — Web Notification API is not reliable inside Capacitor WebView
   if (nativeNotifications.isNative()) {
+    if (!initialized) {
+      logger.warn('[Notifications] sendTestNotification: native init failed — permission denied or plugin error');
+      return false;
+    }
     try {
-      // Ensure the plugin is ready and permissions are granted
-      const initialized = await nativeNotifications.initialize();
-      if (!initialized) {
-        logger.warn('[Notifications] sendTestNotification: native init failed (permission denied?)');
-        return false;
-      }
-      // Capacitor LocalNotifications requires a future scheduledAt date.
-      // 5 seconds is enough time for the system to register and display it.
+      // LocalNotifications requires a future scheduledAt date.
+      // 5 s gives the OS time to register the alarm and display it.
       const fiveSecondsFromNow = new Date(Date.now() + 5_000);
+      logger.info(`[Notifications] sendTestNotification: scheduling native notification for ${fiveSecondsFromNow.toISOString()}`);
       const scheduled = await nativeNotifications.scheduleLocal({
         id: 'test-notification',
         title: 'ChronoDeX Notifications Enabled! 🎉',
         body: 'You will now receive reminders for your tasks, events, and budget alerts.',
         scheduledAt: fiveSecondsFromNow,
       });
-      logger.info('[Notifications] Test notification scheduled via native LocalNotifications');
+      logger.info(`[Notifications] sendTestNotification: scheduleLocal() returned ${scheduled}`);
       return scheduled;
     } catch (error) {
-      logger.error('[Notifications] Native test notification failed', error as Error);
+      logger.error('[Notifications] sendTestNotification: scheduleLocal() threw', error as Error);
       return false;
     }
   }
 
   // Web fallback — uses Web Notification API / Service Worker
+  logger.info('[Notifications] sendTestNotification: using web path');
   return sendNotification('ChronoDeX Notifications Enabled! 🎉', {
     body: 'You will now receive reminders for your tasks, events, and budget alerts.',
     tag: 'test-notification',
