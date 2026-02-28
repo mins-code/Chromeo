@@ -545,7 +545,7 @@ export const Layout: React.FC<LayoutProps> = ({
                 <div className="flex-1 flex flex-col h-full overflow-hidden relative">
 
                     {/* TOP Header */}
-                    <header className="h-20 glass border-b border-slate-200 dark:border-white/5 flex items-center justify-between px-6 z-30 shrink-0">
+                    <header className="min-h-20 glass border-b border-slate-200 dark:border-white/5 flex items-center justify-between px-6 z-30 shrink-0 pt-safe-area">
                         {/* Brand */}
                         <div className="flex items-center gap-6">
                             {/* Mobile Menu Trigger (Visible only on mobile) */}

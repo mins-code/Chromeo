@@ -171,14 +171,18 @@
 }
 
 .theme-cyberpunk .glass {
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.15), 0 0 40px rgba(255, 0, 255, 0.08);
+  box-shadow:
+    0 0 20px rgba(0, 255, 255, 0.15),
+    0 0 40px rgba(255, 0, 255, 0.08);
   border: 1px solid var(--glass-border);
 }
 
 /* Neon glow text for accent */
 .theme-cyberpunk .text-brand-500 {
   color: #00ffff;
-  text-shadow: 0 0 10px rgba(0, 255, 255, 0.7), 0 0 20px rgba(0, 255, 255, 0.4);
+  text-shadow:
+    0 0 10px rgba(0, 255, 255, 0.7),
+    0 0 20px rgba(0, 255, 255, 0.4);
 }
 
 .theme-cyberpunk .text-brand-600 {
@@ -214,12 +218,16 @@
 .theme-cyberpunk .glass-panel {
   background: rgba(18, 0, 40, 0.85);
   border: 1px solid rgba(0, 255, 255, 0.15);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 255, 255, 0.05);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 15px rgba(0, 255, 255, 0.05);
 }
 
 .theme-cyberpunk .glass-panel:hover {
   border-color: rgba(0, 255, 255, 0.4);
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.6), 0 0 25px rgba(0, 255, 255, 0.15),
+  box-shadow:
+    0 4px 25px rgba(0, 0, 0, 0.6),
+    0 0 25px rgba(0, 255, 255, 0.15),
     0 0 40px rgba(255, 0, 255, 0.08);
 }
 
@@ -227,7 +235,9 @@
 .theme-cyberpunk button.rounded-full {
   background: linear-gradient(135deg, #00ffff 0%, #00cccc 100%);
   border: none;
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4), 0 0 40px rgba(0, 255, 255, 0.2);
+  box-shadow:
+    0 0 20px rgba(0, 255, 255, 0.4),
+    0 0 40px rgba(0, 255, 255, 0.2);
   color: #0a0014;
 }
 
@@ -441,7 +451,9 @@
 
 .theme-onepiece .glass-panel:hover {
   border-color: rgba(212, 165, 116, 0.3);
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.5), 0 0 20px rgba(212, 165, 116, 0.1);
+  box-shadow:
+    0 4px 25px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(212, 165, 116, 0.1);
 }
 
 /* Rose gold gradient buttons */
@@ -572,7 +584,7 @@ body {
 }
 
 .pt-safe-area {
-  padding-top: env(safe-area-inset-top, 0);
+  padding-top: env(safe-area-inset-top, 20px);
 }
 
 .pl-safe-area {
@@ -679,8 +691,14 @@ body {
 
 /* Slide-in animation for mobile panels */
 @keyframes slideInRight {
-  0% { transform: translateX(100%); opacity: 0; }
-  100% { transform: translateX(0); opacity: 1; }
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .animate-slide-in-right {
