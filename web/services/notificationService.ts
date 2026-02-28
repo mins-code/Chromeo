@@ -375,45 +375,51 @@ export const scheduleNotification = async (
 
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return true; // Still return true since we cached locally
+    if (!user) return true;
 
-    // Also check for a valid session to avoid 401 errors
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return true; // Still return true since we cached locally
+    if (!session) return true;
 
-    // Silently fail if push notification function is not available
-    // This prevents CORS errors when the function isn't deployed or configured
-    const { error } = await supabase.functions.invoke('push-notification', {
-      body: {
-        action: 'schedule',
-        userId: user.id,
-        taskId: options?.taskId || id,
-        notification: {
-          title,
-          body: options?.body,
-          scheduledTime: scheduledTime.toISOString(),
-        },
+    const schedulePayload = {
+      action: 'schedule' as const,
+      userId: user.id,
+      taskId: options?.taskId || id,
+      notification: {
+        title,
+        body: options?.body,
+        scheduledTime: scheduledTime.toISOString(),
       },
-    }).catch((err) => {
-      // Suppress 401 errors (user not authenticated) - this is expected
+    };
+
+    // ── Offline gate ──────────────────────────────────────────────────────
+    // If the device has no connectivity, queue for later instead of calling
+    // Supabase and silently losing the action.
+    if (!navigator.onLine) {
+      logger.debug('[Notifications] Offline — queuing schedule action for later');
+      await OfflineNotifications.addSyncAction({ action: 'schedule', payload: schedulePayload });
+      return true;
+    }
+
+    const { error } = await supabase.functions.invoke('push-notification', {
+      body: schedulePayload,
+    }).catch(async (err) => {
       if (err?.message?.includes('401') || err?.status === 401) {
-        return { error: null }; // Silently ignore auth errors
+        return { error: null }; // Silently ignore auth errors — not a network problem
       }
-      return { error: { message: 'Push notification service unavailable' } };
+      // Network-level failure: persist so flushSyncQueue can retry
+      logger.debug('[Notifications] Network error scheduling — queuing for later', err);
+      await OfflineNotifications.addSyncAction({ action: 'schedule', payload: schedulePayload });
+      return { error: null };
     });
 
     if (error) {
-      // Silently log the error instead of throwing
       console.debug('Push notification scheduling skipped:', error.message);
-      // Still return true since we have local cache
     }
-    
+
     logger.debug(`Scheduled notification for ${scheduledTime.toISOString()}`);
     return true;
   } catch (error) {
-    // Silently handle errors to prevent console spam
     console.debug('Error scheduling notification on server:', error);
-    // Return true since we still have local cache working
     return true;
   }
 };
@@ -434,21 +440,27 @@ export const cancelNotification = async (taskId: string): Promise<boolean> => {
   if (!PUSH_NOTIFICATIONS_BACKEND_ENABLED) return true;
 
   try {
-    // Check for valid session before making API call
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return true; // Still return true since we cleared local cache
+    if (!session) return true;
+
+    const cancelPayload = { action: 'cancel' as const, taskId };
+
+    // ── Offline gate ──────────────────────────────────────────────────────
+    if (!navigator.onLine) {
+      logger.debug('[Notifications] Offline — queuing cancel action for later');
+      await OfflineNotifications.addSyncAction({ action: 'cancel', payload: cancelPayload });
+      return true;
+    }
 
     const { error } = await supabase.functions.invoke('push-notification', {
-      body: {
-        action: 'cancel',
-        taskId,
-      },
-    }).catch((err) => {
-      // Suppress 401 errors (user not authenticated) - this is expected
+      body: cancelPayload,
+    }).catch(async (err) => {
       if (err?.message?.includes('401') || err?.status === 401) {
-        return { error: null }; // Silently ignore auth errors
+        return { error: null };
       }
-      return { error: { message: 'Push notification service unavailable' } };
+      logger.debug('[Notifications] Network error cancelling — queuing for later', err);
+      await OfflineNotifications.addSyncAction({ action: 'cancel', payload: cancelPayload });
+      return { error: null };
     });
 
     if (error) {
@@ -457,7 +469,55 @@ export const cancelNotification = async (taskId: string): Promise<boolean> => {
     return true;
   } catch (error) {
     console.debug('Error cancelling notification on server:', error);
-    return true; // Still return true since we cleared local cache
+    return true;
+  }
+};
+
+/**
+ * Flush all queued sync actions to the Supabase push-notification Edge Function.
+ *
+ * Called:
+ *  - When the `online` window event fires (device reconnects)
+ *  - When the service worker sends a `FLUSH_SYNC_QUEUE` postMessage (triggered
+ *    by a Background Sync event from the browser)
+ *
+ * Each successfully-replayed action is removed from the queue so it is never
+ * sent twice. Failed actions remain in the queue for the next flush attempt.
+ */
+export const flushSyncQueue = async (): Promise<void> => {
+  if (!navigator.onLine) {
+    logger.debug('[Notifications] flushSyncQueue: still offline, skipping');
+    return;
+  }
+
+  const actions = await OfflineNotifications.getSyncActions();
+  if (actions.length === 0) return;
+
+  logger.info(`[Notifications] Flushing ${actions.length} queued sync action(s)`);
+
+  for (const action of actions) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        logger.debug('[Notifications] flushSyncQueue: no session, stopping flush');
+        break; // All remaining actions need auth too — stop early
+      }
+
+      const { error } = await supabase.functions.invoke('push-notification', {
+        body: action.payload,
+      });
+
+      if (error) {
+        logger.warn(`[Notifications] flushSyncQueue: action ${action.id} failed, keeping in queue`, error);
+        // Leave it in the queue — will retry on next flush
+        continue;
+      }
+
+      await OfflineNotifications.removeSyncAction(action.id);
+      logger.debug(`[Notifications] flushSyncQueue: action ${action.id} replayed and removed`);
+    } catch (err) {
+      logger.warn(`[Notifications] flushSyncQueue: network error for action ${action.id}, keeping in queue`, err as Error);
+    }
   }
 };
 

@@ -9,8 +9,9 @@
 import { logger } from '../utils/logger';
 
 const DB_NAME = 'chronodex-notifications';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // v2 adds the sync-queue store
 const STORE_NAME = 'scheduled-notifications';
+const SYNC_QUEUE_STORE = 'sync-queue';
 
 export interface CachedNotification {
   id: string;
@@ -22,6 +23,17 @@ export interface CachedNotification {
   createdAt: number;
   syncedAt?: number;
   type?: 'TASK' | 'EVENT' | 'APPOINTMENT' | 'REMINDER';
+}
+
+/**
+ * A deferred action that was captured while offline and must be replayed
+ * against the Supabase push-notification Edge Function once connectivity resumes.
+ */
+export interface SyncAction {
+  id: string;           // uuid generated at insertion time
+  action: 'schedule' | 'cancel';
+  payload: any;         // exact body forwarded to supabase.functions.invoke
+  timestamp: number;    // Date.now() at insertion
 }
 
 let dbInstance: IDBDatabase | null = null;
@@ -51,14 +63,21 @@ export const initDB = (): Promise<IDBDatabase> => {
 
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
-      
-      // Create object store if it doesn't exist
+
+      // v1 → scheduled-notifications store
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
         store.createIndex('scheduledTime', 'scheduledTime', { unique: false });
         store.createIndex('fired', 'fired', { unique: false });
         store.createIndex('taskId', 'taskId', { unique: false });
-        logger.debug('[OfflineNotifications] Object store created');
+        logger.debug('[OfflineNotifications] scheduled-notifications store created');
+      }
+
+      // v2 → sync-queue store for deferred Supabase actions
+      if (!db.objectStoreNames.contains(SYNC_QUEUE_STORE)) {
+        const syncStore = db.createObjectStore(SYNC_QUEUE_STORE, { keyPath: 'id' });
+        syncStore.createIndex('timestamp', 'timestamp', { unique: false });
+        logger.debug('[OfflineNotifications] sync-queue store created');
       }
     };
   });
@@ -298,4 +317,78 @@ export const getNotificationStats = async (): Promise<{
 export const exportCachedNotifications = async (): Promise<string> => {
   const notifications = await getCachedNotifications();
   return JSON.stringify(notifications, null, 2);
+};
+
+// ─── Sync Queue ──────────────────────────────────────────────────────────────
+
+/**
+ * Persist a deferred Supabase action to the sync queue.
+ * Called when the device is offline or when a network-level error occurs
+ * so the action is not lost and can be replayed via `flushSyncQueue`.
+ */
+export const addSyncAction = async (
+  action: Omit<SyncAction, 'id' | 'timestamp'>
+): Promise<void> => {
+  try {
+    const db = await initDB();
+    const record: SyncAction = {
+      ...action,
+      id: crypto.randomUUID(),
+      timestamp: Date.now(),
+    };
+    const tx = db.transaction(SYNC_QUEUE_STORE, 'readwrite');
+    tx.objectStore(SYNC_QUEUE_STORE).put(record);
+    await new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => {
+        logger.debug(`[OfflineNotifications] Sync action queued: ${record.action} (${record.id})`);
+        resolve();
+      };
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (error) {
+    logger.error('[OfflineNotifications] Failed to queue sync action', error as Error);
+  }
+};
+
+/**
+ * Return all queued sync actions sorted oldest-first.
+ */
+export const getSyncActions = async (): Promise<SyncAction[]> => {
+  try {
+    const db = await initDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(SYNC_QUEUE_STORE, 'readonly');
+      const request = tx.objectStore(SYNC_QUEUE_STORE).getAll();
+      request.onsuccess = () => {
+        const sorted = (request.result as SyncAction[]).sort(
+          (a, b) => a.timestamp - b.timestamp
+        );
+        resolve(sorted);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    logger.error('[OfflineNotifications] Failed to get sync actions', error as Error);
+    return [];
+  }
+};
+
+/**
+ * Remove a successfully-replayed sync action from the queue.
+ */
+export const removeSyncAction = async (id: string): Promise<void> => {
+  try {
+    const db = await initDB();
+    const tx = db.transaction(SYNC_QUEUE_STORE, 'readwrite');
+    tx.objectStore(SYNC_QUEUE_STORE).delete(id);
+    await new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => {
+        logger.debug(`[OfflineNotifications] Sync action removed: ${id}`);
+        resolve();
+      };
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (error) {
+    logger.error('[OfflineNotifications] Failed to remove sync action', error as Error);
+  }
 };
