@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Transaction } from '../types';
-import { Calendar, Search, ChevronLeft, ChevronRight, Receipt, SearchX } from 'lucide-react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, addWeeks, subWeeks, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import { Calendar, Search, ChevronLeft, ChevronRight, Receipt, SearchX, X } from 'lucide-react';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, addWeeks, subWeeks, startOfWeek, endOfWeek } from 'date-fns';
 import { logger } from '../utils/logger';
 import TransactionItem from './TransactionItem';
 import TransactionEditRow from './TransactionEditRow';
@@ -49,14 +49,26 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
     const filteredTransactions = useMemo(() => {
         const searchLower = searchTerm.toLowerCase();
 
+        // ⚡ Bolt Optimization: Pre-calculate date range boundaries as timestamps
+        // to use fast numeric comparisons instead of date-fns isWithinInterval.
+        const startTs = range ? range.start.getTime() : 0;
+        const endTs = range ? range.end.getTime() : 0;
+        const hasRange = viewMode !== 'all' && range;
+
         return transactions.filter(t => {
-            const matchesSearch = t.description.toLowerCase().includes(searchLower);
+            // ⚡ Optimization: Check date range FIRST (fastest check)
+            if (hasRange) {
+                if (t.date < startTs || t.date > endTs) {
+                    return false;
+                }
+            }
 
-            if (viewMode === 'all') return matchesSearch;
-            if (!range) return matchesSearch;
+            // Then check search term (slower string operation)
+            if (searchTerm) {
+                return t.description.toLowerCase().includes(searchLower);
+            }
 
-            // date-fns isWithinInterval supports timestamp numbers directly, avoiding new Date() creation
-            return matchesSearch && isWithinInterval(t.date, range);
+            return true;
         });
     }, [transactions, searchTerm, viewMode, range]);
 
@@ -102,9 +114,9 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                         {(['all', 'month', 'week'] as const).map((mode) => (
                             <button
                                 key={mode}
-                            type="button"
-                            role="radio"
-                            aria-checked={viewMode === mode}
+                                type="button"
+                                role="radio"
+                                aria-checked={viewMode === mode}
                                 onClick={() => setViewMode(mode)}
                                 className={`px-3 py-1 text-xs rounded-md capitalize transition-colors ${
                                     viewMode === mode
