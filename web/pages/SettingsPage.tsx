@@ -141,7 +141,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
 
         {/* Appearance Settings */}
-        <div className="col-span-1 lg:col-span-2 space-y-4">
+        <div className="col-span-1 lg:col-span-2 space-y-4 pt-6">
           <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
             <Palette className="text-brand-500" />
             <h3>Appearance</h3>
@@ -177,7 +177,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
 
         {/* Notifications Section */}
-        <div className="col-span-1 lg:col-span-2 space-y-4">
+        <div className="col-span-1 lg:col-span-2 space-y-4 pt-6">
           <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
             <Bell className="text-brand-500" />
             <h3>Notifications</h3>
@@ -426,7 +426,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
 
         {/* Integrations Section */}
-        <div className="col-span-1 lg:col-span-2 space-y-4">
+        <div className="col-span-1 lg:col-span-2 space-y-4 pt-6">
           <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
             <Link2 className="text-brand-500" />
             <h3>Integrations</h3>
@@ -504,7 +504,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         />
 
         {/* Advanced Section */}
-        <div className="col-span-1 lg:col-span-2 space-y-4">
+        <div className="col-span-1 lg:col-span-2 space-y-4 pt-6">
           <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
              <Terminal className="text-brand-500" />
             <h3>Advanced</h3>
