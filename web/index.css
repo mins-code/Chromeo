@@ -584,7 +584,7 @@ body {
 }
 
 .pt-safe-area {
-  padding-top: calc(env(safe-area-inset-top, 20px) + 15px);
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 .pl-safe-area {

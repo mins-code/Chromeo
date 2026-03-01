@@ -12,8 +12,9 @@ let VAPID_PUBLIC_KEY = null;
 
 // IndexedDB configuration for offline notifications
 const DB_NAME = 'chronodex-notifications';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // v2 adds the sync-queue store (keep in sync with offlineNotificationService.ts)
 const STORE_NAME = 'scheduled-notifications';
+const SYNC_QUEUE_STORE = 'sync-queue';
 
 /**
  * Open IndexedDB for offline notifications
@@ -33,10 +34,16 @@ const openNotificationsDB = () => {
     
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
+      // v1 → scheduled-notifications store
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
         store.createIndex('scheduledTime', 'scheduledTime', { unique: false });
         store.createIndex('fired', 'fired', { unique: false });
+      }
+      // v2 → sync-queue store
+      if (!db.objectStoreNames.contains(SYNC_QUEUE_STORE)) {
+        const syncStore = db.createObjectStore(SYNC_QUEUE_STORE, { keyPath: 'id' });
+        syncStore.createIndex('timestamp', 'timestamp', { unique: false });
       }
     };
   });

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ThemeOption } from '../types';
 
@@ -28,7 +29,9 @@ const Select: React.FC<SelectProps> = ({
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
+    const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
     const listboxId = React.useId();
 
     // Reset highlight when opening
@@ -36,13 +39,25 @@ const Select: React.FC<SelectProps> = ({
         if (isOpen) {
             const idx = options.findIndex(o => o.value === value);
             setHighlightedIndex(idx >= 0 ? idx : 0);
+            // Compute fixed position from button's bounding rect
+            if (buttonRef.current) {
+                const rect = buttonRef.current.getBoundingClientRect();
+                setDropdownPos({
+                    top: rect.bottom + 4,
+                    left: rect.left,
+                    width: rect.width,
+                });
+            }
         }
     }, [isOpen, value, options]);
 
     // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+            if (
+                dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
+                buttonRef.current && !buttonRef.current.contains(event.target as Node)
+            ) {
                 setIsOpen(false);
             }
         };
@@ -115,13 +130,14 @@ const Select: React.FC<SelectProps> = ({
     const colors = getThemeColors();
 
     return (
-        <div className={`relative ${className}`} ref={dropdownRef}>
+        <div className={`relative ${className}`}>
             {label && (
                 <label className="text-xs font-bold uppercase text-slate-500 mb-1.5 block tracking-wider font-mono">
                     {label}
                 </label>
             )}
             <button
+                ref={buttonRef}
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 onKeyDown={(e) => {
@@ -160,11 +176,19 @@ const Select: React.FC<SelectProps> = ({
                 </span>
             </button>
 
-            {isOpen && (
+            {isOpen && ReactDOM.createPortal(
                 <div
+                    ref={dropdownRef}
                     id={listboxId}
                     role="listbox"
-                    className={`absolute z-50 w-full mt-1 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 border ${colors.listBg} ${colors.listBorder}`}
+                    style={{
+                        position: 'fixed',
+                        top: dropdownPos.top,
+                        left: dropdownPos.left,
+                        width: dropdownPos.width,
+                        zIndex: 9999,
+                    }}
+                    className={`rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 border ${colors.listBg} ${colors.listBorder}`}
                 >
                     <div className="max-h-60 overflow-auto py-1 custom-scrollbar">
                         {options.map((option, idx) => (
@@ -192,7 +216,8 @@ const Select: React.FC<SelectProps> = ({
                             </div>
                         ))}
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
