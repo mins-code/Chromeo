@@ -305,21 +305,21 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
             {partnerships.map(p => (
               <div 
                 key={p.id} 
-                className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10"
+                className="flex items-center justify-between gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="w-10 h-10 shrink-0 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500">
                     <User size={20} />
                   </div>
-                  <div>
-                    <p className="font-medium text-slate-800 dark:text-slate-200">
+                  <div className="min-w-0 overflow-hidden">
+                    <p className="font-medium text-slate-800 dark:text-slate-200 truncate">
                       {p.partnerName || p.partnerEmail}
                     </p>
-                    <p className="text-xs text-slate-500">{p.partnerEmail}</p>
+                    <p className="text-xs text-slate-500 truncate">{p.partnerEmail}</p>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   {p.status === 'pending' ? (
                     p.isIncoming ? (
                       <>
