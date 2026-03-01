@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, Suspense, lazy } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { App as CapacitorApp } from '@capacitor/app';
+import { isNativePlatform } from './utils/device';
 import { Layout } from './components/Layout';
 import { Task, ViewMode, TaskStatus, Partner, TaskPriority, TaskType, ViewSourceMode } from './types';
 import { getUrgencyScore } from './utils/taskScoring';
@@ -279,27 +279,41 @@ const App: React.FC = () => {
 
     // Android hardware back button: navigate back instead of exiting
     useEffect(() => {
+        if (!isNativePlatform()) return;
+
+        let handlerRef: { remove: () => void } | null = null;
+
         const setupBackButton = async () => {
-            const handler = await CapacitorApp.addListener('backButton', ({ canGoBack }) => {
-                if (isEditorOpen) {
-                    setIsEditorOpen(false);
-                } else if (isRoutineEditorOpen) {
-                    setIsRoutineEditorOpen(false);
-                } else if (isFocusModeOpen) {
-                    setIsFocusModeOpen(false);
-                } else if (isAIChatOpen) {
-                    setIsAIChatOpen(false);
-                } else if (canGoBack) {
-                    navigate(-1);
-                } else {
-                    CapacitorApp.exitApp();
-                }
-            });
-            return handler;
+            try {
+                // Dynamic import ensures we only access the plugin AFTER the
+                // Capacitor native bridge has finished registering it.
+                // A top-level import races against bridge initialisation and
+                // produces "App plugin is not implemented on android" rejections.
+                const { App: CapacitorApp } = await import('@capacitor/app');
+                const handler = await CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+                    if (isEditorOpen) {
+                        setIsEditorOpen(false);
+                    } else if (isRoutineEditorOpen) {
+                        setIsRoutineEditorOpen(false);
+                    } else if (isFocusModeOpen) {
+                        setIsFocusModeOpen(false);
+                    } else if (isAIChatOpen) {
+                        setIsAIChatOpen(false);
+                    } else if (canGoBack) {
+                        navigate(-1);
+                    } else {
+                        CapacitorApp.exitApp();
+                    }
+                });
+                handlerRef = handler;
+            } catch (err) {
+                // Bridge not ready yet — safe to ignore, back button just won't
+                // be intercepted on this rare startup race.
+                console.warn('[App] Back button setup skipped — Capacitor App plugin not ready:', err);
+            }
         };
 
-        let handlerRef: Awaited<ReturnType<typeof CapacitorApp.addListener>> | null = null;
-        setupBackButton().then(h => { handlerRef = h; });
+        setupBackButton();
 
         return () => {
             handlerRef?.remove();

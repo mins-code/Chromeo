@@ -49,7 +49,16 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
       });
 
       if (fnError) {
-        throw new Error(fnError.message || 'Failed to delete account');
+        // fnError.message is the generic "Edge Function returned a non-2xx status code".
+        // The real error from the server lives in the response body (fnError.context).
+        let serverMessage: string | null = null;
+        try {
+          const errorBody = await fnError.context?.json();
+          serverMessage = errorBody?.error || null;
+        } catch {
+          // body not parseable – fall through to generic message
+        }
+        throw new Error(serverMessage || fnError.message || 'Failed to delete account');
       }
 
       if (!data?.success) {

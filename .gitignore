@@ -1,2 +1,8 @@
 # IDE configurations
-.idea/
+.idea/Delete account error
+
+Error: Edge Function returned a non-2xx status code
+
+Stack Trace
+
+Error: Edge Function returned a non-2xx status code at Z (https://localhost/assets/index- C53foTik.js:66:64102)
