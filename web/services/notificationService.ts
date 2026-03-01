@@ -171,16 +171,36 @@ export const subscribeToPush = async (): Promise<boolean> => {
   try {
     // Wait for service worker to be ready
     const registration = await navigator.serviceWorker.ready;
-    
+
+    // Helper to perform the actual subscribe call
+    const doSubscribe = () => registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
+    });
+
     // Check for existing subscription
     let subscription = await registration.pushManager.getSubscription();
-    
+
     if (!subscription) {
-      // Create new subscription
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
-      });
+      try {
+        subscription = await doSubscribe();
+      } catch (subscribeErr: any) {
+        // "Registration failed - push service error" usually means the browser
+        // holds a stale push registration that no longer matches the VAPID key
+        // or the FCM endpoint is invalid. Unsubscribe any residual state and
+        // retry once with a fresh subscription.
+        if (subscribeErr?.message?.includes('push service error') ||
+            subscribeErr?.message?.includes('Registration failed')) {
+          logger.warn('Push service error on first subscribe attempt — clearing stale registration and retrying', subscribeErr);
+          try {
+            const stale = await registration.pushManager.getSubscription();
+            if (stale) await stale.unsubscribe();
+          } catch (_) { /* ignore cleanup errors */ }
+          subscription = await doSubscribe(); // second attempt
+        } else {
+          throw subscribeErr;
+        }
+      }
     }
 
     // Get current user
@@ -210,11 +230,11 @@ export const subscribeToPush = async (): Promise<boolean> => {
 
     // Cache subscription locally
     localStorage.setItem(PUSH_SUBSCRIPTION_KEY, JSON.stringify(subscription.toJSON()));
-    
+
     logger.info('Push notification subscription successful');
     return true;
   } catch (error) {
-    logger.error('Error subscribing to push notifications', error as Error);
+    logger.warn('Error subscribing to push notifications (web push may be unavailable in this browser/network)', error as Error);
     return false;
   }
 };
