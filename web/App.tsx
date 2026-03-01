@@ -302,7 +302,11 @@ const App: React.FC = () => {
                     } else if (canGoBack) {
                         navigate(-1);
                     } else {
-                        CapacitorApp.exitApp();
+                        // Never exit the app — fall back to the home screen instead.
+                        // This handles the case where the user is already at the root
+                        // of the React Router history stack (e.g. first launch or after
+                        // navigating directly to a deep route).
+                        navigate('/activities', { replace: true });
                     }
                 });
                 handlerRef = handler;

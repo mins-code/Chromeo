@@ -1,6 +1,36 @@
 import './index.css';
 import React, { lazy, Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
+
+// ---------------------------------------------------------------------------
+// Web back-navigation guard (PWA / mobile browser)
+// Push a sentinel history entry so that a swipe-back or browser-back always
+// has something to land on *inside* the app rather than closing the tab.
+// When the user reaches the sentinel we immediately push it again, keeping
+// them trapped inside the app.  This mirrors what native apps do by default.
+// ---------------------------------------------------------------------------
+(function installWebBackGuard() {
+    // Only needed in a browser context (not in SSR / Capacitor native).
+    if (typeof window === 'undefined') return;
+
+    // Skip in Capacitor native — the Android hardware back button is handled
+    // separately via @capacitor/app in App.tsx.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((window as any).Capacitor?.isNativePlatform?.()) return;
+
+    const SENTINEL = { appBackGuard: true };
+
+    // Push the sentinel below the current page so there is always a "previous"
+    // entry within the app history stack.
+    window.history.pushState(SENTINEL, '');
+
+    window.addEventListener('popstate', (event) => {
+        if (event.state && event.state.appBackGuard) {
+            // Reached the sentinel — push it again so the guard resets.
+            window.history.pushState(SENTINEL, '');
+        }
+    });
+})();
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from './App';
 import { QueryProvider } from './context/QueryProvider';
