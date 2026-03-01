@@ -236,10 +236,11 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
       {/* Search and Create */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} aria-hidden="true" />
           <input
             type="text"
             placeholder="Search notes..."
+            aria-label="Search notes"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-slate-100 dark:bg-dark-surface border border-slate-200 dark:border-dark-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-all placeholder-slate-400 dark:placeholder-slate-500 shadow-sm"
@@ -412,10 +413,11 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
               {noteType === 'note' ? (
                 // Plain Note Content
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-2 ml-1 font-mono">
+                  <label htmlFor="note-content" className="block text-[10px] font-bold uppercase text-slate-400 mb-2 ml-1 font-mono">
                     Content
                   </label>
                   <textarea
+                    id="note-content"
                     value={noteContent}
                     onChange={(e) => setNoteContent(e.target.value)}
                     placeholder={t(currentTheme, 'noteContent')}
@@ -434,6 +436,7 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
                   <div className="flex gap-2">
                     <input
                       type="text"
+                      aria-label="Add a checklist item"
                       value={newChecklistItem}
                       onChange={(e) => setNewChecklistItem(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleAddChecklistItem()}
