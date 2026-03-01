@@ -52,7 +52,10 @@ export function getUrgencyScore(task: Task, now: number = Date.now()): number {
   // Deadline proximity scoring
   const dateStr = task.dueDate || task.reminderTime;
   if (dateStr) {
-    const due = new Date(dateStr).getTime();
+    // ⚡ Bolt Optimization: Use Date.parse() instead of new Date().getTime()
+    // This avoids creating a full Date object just to get the timestamp,
+    // which is significantly faster in tight loops (like list sorting).
+    const due = Date.parse(dateStr);
     const diffHours = (due - now) / (1000 * 60 * 60);
     
     if (diffHours < 0) {
@@ -124,7 +127,7 @@ export function getTodaysTasks(tasks: Task[]): Task[] {
  * @returns Tasks that are past their due date
  */
 export function getOverdueTasks(tasks: Task[]): Task[] {
-  const now = new Date();
+  const nowTs = Date.now();
   
   return tasks.filter(task => {
     if (task.status === TaskStatus.DONE) return false;
@@ -132,7 +135,8 @@ export function getOverdueTasks(tasks: Task[]): Task[] {
     const dateStr = task.dueDate || task.reminderTime;
     if (!dateStr) return false;
     
-    return new Date(dateStr) < now;
+    // ⚡ Bolt Optimization: Use Date.parse for faster timestamp comparison
+    return Date.parse(dateStr) < nowTs;
   });
 }
 
