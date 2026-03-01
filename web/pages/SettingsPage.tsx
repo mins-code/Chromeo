@@ -114,8 +114,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             <User className="text-brand-500" />
             <h3>Profile</h3>
           </div>
-          <div className="bg-white/40 dark:bg-dark-surface/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 backdrop-blur-sm">
-            <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">Profile Settings</h4>
+          <div className="glass-panel p-6 rounded-2xl">
             <Input
               label="Display Name / Nickname"
               value={username}
@@ -141,13 +140,12 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
 
         {/* Appearance Settings */}
-        <div className="col-span-1 lg:col-span-2 space-y-4 pt-6">
+        <div className="col-span-1 lg:col-span-2 space-y-4">
           <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
             <Palette className="text-brand-500" />
             <h3>Appearance</h3>
           </div>
-          <div className="bg-white/40 dark:bg-dark-surface/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 backdrop-blur-sm">
-            <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">Select Theme</h4>
+          <div className="glass-panel p-6 rounded-2xl">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
               {themes.map((t) => (
                 <button
@@ -177,12 +175,12 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
 
         {/* Notifications Section */}
-        <div className="col-span-1 lg:col-span-2 space-y-4 pt-6">
+        <div className="col-span-1 lg:col-span-2 space-y-4">
           <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
             <Bell className="text-brand-500" />
             <h3>Notifications</h3>
           </div>
-          <div className="bg-white/40 dark:bg-dark-surface/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 backdrop-blur-sm space-y-6">
+          <div className="glass-panel p-6 rounded-2xl space-y-6">
             {/* Main Toggle */}
             <div className="flex items-center justify-between">
               <div>
@@ -214,7 +212,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             </div>
 
             {/* Permission Status */}
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-100 dark:bg-black/20">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-black/5 dark:bg-black/20">
               <div
                 className={`w-2 h-2 rounded-full ${
                   notificationPermission === 'granted'
@@ -243,46 +241,79 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                   Notification Types
                 </h5>
 
-                <label className="flex items-center justify-between cursor-pointer group">
+                <div className="flex items-center justify-between group">
                   <div className="flex items-center gap-3">
                     <CheckSquare size={18} className="text-blue-500" />
                     <span className="text-slate-800 dark:text-slate-100 font-medium">Task Reminders</span>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={notificationSettings.taskReminders}
-                    onChange={(e) => onNotificationPreferenceChange('taskReminders', e.target.checked)}
-                    className="w-4 h-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500"
-                  />
-                </label>
+                  <button
+                    type="button"
+                    onClick={() => onNotificationPreferenceChange('taskReminders', !notificationSettings.taskReminders)}
+                    className={`relative w-11 h-6 rounded-full transition-colors duration-200 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
+                      notificationSettings.taskReminders ? 'bg-brand-500' : 'bg-slate-300 dark:bg-slate-600'
+                    }`}
+                    role="switch"
+                    aria-checked={notificationSettings.taskReminders}
+                  >
+                    <span className="sr-only">Toggle task reminders</span>
+                    <span
+                      aria-hidden="true"
+                      className={`pointer-events-none absolute top-1 left-1 w-4 h-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out ${
+                        notificationSettings.taskReminders ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
 
-                <label className="flex items-center justify-between cursor-pointer group">
+                <div className="flex items-center justify-between group">
                   <div className="flex items-center gap-3">
                     <CalendarDays size={18} className="text-purple-500" />
                     <span className="text-slate-800 dark:text-slate-100 font-medium">
                       Event &amp; Appointment Reminders
                     </span>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={notificationSettings.eventReminders}
-                    onChange={(e) => onNotificationPreferenceChange('eventReminders', e.target.checked)}
-                    className="w-4 h-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500"
-                  />
-                </label>
+                  <button
+                    type="button"
+                    onClick={() => onNotificationPreferenceChange('eventReminders', !notificationSettings.eventReminders)}
+                    className={`relative w-11 h-6 rounded-full transition-colors duration-200 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
+                      notificationSettings.eventReminders ? 'bg-brand-500' : 'bg-slate-300 dark:bg-slate-600'
+                    }`}
+                    role="switch"
+                    aria-checked={notificationSettings.eventReminders}
+                  >
+                    <span className="sr-only">Toggle event reminders</span>
+                    <span
+                      aria-hidden="true"
+                      className={`pointer-events-none absolute top-1 left-1 w-4 h-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out ${
+                        notificationSettings.eventReminders ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
 
-                <label className="flex items-center justify-between cursor-pointer group">
+                <div className="flex items-center justify-between group">
                   <div className="flex items-center gap-3">
                     <AlertCircle size={18} className="text-amber-500" />
                     <span className="text-slate-800 dark:text-slate-100 font-medium">Budget Alerts</span>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={notificationSettings.budgetAlerts}
-                    onChange={(e) => onNotificationPreferenceChange('budgetAlerts', e.target.checked)}
-                    className="w-4 h-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500"
-                  />
-                </label>
+                  <button
+                    type="button"
+                    onClick={() => onNotificationPreferenceChange('budgetAlerts', !notificationSettings.budgetAlerts)}
+                    className={`relative w-11 h-6 rounded-full transition-colors duration-200 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
+                      notificationSettings.budgetAlerts ? 'bg-brand-500' : 'bg-slate-300 dark:bg-slate-600'
+                    }`}
+                    role="switch"
+                    aria-checked={notificationSettings.budgetAlerts}
+                  >
+                    <span className="sr-only">Toggle budget alerts</span>
+                    <span
+                      aria-hidden="true"
+                      className={`pointer-events-none absolute top-1 left-1 w-4 h-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out ${
+                        notificationSettings.budgetAlerts ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
 
                 {/* Lead Time Selector */}
                 <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
@@ -302,8 +333,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                         onClick={() => onNotificationPreferenceChange('reminderMinutesBefore', option.value)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                           notificationSettings.reminderMinutesBefore === option.value
-                            ? 'bg-brand-500 text-slate-900 shadow-md'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                            ? 'bg-brand-500 text-slate-900 shadow-md scale-105'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 hover:shadow-sm'
                         }`}
                       >
                         {option.label}
@@ -313,8 +344,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                       onClick={() => onNotificationPreferenceChange('reminderMinutesBefore', -1)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                         ![5, 15, 60, 720, 1440].includes(notificationSettings.reminderMinutesBefore)
-                          ? 'bg-brand-500 text-slate-900 shadow-md'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                          ? 'bg-brand-500 text-slate-900 shadow-md scale-105'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 hover:shadow-sm'
                       }`}
                     >
                       Custom
@@ -386,7 +417,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
                   <label className="block text-sm font-semibold text-slate-800 dark:text-slate-100">
                     Default Notification Sound
-                    <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">
+                    <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-400">
                       Android only
                     </span>
                   </label>
@@ -431,12 +462,12 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
 
         {/* Integrations Section */}
-        <div className="col-span-1 lg:col-span-2 space-y-4 pt-6">
+        <div className="col-span-1 lg:col-span-2 space-y-4">
           <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
             <Link2 className="text-brand-500" />
             <h3>Integrations</h3>
           </div>
-          <div className="bg-white/40 dark:bg-dark-surface/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 backdrop-blur-sm">
+          <div className="glass-panel p-6 rounded-2xl">
             {/* Google Calendar Integration */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -476,7 +507,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             {/* Connection Status */}
             {googleCalendarEnabled && (
               <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-100 dark:bg-black/20">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-black/5 dark:bg-black/20">
                   <div
                     className={`w-2 h-2 rounded-full ${
                       hasGoogleToken ? 'bg-emerald-500' : 'bg-yellow-500'
@@ -508,7 +539,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
 
         {/* Collaboration Section */}
-        <div className="col-span-1 lg:col-span-2 pt-6">
+        <div className="col-span-1 lg:col-span-2">
           <CollaborationSettings
             currentUserId={session?.user?.id}
             currentUserEmail={session?.user?.email}
@@ -516,12 +547,12 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
 
         {/* Advanced Section */}
-        <div className="col-span-1 lg:col-span-2 space-y-4 pt-6">
+        <div className="col-span-1 lg:col-span-2 space-y-4">
           <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
              <Terminal className="text-brand-500" />
             <h3>Advanced</h3>
           </div>
-          <div className="bg-white/40 dark:bg-dark-surface/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 backdrop-blur-sm">
+          <div className="glass-panel p-6 rounded-2xl">
             <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">Diagnostics</h4>
             <div className="flex items-center justify-between">
               <div>
