@@ -28,8 +28,6 @@ import {
   ExternalLink,
   Terminal,
   Settings,
-  Mail,
-  Volume2,
 } from 'lucide-react';
 
 interface SettingsPageProps {
@@ -102,120 +100,54 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
     }
   };
 
-  /** Reusable section header */
-  const SectionHeader = ({ icon, label }: { icon: React.ReactNode; label: string }) => (
-    <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">
-      <span className="text-brand-500">{icon}</span>
-      <h3>{label}</h3>
-    </div>
-  );
-
-  /** Reusable card container */
-  const Card = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
-    <div className={`bg-white/40 dark:bg-dark-surface/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 backdrop-blur-sm ${className}`}>
-      {children}
-    </div>
-  );
-
-  /** Reusable toggle switch */
-  const Toggle = ({
-    checked,
-    onChange,
-    disabled = false,
-    color = 'brand',
-    ariaLabel,
-  }: {
-    checked: boolean;
-    onChange: (v: boolean) => void;
-    disabled?: boolean;
-    color?: 'brand' | 'blue';
-    ariaLabel: string;
-  }) => (
-    <button
-      type="button"
-      onClick={() => !disabled && onChange(!checked)}
-      disabled={disabled}
-      className={`relative w-14 h-7 rounded-full transition-colors duration-200 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
-        color === 'blue'
-          ? `focus-visible:ring-blue-500 ${checked ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'}`
-          : `focus-visible:ring-brand-500 ${checked ? 'bg-brand-500' : 'bg-slate-300 dark:bg-slate-600'}`
-      } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-      role="switch"
-      aria-checked={checked}
-      aria-label={ariaLabel}
-    >
-      <span className="sr-only">{ariaLabel}</span>
-      <span
-        aria-hidden="true"
-        className={`pointer-events-none absolute top-1 left-1 w-5 h-5 transform rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
-          checked ? 'translate-x-7' : 'translate-x-0'
-        }`}
-      />
-    </button>
-  );
-
   return (
     <div className="space-y-8 animate-fade-in h-full flex flex-col">
-      {/* Page Header */}
       <header className="border-b border-slate-200 dark:border-white/5 pb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <div className="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-brand-500">
-            <Settings size={20} />
-          </div>
-          <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">Settings</h2>
-        </div>
-        <p className="text-slate-500 dark:text-slate-400 ml-[52px]">
-          Manage your preferences, account, and team.
-        </p>
+        <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2">Settings</h2>
+        <p className="text-slate-500 dark:text-slate-400">Manage your preferences, account, and team.</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 overflow-y-auto pb-20">
-
-        {/* ── Profile ── */}
+        {/* Profile Settings */}
         <div className="col-span-1 lg:col-span-2 space-y-4">
-          <SectionHeader icon={<User size={22} />} label="Profile" />
-          <Card>
-            <div className="flex flex-col sm:flex-row sm:items-start gap-6">
-              {/* Avatar */}
-              <div className="shrink-0">
-                <div className="w-16 h-16 rounded-2xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-500 text-2xl font-bold select-none">
-                  {username ? username[0].toUpperCase() : '?'}
-                </div>
-              </div>
-              {/* Fields */}
-              <div className="flex-1 space-y-4 min-w-0">
-                <Input
-                  label="Display Name / Nickname"
-                  value={username}
-                  onChange={(e) => onUsernameChange(e.target.value)}
-                  placeholder="How should we call you?"
-                />
-                {/* Email + Sign Out row */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-                  <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm min-w-0">
-                    <Mail size={15} className="shrink-0" />
-                    <span className="truncate">{session?.user?.email}</span>
-                  </div>
-                  <Button
-                    variant="secondary"
-                    onClick={onSignOut}
-                    className="w-auto border-red-500/20 text-red-500 hover:bg-red-500/10 shrink-0"
-                  >
-                    <LogOut size={15} className="mr-2" /> Sign Out
-                  </Button>
-                </div>
-              </div>
+          <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
+            <User className="text-brand-500" />
+            <h3>Profile</h3>
+          </div>
+          <div className="bg-white/40 dark:bg-dark-surface/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 backdrop-blur-sm">
+            <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">Profile Settings</h4>
+            <Input
+              label="Display Name / Nickname"
+              value={username}
+              onChange={(e) => onUsernameChange(e.target.value)}
+              placeholder="How should we call you?"
+            />
+            <div className="mt-4">
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2 ml-1 font-mono">
+                Account
+              </label>
+              <p className="text-slate-700 dark:text-slate-300 text-sm mb-4">
+                Logged in as {session?.user?.email}
+              </p>
+              <Button
+                variant="secondary"
+                onClick={onSignOut}
+                className="w-auto border-red-500/20 text-red-500 hover:bg-red-500/10"
+              >
+                <LogOut size={16} className="mr-2" /> Sign Out
+              </Button>
             </div>
-          </Card>
+          </div>
         </div>
 
-        {/* ── Appearance ── */}
-        <div className="col-span-1 lg:col-span-2 space-y-4 pt-2">
-          <SectionHeader icon={<Palette size={22} />} label="Appearance" />
-          <Card>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-              Choose a theme that suits your style.
-            </p>
+        {/* Appearance Settings */}
+        <div className="col-span-1 lg:col-span-2 space-y-4 pt-6">
+          <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
+            <Palette className="text-brand-500" />
+            <h3>Appearance</h3>
+          </div>
+          <div className="bg-white/40 dark:bg-dark-surface/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 backdrop-blur-sm">
+            <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">Select Theme</h4>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
               {themes.map((t) => (
                 <button
@@ -241,39 +173,55 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 </button>
               ))}
             </div>
-          </Card>
+          </div>
         </div>
 
-        {/* ── Notifications ── */}
-        <div className="col-span-1 lg:col-span-2 space-y-4 pt-2">
-          <SectionHeader icon={<Bell size={22} />} label="Notifications" />
-          <Card className="space-y-5">
-
+        {/* Notifications Section */}
+        <div className="col-span-1 lg:col-span-2 space-y-4 pt-6">
+          <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
+            <Bell className="text-brand-500" />
+            <h3>Notifications</h3>
+          </div>
+          <div className="bg-white/40 dark:bg-dark-surface/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 backdrop-blur-sm space-y-6">
             {/* Main Toggle */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-100">Enable Notifications</h4>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                  Enable Notifications
+                </h4>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                   Get notified about tasks, events, and budget alerts
                 </p>
               </div>
-              <Toggle
-                checked={notificationSettings.enabled}
-                onChange={(v) => notificationPermission !== 'denied' && onNotificationToggle(v)}
+              <button
+                type="button"
+                onClick={() => notificationPermission !== 'denied' && onNotificationToggle(!notificationSettings.enabled)}
                 disabled={notificationPermission === 'denied'}
-                ariaLabel="Toggle notifications"
-              />
+                className={`relative w-14 h-7 rounded-full transition-colors duration-200 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
+                  notificationSettings.enabled ? 'bg-brand-500' : 'bg-slate-300 dark:bg-slate-600'
+                } ${notificationPermission === 'denied' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                role="switch"
+                aria-checked={notificationSettings.enabled}
+              >
+                <span className="sr-only">Toggle notifications</span>
+                <span
+                  aria-hidden="true"
+                  className={`pointer-events-none absolute top-1 left-1 w-5 h-5 transform rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
+                    notificationSettings.enabled ? 'translate-x-7' : 'translate-x-0'
+                  }`}
+                />
+              </button>
             </div>
 
-            {/* Permission Status badge */}
-            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100 dark:bg-black/20">
-              <span
-                className={`w-2 h-2 rounded-full shrink-0 ${
+            {/* Permission Status */}
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-100 dark:bg-black/20">
+              <div
+                className={`w-2 h-2 rounded-full ${
                   notificationPermission === 'granted'
                     ? 'bg-emerald-500'
                     : notificationPermission === 'denied'
-                    ? 'bg-red-500'
-                    : 'bg-yellow-500'
+                      ? 'bg-red-500'
+                      : 'bg-yellow-500'
                 }`}
               />
               <span className="text-sm text-slate-600 dark:text-slate-300">
@@ -281,62 +229,66 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 {notificationPermission === 'granted'
                   ? 'Granted'
                   : notificationPermission === 'denied'
-                  ? 'Denied (Enable in browser settings)'
-                  : notificationPermission === 'unsupported'
-                  ? 'Not supported in this browser'
-                  : 'Not requested'}
+                    ? 'Denied (Enable in browser settings)'
+                    : notificationPermission === 'unsupported'
+                      ? 'Not supported in this browser'
+                      : 'Not requested'}
               </span>
             </div>
 
-            {/* Notification Preferences (when enabled) */}
+            {/* Notification Preferences */}
             {notificationSettings.enabled && (
-              <div className="space-y-5 pt-1 border-t border-slate-200 dark:border-white/10">
-                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest pt-1">
+              <div className="space-y-4 pt-2 border-t border-slate-200 dark:border-white/10">
+                <h5 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
                   Notification Types
-                </p>
+                </h5>
 
-                {/* Type toggles */}
-                <div className="space-y-3">
-                  {[
-                    {
-                      key: 'taskReminders' as const,
-                      icon: <CheckSquare size={17} className="text-blue-500" />,
-                      label: 'Task Reminders',
-                    },
-                    {
-                      key: 'eventReminders' as const,
-                      icon: <CalendarDays size={17} className="text-purple-500" />,
-                      label: 'Event & Appointment Reminders',
-                    },
-                    {
-                      key: 'budgetAlerts' as const,
-                      icon: <AlertCircle size={17} className="text-amber-500" />,
-                      label: 'Budget Alerts',
-                    },
-                  ].map(({ key, icon, label }) => (
-                    <label
-                      key={key}
-                      className="flex items-center justify-between cursor-pointer px-4 py-3 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 hover:border-brand-500/30 transition-all group"
-                    >
-                      <div className="flex items-center gap-3">
-                        {icon}
-                        <span className="text-slate-800 dark:text-slate-100 font-medium text-sm">{label}</span>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={notificationSettings[key]}
-                        onChange={(e) => onNotificationPreferenceChange(key, e.target.checked)}
-                        className="w-4 h-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500"
-                      />
-                    </label>
-                  ))}
-                </div>
+                <label className="flex items-center justify-between cursor-pointer group">
+                  <div className="flex items-center gap-3">
+                    <CheckSquare size={18} className="text-blue-500" />
+                    <span className="text-slate-800 dark:text-slate-100 font-medium">Task Reminders</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={notificationSettings.taskReminders}
+                    onChange={(e) => onNotificationPreferenceChange('taskReminders', e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between cursor-pointer group">
+                  <div className="flex items-center gap-3">
+                    <CalendarDays size={18} className="text-purple-500" />
+                    <span className="text-slate-800 dark:text-slate-100 font-medium">
+                      Event &amp; Appointment Reminders
+                    </span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={notificationSettings.eventReminders}
+                    onChange={(e) => onNotificationPreferenceChange('eventReminders', e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between cursor-pointer group">
+                  <div className="flex items-center gap-3">
+                    <AlertCircle size={18} className="text-amber-500" />
+                    <span className="text-slate-800 dark:text-slate-100 font-medium">Budget Alerts</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={notificationSettings.budgetAlerts}
+                    onChange={(e) => onNotificationPreferenceChange('budgetAlerts', e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500"
+                  />
+                </label>
 
                 {/* Lead Time Selector */}
-                <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-white/10">
-                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
+                  <label className="block text-sm font-semibold text-slate-800 dark:text-slate-100">
                     Remind me before event starts
-                  </p>
+                  </label>
                   <div className="flex flex-wrap gap-2">
                     {[
                       { value: 5, label: '5 min' },
@@ -371,7 +323,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
 
                   {/* Custom Input */}
                   {![5, 15, 60, 720, 1440].includes(notificationSettings.reminderMinutesBefore) && (
-                    <div className="flex items-center gap-3 mt-2 animate-fade-in">
+                    <div className="flex items-center gap-3 mt-3 animate-fade-in">
                       <input
                         type="number"
                         min="1"
@@ -380,10 +332,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                           notificationSettings.reminderMinutesBefore >= 1440
                             ? Math.floor(notificationSettings.reminderMinutesBefore / 1440)
                             : notificationSettings.reminderMinutesBefore >= 60
-                            ? Math.floor(notificationSettings.reminderMinutesBefore / 60)
-                            : notificationSettings.reminderMinutesBefore > 0
-                            ? notificationSettings.reminderMinutesBefore
-                            : 30
+                              ? Math.floor(notificationSettings.reminderMinutesBefore / 60)
+                              : notificationSettings.reminderMinutesBefore > 0
+                                ? notificationSettings.reminderMinutesBefore
+                                : 30
                         }
                         onChange={(e) => {
                           const num = parseInt(e.target.value) || 1;
@@ -418,47 +370,46 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                   )}
                 </div>
 
-                {/* Test Notification */}
-                <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-white/10">
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Test your notification setup</p>
+                {/* Test Notification Button */}
+                <div className="pt-4">
                   <Button
                     variant="secondary"
                     onClick={() => NotificationService.sendTestNotification()}
                     className="flex items-center gap-2"
                   >
-                    <Bell size={15} />
-                    Send Test
+                    <Bell size={16} />
+                    Send Test Notification
                   </Button>
                 </div>
 
                 {/* Default Notification Sound */}
-                <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-white/10">
-                  <div className="flex items-center gap-2">
-                    <Volume2 size={16} className="text-slate-500 dark:text-slate-400" />
-                    <label className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                      Default Notification Sound
-                    </label>
-                    <span className="text-xs font-normal text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full">
+                <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
+                  <label className="block text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    Default Notification Sound
+                    <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">
                       Android only
                     </span>
-                  </div>
+                  </label>
                   <Select
                     value={notificationSettings.defaultNotificationSound || 'sound_default'}
                     onChange={(value) =>
-                      onNotificationPreferenceChange('defaultNotificationSound', value as NotificationSound)
+                      onNotificationPreferenceChange(
+                        'defaultNotificationSound',
+                        value as NotificationSound
+                      )
                     }
                     options={[
-                      { value: 'sound_default', label: '🔔 Default' },
-                      { value: 'sound_chime', label: '🎵 Chime' },
-                      { value: 'sound_beep', label: '📡 Digital Beep' },
-                      { value: 'sound_synth', label: '🎹 Synth' },
-                      { value: 'sound_alarm', label: '🚨 Loud Alarm' },
+                      { value: 'sound_default',   label: '🔔 Default' },
+                      { value: 'sound_chime',     label: '🎵 Chime' },
+                      { value: 'sound_beep',      label: '📡 Digital Beep' },
+                      { value: 'sound_synth',     label: '🎹 Synth' },
+                      { value: 'sound_alarm',     label: '🚨 Loud Alarm' },
                       { value: 'sound_custom_os', label: '⚙️ Custom OS Alert' },
                     ]}
                     currentTheme={theme}
                     className="w-full"
                   />
-                  {notificationSettings.defaultNotificationSound === 'sound_custom_os' && isNativePlatform() && (
+                  {(notificationSettings.defaultNotificationSound === 'sound_custom_os') && isNativePlatform() && (
                     <div className="space-y-2">
                       <Button
                         variant="secondary"
@@ -476,128 +427,145 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 </div>
               </div>
             )}
-          </Card>
+          </div>
         </div>
 
-        {/* ── Integrations ── */}
-        <div className="col-span-1 lg:col-span-2 space-y-4 pt-2">
-          <SectionHeader icon={<Link2 size={22} />} label="Integrations" />
-          <Card>
-            {/* Google Calendar row */}
-            <div className="flex items-center justify-between gap-4">
+        {/* Integrations Section */}
+        <div className="col-span-1 lg:col-span-2 space-y-4 pt-6">
+          <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
+            <Link2 className="text-brand-500" />
+            <h3>Integrations</h3>
+          </div>
+          <div className="bg-white/40 dark:bg-dark-surface/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 backdrop-blur-sm">
+            {/* Google Calendar Integration */}
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center shadow-sm shrink-0">
-                  <span className="text-xl font-black text-blue-500">G</span>
+                <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center shadow-sm">
+                  <span className="text-2xl font-bold text-blue-500">G</span>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-slate-800 dark:text-slate-100">Google Calendar</h4>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                    Google Calendar
+                  </h4>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
                     Sync your Google Calendar events
                   </p>
                 </div>
               </div>
               {onGoogleCalendarToggle && (
-                <Toggle
-                  checked={googleCalendarEnabled}
-                  onChange={(v) => onGoogleCalendarToggle(v)}
-                  color="blue"
-                  ariaLabel="Toggle Google Calendar"
-                />
+                <button
+                  type="button"
+                  onClick={() => onGoogleCalendarToggle(!googleCalendarEnabled)}
+                  className={`relative w-14 h-7 rounded-full transition-colors duration-200 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
+                    googleCalendarEnabled ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'
+                  }`}
+                  role="switch"
+                  aria-checked={googleCalendarEnabled}
+                >
+                  <span className="sr-only">Toggle Google Calendar</span>
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none absolute top-1 left-1 w-5 h-5 transform rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
+                      googleCalendarEnabled ? 'translate-x-7' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
               )}
             </div>
 
             {/* Connection Status */}
             {googleCalendarEnabled && (
-              <div className="mt-5 pt-5 border-t border-slate-200 dark:border-white/10">
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-100 dark:bg-black/20">
+              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-100 dark:bg-black/20">
                   <div
-                    className={`w-2 h-2 rounded-full shrink-0 ${
+                    className={`w-2 h-2 rounded-full ${
                       hasGoogleToken ? 'bg-emerald-500' : 'bg-yellow-500'
                     }`}
                   />
                   <span className="text-sm text-slate-600 dark:text-slate-300 flex-1">
-                    {hasGoogleToken ? 'Connected to Google Calendar' : 'Re-authentication required'}
+                    {hasGoogleToken
+                      ? 'Connected to Google Calendar'
+                      : 'Re-authentication required'}
                   </span>
                   {!hasGoogleToken && (
                     <button
                       onClick={() => onGoogleCalendarToggle && onGoogleCalendarToggle(true)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors"
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors"
                     >
-                      <ExternalLink size={13} />
+                      <ExternalLink size={14} />
                       Connect
                     </button>
                   )}
                 </div>
                 {hasGoogleToken && (
-                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 px-1">
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                     Events from your primary Google Calendar will appear in your calendar view.
                   </p>
                 )}
               </div>
             )}
-          </Card>
+          </div>
         </div>
 
-        {/* ── Collaboration ── */}
-        <div className="col-span-1 lg:col-span-2 pt-2">
+        {/* Collaboration Section */}
+        <div className="col-span-1 lg:col-span-2 pt-6">
           <CollaborationSettings
             currentUserId={session?.user?.id}
             currentUserEmail={session?.user?.email}
           />
         </div>
 
-        {/* ── Advanced ── */}
-        <div className="col-span-1 lg:col-span-2 space-y-4 pt-2">
-          <SectionHeader icon={<Terminal size={22} />} label="Advanced" />
-          <Card>
-            <div className="flex items-center justify-between gap-4">
+        {/* Advanced Section */}
+        <div className="col-span-1 lg:col-span-2 space-y-4 pt-6">
+          <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
+             <Terminal className="text-brand-500" />
+            <h3>Advanced</h3>
+          </div>
+          <div className="bg-white/40 dark:bg-dark-surface/30 border border-slate-200 dark:border-white/5 rounded-2xl p-6 backdrop-blur-sm">
+            <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">Diagnostics</h4>
+            <div className="flex items-center justify-between">
               <div>
-                <p className="font-semibold text-slate-800 dark:text-slate-200">Debug Logging</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                  View internal application logs for troubleshooting
-                </p>
+                <p className="text-slate-800 dark:text-slate-200 font-medium">Debug Logging</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">View internal application logs for troubleshooting</p>
               </div>
-              <Button
+              <Button 
                 variant="secondary"
                 onClick={() => onNavigate('debug-logs')}
-                className="flex items-center gap-2 shrink-0"
+                className="flex items-center gap-2"
               >
-                <Terminal size={15} />
+                <Terminal size={16} />
                 View Logs
               </Button>
             </div>
-          </Card>
+          </div>
         </div>
 
-        {/* ── Danger Zone ── */}
+        {/* Danger Zone - Account Deletion */}
         <div className="glass rounded-2xl p-6 lg:col-span-2 border-2 border-red-500/20">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center">
               <AlertTriangle size={20} className="text-white" />
             </div>
             <div>
               <h3 className="text-xl font-bold text-red-600 dark:text-red-400">Danger Zone</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Irreversible actions</p>
+              <p className="text-sm text-slate-500">Irreversible actions</p>
             </div>
           </div>
 
           <div className="bg-red-50 dark:bg-red-500/10 rounded-xl p-4 border border-red-200 dark:border-red-500/20">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h4 className="font-semibold text-red-700 dark:text-red-400 mb-1">Delete Account</h4>
-                <p className="text-sm text-red-600/80 dark:text-red-300/80">
-                  Once deleted, all your data will be permanently erased. This action cannot be undone.
-                </p>
-              </div>
-              <Button
-                variant="danger"
-                onClick={() => setIsDeleteAccountModalOpen(true)}
-                className="flex items-center gap-2 shrink-0"
-              >
-                <Trash2 size={15} />
-                Delete Account
-              </Button>
-            </div>
+            <h4 className="font-semibold text-red-700 dark:text-red-400 mb-2">Delete Account</h4>
+            <p className="text-sm text-red-600/80 dark:text-red-300/80 mb-4">
+              Once you delete your account, all your data will be permanently erased. This action cannot be
+              undone.
+            </p>
+            <Button
+              variant="danger"
+              onClick={() => setIsDeleteAccountModalOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Trash2 size={16} />
+              Delete Account
+            </Button>
           </div>
         </div>
       </div>
