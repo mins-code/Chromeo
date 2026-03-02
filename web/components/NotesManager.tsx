@@ -377,8 +377,14 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
             {/* Editor Content */}
             <div className="p-6 overflow-y-auto flex-1 space-y-4">
               {/* Note Type Toggle */}
-              <div className="flex gap-2">
+              <div
+                className="flex gap-2"
+                role="radiogroup"
+                aria-label="Note Type"
+              >
                 <button
+                  role="radio"
+                  aria-checked={noteType === 'note'}
                   onClick={() => setNoteType('note')}
                   className={`flex-1 py-2 px-4 rounded-xl font-medium transition-all ${
                     noteType === 'note'
@@ -390,6 +396,8 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
                   Note
                 </button>
                 <button
+                  role="radio"
+                  aria-checked={noteType === 'checklist'}
                   onClick={() => setNoteType('checklist')}
                   className={`flex-1 py-2 px-4 rounded-xl font-medium transition-all ${
                     noteType === 'checklist'

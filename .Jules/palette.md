@@ -71,3 +71,7 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+
+## 2026-03-09 - Segmented Toggle Accessibility in Modals
+**Learning:** Segmented toggles (like "Note vs. Checklist") implemented inside modals often use basic `<button>` elements inside a `<div>` for styling. This fails to communicate the mutually exclusive nature of the options to screen readers.
+**Action:** When styling a segmented control as a toggle group, always wrap it in a `role="radiogroup"` with an appropriate `aria-label`, and assign `role="radio"` and `aria-checked` to the individual buttons to provide semantic meaning.
