@@ -704,7 +704,7 @@ const App: React.FC = () => {
                             {lastSmsTransaction.type === 'expense' ? '-' : '+'}{lastSmsTransaction.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
                         </p>
                     </div>
-                    <button onClick={() => setLastSmsTransaction(null)} className="text-slate-400 hover:text-slate-600">
+                    <button onClick={() => setLastSmsTransaction(null)} className="text-slate-400 hover:text-slate-600" aria-label="Dismiss SMS transaction alert">
                         <ArrowRight size={18} />
                     </button>
                 </div>
