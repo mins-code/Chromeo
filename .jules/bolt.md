@@ -31,3 +31,7 @@
 ## 2026-03-03 - Optimizing Date Parsing for Sorting
 **Learning:** `new Date(dateStr).getTime()` creates a full Date object just to extract the timestamp, adding unnecessary memory allocation and garbage collection overhead. In functions called frequently (like sorting algorithms iterating over thousands of items in `taskScoring.ts`), this is a measurable bottleneck.
 **Action:** Use `Date.parse(dateStr)` when only the timestamp is needed. Benchmark shows this avoids object creation and improves date parsing time by ~30% for ISO-8601 strings.
+
+## 2026-03-05 - Replacing Chained Array Methods with Single Pass Loops
+**Learning:** In React components like `BudgetPlanner`, calculating derived state by chaining array methods (e.g. `transactions.filter().reduce()`) creates intermediate array allocations and causes multiple traversals over the same data. Doing this multiple times inline causes significant rendering overhead and garbage collection during list updates or modal expansions.
+**Action:** Replace multiple `filter` and `reduce` operations with a single `for` loop pass through the data array, calculating all required derived values at once within a `useMemo` block.
