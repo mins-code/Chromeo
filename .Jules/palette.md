@@ -71,3 +71,7 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+
+## 2025-03-03 - Missing ARIA label on toast dismiss buttons
+**Learning:** Icon-only dismiss buttons in transient or toast-like UI elements (like the recent SMS transaction alert) often lack ARIA labels, making them inaccessible to screen readers.
+**Action:** Always verify and add `aria-label` (e.g., `aria-label="Dismiss alert"`) to icon-only close/dismiss buttons in transient notification components.
