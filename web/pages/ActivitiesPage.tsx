@@ -11,7 +11,7 @@ import Button from '../components/Button';
 import { Activity, CheckSquare, Bell, CalendarDays, Clock, ArrowRight, Repeat, CalendarClock, Sparkles } from 'lucide-react';
 import { getGreeting, t } from '../themeText';
 import { enhanceTaskWithAI } from '../services/geminiService';
-import { getUrgencyScore } from '../utils/taskScoring';
+import { sortByUrgency } from '../utils/taskScoring';
 
 const viewModeToPath: Record<ViewMode, string> = {
   'dashboard': '/',
@@ -63,9 +63,7 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
 
   // Compute sorted tasks by urgency (using centralized utility)
   const sortedTodoTasks = React.useMemo(() => {
-    return tasks
-      .filter(t => t.status !== TaskStatus.DONE)
-      .sort((a, b) => getUrgencyScore(b) - getUrgencyScore(a));
+    return sortByUrgency(tasks.filter(t => t.status !== TaskStatus.DONE));
   }, [tasks]);
 
   // Get all tags for AI analysis
