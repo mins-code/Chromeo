@@ -71,3 +71,7 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+
+## 2024-03-05 - Missing ARIA Labels on Form Inputs
+**Learning:** Found several input elements across the codebase (e.g. text inputs for inline search forms in CollaborationSettings, custom tag edits in Layout, and inputs in DateTimePicker) that were relying solely on visual context or adjacent text nodes for meaning instead of explicit `<label>` elements or `aria-label` attributes, which impairs screen reader accessibility.
+**Action:** Always ensure that form `<input>` elements have an associated `aria-label` when a semantic `<label>` is not explicitly linked via the `for/id` relationship, especially for inputs used in custom components like inline search forms. Do not add `aria-label` if an explicit `<label htmlFor="...">` already exists to avoid overriding the visible label.

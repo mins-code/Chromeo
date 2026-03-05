@@ -238,6 +238,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
         <input
           type="text"
           inputMode="numeric"
+          aria-label="Time component value"
           value={inputValue}
           onChange={handleInputChange}
           onBlur={handleInputBlur}
@@ -323,6 +324,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
               <input
                 ref={typeInputRef}
                 type="text"
+                aria-label="Type time"
                 value={typeValue}
                 onChange={(e) => setTypeValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleTypeSubmit()}
