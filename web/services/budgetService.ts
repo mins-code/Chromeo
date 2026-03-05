@@ -47,7 +47,7 @@ export const getBudget = async (): Promise<Budget> => {
             description: t.description,
             amount: t.amount,
             type: t.type,
-            date: new Date(t.date).getTime(),
+            date: Date.parse(t.date),
             category: t.category || 'Uncategorized'
         })),
         recurring: (recurring || []).map((r: DbTransaction) => ({
@@ -378,7 +378,7 @@ export const getSharedBudgetFromPartner = async (ownerId: string): Promise<Budge
             description: t.description,
             amount: t.amount,
             type: t.type,
-            date: new Date(t.date).getTime()
+            date: Date.parse(t.date)
         })),
         recurring: [] // Don't share recurring details
     };
