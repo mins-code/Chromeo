@@ -121,8 +121,8 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
             // 2. Date check
             const dateA = task.dueDate || task.reminderTime || String(Number.MAX_SAFE_INTEGER);
             const dateB = currentBest.dueDate || currentBest.reminderTime || String(Number.MAX_SAFE_INTEGER);
-            const timeA = new Date(dateA).getTime();
-            const timeB = new Date(dateB).getTime();
+            const timeA = Date.parse(dateA);
+            const timeB = Date.parse(dateB);
 
             if (timeA < timeB) {
                 replace = true;

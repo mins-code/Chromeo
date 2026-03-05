@@ -104,7 +104,7 @@ export const useNotificationScheduler = (
               : notificationSettings.reminderMinutesBefore;
 
           if (reminderTime) {
-            notifyTime = new Date(new Date(reminderTime).getTime() - leadTimeMinutes * 60 * 1000);
+            notifyTime = new Date(Date.parse(reminderTime) - leadTimeMinutes * 60 * 1000);
           } else {
             continue; // No time base available
           }

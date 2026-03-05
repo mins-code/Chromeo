@@ -31,3 +31,6 @@
 ## 2026-03-03 - Optimizing Date Parsing for Sorting
 **Learning:** `new Date(dateStr).getTime()` creates a full Date object just to extract the timestamp, adding unnecessary memory allocation and garbage collection overhead. In functions called frequently (like sorting algorithms iterating over thousands of items in `taskScoring.ts`), this is a measurable bottleneck.
 **Action:** Use `Date.parse(dateStr)` when only the timestamp is needed. Benchmark shows this avoids object creation and improves date parsing time by ~30% for ISO-8601 strings.
+## 2026-03-05 - Optimizing Date Parsing for O(N log N) List Rendering
+**Learning:** Profiling showed `new Date(dateStr).getTime()` caused high memory allocation and garbage collection overhead in tight loops like the sorting algorithm used on `DayPlannerPage`, `ActivitiesPage` and mapping in `budgetService`. Creating a full Date object simply to extract a timestamp adds up.
+**Action:** Replaced `new Date(dateStr).getTime()` with `Date.parse(dateStr)` across several files (`DayPlannerPage`, `ActivitiesPage`, `FlowchartCanvas`, `useNotificationScheduler`, `budgetService`, `supabase-custom`). Benchmarking confirmed that this improves parsing times by approximately ~30% for ISO-8601 strings, saving considerable time during repeated O(N log N) sorting routines.

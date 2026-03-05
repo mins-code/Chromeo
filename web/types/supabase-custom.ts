@@ -82,7 +82,7 @@ export const mapTaskFromDb = (dbTask: DbTask): Task => ({
   dependencyIds: dbTask.dependency_ids ?? [],
   isShared: dbTask.is_shared ?? false,
   recurrence: dbTask.recurrence as unknown as RecurrenceConfig | undefined,
-  createdAt: dbTask.created_at ? new Date(dbTask.created_at).getTime() : Date.now(),
+  createdAt: dbTask.created_at ? Date.parse(dbTask.created_at) : Date.now(),
   notificationEnabled: dbTask.notification_enabled ?? undefined,
   notificationMinutesBefore: dbTask.notification_minutes_before ?? undefined,
   notificationTime: dbTask.notification_time ?? undefined,
@@ -96,7 +96,7 @@ export const mapTransactionFromDb = (dbTx: DbTransaction): Transaction => ({
   description: dbTx.description,
   amount: dbTx.amount,
   type: dbTx.type as 'income' | 'expense',
-  date: dbTx.date ? new Date(dbTx.date).getTime() : Date.now(),
+  date: dbTx.date ? Date.parse(dbTx.date) : Date.now(),
 });
 
 /**

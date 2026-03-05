@@ -87,10 +87,10 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
       let timeGap: number | null = null;
       
       if (sourceTask?.dueDate && targetTask?.dueDate) {
-        const sourceStart = new Date(sourceTask.dueDate).getTime();
+        const sourceStart = Date.parse(sourceTask.dueDate);
         const sourceDuration = (sourceTask.duration || 30) * 60 * 1000; // Convert minutes to ms
         const sourceEnd = sourceStart + sourceDuration;
-        const targetStart = new Date(targetTask.dueDate).getTime();
+        const targetStart = Date.parse(targetTask.dueDate);
         
         // Time gap in minutes (can be negative if tasks overlap)
         timeGap = Math.round((targetStart - sourceEnd) / (60 * 1000));
