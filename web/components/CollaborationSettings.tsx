@@ -270,9 +270,10 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
         {/* Add Partner Search */}
         <div className="relative mb-4" ref={searchRef}>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} aria-hidden="true" />
             <input
               type="text"
+              aria-label="Search for a partner by email"
               placeholder="Search by email..."
               value={searchContext === 'partner' ? searchQuery : ''}
               onChange={(e) => {
@@ -515,9 +516,10 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                     {team.isOwner && (
                       <div className="relative py-3" ref={searchContext && typeof searchContext === 'object' && searchContext.teamId === team.id ? searchRef : undefined}>
                         <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} aria-hidden="true" />
                           <input
                             type="text"
+                            aria-label={`Search for a member by email to add to ${team.name}`}
                             placeholder="Add member by email..."
                             value={searchContext && typeof searchContext === 'object' && searchContext.teamId === team.id ? searchQuery : ''}
                             onChange={(e) => {

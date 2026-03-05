@@ -363,6 +363,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                                                     <input
                                                                         ref={editInputRef}
                                                                         type="text"
+                                                                        aria-label={`Edit tag ${tag.name}`}
                                                                         value={editTagValue}
                                                                         onChange={(e) => setEditTagValue(e.target.value)}
                                                                         onKeyDown={handleEditKeyDown}
