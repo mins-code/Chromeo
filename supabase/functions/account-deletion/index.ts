@@ -2,9 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Vary": "Origin",
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
   "X-XSS-Protection": "1; mode=block",
@@ -35,9 +35,20 @@ async function hashToken(token: string): Promise<string> {
 }
 
 serve(async (req) => {
+  // 🛡️ SECURITY: Dynamic CORS to allow only specific origins
+  const origin = req.headers.get("Origin") || "";
+  const allowedOrigins = [
+    Deno.env.get("APP_URL"),
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+  ].filter(Boolean);
+
+  const allowOrigin = allowedOrigins.includes(origin) ? origin : (allowedOrigins[0] || "*");
+  const headers = { ...corsHeaders, "Access-Control-Allow-Origin": allowOrigin };
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers });
   }
 
   try {
@@ -81,14 +92,14 @@ serve(async (req) => {
       // Fail securely: if rate limiting is unavailable, prevent potential abuse
       return new Response(
         JSON.stringify({ success: false, error: 'Service temporarily unavailable. Please try again later.' }),
-        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 503, headers: { ...headers, "Content-Type": "application/json" } }
       );
     }
 
     if (typeof currentCount === 'number' && currentCount > MAX_REQUESTS) {
         return new Response(
             JSON.stringify({ success: false, error: 'Too many requests. Please try again later.' }),
-            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 429, headers: { ...headers, "Content-Type": "application/json" } }
         )
     }
 
@@ -161,7 +172,7 @@ serve(async (req) => {
           success: true, 
           message: "Your account and all associated data have been permanently deleted." 
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...headers, "Content-Type": "application/json" } }
       );
     }
 
@@ -188,7 +199,7 @@ serve(async (req) => {
               message: "A deletion request is already pending. Please check your email for the confirmation link.",
               expiresAt: existingRequest.expires_at
             }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { headers: { ...headers, "Content-Type": "application/json" } }
           );
         } else {
           // Mark old request as expired
@@ -235,7 +246,7 @@ serve(async (req) => {
           emailSent: true,
           expiresAt: expiresAt.toISOString()
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...headers, "Content-Type": "application/json" } }
       );
     }
 
@@ -290,7 +301,7 @@ serve(async (req) => {
           emailSent: true,
           expiresAt: existingRequest.expires_at
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...headers, "Content-Type": "application/json" } }
       );
     }
 
@@ -390,7 +401,7 @@ serve(async (req) => {
           success: true, 
           message: "Your account and all associated data have been permanently deleted." 
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...headers, "Content-Type": "application/json" } }
       );
     }
 
@@ -409,7 +420,7 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, message: "Deletion request cancelled." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...headers, "Content-Type": "application/json" } }
       );
     }
 
@@ -428,7 +439,7 @@ serve(async (req) => {
           hasPendingRequest: !!request,
           request: request || null
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...headers, "Content-Type": "application/json" } }
       );
     }
 
@@ -446,7 +457,7 @@ serve(async (req) => {
       JSON.stringify({ success: false, error: message }),
       { 
         status: status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        headers: { ...headers, "Content-Type": "application/json" }
       }
     );
   }
