@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Task } from '../types';
 import { Clock, CheckCircle2, AlertCircle, Calendar, Plus } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatTime } from '../utils/date';
 
 interface TaskNodeProps {
   data: {
@@ -170,7 +170,7 @@ const TaskNode: React.FC<TaskNodeProps> = ({ data }) => {
           {task.dueDate && (
             <div className="flex items-center gap-1">
               <Calendar size={12} />
-              <span>{format(new Date(task.dueDate), 'h:mm a')}</span>
+              <span>{formatTime(task.dueDate)}</span>
             </div>
           )}
           {task.duration && (
