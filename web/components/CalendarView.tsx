@@ -676,8 +676,14 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                     </h2>
                     <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar">
                         {/* View Toggle */}
-                        <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 sm:p-1 shrink-0">
+                        <div
+                            className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 sm:p-1 shrink-0"
+                            role="radiogroup"
+                            aria-label="Calendar view mode"
+                        >
                             <button
+                                role="radio"
+                                aria-checked={viewMode === 'month'}
                                 onClick={() => setViewMode('month')}
                                 className={`flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${
                                     viewMode === 'month'
@@ -690,6 +696,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                 <span className="hidden sm:inline">Month</span>
                             </button>
                             <button
+                                role="radio"
+                                aria-checked={viewMode === 'week'}
                                 onClick={() => setViewMode('week')}
                                 className={`flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${
                                     viewMode === 'week'
@@ -702,6 +710,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                 <span className="hidden sm:inline">Week</span>
                             </button>
                             <button
+                                role="radio"
+                                aria-checked={viewMode === 'day'}
                                 onClick={() => setViewMode('day')}
                                 className={`flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${
                                     viewMode === 'day'
@@ -717,6 +727,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                             {/* Custom Interval Dropdown */}
                             <div className="relative" ref={intervalDropdownRef}>
                                 <button
+                                    role="radio"
+                                    aria-checked={viewMode === 'custom'}
                                     onClick={() => {
                                         setShowIntervalDropdown(!showIntervalDropdown);
                                     }}
