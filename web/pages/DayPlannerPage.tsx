@@ -27,6 +27,7 @@ import RecurringPlanModal from '../components/RecurringPlanModal';
 import * as DayPlanService from '../services/dayPlanService';
 import { ReactFlowProvider } from '@xyflow/react';
 import { DayPlanTemplate, RecurrenceConfig } from '../types';
+import { formatTime } from '../utils/date';
 
 interface DayPlannerPageProps {
   tasks: Task[];
@@ -855,7 +856,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
                   {task.dueDate && (
                     <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                       <Calendar size={10} />
-                      {format(new Date(task.dueDate), 'h:mm a')}
+                      {formatTime(task.dueDate)}
                     </div>
                   )}
                   {task.tags.length > 0 && (
@@ -925,7 +926,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
                       {task.dueDate && (
                         <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                           <Calendar size={10} />
-                          {format(new Date(task.dueDate), 'h:mm a')}
+                          {formatTime(task.dueDate)}
                         </div>
                       )}
                       {task.tags.length > 0 && (
@@ -1070,7 +1071,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
                         {task.dueDate && (
                           <div className="text-xs text-slate-400 mt-1 flex items-center gap-1">
                             <Calendar size={10} />
-                            {format(new Date(task.dueDate), 'h:mm a')}
+                            {formatTime(task.dueDate)}
                           </div>
                         )}
                       </div>

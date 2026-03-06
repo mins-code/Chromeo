@@ -25,8 +25,8 @@
 **Learning:** Storing form state (e.g. `editDesc`, `editAmount`) in a parent list component triggers a re-render of the entire list (and all children) on every keystroke. This O(N) re-render cost makes typing laggy in large lists.
 **Action:** Extract the edit form into a separate component (`TransactionEditRow`) that manages its own local state. The parent list only tracks *which* item is being edited, so typing only re-renders the single row being modified.
 ## 2026-03-01 - Optimizing Date Formatting in Lists
-**Learning:** `new Date().toLocaleDateString()` and `toLocaleTimeString()` are significantly slower (6.3x in benchmark) than `date-fns` `format()` for standard formats, due to `Intl` overhead and object creation. In long lists like `TransactionList`, this adds up to measurable lag.
-**Action:** Prefer `date-fns` `format` for list items where locale-specific flexibility is not critical, or cache `Intl` formatters if locale support is needed.
+**Learning:** Initial tests showed `Intl` overhead to be large for one-off calls vs `date-fns` `format()`. However, caching `Intl.DateTimeFormat` instances yields a massive performance improvement—about ~3x faster than `date-fns` `format()` and ~60x faster than uncached `toLocaleTimeString()` in large lists.
+**Action:** For highly repetitive formatting in render loops (like large list rendering), instantiate cached `Intl.DateTimeFormat` objects in a utility file instead of calling `date-fns` `format()`.
 
 ## 2026-03-03 - Optimizing Date Parsing for Sorting
 **Learning:** `new Date(dateStr).getTime()` creates a full Date object just to extract the timestamp, adding unnecessary memory allocation and garbage collection overhead. In functions called frequently (like sorting algorithms iterating over thousands of items in `taskScoring.ts`), this is a measurable bottleneck.
