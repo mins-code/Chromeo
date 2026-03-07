@@ -41,82 +41,70 @@ export const nowIso = (): string => {
 // Formatting Functions (Local Timezone)
 // ============================================================================
 
+// ⚡ Bolt Optimization: Cache Intl formatters to avoid expensive object creation
+// on every function call. This drastically improves performance when formatting
+// dates in tight loops or large lists (like TransactionList or CalendarView).
+
+const formatters = {
+  shortDate: new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }),
+  longDate: new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'long', day: 'numeric' }),
+  weekdayDate: new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'long', day: 'numeric' }),
+  weekdayDateUS: new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
+  numericDate: new Intl.DateTimeFormat(),
+  time: new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }),
+  time24: new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', hour12: false }),
+  dateTimeLong: new Intl.DateTimeFormat(undefined, {
+    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+  }),
+};
+
 /**
  * Formats a date for display: "Jan 6" or "Dec 25"
  */
 export const formatDateShort = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    month: 'short', 
-    day: 'numeric' 
-  });
+  return formatters.shortDate.format(parseDate(date));
 };
 
 /**
  * Formats a date with full month: "January 6, 2026"
  */
 export const formatDateLong = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    year: 'numeric',
-    month: 'long', 
-    day: 'numeric' 
-  });
+  return formatters.longDate.format(parseDate(date));
 };
 
 /**
  * Formats a date with weekday: "Monday, January 6"
  */
 export const formatDateWithWeekday = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    weekday: 'long', 
-    month: 'long', 
-    day: 'numeric' 
-  });
+  return formatters.weekdayDate.format(parseDate(date));
 };
 
 /**
  * Formats a date with weekday (US format): "Monday, January 6"
  */
 export const formatDateWithWeekdayUS = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    month: 'long', 
-    day: 'numeric' 
-  });
+  return formatters.weekdayDateUS.format(parseDate(date));
 };
 
 /**
  * Formats a date as "MM/DD/YYYY" or locale equivalent
  */
 export const formatDateNumeric = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleDateString();
+  return formatters.numericDate.format(parseDate(date));
 };
 
 /**
  * Formats time only: "2:30 PM"
  */
 export const formatTime = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleTimeString(undefined, { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
+  return formatters.time.format(parseDate(date));
 };
 
 /**
  * Formats time in 24-hour format: "14:30"
  */
 export const formatTime24 = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleTimeString(undefined, { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    hour12: false 
-  });
+  return formatters.time24.format(parseDate(date));
 };
 
 /**
@@ -131,14 +119,7 @@ export const formatDateTime = (date: string | Date): string => {
  * Formats date and time with full month: "January 6, 2026 at 2:30 PM"
  */
 export const formatDateTimeLong = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    year: 'numeric',
-    month: 'long', 
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  return formatters.dateTimeLong.format(parseDate(date));
 };
 
 // ============================================================================
