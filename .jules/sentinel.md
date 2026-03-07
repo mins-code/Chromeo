@@ -117,3 +117,7 @@
 **Vulnerability:** The `push-notification` Edge Function used a `service_role` client to schedule notifications. It allowed any authenticated user to schedule a notification for ANY task ID, regardless of ownership. Since notifications are unique per task, this allowed an attacker to "lock" the notification slot for a victim's task, preventing the victim from scheduling their own notification (DoS).
 **Learning:** Using `service_role` clients in user-facing functions bypasses RLS. You cannot rely on "implied" permissions.
 **Prevention:** Always verify resource ownership (e.g., `task.user_id === userId`) explicitly when performing operations on behalf of a user using a privileged client.
+## 2025-05-28 - IDOR in Client-Side Supabase Deletions
+**Vulnerability:** The `unshareBudgetWithPartner` function in `web/services/budgetService.ts` performed a deletion solely based on `shareId` (`.eq('id', shareId)`). If RLS policies were misconfigured or if this function was invoked in a privileged context, an attacker could delete arbitrary budget shares belonging to other users by guessing the `shareId`.
+**Learning:** Client-side mutations on shared or cross-user resources must always include explicit ownership checks as a defense-in-depth measure, even if RLS is expected to handle it at the database layer.
+**Prevention:** Always chain an ownership verification filter, such as `.eq('owner_id', user.id)`, when performing `update` or `delete` operations on user-owned records.
