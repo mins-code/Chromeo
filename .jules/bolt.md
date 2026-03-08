@@ -31,3 +31,7 @@
 ## 2026-03-03 - Optimizing Date Parsing for Sorting
 **Learning:** `new Date(dateStr).getTime()` creates a full Date object just to extract the timestamp, adding unnecessary memory allocation and garbage collection overhead. In functions called frequently (like sorting algorithms iterating over thousands of items in `taskScoring.ts`), this is a measurable bottleneck.
 **Action:** Use `Date.parse(dateStr)` when only the timestamp is needed. Benchmark shows this avoids object creation and improves date parsing time by ~30% for ISO-8601 strings.
+
+## 2026-03-05 - Intl.DateTimeFormat Object Instantiation Overhead
+**Learning:** Calling `toLocaleDateString()` or `toLocaleTimeString()` directly on `Date` objects inside formatting functions (e.g. `formatDateShort`, `formatTime`) instantiates a new `Intl.DateTimeFormat` object every time. In large lists (like `TransactionList` or `CalendarView`), this causes severe O(N) object instantiation and garbage collection overhead, significantly slowing down render times.
+**Action:** Instantiate `Intl.DateTimeFormat` objects once at the module level and reuse their `.format()` methods. This completely eliminates the instantiation overhead during tight React render loops while preserving locale-aware formatting.
