@@ -1,3 +1,5 @@
+/* eslint-env serviceworker */
+/* global indexedDB */
 import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching'
 
 cleanupOutdatedCaches()
