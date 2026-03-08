@@ -448,7 +448,9 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                  {title && !isEnhancing && (
                     <button 
                         onClick={handleAIEnhance} 
-                        className="w-full py-2.5 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 hover:from-purple-500/20 hover:to-indigo-500/20 text-purple-600 dark:text-purple-400 rounded-xl text-sm font-medium transition-all border border-purple-500/20 hover:border-purple-500/30 group"
+                        className="w-full py-2.5 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 hover:from-purple-500/20 hover:to-indigo-500/20 text-purple-600 dark:text-purple-400 rounded-xl text-sm font-medium transition-all border border-purple-500/20 hover:border-purple-500/30 group focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                        aria-label="Auto-Enhance task details with Gemini AI"
+                        title="Auto-Enhance task details with Gemini AI"
                     >
                         <Wand2 size={16} className="group-hover:rotate-12 transition-transform" /> 
                         Auto-Enhance with Gemini AI
@@ -524,7 +526,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                            }
                        }}
                        disabled={!newTag.trim() && !(showTagSuggestions && suggestedTags.length > 0)}
-                       className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                       className={`px-4 py-2 rounded-xl text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/50 ${
                            newTag.trim() || (showTagSuggestions && suggestedTags.length > 0)
                                ? 'bg-brand-500 text-white shadow-md hover:bg-brand-600 active:scale-95'
                                : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
@@ -891,11 +893,13 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                     </label>
                     <button
                         onClick={() => setIsShared(!isShared)}
-                        className={`w-full px-3 py-2 rounded-lg text-sm border flex items-center justify-between transition-all ${
+                        className={`w-full px-3 py-2 rounded-lg text-sm border flex items-center justify-between transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
                             isShared 
                             ? 'bg-blue-500/10 text-blue-600 dark:text-blue-300 border-blue-500/30' 
                             : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
                         }`}
+                        aria-label="Toggle collaboration sharing"
+                        aria-pressed={isShared}
                     >
                         <span>{isShared ? 'Shared with Partner' : 'Private'}</span>
                         {isShared && <Check size={14} />}
