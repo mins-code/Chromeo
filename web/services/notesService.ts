@@ -6,7 +6,9 @@ import { supabase } from './supabaseClient';
  * Returns both owned notes and notes shared with the user
  */
 export const getNotes = async (): Promise<Note[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
   // Fetch user's own notes
@@ -40,7 +42,9 @@ export const createNote = async (
   isChecklist: boolean = false,
   checklistItems: ChecklistItem[] = []
 ): Promise<Note> => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
   const { data, error } = await supabase
@@ -80,7 +84,7 @@ export const updateNote = async (
   updates: Partial<Omit<Note, 'id' | 'user_id' | 'createdAt' | 'updatedAt'>>
 ): Promise<Note> => {
   const dbUpdates: any = {};
-  
+
   if (updates.title !== undefined) dbUpdates.title = updates.title;
   if (updates.content !== undefined) dbUpdates.content = updates.content;
   if (updates.isChecklist !== undefined) dbUpdates.is_checklist = updates.isChecklist;
@@ -114,10 +118,7 @@ export const updateNote = async (
  * Delete a note
  */
 export const deleteNote = async (id: string): Promise<boolean> => {
-  const { error } = await supabase
-    .from('notes')
-    .delete()
-    .eq('id', id);
+  const { error } = await supabase.from('notes').delete().eq('id', id);
 
   if (error) throw error;
   return true;
@@ -129,15 +130,19 @@ export const deleteNote = async (id: string): Promise<boolean> => {
  * Get all shares for notes owned by current user
  */
 export const getNoteShares = async (noteId?: string): Promise<NoteShare[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
   let query = supabase
     .from('note_shares')
-    .select(`
+    .select(
+      `
       *,
       shared_with:profiles!note_shares_shared_with_id_fkey(id, email, full_name)
-    `)
+    `
+    )
     .eq('owner_id', user.id);
 
   if (noteId) {
@@ -149,8 +154,8 @@ export const getNoteShares = async (noteId?: string): Promise<NoteShare[]> => {
   if (error) throw error;
 
   return (shares || []).map((dbShare: DbNoteShare) => {
-    const sharedWith = Array.isArray(dbShare.shared_with) 
-      ? dbShare.shared_with[0] 
+    const sharedWith = Array.isArray(dbShare.shared_with)
+      ? dbShare.shared_with[0]
       : dbShare.shared_with;
 
     return {
@@ -168,11 +173,10 @@ export const getNoteShares = async (noteId?: string): Promise<NoteShare[]> => {
 /**
  * Share a note with a partner
  */
-export const shareNoteWithPartner = async (
-  noteId: string,
-  partnerId: string
-): Promise<boolean> => {
-  const { data: { user } } = await supabase.auth.getUser();
+export const shareNoteWithPartner = async (noteId: string, partnerId: string): Promise<boolean> => {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
   // First, update the note to mark it as shared
@@ -185,17 +189,16 @@ export const shareNoteWithPartner = async (
   if (noteError) throw noteError;
 
   // Then create the share record
-  const { error: shareError } = await supabase
-    .from('note_shares')
-    .insert({
-      note_id: noteId,
-      owner_id: user.id,
-      shared_with_id: partnerId,
-    });
+  const { error: shareError } = await supabase.from('note_shares').insert({
+    note_id: noteId,
+    owner_id: user.id,
+    shared_with_id: partnerId,
+  });
 
   if (shareError) {
     // If already shared, ignore the error
-    if (shareError.code === '23505') { // unique constraint violation
+    if (shareError.code === '23505') {
+      // unique constraint violation
       return true;
     }
     throw shareError;
@@ -208,7 +211,9 @@ export const shareNoteWithPartner = async (
  * Unshare a note (remove a specific share)
  */
 export const unshareNote = async (shareId: string): Promise<boolean> => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
   // Get the share to find the note_id
@@ -238,10 +243,7 @@ export const unshareNote = async (shareId: string): Promise<boolean> => {
 
     // If no more shares, update the note to mark as not shared
     if (!remainingShares || remainingShares.length === 0) {
-      await supabase
-        .from('notes')
-        .update({ is_shared: false })
-        .eq('id', share.note_id);
+      await supabase.from('notes').update({ is_shared: false }).eq('id', share.note_id);
     }
   }
 

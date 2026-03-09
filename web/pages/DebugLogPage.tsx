@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Trash2, RefreshCw, Copy, AlertTriangle, Info, AlertCircle, Terminal } from 'lucide-react';
+import {
+  ArrowLeft,
+  Trash2,
+  RefreshCw,
+  Copy,
+  AlertTriangle,
+  Info,
+  AlertCircle,
+  Terminal,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { logger } from '../utils/logger';
 import Button from '../components/Button';
@@ -46,23 +55,31 @@ const DebugLogPage: React.FC = () => {
 
   const getLevelIcon = (level: string) => {
     switch (level) {
-      case 'error': return <AlertCircle className="text-red-500" size={16} />;
-      case 'warn': return <AlertTriangle className="text-yellow-500" size={16} />;
-      case 'info': return <Info className="text-blue-500" size={16} />;
-      default: return <Terminal className="text-slate-400" size={16} />;
+      case 'error':
+        return <AlertCircle className="text-red-500" size={16} />;
+      case 'warn':
+        return <AlertTriangle className="text-yellow-500" size={16} />;
+      case 'info':
+        return <Info className="text-blue-500" size={16} />;
+      default:
+        return <Terminal className="text-slate-400" size={16} />;
     }
   };
 
   const getLevelColor = (level: string) => {
     switch (level) {
-      case 'error': return 'bg-red-500/10 border-red-500/20';
-      case 'warn': return 'bg-yellow-500/10 border-yellow-500/20';
-      case 'info': return 'bg-blue-500/10 border-blue-500/20';
-      default: return 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700';
+      case 'error':
+        return 'bg-red-500/10 border-red-500/20';
+      case 'warn':
+        return 'bg-yellow-500/10 border-yellow-500/20';
+      case 'info':
+        return 'bg-blue-500/10 border-blue-500/20';
+      default:
+        return 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700';
     }
   };
 
-  const filteredLogs = logs.filter(log => {
+  const filteredLogs = logs.filter((log) => {
     if (filter === 'all') return true;
     return log.level === filter;
   });
@@ -72,7 +89,7 @@ const DebugLogPage: React.FC = () => {
       {/* Header */}
       <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10">
         <div className="max-w-screen-xl mx-auto px-4 h-16 flex items-center justify-between">
-          <button 
+          <button
             onClick={() => navigate(-1)}
             className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"
           >
@@ -81,7 +98,7 @@ const DebugLogPage: React.FC = () => {
           <h1 className="text-lg font-semibold text-slate-800 dark:text-white">Debug Logs</h1>
           <div className="w-10" /> {/* Spacer */}
         </div>
-        
+
         {/* Toolbar */}
         <div className="px-4 py-3 flex items-center gap-2 overflow-x-auto no-scrollbar">
           <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1 mr-auto">
@@ -90,8 +107,8 @@ const DebugLogPage: React.FC = () => {
                 key={f}
                 onClick={() => setFilter(f)}
                 className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors capitalize ${
-                  filter === f 
-                    ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-white shadow-sm' 
+                  filter === f
+                    ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-white shadow-sm'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                 }`}
               >
@@ -99,20 +116,20 @@ const DebugLogPage: React.FC = () => {
               </button>
             ))}
           </div>
-          
-          <button 
+
+          <button
             onClick={loadLogs}
             className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
           >
             <RefreshCw size={20} />
           </button>
-          <button 
+          <button
             onClick={handleCopyLogs}
             className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
           >
             <Copy size={20} />
           </button>
-          <button 
+          <button
             onClick={handleClearLogs}
             className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
           >
@@ -130,32 +147,32 @@ const DebugLogPage: React.FC = () => {
           </div>
         ) : (
           filteredLogs.map((log, index) => (
-            <div 
-              key={index}
-              className={`rounded-lg border p-3 ${getLevelColor(log.level)}`}
-            >
+            <div key={index} className={`rounded-lg border p-3 ${getLevelColor(log.level)}`}>
               <div className="flex items-start gap-3">
-                <div className="mt-0.5 shrink-0">
-                  {getLevelIcon(log.level)}
-                </div>
+                <div className="mt-0.5 shrink-0">{getLevelIcon(log.level)}</div>
                 <div className="flex-1 min-w-0 overflow-hidden">
                   <div className="flex items-center justify-between gap-2 mb-1">
                     <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
                       {new Date(log.timestamp).toLocaleTimeString()}
                     </span>
-                    <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
-                      log.level === 'error' ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' :
-                      log.level === 'warn' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300' :
-                      log.level === 'info' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' :
-                      'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
-                    }`}>
+                    <span
+                      className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
+                        log.level === 'error'
+                          ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300'
+                          : log.level === 'warn'
+                            ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300'
+                            : log.level === 'info'
+                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+                              : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                      }`}
+                    >
                       {log.level}
                     </span>
                   </div>
                   <p className="text-sm font-medium text-slate-800 dark:text-slate-200 break-words font-mono">
                     {log.message}
                   </p>
-                  
+
                   {log.context && Object.keys(log.context).length > 0 && (
                     <details className="mt-2 text-xs">
                       <summary className="cursor-pointer text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 select-none">

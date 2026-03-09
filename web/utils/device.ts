@@ -57,7 +57,7 @@ export const openNativeAppSettings = async (): Promise<void> => {
     // This is non-fatal — the user can manually navigate to settings.
     console.warn(
       '[Device] openNativeAppSettings failed. ' +
-      'Make sure @capacitor/app is installed (npm install @capacitor/app && npx cap sync android).',
+        'Make sure @capacitor/app is installed (npm install @capacitor/app && npx cap sync android).',
       error
     );
   }

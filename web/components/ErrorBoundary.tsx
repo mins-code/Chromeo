@@ -18,7 +18,7 @@ interface ErrorBoundaryState {
  * React Error Boundary component for graceful error handling.
  * Catches JavaScript errors in child component tree and displays
  * a fallback UI instead of crashing the whole app.
- * 
+ *
  * In production, errors are logged via the centralized logger for monitoring.
  */
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -35,7 +35,9 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // Report error to logging system
     this.reportError(error, errorInfo);
-    (this as unknown as { setState: (state: Partial<ErrorBoundaryState>) => void }).setState({ errorInfo });
+    (this as unknown as { setState: (state: Partial<ErrorBoundaryState>) => void }).setState({
+      errorInfo,
+    });
   }
 
   /**
@@ -74,11 +76,11 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
             <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-red-500/10 flex items-center justify-center">
               <AlertCircle className="text-red-500" size={32} />
             </div>
-            
+
             <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">
               Something went wrong
             </h2>
-            
+
             <p className="text-slate-500 dark:text-slate-400 mb-6">
               We're sorry, but something unexpected happened. Please try refreshing the page.
             </p>

@@ -1,8 +1,21 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  Users, UserPlus, UserMinus, Search, Check, X, 
-  MoreVertical, Shield, User, Crown, Plus, 
-  ChevronDown, ChevronUp, Trash2, Edit3, Loader2
+import {
+  Users,
+  UserPlus,
+  UserMinus,
+  Search,
+  Check,
+  X,
+  MoreVertical,
+  Shield,
+  User,
+  Crown,
+  Plus,
+  ChevronDown,
+  ChevronUp,
+  Trash2,
+  Edit3,
+  Loader2,
 } from 'lucide-react';
 import Button from './Button';
 import Input from './Input';
@@ -16,27 +29,29 @@ interface CollaborationSettingsProps {
 
 export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
   currentUserId,
-  currentUserEmail
+  currentUserEmail,
 }) => {
   // Partner State
   const [partnerships, setPartnerships] = useState<Partnership[]>([]);
   const [isLoadingPartners, setIsLoadingPartners] = useState(true);
-  
+
   // Team State
   const [teams, setTeams] = useState<Team[]>([]);
   const [teamInvites, setTeamInvites] = useState<Team[]>([]);
   const [isLoadingTeams, setIsLoadingTeams] = useState(true);
   const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
   const [teamMembers, setTeamMembers] = useState<Record<string, TeamMember[]>>({});
-  
+
   // User Search State
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
-  const [searchContext, setSearchContext] = useState<'partner' | { type: 'team'; teamId: string } | null>(null);
+  const [searchContext, setSearchContext] = useState<
+    'partner' | { type: 'team'; teamId: string } | null
+  >(null);
   const searchRef = useRef<HTMLDivElement>(null);
-  
+
   // Create Team Modal
   const [showCreateTeam, setShowCreateTeam] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
@@ -71,15 +86,19 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
     const timer = setTimeout(async () => {
       setIsSearching(true);
       const results = await PartnerService.searchUsersByEmail(searchQuery);
-      
+
       // Filter out existing partners if searching for partners
       if (searchContext === 'partner') {
-        const partnerIds = new Set(partnerships.map(p => p.partnerId));
-        setSearchResults(results.filter(r => !partnerIds.has(r.id)));
-      } else if (searchContext && typeof searchContext === 'object' && searchContext.type === 'team') {
+        const partnerIds = new Set(partnerships.map((p) => p.partnerId));
+        setSearchResults(results.filter((r) => !partnerIds.has(r.id)));
+      } else if (
+        searchContext &&
+        typeof searchContext === 'object' &&
+        searchContext.type === 'team'
+      ) {
         // Filter out existing team members
-        const memberIds = new Set((teamMembers[searchContext.teamId] || []).map(m => m.userId));
-        setSearchResults(results.filter(r => !memberIds.has(r.id)));
+        const memberIds = new Set((teamMembers[searchContext.teamId] || []).map((m) => m.userId));
+        setSearchResults(results.filter((r) => !memberIds.has(r.id)));
       } else {
         setSearchResults(results);
       }
@@ -100,7 +119,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
     setIsLoadingTeams(true);
     const [teamsData, invitesData] = await Promise.all([
       PartnerService.getTeams(),
-      PartnerService.getTeamInvites()
+      PartnerService.getTeamInvites(),
     ]);
     setTeams(teamsData);
     setTeamInvites(invitesData);
@@ -109,7 +128,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
 
   const loadTeamMembers = async (teamId: string) => {
     const members = await PartnerService.getTeamMembers(teamId);
-    setTeamMembers(prev => ({ ...prev, [teamId]: members }));
+    setTeamMembers((prev) => ({ ...prev, [teamId]: members }));
   };
 
   // Partner Actions
@@ -142,9 +161,12 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
   const handleCreateTeam = async () => {
     if (!newTeamName.trim()) return;
     setIsCreatingTeam(true);
-    const team = await PartnerService.createTeam(newTeamName.trim(), newTeamDesc.trim() || undefined);
+    const team = await PartnerService.createTeam(
+      newTeamName.trim(),
+      newTeamDesc.trim() || undefined
+    );
     if (team) {
-      setTeams(prev => [...prev, team]);
+      setTeams((prev) => [...prev, team]);
       setNewTeamName('');
       setNewTeamDesc('');
       setShowCreateTeam(false);
@@ -155,7 +177,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
   const handleDeleteTeam = async (teamId: string) => {
     const success = await PartnerService.deleteTeam(teamId);
     if (success) {
-      setTeams(prev => prev.filter(t => t.id !== teamId));
+      setTeams((prev) => prev.filter((t) => t.id !== teamId));
       if (expandedTeam === teamId) setExpandedTeam(null);
     }
   };
@@ -190,7 +212,11 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
     }
   };
 
-  const handleUpdateMemberRole = async (memberId: string, role: 'admin' | 'member', teamId: string) => {
+  const handleUpdateMemberRole = async (
+    memberId: string,
+    role: 'admin' | 'member',
+    teamId: string
+  ) => {
     const success = await PartnerService.updateMemberRole(memberId, role);
     if (success) await loadTeamMembers(teamId);
   };
@@ -205,7 +231,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
   const handleRejectTeamInvite = async (teamId: string) => {
     const success = await PartnerService.rejectTeamInvite(teamId);
     if (success) {
-      setTeamInvites(prev => prev.filter(t => t.id !== teamId));
+      setTeamInvites((prev) => prev.filter((t) => t.id !== teamId));
     }
   };
 
@@ -222,7 +248,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
           {searchQuery.length < 2 ? 'Type at least 2 characters' : 'No users found'}
         </div>
       ) : (
-        searchResults.map(user => (
+        searchResults.map((user) => (
           <button
             key={user.id}
             onClick={() => onSelect(user)}
@@ -262,7 +288,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
             Partners
           </h4>
         </div>
-        
+
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
           Add partners to share specific tasks with them. Search by email to find registered users.
         </p>
@@ -287,7 +313,9 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
               className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-dark-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-all placeholder-slate-400 dark:placeholder-slate-500"
             />
           </div>
-          {showSearchDropdown && searchContext === 'partner' && renderSearchDropdown(handleAddPartner)}
+          {showSearchDropdown &&
+            searchContext === 'partner' &&
+            renderSearchDropdown(handleAddPartner)}
         </div>
 
         {/* Partners List */}
@@ -302,9 +330,9 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
           </div>
         ) : (
           <div className="space-y-2">
-            {partnerships.map(p => (
-              <div 
-                key={p.id} 
+            {partnerships.map((p) => (
+              <div
+                key={p.id}
                 className="flex items-center justify-between gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10"
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -318,12 +346,12 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                     <p className="text-xs text-slate-500 truncate">{p.partnerEmail}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-2 shrink-0">
                   {p.status === 'pending' ? (
                     p.isIncoming ? (
                       <>
-                        <button 
+                        <button
                           onClick={() => handleAcceptPartner(p.id)}
                           className="p-1.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 dark:hover:bg-emerald-500/30 transition-colors"
                           title="Accept"
@@ -331,7 +359,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                         >
                           <Check size={16} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleRejectPartner(p.id)}
                           className="p-1.5 rounded-lg bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/20 dark:hover:bg-red-500/30 transition-colors"
                           title="Reject"
@@ -350,7 +378,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                       <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">
                         Connected
                       </span>
-                      <button 
+                      <button
                         onClick={() => handleRemovePartner(p.id)}
                         className="p-1.5 rounded-lg text-slate-400 hover:bg-red-500/10 dark:hover:bg-red-500/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         title="Remove"
@@ -378,7 +406,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
             <Plus size={16} className="mr-1" /> Create Team
           </Button>
         </div>
-        
+
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
           Create teams to collaborate with multiple people on shared tasks.
         </p>
@@ -388,21 +416,23 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
           <div className="mb-4 p-3 rounded-xl bg-brand-500/5 border border-brand-500/20">
             <p className="text-sm font-medium text-brand-500 mb-2">Team Invites</p>
             <div className="space-y-2">
-              {teamInvites.map(team => (
-                <div 
-                  key={team.id} 
+              {teamInvites.map((team) => (
+                <div
+                  key={team.id}
                   className="flex items-center justify-between p-2 rounded-lg bg-white/50 dark:bg-black/20"
                 >
-                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{team.name}</span>
+                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                    {team.name}
+                  </span>
                   <div className="flex gap-2">
-                    <button 
+                    <button
                       onClick={() => handleAcceptTeamInvite(team.id)}
                       className="p-1.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 dark:hover:bg-emerald-500/30"
                       aria-label="Accept team invite"
                     >
                       <Check size={14} />
                     </button>
-                    <button 
+                    <button
                       onClick={() => handleRejectTeamInvite(team.id)}
                       className="p-1.5 rounded-lg bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/20 dark:hover:bg-red-500/30"
                       aria-label="Reject team invite"
@@ -435,7 +465,11 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
               />
             </div>
             <div className="flex gap-2 mt-4">
-              <Button size="sm" onClick={handleCreateTeam} disabled={!newTeamName.trim() || isCreatingTeam}>
+              <Button
+                size="sm"
+                onClick={handleCreateTeam}
+                disabled={!newTeamName.trim() || isCreatingTeam}
+              >
                 {isCreatingTeam ? <Loader2 className="animate-spin mr-1" size={14} /> : null}
                 Create
               </Button>
@@ -458,13 +492,13 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
           </div>
         ) : (
           <div className="space-y-3">
-            {teams.map(team => (
-              <div 
-                key={team.id} 
+            {teams.map((team) => (
+              <div
+                key={team.id}
                 className="rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 overflow-hidden"
               >
                 {/* Team Header */}
-                <div 
+                <div
                   className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
                   onClick={() => handleToggleTeam(team.id)}
                 >
@@ -479,14 +513,19 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                           <Crown size={14} className="text-yellow-500" title="You own this team" />
                         )}
                       </p>
-                      <p className="text-xs text-slate-500">{team.memberCount} member{team.memberCount !== 1 ? 's' : ''}</p>
+                      <p className="text-xs text-slate-500">
+                        {team.memberCount} member{team.memberCount !== 1 ? 's' : ''}
+                      </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     {team.isOwner && (
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleDeleteTeam(team.id); }}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTeam(team.id);
+                        }}
                         className="p-1.5 rounded-lg text-slate-400 hover:bg-red-500/10 dark:hover:bg-red-500/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         title="Delete Team"
                         aria-label="Delete team"
@@ -513,13 +552,31 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
 
                     {/* Add Member (only for owners/admins) */}
                     {team.isOwner && (
-                      <div className="relative py-3" ref={searchContext && typeof searchContext === 'object' && searchContext.teamId === team.id ? searchRef : undefined}>
+                      <div
+                        className="relative py-3"
+                        ref={
+                          searchContext &&
+                          typeof searchContext === 'object' &&
+                          searchContext.teamId === team.id
+                            ? searchRef
+                            : undefined
+                        }
+                      >
                         <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                          <Search
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                            size={16}
+                          />
                           <input
                             type="text"
                             placeholder="Add member by email..."
-                            value={searchContext && typeof searchContext === 'object' && searchContext.teamId === team.id ? searchQuery : ''}
+                            value={
+                              searchContext &&
+                              typeof searchContext === 'object' &&
+                              searchContext.teamId === team.id
+                                ? searchQuery
+                                : ''
+                            }
                             onChange={(e) => {
                               setSearchQuery(e.target.value);
                               setSearchContext({ type: 'team', teamId: team.id });
@@ -532,15 +589,19 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                             className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-dark-border rounded-lg pl-9 pr-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50 placeholder-slate-400"
                           />
                         </div>
-                        {showSearchDropdown && searchContext && typeof searchContext === 'object' && searchContext.teamId === team.id && 
-                          renderSearchDropdown((user) => handleAddTeamMember(team.id, user))
-                        }
+                        {showSearchDropdown &&
+                          searchContext &&
+                          typeof searchContext === 'object' &&
+                          searchContext.teamId === team.id &&
+                          renderSearchDropdown((user) => handleAddTeamMember(team.id, user))}
                       </div>
                     )}
 
                     {/* Members List */}
                     <div className="space-y-2 pt-2">
-                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Members</p>
+                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                        Members
+                      </p>
                       {!teamMembers[team.id] ? (
                         <div className="py-4 text-center text-slate-400 text-sm">
                           <Loader2 className="animate-spin inline mr-2" size={14} />
@@ -551,8 +612,8 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                           No members yet
                         </div>
                       ) : (
-                        teamMembers[team.id].map(member => (
-                          <div 
+                        teamMembers[team.id].map((member) => (
+                          <div
                             key={member.id}
                             className="flex items-center justify-between p-2 rounded-lg bg-white/50 dark:bg-slate-800/50"
                           >
@@ -575,17 +636,19 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                                   Pending
                                 </span>
                               ) : (
-                                <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                                  member.role === 'admin' 
-                                    ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' 
-                                    : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
-                                }`}>
+                                <span
+                                  className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                                    member.role === 'admin'
+                                      ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
+                                      : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                                  }`}
+                                >
                                   {member.role === 'admin' && <Shield size={10} />}
                                   {member.role}
                                 </span>
                               )}
                               {team.isOwner && (
-                                <button 
+                                <button
                                   onClick={() => handleRemoveTeamMember(team.id, member.id)}
                                   className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors"
                                   title="Remove member"

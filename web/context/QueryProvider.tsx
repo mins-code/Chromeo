@@ -24,8 +24,8 @@ export const QueryProvider: React.FC<PropsWithChildren> = ({ children }) => {
   return (
     <PersistQueryClientProvider
       client={queryClient}
-      persistOptions={{ 
-        persister, 
+      persistOptions={{
+        persister,
         maxAge: 1000 * 60 * 60 * 24, // 24 hours max cache age
       }}
     >

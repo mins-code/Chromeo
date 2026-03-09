@@ -2,15 +2,7 @@ import React, { useMemo, useEffect, useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { Task } from '../types';
 import DraggableTask from './DraggableTask';
-import {
-  addDays,
-  format,
-  isSameDay,
-  isToday,
-  parseISO,
-  getHours,
-  getMinutes,
-} from 'date-fns';
+import { addDays, format, isSameDay, isToday, parseISO, getHours, getMinutes } from 'date-fns';
 
 interface CustomIntervalViewProps {
   tasks: Task[];
@@ -48,11 +40,11 @@ const DroppableHourCell: React.FC<DroppableHourCellProps> = ({ dayDate, hour, ch
   );
 };
 
-const CustomIntervalView: React.FC<CustomIntervalViewProps> = ({ 
-  tasks, 
-  currentDate, 
+const CustomIntervalView: React.FC<CustomIntervalViewProps> = ({
+  tasks,
+  currentDate,
   intervalDays,
-  onEditTask 
+  onEditTask,
 }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -75,7 +67,7 @@ const CustomIntervalView: React.FC<CustomIntervalViewProps> = ({
   const getTaskTime = (task: Task): { hour: number; minutes: number } | null => {
     const timeStr = task.reminderTime || task.dueDate;
     if (!timeStr) return null;
-    
+
     try {
       const date = parseISO(timeStr);
       return { hour: getHours(date), minutes: getMinutes(date) };
@@ -98,9 +90,9 @@ const CustomIntervalView: React.FC<CustomIntervalViewProps> = ({
   // Group tasks by day
   const tasksByDay = useMemo(() => {
     const grouped: Record<string, Task[]> = {};
-    displayDays.forEach(day => {
+    displayDays.forEach((day) => {
       const key = format(day, 'yyyy-MM-dd');
-      grouped[key] = tasks.filter(task => {
+      grouped[key] = tasks.filter((task) => {
         const taskDate = getTaskDate(task);
         return taskDate && isSameDay(taskDate, day);
       });
@@ -130,7 +122,7 @@ const CustomIntervalView: React.FC<CustomIntervalViewProps> = ({
     return hours * HOUR_HEIGHT + (minutes / 60) * HOUR_HEIGHT;
   }, [currentTime]);
 
-  const todayIndex = displayDays.findIndex(day => isToday(day));
+  const todayIndex = displayDays.findIndex((day) => isToday(day));
 
   // Calculate column width based on interval
   const getColumnClass = () => {
@@ -146,7 +138,8 @@ const CustomIntervalView: React.FC<CustomIntervalViewProps> = ({
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header with day names - no separate scroll */}
         <div className="flex border-b border-slate-200 dark:border-white/5 flex-shrink-0">
-          <div className="w-16 flex-shrink-0 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900 z-20" /> {/* Time column spacer */}
+          <div className="w-16 flex-shrink-0 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900 z-20" />{' '}
+          {/* Time column spacer */}
           <div className="flex-1 overflow-hidden">
             <div className="flex">
               {displayDays.map((day, idx) => (
@@ -159,7 +152,9 @@ const CustomIntervalView: React.FC<CustomIntervalViewProps> = ({
                   <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                     {format(day, 'EEE')}
                   </div>
-                  <div className={`text-lg font-bold ${isToday(day) ? 'text-brand-500' : 'text-slate-700 dark:text-slate-200'}`}>
+                  <div
+                    className={`text-lg font-bold ${isToday(day) ? 'text-brand-500' : 'text-slate-700 dark:text-slate-200'}`}
+                  >
                     {format(day, 'd')}
                   </div>
                   {/* Show month name for first day or when month changes */}
@@ -178,7 +173,7 @@ const CustomIntervalView: React.FC<CustomIntervalViewProps> = ({
         <div className="flex-1 flex overflow-hidden">
           {/* Time column - sticky */}
           <div className="w-16 flex-shrink-0 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900 z-10 overflow-y-auto">
-            {HOURS.map(hour => (
+            {HOURS.map((hour) => (
               <div
                 key={hour}
                 className="text-right pr-2 text-xs text-slate-400 font-medium"
@@ -202,12 +197,12 @@ const CustomIntervalView: React.FC<CustomIntervalViewProps> = ({
                     className={`flex-1 ${getColumnClass()} relative ${isToday(day) ? 'bg-brand-500/5' : ''}`}
                   >
                     {/* Hour cells (droppable) */}
-                    {HOURS.map(hour => (
+                    {HOURS.map((hour) => (
                       <DroppableHourCell key={hour} dayDate={day} hour={hour} />
                     ))}
 
                     {/* Task blocks */}
-                    {dayTasks.map(task => (
+                    {dayTasks.map((task) => (
                       <div
                         key={task.id}
                         style={getTaskStyle(task)}

@@ -17,7 +17,13 @@ export default defineConfig(({ mode }) => {
         srcDir: 'src',
         filename: 'sw.js',
         injectRegister: false,
-        includeAssets: ['favicon.ico', 'logo-light.jpg', 'logo-dark.jpg', 'logo-cyberpunk.jpg', 'logo-onepiece.png'],
+        includeAssets: [
+          'favicon.ico',
+          'logo-light.jpg',
+          'logo-dark.jpg',
+          'logo-cyberpunk.jpg',
+          'logo-onepiece.png',
+        ],
         manifest: {
           name: 'ChronoDeX',
           short_name: 'ChronoDeX',
@@ -35,20 +41,20 @@ export default defineConfig(({ mode }) => {
               src: 'pwa-192x192.png',
               sizes: '192x192',
               type: 'image/png',
-              purpose: 'any'
+              purpose: 'any',
             },
             {
               src: 'pwa-512x512.png',
               sizes: '512x512',
               type: 'image/png',
-              purpose: 'any'
+              purpose: 'any',
             },
             {
               src: 'pwa-512x512.png',
               sizes: '512x512',
               type: 'image/png',
-              purpose: 'maskable'
-            }
+              purpose: 'maskable',
+            },
           ],
           shortcuts: [
             {
@@ -56,30 +62,30 @@ export default defineConfig(({ mode }) => {
               short_name: 'Task',
               description: 'Create a new task',
               url: '/calendar?action=new-task',
-              icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }]
+              icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
             },
             {
               name: 'Calendar',
               short_name: 'Calendar',
               description: 'View calendar',
               url: '/calendar',
-              icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }]
+              icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
             },
             {
               name: 'Day Planner',
               short_name: 'Planner',
               description: 'Plan your day',
               url: '/day-planner',
-              icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }]
+              icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
             },
             {
               name: 'Budget',
               short_name: 'Budget',
               description: 'Track your budget',
               url: '/budget',
-              icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }]
-            }
-          ]
+              icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
+            },
+          ],
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,woff,woff2}'],
@@ -91,12 +97,12 @@ export default defineConfig(({ mode }) => {
                 cacheName: 'google-fonts-cache',
                 expiration: {
                   maxEntries: 10,
-                  maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
                 },
                 cacheableResponse: {
-                  statuses: [0, 200]
-                }
-              }
+                  statuses: [0, 200],
+                },
+              },
             },
             {
               urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
@@ -105,26 +111,26 @@ export default defineConfig(({ mode }) => {
                 cacheName: 'gstatic-fonts-cache',
                 expiration: {
                   maxEntries: 10,
-                  maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
                 },
                 cacheableResponse: {
-                  statuses: [0, 200]
-                }
-              }
-            }
-          ]
-        }
-      })
+                  statuses: [0, 200],
+                },
+              },
+            },
+          ],
+        },
+      }),
     ],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
-      }
+      },
     },
     build: {
       // Optimize bundle size
       target: 'es2022',
-      
+
       // Source maps for production debugging
       sourcemap: mode === 'production' ? 'hidden' : true,
       // Chunk splitting for better caching
@@ -132,13 +138,13 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: {
             'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-            'supabase': ['@supabase/supabase-js'],
-            'query': ['@tanstack/react-query'],
-            'icons': ['lucide-react'],
-            'charts': ['recharts'],
-            'dnd': ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
-            'flow': ['@xyflow/react'],
-            'date': ['date-fns'],
+            supabase: ['@supabase/supabase-js'],
+            query: ['@tanstack/react-query'],
+            icons: ['lucide-react'],
+            charts: ['recharts'],
+            dnd: ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
+            flow: ['@xyflow/react'],
+            date: ['date-fns'],
           },
         },
       },

@@ -15,7 +15,7 @@ export class AppError extends Error {
   ) {
     super(message);
     this.name = 'AppError';
-    
+
     // Maintains proper stack trace for where error was thrown
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, AppError);
@@ -38,18 +38,18 @@ export class AppError extends Error {
    * Check if this is a network-related error
    */
   isNetworkError(): boolean {
-    return this.code === 'NETWORK_ERROR' || 
-           this.message.toLowerCase().includes('network') ||
-           this.message.toLowerCase().includes('fetch');
+    return (
+      this.code === 'NETWORK_ERROR' ||
+      this.message.toLowerCase().includes('network') ||
+      this.message.toLowerCase().includes('fetch')
+    );
   }
 
   /**
    * Check if this is an authentication error
    */
   isAuthError(): boolean {
-    return this.code === 'AUTH_ERROR' || 
-           this.statusCode === 401 || 
-           this.statusCode === 403;
+    return this.code === 'AUTH_ERROR' || this.statusCode === 401 || this.statusCode === 403;
   }
 }
 
@@ -78,11 +78,13 @@ export function isNetworkError(error: unknown): boolean {
   if (error instanceof AppError) {
     return error.isNetworkError();
   }
-  
-  return error instanceof Error && 
-    (error.message.toLowerCase().includes('network') || 
-     error.message.toLowerCase().includes('fetch') ||
-     error.message.toLowerCase().includes('failed to fetch'));
+
+  return (
+    error instanceof Error &&
+    (error.message.toLowerCase().includes('network') ||
+      error.message.toLowerCase().includes('fetch') ||
+      error.message.toLowerCase().includes('failed to fetch'))
+  );
 }
 
 /**
@@ -92,10 +94,12 @@ export function isAuthError(error: unknown): boolean {
   if (error instanceof AppError) {
     return error.isAuthError();
   }
-  
-  return error instanceof Error && 
+
+  return (
+    error instanceof Error &&
     (error.message.toLowerCase().includes('unauthorized') ||
-     error.message.toLowerCase().includes('unauthenticated'));
+      error.message.toLowerCase().includes('unauthenticated'))
+  );
 }
 
 /**
@@ -113,11 +117,11 @@ export async function safeAsync<T>(
     return await operation();
   } catch (error) {
     console.error(`[${context}] Error:`, error);
-    
+
     if (fallback !== undefined) {
       return fallback;
     }
-    
+
     throw AppError.from(error, context);
   }
 }

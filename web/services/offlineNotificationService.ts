@@ -1,6 +1,6 @@
 /**
  * Offline Notification Service
- * 
+ *
  * Caches scheduled notifications in IndexedDB so they can be fired
  * even when the device is offline. The service worker checks this cache
  * periodically and fires any overdue notifications.
@@ -30,10 +30,10 @@ export interface CachedNotification {
  * against the Supabase push-notification Edge Function once connectivity resumes.
  */
 export interface SyncAction {
-  id: string;           // uuid generated at insertion time
+  id: string; // uuid generated at insertion time
   action: 'schedule' | 'cancel';
-  payload: any;         // exact body forwarded to supabase.functions.invoke
-  timestamp: number;    // Date.now() at insertion
+  payload: any; // exact body forwarded to supabase.functions.invoke
+  timestamp: number; // Date.now() at insertion
 }
 
 let dbInstance: IDBDatabase | null = null;
@@ -86,21 +86,23 @@ export const initDB = (): Promise<IDBDatabase> => {
 /**
  * Cache a notification for offline use
  */
-export const cacheNotification = async (notification: Omit<CachedNotification, 'createdAt' | 'fired'>): Promise<void> => {
+export const cacheNotification = async (
+  notification: Omit<CachedNotification, 'createdAt' | 'fired'>
+): Promise<void> => {
   try {
     const db = await initDB();
-    
+
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
-    
+
     const cachedNotification: CachedNotification = {
       ...notification,
       fired: false,
       createdAt: Date.now(),
     };
-    
+
     store.put(cachedNotification);
-    
+
     await new Promise<void>((resolve, reject) => {
       tx.oncomplete = () => {
         logger.debug(`[OfflineNotifications] Cached notification: ${notification.id}`);
@@ -108,7 +110,7 @@ export const cacheNotification = async (notification: Omit<CachedNotification, '
       };
       tx.onerror = () => reject(tx.error);
     });
-    
+
     // Notify service worker about the new notification
     notifyServiceWorker();
   } catch (error) {
@@ -122,12 +124,12 @@ export const cacheNotification = async (notification: Omit<CachedNotification, '
 export const getCachedNotifications = async (): Promise<CachedNotification[]> => {
   try {
     const db = await initDB();
-    
+
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, 'readonly');
       const store = tx.objectStore(STORE_NAME);
       const request = store.getAll();
-      
+
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
@@ -144,7 +146,7 @@ export const getOverdueNotifications = async (): Promise<CachedNotification[]> =
   try {
     const all = await getCachedNotifications();
     const now = Date.now();
-    return all.filter(n => n.scheduledTime <= now && !n.fired);
+    return all.filter((n) => n.scheduledTime <= now && !n.fired);
   } catch (error) {
     logger.error('[OfflineNotifications] Failed to get overdue notifications', error as Error);
     return [];
@@ -158,7 +160,7 @@ export const getUpcomingNotifications = async (): Promise<CachedNotification[]> 
   try {
     const all = await getCachedNotifications();
     const now = Date.now();
-    return all.filter(n => n.scheduledTime > now && !n.fired);
+    return all.filter((n) => n.scheduledTime > now && !n.fired);
   } catch (error) {
     logger.error('[OfflineNotifications] Failed to get upcoming notifications', error as Error);
     return [];
@@ -171,12 +173,12 @@ export const getUpcomingNotifications = async (): Promise<CachedNotification[]> 
 export const markNotificationAsFired = async (id: string): Promise<void> => {
   try {
     const db = await initDB();
-    
+
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
-    
+
     const request = store.get(id);
-    
+
     request.onsuccess = () => {
       const notification = request.result;
       if (notification) {
@@ -185,7 +187,7 @@ export const markNotificationAsFired = async (id: string): Promise<void> => {
         logger.debug(`[OfflineNotifications] Marked as fired: ${id}`);
       }
     };
-    
+
     await new Promise<void>((resolve, reject) => {
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
@@ -201,11 +203,11 @@ export const markNotificationAsFired = async (id: string): Promise<void> => {
 export const removeCachedNotification = async (id: string): Promise<void> => {
   try {
     const db = await initDB();
-    
+
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
     store.delete(id);
-    
+
     await new Promise<void>((resolve, reject) => {
       tx.oncomplete = () => {
         logger.debug(`[OfflineNotifications] Removed notification: ${id}`);
@@ -224,13 +226,13 @@ export const removeCachedNotification = async (id: string): Promise<void> => {
 export const removeCachedNotificationByTaskId = async (taskId: string): Promise<void> => {
   try {
     const db = await initDB();
-    
+
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
     const index = store.index('taskId');
-    
+
     const request = index.openCursor(IDBKeyRange.only(taskId));
-    
+
     request.onsuccess = () => {
       const cursor = request.result;
       if (cursor) {
@@ -238,7 +240,7 @@ export const removeCachedNotificationByTaskId = async (taskId: string): Promise<
         cursor.continue();
       }
     };
-    
+
     await new Promise<void>((resolve, reject) => {
       tx.oncomplete = () => {
         logger.debug(`[OfflineNotifications] Removed notifications for task: ${taskId}`);
@@ -247,7 +249,10 @@ export const removeCachedNotificationByTaskId = async (taskId: string): Promise<
       tx.onerror = () => reject(tx.error);
     });
   } catch (error) {
-    logger.error('[OfflineNotifications] Failed to remove notifications by task ID', error as Error);
+    logger.error(
+      '[OfflineNotifications] Failed to remove notifications by task ID',
+      error as Error
+    );
   }
 };
 
@@ -259,17 +264,17 @@ export const cleanupOldNotifications = async (): Promise<void> => {
   try {
     const all = await getCachedNotifications();
     const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-    
-    const oldNotifications = all.filter(n => 
-      n.fired && n.scheduledTime < oneDayAgo
-    );
-    
+
+    const oldNotifications = all.filter((n) => n.fired && n.scheduledTime < oneDayAgo);
+
     for (const notification of oldNotifications) {
       await removeCachedNotification(notification.id);
     }
-    
+
     if (oldNotifications.length > 0) {
-      logger.debug(`[OfflineNotifications] Cleaned up ${oldNotifications.length} old notifications`);
+      logger.debug(
+        `[OfflineNotifications] Cleaned up ${oldNotifications.length} old notifications`
+      );
     }
   } catch (error) {
     logger.error('[OfflineNotifications] Failed to cleanup old notifications', error as Error);
@@ -282,7 +287,7 @@ export const cleanupOldNotifications = async (): Promise<void> => {
 const notifyServiceWorker = async (): Promise<void> => {
   if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
     navigator.serviceWorker.controller.postMessage({
-      type: 'CHECK_NOTIFICATIONS'
+      type: 'CHECK_NOTIFICATIONS',
     });
   }
 };
@@ -299,12 +304,12 @@ export const getNotificationStats = async (): Promise<{
   try {
     const all = await getCachedNotifications();
     const now = Date.now();
-    
+
     return {
       total: all.length,
-      upcoming: all.filter(n => n.scheduledTime > now && !n.fired).length,
-      overdue: all.filter(n => n.scheduledTime <= now && !n.fired).length,
-      fired: all.filter(n => n.fired).length,
+      upcoming: all.filter((n) => n.scheduledTime > now && !n.fired).length,
+      overdue: all.filter((n) => n.scheduledTime <= now && !n.fired).length,
+      fired: all.filter((n) => n.fired).length,
     };
   } catch {
     return { total: 0, upcoming: 0, overdue: 0, fired: 0 };
@@ -360,9 +365,7 @@ export const getSyncActions = async (): Promise<SyncAction[]> => {
       const tx = db.transaction(SYNC_QUEUE_STORE, 'readonly');
       const request = tx.objectStore(SYNC_QUEUE_STORE).getAll();
       request.onsuccess = () => {
-        const sorted = (request.result as SyncAction[]).sort(
-          (a, b) => a.timestamp - b.timestamp
-        );
+        const sorted = (request.result as SyncAction[]).sort((a, b) => a.timestamp - b.timestamp);
         resolve(sorted);
       };
       request.onerror = () => reject(request.error);

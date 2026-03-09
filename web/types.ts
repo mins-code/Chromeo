@@ -1,4 +1,3 @@
-
 // Transaction Categories for Budget Planner AI Auto-Categorization
 export const TRANSACTION_CATEGORIES = [
   'Food & Dining',
@@ -10,21 +9,21 @@ export const TRANSACTION_CATEGORIES = [
   'Travel',
   'Income',
   'Other',
-  'Uncategorized'
+  'Uncategorized',
 ] as const;
 
-export type TransactionCategory = typeof TRANSACTION_CATEGORIES[number];
+export type TransactionCategory = (typeof TRANSACTION_CATEGORIES)[number];
 
 export enum TaskStatus {
   TODO = 'TODO',
   IN_PROGRESS = 'IN_PROGRESS',
-  DONE = 'DONE'
+  DONE = 'DONE',
 }
 
 export enum TaskPriority {
   LOW = 'LOW',
   MEDIUM = 'MEDIUM',
-  HIGH = 'HIGH'
+  HIGH = 'HIGH',
 }
 
 export type TaskType = 'TASK' | 'EVENT' | 'APPOINTMENT' | 'REMINDER';
@@ -69,7 +68,7 @@ export interface Task {
   subtasks: SubTask[];
   tags: string[];
   createdAt: number;
-  
+
   // New Features
   type: TaskType;
   duration?: number; // in minutes
@@ -78,14 +77,13 @@ export interface Task {
   dependencyIds: string[]; // IDs of tasks that must be completed first
   isShared: boolean; // Shared with partner
   recurrence?: RecurrenceConfig;
-  
+
   // Per-task notification settings (overrides global settings)
   notificationEnabled?: boolean; // undefined = use global, true/false = override
   notificationMinutesBefore?: number; // Custom lead time for this task
   notificationTime?: string; // Absolute notification time (ISO date string)
   notificationSoundId?: NotificationSound; // Android notification channel / sound
 }
-
 
 export interface Partner {
   id: string;
@@ -213,7 +211,22 @@ export interface NoteShare {
   createdAt: string;
 }
 
-export type ViewMode = 'dashboard' | 'activities' | 'all-activities' | 'tasks' | 'reminders' | 'events' | 'appointments' | 'budget' | 'ai-chat' | 'settings' | 'calendar' | 'routines' | 'day-planner' | 'notes' | 'debug-logs';
+export type ViewMode =
+  | 'dashboard'
+  | 'activities'
+  | 'all-activities'
+  | 'tasks'
+  | 'reminders'
+  | 'events'
+  | 'appointments'
+  | 'budget'
+  | 'ai-chat'
+  | 'settings'
+  | 'calendar'
+  | 'routines'
+  | 'day-planner'
+  | 'notes'
+  | 'debug-logs';
 
 export type ViewSourceMode = 'personal' | 'partners' | 'combined';
 
@@ -304,7 +317,7 @@ export interface DayPlan {
   userId: string;
   date: string; // YYYY-MM-DD
   taskIds: string[]; // References to actual Task IDs
-  links: TaskLink[]; // Connections between tasks  
+  links: TaskLink[]; // Connections between tasks
   layout: TaskLayout[]; // Visual positions
   templateId?: string; // If created from template
   isRecurring?: boolean; // If part of recurring plan
@@ -370,15 +383,17 @@ export interface DbBudgetShare {
   owner_id?: string;
   partner_id: string;
   created_at: string;
-  partner?: {
-    id: string;
-    email: string;
-    full_name?: string;
-  } | Array<{
-    id: string;
-    email: string;
-    full_name?: string;
-  }>;
+  partner?:
+    | {
+        id: string;
+        email: string;
+        full_name?: string;
+      }
+    | Array<{
+        id: string;
+        email: string;
+        full_name?: string;
+      }>;
 }
 
 /** Database response for notes table */
@@ -401,13 +416,15 @@ export interface DbNoteShare {
   owner_id: string;
   shared_with_id: string;
   created_at: string;
-  shared_with?: {
-    id: string;
-    email: string;
-    full_name?: string;
-  } | Array<{
-    id: string;
-    email: string;
-    full_name?: string;
-  }>;
+  shared_with?:
+    | {
+        id: string;
+        email: string;
+        full_name?: string;
+      }
+    | Array<{
+        id: string;
+        email: string;
+        full_name?: string;
+      }>;
 }

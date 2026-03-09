@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 import Button from './Button';
@@ -48,7 +47,9 @@ const Auth: React.FC = () => {
           password,
         });
         if (error) throw error;
-        setSuccessMessage('Registration successful! Please check your email to confirm your account, then sign in.');
+        setSuccessMessage(
+          'Registration successful! Please check your email to confirm your account, then sign in.'
+        );
         setIsSignUp(false);
         setPassword('');
       } else {
@@ -77,18 +78,18 @@ const Auth: React.FC = () => {
 
   // Determine key UI text based on mode
   let title = APP_NAME;
-  let subtitle = "Your AI-powered productivity suite.";
+  let subtitle = 'Your AI-powered productivity suite.';
   let buttonText = isSignUp ? 'Create Account' : 'Sign In';
 
   if (isResettingPassword) {
-    title = "Reset Password";
-    subtitle = "Enter your email to receive reset instructions.";
-    buttonText = "Send Reset Link";
+    title = 'Reset Password';
+    subtitle = 'Enter your email to receive reset instructions.';
+    buttonText = 'Send Reset Link';
   } else if (isSignUp) {
-    title = "Create Account";
-    subtitle = "Join us to boost your productivity.";
+    title = 'Create Account';
+    subtitle = 'Join us to boost your productivity.';
   } else {
-    title = "Welcome Back";
+    title = 'Welcome Back';
   }
 
   return (
@@ -102,13 +103,20 @@ const Auth: React.FC = () => {
       <div className="w-full max-w-md p-8 bg-white rounded-3xl shadow-xl shadow-slate-200/50 relative z-10 mx-4 border border-slate-200">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <img src="/logo-light.jpg" alt={APP_NAME} className="h-16 w-auto rounded-2xl shadow-lg" />
+            <img
+              src="/logo-light.jpg"
+              alt={APP_NAME}
+              className="h-16 w-auto rounded-2xl shadow-lg"
+            />
           </div>
           <h1 className="text-3xl font-bold text-slate-800 font-display mb-2">{title}</h1>
           <p className="text-slate-500">{subtitle}</p>
         </div>
 
-        <form onSubmit={isResettingPassword ? handlePasswordReset : handleAuth} className="space-y-6">
+        <form
+          onSubmit={isResettingPassword ? handlePasswordReset : handleAuth}
+          className="space-y-6"
+        >
           <Input
             label="Email"
             type="email"
@@ -118,12 +126,12 @@ const Auth: React.FC = () => {
             required
             className="bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400"
           />
-          
+
           {!isResettingPassword && (
             <div className="relative">
               <Input
                 label="Password"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -134,7 +142,7 @@ const Auth: React.FC = () => {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-[35px] text-slate-400 hover:text-slate-600 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500/50 rounded-lg p-1"
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -162,7 +170,7 @@ const Auth: React.FC = () => {
               {error}
             </div>
           )}
-          
+
           {successMessage && (
             <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-green-600 text-sm">
               {successMessage}
@@ -189,12 +197,12 @@ const Auth: React.FC = () => {
               </button>
             ) : (
               <>
-                {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+                {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
                 <button
                   onClick={handleModeSwitch}
                   className="text-brand-500 hover:text-brand-600 font-semibold transition-colors"
                 >
-                  {isSignUp ? "Sign In" : "Sign Up"}
+                  {isSignUp ? 'Sign In' : 'Sign Up'}
                 </button>
               </>
             )}

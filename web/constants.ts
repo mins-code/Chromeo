@@ -1,16 +1,26 @@
+import {
+  CheckSquare,
+  Calendar as CalendarIcon,
+  Wallet,
+  Bell,
+  Clock,
+  CalendarDays,
+  LayoutGrid,
+  Repeat,
+  Workflow,
+  StickyNote,
+} from 'lucide-react';
 
-import { CheckSquare, Calendar as CalendarIcon, Wallet, Bell, Clock, CalendarDays, LayoutGrid, Repeat, Workflow, StickyNote } from 'lucide-react';
-
-export const APP_NAME = "ChronoDeX";
+export const APP_NAME = 'ChronoDeX';
 
 export const NAVIGATION_ITEMS = [
   { id: 'calendar', label: 'Calendar', icon: CalendarIcon },
   { id: 'day-planner', label: 'Day Planner', icon: Workflow },
   { id: 'budget', label: 'Budget Plan', icon: Wallet },
   { id: 'notes', label: 'Notes', icon: StickyNote },
-  { 
-    id: 'activities', 
-    label: 'Activities', 
+  {
+    id: 'activities',
+    label: 'Activities',
     icon: LayoutGrid,
     children: [
       { id: 'tasks', label: 'Tasks', icon: CheckSquare },
@@ -18,7 +28,7 @@ export const NAVIGATION_ITEMS = [
       { id: 'events', label: 'Events', icon: CalendarDays },
       { id: 'appointments', label: 'Appointments', icon: Clock },
       { id: 'routines', label: 'Routines', icon: Repeat },
-    ]
+    ],
   },
 ];
 

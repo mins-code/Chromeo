@@ -8,11 +8,7 @@ interface SaveTemplateModalProps {
   onSave: (name: string, description: string) => void;
 }
 
-const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
-  isOpen,
-  onClose,
-  onSave,
-}) => {
+const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({ isOpen, onClose, onSave }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
@@ -81,20 +77,10 @@ const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
 
           {/* Actions */}
           <div className="flex items-center gap-3 pt-2">
-            <Button
-              type="button"
-              variant="secondary"
-              className="flex-1"
-              onClick={onClose}
-            >
+            <Button type="button" variant="secondary" className="flex-1" onClick={onClose}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              className="flex-1"
-              disabled={!name.trim()}
-            >
+            <Button type="submit" variant="primary" className="flex-1" disabled={!name.trim()}>
               <Check size={18} />
               Save Template
             </Button>

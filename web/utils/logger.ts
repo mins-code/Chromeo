@@ -21,7 +21,7 @@ function redactSensitiveData(data: any): any {
   const redacted = { ...data };
 
   for (const key in redacted) {
-    if (sensitiveKeys.some(sensitive => key.toLowerCase().includes(sensitive))) {
+    if (sensitiveKeys.some((sensitive) => key.toLowerCase().includes(sensitive))) {
       redacted[key] = '[REDACTED]';
     } else if (typeof redacted[key] === 'object') {
       redacted[key] = redactSensitiveData(redacted[key]);
@@ -63,16 +63,18 @@ class Logger {
         level,
         message,
         context: context ? redactSensitiveData(context) : undefined,
-        error: error ? {
-          message: error.message,
-          stack: error.stack,
-          name: error.name
-        } : undefined
+        error: error
+          ? {
+              message: error.message,
+              stack: error.stack,
+              name: error.name,
+            }
+          : undefined,
       };
 
       const existingLogs = this.getLogs();
       const newLogs = [logEntry, ...existingLogs].slice(0, this.MAX_LOGS);
-      
+
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(newLogs));
     } catch (e) {
       // Fallback if localStorage fails (e.g. quota exceeded)
@@ -120,7 +122,7 @@ class Logger {
   warn(message: string, context?: LogContext): void {
     console.warn(formatLogMessage('warn', message, context));
     this.saveLog('warn', message, context);
-    
+
     // In production, you could send to error tracking service
     if (!this.isDevelopment) {
       this.sendToErrorTracking('warn', message, context);
@@ -136,10 +138,10 @@ class Logger {
       errorMessage: error?.message,
       errorStack: this.isDevelopment ? error?.stack : undefined,
     };
-    
+
     console.error(formatLogMessage('error', message, errorContext));
     this.saveLog('error', message, context, error);
-    
+
     // In production, send to error tracking service
     if (!this.isDevelopment) {
       this.sendToErrorTracking('error', message, errorContext, error);

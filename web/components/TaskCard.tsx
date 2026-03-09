@@ -1,7 +1,18 @@
-
 import React from 'react';
 import { Task, TaskPriority, TaskStatus } from '../types';
-import { Calendar, CheckCircle2, Circle, MoreVertical, Sparkles, Bell, Users, Lock, Clock, MapPin, Play } from 'lucide-react';
+import {
+  Calendar,
+  CheckCircle2,
+  Circle,
+  MoreVertical,
+  Sparkles,
+  Bell,
+  Users,
+  Lock,
+  Clock,
+  MapPin,
+  Play,
+} from 'lucide-react';
 import Button from './Button';
 import { formatDateShort, formatTime, isPast } from '../utils/date';
 
@@ -14,20 +25,30 @@ interface TaskCardProps {
   onFocus?: (task: Task) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, allTasksMap, onEdit, onToggleStatus, onAIAnalysis, onFocus }) => {
+const TaskCard: React.FC<TaskCardProps> = ({
+  task,
+  allTasksMap,
+  onEdit,
+  onToggleStatus,
+  onAIAnalysis,
+  onFocus,
+}) => {
   const isDone = task.status === TaskStatus.DONE;
 
   // Check dependencies - early exit if no dependencies
   const hasDependencies = task.dependencyIds && task.dependencyIds.length > 0;
-  const unfinishedDependencies = hasDependencies && allTasksMap
-    ? task.dependencyIds.map(id => allTasksMap.get(id)).filter((t): t is Task => !!t && t.status !== TaskStatus.DONE)
-    : [];
+  const unfinishedDependencies =
+    hasDependencies && allTasksMap
+      ? task.dependencyIds
+          .map((id) => allTasksMap.get(id))
+          .filter((t): t is Task => !!t && t.status !== TaskStatus.DONE)
+      : [];
   const isBlocked = unfinishedDependencies.length > 0;
   const blockedBy = unfinishedDependencies?.[0]?.title;
 
   // Subtask progress
   const totalSub = task.subtasks.length;
-  const doneSub = task.subtasks.filter(s => s.isCompleted).length;
+  const doneSub = task.subtasks.filter((s) => s.isCompleted).length;
   const progressPercent = totalSub > 0 ? (doneSub / totalSub) * 100 : 0;
 
   const typeLabel = task.type === 'EVENT' ? 'Event' : task.type === 'APPOINTMENT' ? 'Appt' : 'Task';
@@ -46,15 +67,24 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasksMap, onEdit, onToggle
             if (!isBlocked) onToggleStatus(task);
           }}
           disabled={isBlocked && !isDone}
-          aria-label={isBlocked ? "Task blocked" : isDone ? "Mark as incomplete" : "Mark as complete"}
-          className={`mt-0.5 flex-shrink-0 transition-all duration-200 hover:scale-110 active:scale-95 ${isBlocked && !isDone
+          aria-label={
+            isBlocked ? 'Task blocked' : isDone ? 'Mark as incomplete' : 'Mark as complete'
+          }
+          className={`mt-0.5 flex-shrink-0 transition-all duration-200 hover:scale-110 active:scale-95 ${
+            isBlocked && !isDone
               ? 'text-red-400/50 cursor-not-allowed'
               : isDone
                 ? 'text-emerald-500 drop-shadow-sm'
                 : 'text-slate-400 hover:text-brand-500'
-            }`}
+          }`}
         >
-          {isBlocked && !isDone ? <Lock size={22} /> : (isDone ? <CheckCircle2 size={24} weight="fill" /> : <Circle size={24} />)}
+          {isBlocked && !isDone ? (
+            <Lock size={22} />
+          ) : isDone ? (
+            <CheckCircle2 size={24} weight="fill" />
+          ) : (
+            <Circle size={24} />
+          )}
         </button>
 
         {/* Content Area */}
@@ -62,8 +92,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasksMap, onEdit, onToggle
           {/* Shared/Priority Indicators - Absolute positioned */}
           <div className="absolute top-4 right-4 flex items-center gap-1.5 sm:right-14">
             {task.type !== 'TASK' && (
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${task.type === 'EVENT' ? 'bg-brand-500/10 text-brand-600 dark:text-brand-300' : 'bg-purple-500/10 text-purple-600 dark:text-purple-300'
-                }`}>
+              <span
+                className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                  task.type === 'EVENT'
+                    ? 'bg-brand-500/10 text-brand-600 dark:text-brand-300'
+                    : 'bg-purple-500/10 text-purple-600 dark:text-purple-300'
+                }`}
+              >
                 {typeLabel}
               </span>
             )}
@@ -81,8 +116,12 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasksMap, onEdit, onToggle
               role="img"
               aria-label={`${task.priority.toLowerCase()} priority`}
               title={`${task.priority} priority`}
-              className={`w-2.5 h-2.5 rounded-full ${task.priority === TaskPriority.HIGH ? 'bg-red-500 shadow-sm' :
-                task.priority === TaskPriority.MEDIUM ? 'bg-yellow-500' : 'bg-green-500'
+              className={`w-2.5 h-2.5 rounded-full ${
+                task.priority === TaskPriority.HIGH
+                  ? 'bg-red-500 shadow-sm'
+                  : task.priority === TaskPriority.MEDIUM
+                    ? 'bg-yellow-500'
+                    : 'bg-green-500'
               }`}
             />
           </div>
@@ -101,7 +140,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasksMap, onEdit, onToggle
           </h3>
 
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 line-clamp-2 leading-relaxed">
-            {task.description || "No description"}
+            {task.description || 'No description'}
           </p>
 
           {isBlocked && (
@@ -117,7 +156,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasksMap, onEdit, onToggle
           {/* Subtask Progress Bar */}
           {totalSub > 0 && !isDone && (
             <div className="mb-3">
-              <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-wider font-semibold" aria-hidden="true">
+              <div
+                className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-wider font-semibold"
+                aria-hidden="true"
+              >
                 <span>Progress</span>
                 <span>{Math.round(progressPercent)}%</span>
               </div>
@@ -139,9 +181,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasksMap, onEdit, onToggle
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
             {task.reminderTime && (
-              <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${isPast(task.reminderTime) ? 'bg-red-500/5 border-red-500/20 text-red-500 dark:text-red-400' : 'bg-yellow-500/5 border-yellow-500/20 text-yellow-600 dark:text-yellow-500'}`}>
+              <div
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${isPast(task.reminderTime) ? 'bg-red-500/5 border-red-500/20 text-red-500 dark:text-red-400' : 'bg-yellow-500/5 border-yellow-500/20 text-yellow-600 dark:text-yellow-500'}`}
+              >
                 <Bell size={12} aria-hidden="true" />
-                <span>{formatDateShort(task.reminderTime)} {formatTime(task.reminderTime)}</span>
+                <span>
+                  {formatDateShort(task.reminderTime)} {formatTime(task.reminderTime)}
+                </span>
               </div>
             )}
 
@@ -166,8 +212,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasksMap, onEdit, onToggle
               </div>
             )}
 
-            {task.tags.map(tag => (
-              <span key={tag} className="bg-slate-100 dark:bg-white/5 px-2 py-1 rounded-md border border-slate-200 dark:border-white/5 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors">#{tag}</span>
+            {task.tags.map((tag) => (
+              <span
+                key={tag}
+                className="bg-slate-100 dark:bg-white/5 px-2 py-1 rounded-md border border-slate-200 dark:border-white/5 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+              >
+                #{tag}
+              </span>
             ))}
           </div>
         </div>
@@ -178,7 +229,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasksMap, onEdit, onToggle
             variant="secondary"
             size="icon"
             className="h-8 w-8 bg-white/80 dark:bg-slate-800/80 backdrop-blur"
-            onClick={(e) => { e.stopPropagation(); onEdit(task); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(task);
+            }}
             aria-label="Edit task"
           >
             <MoreVertical size={14} />
@@ -188,7 +242,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasksMap, onEdit, onToggle
               variant="secondary"
               size="icon"
               className="h-8 w-8 text-purple-500 dark:text-purple-400 border-purple-200 dark:border-purple-500/20 hover:bg-purple-50 dark:hover:bg-purple-500/10"
-              onClick={(e) => { e.stopPropagation(); onAIAnalysis(task); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onAIAnalysis(task);
+              }}
               title="AI Breakdown"
               aria-label="AI Breakdown"
             >
@@ -200,7 +257,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, allTasksMap, onEdit, onToggle
               variant="secondary"
               size="icon"
               className="h-8 w-8 text-brand-500 dark:text-brand-400 border-brand-200 dark:border-brand-500/20 hover:bg-brand-50 dark:hover:bg-brand-500/10"
-              onClick={(e) => { e.stopPropagation(); onFocus(task); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onFocus(task);
+              }}
               title="Start Focus Session"
               aria-label="Start Focus Session"
             >

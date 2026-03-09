@@ -19,7 +19,8 @@ export const TYPE_COLORS: Record<TaskType, string> = {
 };
 
 // Muted colors for completed tasks
-const COMPLETED_COLORS = 'bg-slate-200/50 dark:bg-slate-700/30 border-slate-400 dark:border-slate-500 text-slate-500 dark:text-slate-400';
+const COMPLETED_COLORS =
+  'bg-slate-200/50 dark:bg-slate-700/30 border-slate-400 dark:border-slate-500 text-slate-500 dark:text-slate-400';
 
 /**
  * ⚡ Performance Optimization:
@@ -40,7 +41,7 @@ const DraggableTask = React.memo(({ task, children, variant = 'chip' }: Draggabl
     cursor: isDragging ? 'grabbing' : 'grab',
   };
 
-  const colorClass = isCompleted ? COMPLETED_COLORS : (TYPE_COLORS[task.type] || TYPE_COLORS.TASK);
+  const colorClass = isCompleted ? COMPLETED_COLORS : TYPE_COLORS[task.type] || TYPE_COLORS.TASK;
 
   if (children) {
     return (
@@ -75,14 +76,19 @@ const DraggableTask = React.memo(({ task, children, variant = 'chip' }: Draggabl
       {...attributes}
       className={`absolute left-1 right-1 px-2 py-1 rounded-md border-l-4 ${colorClass} overflow-hidden shadow-sm hover:shadow-md transition-all`}
     >
-      <div className={`text-xs font-medium truncate flex items-center gap-1 ${isCompleted ? 'line-through' : ''}`}>
+      <div
+        className={`text-xs font-medium truncate flex items-center gap-1 ${isCompleted ? 'line-through' : ''}`}
+      >
         {isCompleted && <CheckCircle2 size={10} className="shrink-0" />}
         {task.title}
       </div>
       {task.reminderTime && (
         <div className="flex items-center gap-1 text-[10px] opacity-75 mt-0.5">
           <Clock size={8} />
-          {new Date(task.reminderTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          {new Date(task.reminderTime).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
         </div>
       )}
     </div>
@@ -90,4 +96,3 @@ const DraggableTask = React.memo(({ task, children, variant = 'chip' }: Draggabl
 });
 
 export default DraggableTask;
-

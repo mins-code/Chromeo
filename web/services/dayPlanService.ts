@@ -15,7 +15,9 @@ import { logger } from '../utils/logger';
  */
 export const getDayPlan = async (date: string): Promise<DayPlan | null> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return null;
 
     const { data, error } = await supabase
@@ -52,7 +54,9 @@ export const getDayPlan = async (date: string): Promise<DayPlan | null> => {
  */
 export const saveDayPlan = async (plan: DayPlan): Promise<DayPlan> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
     const dbPlan = {
@@ -95,7 +99,9 @@ export const saveDayPlan = async (plan: DayPlan): Promise<DayPlan> => {
  */
 export const deleteDayPlan = async (date: string): Promise<boolean> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return false;
 
     const { error } = await supabase
@@ -124,7 +130,9 @@ export const cloneDayPlan = async (
   targetDates: string[],
   adjustTimes?: boolean
 ): Promise<DayPlan[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
   // Find source plan
@@ -167,7 +175,9 @@ export const addTaskToPlan = async (
   taskId: string,
   position: { x: number; y: number }
 ): Promise<DayPlan | null> => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return null;
 
   // Fetch the plan
@@ -217,8 +227,13 @@ export const addTaskToPlan = async (
 /**
  * Remove task from day plan
  */
-export const removeTaskFromPlan = async (planId: string, taskId: string): Promise<DayPlan | null> => {
-  const { data: { user } } = await supabase.auth.getUser();
+export const removeTaskFromPlan = async (
+  planId: string,
+  taskId: string
+): Promise<DayPlan | null> => {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return null;
 
   // Fetch the plan
@@ -268,7 +283,9 @@ export const linkTasks = async (
   toTaskId: string,
   linkType: 'flow' | 'dependency' = 'flow'
 ): Promise<TaskLink | null> => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return null;
 
   // Fetch the plan
@@ -319,7 +336,9 @@ export const linkTasks = async (
  * Remove task link
  */
 export const removeTaskLink = async (planId: string, linkId: string): Promise<boolean> => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return false;
 
   // Fetch the plan
@@ -402,7 +421,7 @@ export const saveAsTemplate = (
   description?: string
 ): DayPlanTemplate => {
   const templates = getAllTemplates();
-  
+
   const template: DayPlanTemplate = {
     id: crypto.randomUUID(),
     name,
@@ -432,8 +451,8 @@ export const saveAsTemplate = (
  */
 export const deleteTemplate = (templateId: string): boolean => {
   const templates = getAllTemplates();
-  const filtered = templates.filter(t => t.id !== templateId);
-  
+  const filtered = templates.filter((t) => t.id !== templateId);
+
   if (filtered.length < templates.length) {
     saveAllTemplates(filtered);
     return true;
@@ -451,8 +470,8 @@ export const applyTemplate = async (
   userId: string
 ): Promise<DayPlan | null> => {
   const templates = getAllTemplates();
-  const template = templates.find(t => t.id === templateId);
-  
+  const template = templates.find((t) => t.id === templateId);
+
   if (!template) return null;
 
   const newPlan: DayPlan = {
@@ -460,11 +479,11 @@ export const applyTemplate = async (
     userId,
     date,
     taskIds: [],
-    links: template.links.map(link => ({
+    links: template.links.map((link) => ({
       ...link,
       id: crypto.randomUUID(),
     })),
-    layout: template.layout.map(item => ({
+    layout: template.layout.map((item) => ({
       ...item,
       taskId: (item as any).taskId || '',
     })),
@@ -512,14 +531,14 @@ export const saveRecurringRule = (
 ): DayPlan => {
   const plans = getAllRecurringPlans();
   const id = crypto.randomUUID();
-  
+
   const recurringPlan: DayPlan = {
     id,
     userId,
     date: 'RECURRING',
     taskIds: [],
-    links: template.links.map(l => ({ ...l, id: crypto.randomUUID() })),
-    layout: template.layout.map(l => ({ ...l, taskId: (l as any).taskId || '' })),
+    links: template.links.map((l) => ({ ...l, id: crypto.randomUUID() })),
+    layout: template.layout.map((l) => ({ ...l, taskId: (l as any).taskId || '' })),
     templateId: template.id,
     isRecurring: true,
     recurringConfig,
@@ -544,7 +563,7 @@ export const getRecurringRules = (): DayPlan[] => {
  * Check if a date matches a recurring rule
  */
 export const checkForRecurringPlans = async (
-  date: string, 
+  date: string,
   userId: string
 ): Promise<DayPlanTemplate | null> => {
   // Check if plan already exists for this date
@@ -556,26 +575,26 @@ export const checkForRecurringPlans = async (
   const recurringRules = getRecurringRules();
   const targetDate = new Date(date);
   const dayOfWeek = targetDate.getDay();
-  
+
   // Find matching rule
-  const match = recurringRules.find(rule => {
+  const match = recurringRules.find((rule) => {
     if (!rule.recurringConfig) return false;
-    
+
     // Check specific days
     if (rule.recurringConfig.days && rule.recurringConfig.days.includes(dayOfWeek)) {
       return true;
     }
-    
+
     // Check daily/weekly/monthly intervals
     if (rule.recurringConfig.frequency === 'daily') return true;
     if (rule.recurringConfig.frequency === 'weekly') return true;
-    
+
     return false;
   });
 
   if (match && match.templateId) {
     const templates = getAllTemplates();
-    const sourceTemplate = templates.find(t => t.id === match.templateId);
+    const sourceTemplate = templates.find((t) => t.id === match.templateId);
     return sourceTemplate || null;
   }
 

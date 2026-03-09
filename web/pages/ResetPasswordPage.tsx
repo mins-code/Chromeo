@@ -21,8 +21,10 @@ const ResetPasswordPage: React.FC = () => {
   useEffect(() => {
     // Check if we have a valid recovery session
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       // A recovery session will have the user logged in via the recovery token
       if (session?.user) {
         setIsValidSession(true);
@@ -35,7 +37,9 @@ const ResetPasswordPage: React.FC = () => {
     checkSession();
 
     // Listen for PASSWORD_RECOVERY event
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsValidSession(true);
         setIsCheckingSession(false);
@@ -68,7 +72,7 @@ const ResetPasswordPage: React.FC = () => {
       if (error) throw error;
 
       setSuccess(true);
-      
+
       // Redirect to app after 3 seconds
       setTimeout(() => {
         navigate('/');
@@ -105,11 +109,7 @@ const ResetPasswordPage: React.FC = () => {
           <p className="text-slate-500 mb-6">
             Your password has been updated. You will be redirected to the app shortly.
           </p>
-          <Button
-            variant="primary"
-            className="w-full"
-            onClick={() => navigate('/')}
-          >
+          <Button variant="primary" className="w-full" onClick={() => navigate('/')}>
             Go to App Now
           </Button>
         </div>
@@ -142,11 +142,7 @@ const ResetPasswordPage: React.FC = () => {
               <AlertCircle size={32} className="text-red-500" />
             </div>
             <p className="text-red-600 mb-6">{error}</p>
-            <Button
-              variant="primary"
-              className="w-full"
-              onClick={() => navigate('/')}
-            >
+            <Button variant="primary" className="w-full" onClick={() => navigate('/')}>
               Back to Sign In
             </Button>
           </div>
@@ -155,7 +151,7 @@ const ResetPasswordPage: React.FC = () => {
             <div className="relative">
               <Input
                 label="New Password"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -175,7 +171,7 @@ const ResetPasswordPage: React.FC = () => {
             <div className="relative">
               <Input
                 label="Confirm New Password"
-                type={showConfirmPassword ? "text" : "password"}
+                type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"

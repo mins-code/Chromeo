@@ -8,36 +8,81 @@ import { useTheme } from '../context/ThemeContext';
 import TaskCard from '../components/TaskCard';
 import Stats from '../components/Stats';
 import Button from '../components/Button';
-import { Activity, CheckSquare, Bell, CalendarDays, Clock, ArrowRight, Repeat, CalendarClock, Sparkles } from 'lucide-react';
+import {
+  Activity,
+  CheckSquare,
+  Bell,
+  CalendarDays,
+  Clock,
+  ArrowRight,
+  Repeat,
+  CalendarClock,
+  Sparkles,
+} from 'lucide-react';
 import { getGreeting, t } from '../themeText';
 import { enhanceTaskWithAI } from '../services/geminiService';
 import { getUrgencyScore } from '../utils/taskScoring';
 
 const viewModeToPath: Record<ViewMode, string> = {
-  'dashboard': '/',
-  'activities': '/activities',
+  dashboard: '/',
+  activities: '/activities',
   'all-activities': '/all-activities',
-  'tasks': '/tasks',
-  'reminders': '/reminders',
-  'events': '/events',
-  'appointments': '/appointments',
-  'calendar': '/calendar',
-  'budget': '/budget',
+  tasks: '/tasks',
+  reminders: '/reminders',
+  events: '/events',
+  appointments: '/appointments',
+  calendar: '/calendar',
+  budget: '/budget',
   'ai-chat': '/ai-chat',
-  'settings': '/settings',
-  'routines': '/routines',
+  settings: '/settings',
+  routines: '/routines',
   'day-planner': '/day-planner',
-  'notes': '/notes',
+  notes: '/notes',
   'debug-logs': '/debug-logs',
 };
 
 // Function to get activity categories with themed labels
 const getActivityCategories = (theme: string) => [
-  { id: 'tasks', label: t(theme as any, 'tasks'), icon: CheckSquare, type: 'TASK' as TaskType, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-  { id: 'reminders', label: t(theme as any, 'reminders'), icon: Bell, type: 'REMINDER' as TaskType, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
-  { id: 'events', label: t(theme as any, 'events'), icon: CalendarDays, type: 'EVENT' as TaskType, color: 'text-brand-500', bg: 'bg-brand-500/10' },
-  { id: 'appointments', label: t(theme as any, 'appointments'), icon: Clock, type: 'APPOINTMENT' as TaskType, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-  { id: 'routines', label: 'Routines', icon: Repeat, type: null as unknown as TaskType, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+  {
+    id: 'tasks',
+    label: t(theme as any, 'tasks'),
+    icon: CheckSquare,
+    type: 'TASK' as TaskType,
+    color: 'text-blue-500',
+    bg: 'bg-blue-500/10',
+  },
+  {
+    id: 'reminders',
+    label: t(theme as any, 'reminders'),
+    icon: Bell,
+    type: 'REMINDER' as TaskType,
+    color: 'text-yellow-500',
+    bg: 'bg-yellow-500/10',
+  },
+  {
+    id: 'events',
+    label: t(theme as any, 'events'),
+    icon: CalendarDays,
+    type: 'EVENT' as TaskType,
+    color: 'text-brand-500',
+    bg: 'bg-brand-500/10',
+  },
+  {
+    id: 'appointments',
+    label: t(theme as any, 'appointments'),
+    icon: Clock,
+    type: 'APPOINTMENT' as TaskType,
+    color: 'text-purple-500',
+    bg: 'bg-purple-500/10',
+  },
+  {
+    id: 'routines',
+    label: 'Routines',
+    icon: Repeat,
+    type: null as unknown as TaskType,
+    color: 'text-emerald-500',
+    bg: 'bg-emerald-500/10',
+  },
 ];
 
 interface ActivitiesPageProps {
@@ -53,25 +98,25 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
   const { budget } = useBudget();
 
   // Create Map for O(1) dependency resolution in TaskCards
-  const tasksMap = React.useMemo(() => new Map(tasks.map(t => [t.id, t])), [tasks]);
+  const tasksMap = React.useMemo(() => new Map(tasks.map((t) => [t.id, t])), [tasks]);
 
-  const today = new Date().toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    month: 'long', 
-    day: 'numeric' 
+  const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
   });
 
   // Compute sorted tasks by urgency (using centralized utility)
   const sortedTodoTasks = React.useMemo(() => {
     return tasks
-      .filter(t => t.status !== TaskStatus.DONE)
+      .filter((t) => t.status !== TaskStatus.DONE)
       .sort((a, b) => getUrgencyScore(b) - getUrgencyScore(a));
   }, [tasks]);
 
   // Get all tags for AI analysis
   const allTags = React.useMemo(() => {
     const tags = new Set<string>();
-    tasks.forEach(t => t.tags.forEach(tag => tags.add(tag)));
+    tasks.forEach((t) => t.tags.forEach((tag) => tags.add(tag)));
     return Array.from(tags).sort();
   }, [tasks]);
 
@@ -82,10 +127,10 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
   const handleAIAnalysis = async (task: Task) => {
     const enhanced = await enhanceTaskWithAI(task.title, allTags);
     if (enhanced?.subtasks) {
-      const subtasks = enhanced.subtasks.map(s => ({
+      const subtasks = enhanced.subtasks.map((s) => ({
         id: crypto.randomUUID(),
         title: s.title,
-        isCompleted: false
+        isCompleted: false,
       }));
       await updateTask({ ...task, subtasks: [...task.subtasks, ...subtasks] });
     }
@@ -96,51 +141,52 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
     const bestByType: Record<string, Task | undefined> = {};
     const pWeight = { [TaskPriority.HIGH]: 3, [TaskPriority.MEDIUM]: 2, [TaskPriority.LOW]: 1 };
 
-    tasks.forEach(task => {
-        if (task.status === TaskStatus.DONE) return;
+    tasks.forEach((task) => {
+      if (task.status === TaskStatus.DONE) return;
 
-        // Only consider valid types
-        if (!['TASK', 'REMINDER', 'EVENT', 'APPOINTMENT'].includes(task.type)) return;
+      // Only consider valid types
+      if (!['TASK', 'REMINDER', 'EVENT', 'APPOINTMENT'].includes(task.type)) return;
 
-        const currentBest = bestByType[task.type];
-        if (!currentBest) {
-            bestByType[task.type] = task;
-            return;
+      const currentBest = bestByType[task.type];
+      if (!currentBest) {
+        bestByType[task.type] = task;
+        return;
+      }
+
+      // Compare task vs currentBest
+      let replace = false;
+
+      // 1. Priority check
+      const taskP = pWeight[task.priority] || 0;
+      const bestP = pWeight[currentBest.priority] || 0;
+
+      if (taskP > bestP) {
+        replace = true;
+      } else if (taskP === bestP) {
+        // 2. Date check
+        const dateA = task.dueDate || task.reminderTime || String(Number.MAX_SAFE_INTEGER);
+        const dateB =
+          currentBest.dueDate || currentBest.reminderTime || String(Number.MAX_SAFE_INTEGER);
+        const timeA = new Date(dateA).getTime();
+        const timeB = new Date(dateB).getTime();
+
+        if (timeA < timeB) {
+          replace = true;
         }
+      }
 
-        // Compare task vs currentBest
-        let replace = false;
-
-        // 1. Priority check
-        const taskP = pWeight[task.priority] || 0;
-        const bestP = pWeight[currentBest.priority] || 0;
-
-        if (taskP > bestP) {
-            replace = true;
-        } else if (taskP === bestP) {
-            // 2. Date check
-            const dateA = task.dueDate || task.reminderTime || String(Number.MAX_SAFE_INTEGER);
-            const dateB = currentBest.dueDate || currentBest.reminderTime || String(Number.MAX_SAFE_INTEGER);
-            const timeA = new Date(dateA).getTime();
-            const timeB = new Date(dateB).getTime();
-
-            if (timeA < timeB) {
-                replace = true;
-            }
-        }
-
-        if (replace) {
-            bestByType[task.type] = task;
-        }
+      if (replace) {
+        bestByType[task.type] = task;
+      }
     });
     return bestByType;
   }, [tasks]);
 
   const getCount = (cat: ReturnType<typeof getActivityCategories>[0]) => {
     if (cat.id === 'routines') {
-      return routines.filter(r => r.isActive).length;
+      return routines.filter((r) => r.isActive).length;
     }
-    return tasks.filter(t => t.type === cat.type && t.status !== TaskStatus.DONE).length;
+    return tasks.filter((t) => t.type === cat.type && t.status !== TaskStatus.DONE).length;
   };
 
   return (
@@ -166,11 +212,7 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
       </div>
 
       {/* Stats Section */}
-      <Stats 
-        tasks={tasks} 
-        budget={budget} 
-        onNavigate={(view) => navigate(viewModeToPath[view])} 
-      />
+      <Stats tasks={tasks} budget={budget} onNavigate={(view) => navigate(viewModeToPath[view])} />
 
       {/* Recent Priorities Section */}
       <div className="pt-4">
@@ -183,7 +225,7 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
           </span>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {sortedTodoTasks.slice(0, 4).map(task => (
+          {sortedTodoTasks.slice(0, 4).map((task) => (
             <TaskCard
               key={task.id}
               task={task}
@@ -201,9 +243,7 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
               <h4 className="text-slate-800 dark:text-slate-200 font-semibold text-lg">
                 All caught up!
               </h4>
-              <p className="text-slate-500 mt-1">
-                Enjoy your free time or start something new.
-              </p>
+              <p className="text-slate-500 mt-1">Enjoy your free time or start something new.</p>
             </div>
           )}
         </div>
@@ -220,7 +260,7 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
 
         {/* Activity Category Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {getActivityCategories(theme).map(cat => {
+          {getActivityCategories(theme).map((cat) => {
             const isRoutines = cat.id === 'routines';
             const topItem = isRoutines ? undefined : topItemsByType[cat.type];
             const count = getCount(cat);
@@ -245,7 +285,9 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
                   {cat.label}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                  {isRoutines ? 'Manage recurring activities' : `Manage your ${cat.label.toLowerCase()}`}
+                  {isRoutines
+                    ? 'Manage recurring activities'
+                    : `Manage your ${cat.label.toLowerCase()}`}
                 </p>
 
                 {isRoutines ? (
@@ -253,19 +295,24 @@ const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ username, onEditTask })
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">
-                        {count > 0 ? `${count} active routine${count > 1 ? 's' : ''}` : 'No routines yet'}
+                        {count > 0
+                          ? `${count} active routine${count > 1 ? 's' : ''}`
+                          : 'No routines yet'}
                       </p>
-                      <p className="text-xs text-slate-500 truncate">
-                        Set up recurring schedules
-                      </p>
+                      <p className="text-xs text-slate-500 truncate">Set up recurring schedules</p>
                     </div>
                   </div>
                 ) : topItem ? (
                   <div className="mt-auto bg-white/50 dark:bg-black/20 p-3 rounded-xl border border-slate-200 dark:border-white/5 flex items-center gap-3">
-                    <div className={`w-1.5 h-1.5 rounded-full ${
-                      topItem.priority === TaskPriority.HIGH ? 'bg-red-500' :
-                      topItem.priority === TaskPriority.MEDIUM ? 'bg-yellow-500' : 'bg-green-500'
-                    }`} />
+                    <div
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        topItem.priority === TaskPriority.HIGH
+                          ? 'bg-red-500'
+                          : topItem.priority === TaskPriority.MEDIUM
+                            ? 'bg-yellow-500'
+                            : 'bg-green-500'
+                      }`}
+                    />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">
                         {topItem.title}

@@ -3,14 +3,24 @@ import { ThemeOption, Note, ChecklistItem, NoteShare, Partnership } from '../typ
 import { useNotes } from '../hooks/useNotes';
 import * as NotesService from '../services/notesService';
 import * as PartnerService from '../services/partnerService';
-import { supabase } from '../services/supabaseClient'; 
+import { supabase } from '../services/supabaseClient';
 import Button from './Button';
 import Input from './Input';
 import Select from './Select';
-import { 
-  FileText, Plus, Trash2, Share2, CheckSquare, 
-  X, Loader2, UserPlus, User, Save, Search, StickyNote,
-  Check
+import {
+  FileText,
+  Plus,
+  Trash2,
+  Share2,
+  CheckSquare,
+  X,
+  Loader2,
+  UserPlus,
+  User,
+  Save,
+  Search,
+  StickyNote,
+  Check,
 } from 'lucide-react';
 import { t } from '../themeText';
 import { logger } from '../utils/logger';
@@ -20,20 +30,21 @@ interface NotesManagerProps {
 }
 
 const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
-  const { notes, isLoading, createNote, updateNote, deleteNote, shareNote, unshareNote } = useNotes();
-  
+  const { notes, isLoading, createNote, updateNote, deleteNote, shareNote, unshareNote } =
+    useNotes();
+
   // UI State
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // Form State
   const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');
   const [noteType, setNoteType] = useState<'note' | 'checklist'>('note');
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
   const [newChecklistItem, setNewChecklistItem] = useState('');
-  
+
   // Sharing State
   const [noteShares, setNoteShares] = useState<Record<string, NoteShare[]>>({});
   const [partnerships, setPartnerships] = useState<Partnership[]>([]);
@@ -52,13 +63,13 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
 
   const loadPartnerships = async () => {
     const partners = await PartnerService.getPartnerships();
-    setPartnerships(partners.filter(p => p.status === 'accepted'));
+    setPartnerships(partners.filter((p) => p.status === 'accepted'));
   };
 
   const loadNoteShares = async (noteId: string) => {
     setIsLoadingShares(true);
     const shares = await NotesService.getNoteShares(noteId);
-    setNoteShares(prev => ({ ...prev, [noteId]: shares }));
+    setNoteShares((prev) => ({ ...prev, [noteId]: shares }));
     setIsLoadingShares(false);
   };
 
@@ -141,18 +152,20 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
   };
 
   const handleToggleChecklistItem = (itemId: string) => {
-    setChecklistItems(checklistItems.map(item =>
-      item.id === itemId ? { ...item, isCompleted: !item.isCompleted } : item
-    ));
+    setChecklistItems(
+      checklistItems.map((item) =>
+        item.id === itemId ? { ...item, isCompleted: !item.isCompleted } : item
+      )
+    );
   };
 
   const handleRemoveChecklistItem = (itemId: string) => {
-    setChecklistItems(checklistItems.filter(item => item.id !== itemId));
+    setChecklistItems(checklistItems.filter((item) => item.id !== itemId));
   };
 
   const handleShareNote = async () => {
     if (!editingNote || !selectedPartnerId) return;
-    
+
     try {
       await shareNote(editingNote.id, selectedPartnerId);
       await loadNoteShares(editingNote.id);
@@ -163,10 +176,9 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
     }
   };
 
-
   const handleUnshareNote = async (shareId: string) => {
     if (!editingNote) return;
-    
+
     try {
       await unshareNote(shareId);
       await loadNoteShares(editingNote.id);
@@ -178,21 +190,21 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
 
   const handleToggleQuickChecklist = async (e: React.MouseEvent, note: Note, itemId: string) => {
     e.stopPropagation(); // Prevent opening the modal
-    
-    // Optimistic update locally? 
-    // Actually relying on React Query optimistic update in useNotes is better, 
+
+    // Optimistic update locally?
+    // Actually relying on React Query optimistic update in useNotes is better,
     // but we need to pass the FULL new items list to updateNote.
-    
-    const updatedItems = note.checklistItems.map(item => 
-        item.id === itemId ? { ...item, isCompleted: !item.isCompleted } : item
+
+    const updatedItems = note.checklistItems.map((item) =>
+      item.id === itemId ? { ...item, isCompleted: !item.isCompleted } : item
     );
 
     try {
-        await updateNote(note.id, {
-            checklistItems: updatedItems
-        });
+      await updateNote(note.id, {
+        checklistItems: updatedItems,
+      });
     } catch (error) {
-        logger.error('Failed to toggle item', error);
+      logger.error('Failed to toggle item', error);
     }
   };
 
@@ -209,18 +221,16 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
   const filteredNotes = useMemo(() => {
     if (!searchQuery.trim()) return notes;
     const query = searchQuery.toLowerCase();
-    return notes.filter(note =>
-      note.title.toLowerCase().includes(query) ||
-      note.content.toLowerCase().includes(query)
+    return notes.filter(
+      (note) =>
+        note.title.toLowerCase().includes(query) || note.content.toLowerCase().includes(query)
     );
   }, [notes, searchQuery]);
 
   const availablePartners = useMemo(() => {
     if (!editingNote) return [];
     const currentShares = noteShares[editingNote.id] || [];
-    return partnerships.filter(p =>
-      !currentShares.some(s => s.sharedWithId === p.partnerId)
-    );
+    return partnerships.filter((p) => !currentShares.some((s) => s.sharedWithId === p.partnerId));
   }, [partnerships, noteShares, editingNote]);
 
   return (
@@ -230,13 +240,19 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
         <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2 flex items-center gap-3">
           <StickyNote className="text-brand-500" /> {t(currentTheme, 'myNotes')}
         </h2>
-        <p className="text-slate-500 dark:text-slate-400">Capture your thoughts, ideas, and checklists.</p>
+        <p className="text-slate-500 dark:text-slate-400">
+          Capture your thoughts, ideas, and checklists.
+        </p>
       </div>
 
       {/* Search and Create */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} aria-hidden="true" />
+          <Search
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+            size={18}
+            aria-hidden="true"
+          />
           <input
             type="text"
             placeholder="Search notes..."
@@ -264,10 +280,16 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
               <FileText size={32} className="text-brand-500" />
             </div>
             <p className="text-slate-600 dark:text-slate-300 font-medium">
-              {searchQuery ? 'No notes found matching your search.' : 'No notes yet. Create your first note!'}
+              {searchQuery
+                ? 'No notes found matching your search.'
+                : 'No notes yet. Create your first note!'}
             </p>
             {searchQuery && (
-              <Button variant="ghost" onClick={() => setSearchQuery('')} className="mt-3 text-brand-500">
+              <Button
+                variant="ghost"
+                onClick={() => setSearchQuery('')}
+                className="mt-3 text-brand-500"
+              >
                 Clear Search
               </Button>
             )}
@@ -295,34 +317,37 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
                     </div>
                   )}
                   {note.isShared && (
-                    <div 
-                        className={`p-1.5 rounded-lg ${note.user_id === currentUserId ? 'bg-blue-500/10 text-blue-500' : 'bg-purple-500/10 text-purple-500'}`}
-                        title={note.user_id === currentUserId ? 'Shared by you' : 'Shared with you'}
+                    <div
+                      className={`p-1.5 rounded-lg ${note.user_id === currentUserId ? 'bg-blue-500/10 text-blue-500' : 'bg-purple-500/10 text-purple-500'}`}
+                      title={note.user_id === currentUserId ? 'Shared by you' : 'Shared with you'}
                     >
                       {note.user_id === currentUserId ? <Share2 size={14} /> : <User size={14} />}
                     </div>
                   )}
                 </div>
               </div>
-              
+
               {note.isChecklist ? (
                 <div className="space-y-1.5">
                   {note.checklistItems.slice(0, 3).map((item) => (
                     <div key={item.id} className="flex items-center gap-2 text-sm">
-                      <div 
+                      <div
                         onClick={(e) => handleToggleQuickChecklist(e, note, item.id)}
                         className={`w-3.5 h-3.5 rounded border flex-shrink-0 cursor-pointer transition-colors flex items-center justify-center ${
-                        item.isCompleted 
-                          ? 'bg-brand-500 border-brand-500' 
-                          : 'border-slate-300 dark:border-slate-600 hover:border-brand-500'
-                      }`}>
+                          item.isCompleted
+                            ? 'bg-brand-500 border-brand-500'
+                            : 'border-slate-300 dark:border-slate-600 hover:border-brand-500'
+                        }`}
+                      >
                         {item.isCompleted && <Check size={10} className="text-white" />}
                       </div>
-                      <span className={`line-clamp-1 ${
-                        item.isCompleted 
-                          ? 'line-through text-slate-400' 
-                          : 'text-slate-600 dark:text-slate-300'
-                      }`}>
+                      <span
+                        className={`line-clamp-1 ${
+                          item.isCompleted
+                            ? 'line-through text-slate-400'
+                            : 'text-slate-600 dark:text-slate-300'
+                        }`}
+                      >
                         {item.text}
                       </span>
                     </div>
@@ -338,7 +363,7 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
                   {note.content || 'No content'}
                 </p>
               )}
-              
+
               <div className="mt-4 pt-3 border-t border-slate-200 dark:border-white/10 text-xs text-slate-400">
                 {new Date(note.updatedAt).toLocaleDateString('en-US', {
                   year: 'numeric',
@@ -346,9 +371,9 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
                   day: 'numeric',
                 })}
                 {note.isShared && currentUserId && note.user_id !== currentUserId && (
-                    <span className="ml-2 px-1.5 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-semibold uppercase tracking-wider">
-                        Shared
-                    </span>
+                  <span className="ml-2 px-1.5 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-semibold uppercase tracking-wider">
+                    Shared
+                  </span>
                 )}
               </div>
             </div>
@@ -366,7 +391,10 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
                 {editingNote ? 'Edit Note' : 'Create New Note'}
               </h3>
               <button
-                onClick={() => { setIsEditorOpen(false); resetForm(); }}
+                onClick={() => {
+                  setIsEditorOpen(false);
+                  resetForm();
+                }}
                 className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-slate-600 dark:text-slate-300"
                 aria-label="Close editor"
               >
@@ -413,7 +441,10 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
               {noteType === 'note' ? (
                 // Plain Note Content
                 <div>
-                  <label htmlFor="note-content" className="block text-[10px] font-bold uppercase text-slate-400 mb-2 ml-1 font-mono">
+                  <label
+                    htmlFor="note-content"
+                    className="block text-[10px] font-bold uppercase text-slate-400 mb-2 ml-1 font-mono"
+                  >
                     Content
                   </label>
                   <textarea
@@ -431,7 +462,7 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
                   <label className="block text-[10px] font-bold uppercase text-slate-400 mb-2 ml-1 font-mono">
                     Checklist Items
                   </label>
-                  
+
                   {/* Add New Item */}
                   <div className="flex gap-2">
                     <input
@@ -462,7 +493,9 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
                               ? 'bg-brand-500 border-brand-500'
                               : 'border-slate-300 dark:border-slate-600 hover:border-brand-500'
                           }`}
-                          aria-label={item.isCompleted ? 'Mark item incomplete' : 'Mark item complete'}
+                          aria-label={
+                            item.isCompleted ? 'Mark item incomplete' : 'Mark item complete'
+                          }
                         >
                           {item.isCompleted && <Check size={14} className="text-white" />}
                         </button>
@@ -499,7 +532,7 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
                   <h4 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2 font-mono">
                     <Share2 size={14} /> Share Note
                   </h4>
-                  
+
                   {partnerships.length === 0 ? (
                     <p className="text-sm text-slate-500 dark:text-slate-400">
                       No partners connected. Add partners in Settings → Collaboration.
@@ -511,7 +544,7 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
                         onChange={(value) => setSelectedPartnerId(value)}
                         options={[
                           { value: '', label: 'Choose a partner...' },
-                          ...availablePartners.map(p => ({
+                          ...availablePartners.map((p) => ({
                             value: p.partnerId,
                             label: p.partnerName || p.partnerEmail,
                           })),
@@ -536,7 +569,9 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
                   {/* Current Shares */}
                   {editingNote.isShared && noteShares[editingNote.id]?.length > 0 && (
                     <div className="space-y-2">
-                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Shared With</p>
+                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                        Shared With
+                      </p>
                       {noteShares[editingNote.id].map((share) => (
                         <div
                           key={share.id}
@@ -585,7 +620,13 @@ const NotesManager: React.FC<NotesManagerProps> = ({ currentTheme }) => {
                 )}
               </div>
               <div className="flex gap-3">
-                <Button variant="secondary" onClick={() => { setIsEditorOpen(false); resetForm(); }}>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setIsEditorOpen(false);
+                    resetForm();
+                  }}
+                >
                   Cancel
                 </Button>
                 <Button variant="primary" onClick={handleSaveNote}>

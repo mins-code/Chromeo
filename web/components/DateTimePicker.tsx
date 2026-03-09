@@ -1,6 +1,32 @@
 import React, { useState, useRef, useEffect, useId } from 'react';
-import { Calendar, Clock, ChevronLeft, ChevronRight, X, Keyboard, ChevronUp, ChevronDown } from 'lucide-react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, setHours, setMinutes, getHours, getMinutes, parse, isValid, addDays } from 'date-fns';
+import {
+  Calendar,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Keyboard,
+  ChevronUp,
+  ChevronDown,
+} from 'lucide-react';
+import {
+  format,
+  addMonths,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameDay,
+  isSameMonth,
+  isToday,
+  setHours,
+  setMinutes,
+  getHours,
+  getMinutes,
+  parse,
+  isValid,
+  addDays,
+} from 'date-fns';
 
 interface DateTimePickerProps {
   value: string;
@@ -17,14 +43,16 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   label,
   placeholder = 'Select date & time',
   showTimeSelect = true,
-  className = ''
+  className = '',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<'picker' | 'type'>('picker');
   const [typeValue, setTypeValue] = useState('');
-  const [currentMonth, setCurrentMonth] = useState(() => value ? new Date(value) : new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(() => value ? new Date(value) : null);
-  
+  const [currentMonth, setCurrentMonth] = useState(() => (value ? new Date(value) : new Date()));
+  const [selectedDate, setSelectedDate] = useState<Date | null>(() =>
+    value ? new Date(value) : null
+  );
+
   // Generate unique ID for accessibility
   const generatedId = useId();
   const triggerId = `date-picker-${generatedId}`;
@@ -37,9 +65,9 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     }
     return 9;
   });
-  const [minutes, setMinutesState] = useState(() => value ? getMinutes(new Date(value)) : 0);
-  const [isPM, setIsPM] = useState(() => value ? getHours(new Date(value)) >= 12 : false);
-  
+  const [minutes, setMinutesState] = useState(() => (value ? getMinutes(new Date(value)) : 0));
+  const [isPM, setIsPM] = useState(() => (value ? getHours(new Date(value)) >= 12 : false));
+
   const containerRef = useRef<HTMLDivElement>(null);
   const typeInputRef = useRef<HTMLInputElement>(null);
   const labelId = useId();
@@ -76,13 +104,15 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setIsOpen(false);
+      if (containerRef.current && !containerRef.current.contains(e.target as Node))
+        setIsOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const getDaysInMonth = () => eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) });
+  const getDaysInMonth = () =>
+    eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) });
   const getStartDayOfWeek = () => startOfMonth(currentMonth).getDay();
 
   const handleDateSelect = (date: Date) => {
@@ -106,7 +136,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     setHour12(newH12);
     setMinutesState(newMin);
     setIsPM(newPM);
-    
+
     if (selectedDate) {
       const h24 = get24Hour(newH12, newPM);
       const newDate = setMinutes(setHours(selectedDate, h24), newMin);
@@ -132,11 +162,26 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 
   const handleTypeSubmit = () => {
     if (!typeValue.trim()) return;
-    const formats = ['dd/MM/yyyy HH:mm', 'dd-MM-yyyy HH:mm', 'MM/dd/yyyy HH:mm', 'yyyy-MM-dd HH:mm', 'dd/MM/yyyy h:mm a', 'dd MMM yyyy HH:mm', 'MMM dd, yyyy HH:mm', 'dd/MM/yyyy', 'dd-MM-yyyy', 'MM/dd/yyyy', 'yyyy-MM-dd'];
+    const formats = [
+      'dd/MM/yyyy HH:mm',
+      'dd-MM-yyyy HH:mm',
+      'MM/dd/yyyy HH:mm',
+      'yyyy-MM-dd HH:mm',
+      'dd/MM/yyyy h:mm a',
+      'dd MMM yyyy HH:mm',
+      'MMM dd, yyyy HH:mm',
+      'dd/MM/yyyy',
+      'dd-MM-yyyy',
+      'MM/dd/yyyy',
+      'yyyy-MM-dd',
+    ];
     let parsed: Date | null = null;
     for (const fmt of formats) {
       const result = parse(typeValue, fmt, new Date());
-      if (isValid(result)) { parsed = result; break; }
+      if (isValid(result)) {
+        parsed = result;
+        break;
+      }
     }
     if (parsed) {
       setSelectedDate(parsed);
@@ -170,9 +215,25 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   const focusDate = getFocusDate();
 
   // Spinner component for time - now with direct input
-  const TimeSpinner = ({ value, onChange, min, max, step = 1, display }: { value: number; onChange: (v: number) => void; min: number; max: number; step?: number; display?: (v: number) => string }) => {
-    const [inputValue, setInputValue] = useState(display ? display(value) : String(value).padStart(2, '0'));
-    
+  const TimeSpinner = ({
+    value,
+    onChange,
+    min,
+    max,
+    step = 1,
+    display,
+  }: {
+    value: number;
+    onChange: (v: number) => void;
+    min: number;
+    max: number;
+    step?: number;
+    display?: (v: number) => string;
+  }) => {
+    const [inputValue, setInputValue] = useState(
+      display ? display(value) : String(value).padStart(2, '0')
+    );
+
     // Sync inputValue when value prop changes
     useEffect(() => {
       setInputValue(display ? display(value) : String(value).padStart(2, '0'));
@@ -222,8 +283,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     };
 
     return (
-      <div 
-        className="flex flex-col items-center gap-0.5" 
+      <div
+        className="flex flex-col items-center gap-0.5"
         onWheel={handleWheel}
         title="Scroll or type to change value"
       >
@@ -269,10 +330,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
           {label}
         </label>
       )}
-      
-      <div
-        className="relative w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center group focus-within:ring-2 focus-within:ring-brand-500/50 focus-within:border-brand-500 transition-colors hover:border-brand-500/50"
-      >
+
+      <div className="relative w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center group focus-within:ring-2 focus-within:ring-brand-500/50 focus-within:border-brand-500 transition-colors hover:border-brand-500/50">
         <button
           id={triggerId}
           type="button"
@@ -288,8 +347,13 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
           aria-expanded={isOpen}
           aria-label={label || placeholder}
         >
-          <Calendar size={16} className="text-slate-400 group-hover:text-brand-500 transition-colors flex-shrink-0" />
-          <span className={`truncate ${selectedDate ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400'}`}>
+          <Calendar
+            size={16}
+            className="text-slate-400 group-hover:text-brand-500 transition-colors flex-shrink-0"
+          />
+          <span
+            className={`truncate ${selectedDate ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400'}`}
+          >
             {formatDisplayValue() || placeholder}
           </span>
         </button>
@@ -310,10 +374,16 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
         <div className="absolute z-50 top-full left-0 mt-2 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden animate-scale-in w-full min-w-[280px]">
           {/* Mode Toggle */}
           <div className="flex border-b border-slate-700">
-            <button onClick={() => setMode('picker')} className={`flex-1 py-2 text-xs font-medium transition-colors ${mode === 'picker' ? 'bg-brand-500/20 text-brand-400' : 'text-slate-400 hover:bg-slate-800'}`}>
+            <button
+              onClick={() => setMode('picker')}
+              className={`flex-1 py-2 text-xs font-medium transition-colors ${mode === 'picker' ? 'bg-brand-500/20 text-brand-400' : 'text-slate-400 hover:bg-slate-800'}`}
+            >
               <Calendar size={12} className="inline mr-1" /> Pick
             </button>
-            <button onClick={() => setMode('type')} className={`flex-1 py-2 text-xs font-medium transition-colors ${mode === 'type' ? 'bg-brand-500/20 text-brand-400' : 'text-slate-400 hover:bg-slate-800'}`}>
+            <button
+              onClick={() => setMode('type')}
+              className={`flex-1 py-2 text-xs font-medium transition-colors ${mode === 'type' ? 'bg-brand-500/20 text-brand-400' : 'text-slate-400 hover:bg-slate-800'}`}
+            >
               <Keyboard size={12} className="inline mr-1" /> Type
             </button>
           </div>
@@ -329,8 +399,13 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
                 placeholder="e.g. 15/01/2026 2:30 PM"
                 className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
               />
-              <p className="mt-2 text-[10px] text-slate-500">Formats: dd/mm/yyyy hh:mm, Jan 15, 2026 14:30</p>
-              <button onClick={handleTypeSubmit} className="w-full mt-2 py-2 text-xs font-medium bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors">
+              <p className="mt-2 text-[10px] text-slate-500">
+                Formats: dd/mm/yyyy hh:mm, Jan 15, 2026 14:30
+              </p>
+              <button
+                onClick={handleTypeSubmit}
+                className="w-full mt-2 py-2 text-xs font-medium bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors"
+              >
                 Apply
               </button>
             </div>
@@ -338,11 +413,21 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
             <div className="p-3">
               {/* Calendar Header */}
               <div className="flex items-center justify-between mb-2">
-                <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 transition-colors" aria-label="Previous month">
+                <button
+                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                  className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 transition-colors"
+                  aria-label="Previous month"
+                >
                   <ChevronLeft size={16} />
                 </button>
-                <span className="text-sm font-semibold text-white">{format(currentMonth, 'MMM yyyy')}</span>
-                <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 transition-colors" aria-label="Next month">
+                <span className="text-sm font-semibold text-white">
+                  {format(currentMonth, 'MMM yyyy')}
+                </span>
+                <button
+                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                  className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 transition-colors"
+                  aria-label="Next month"
+                >
                   <ChevronRight size={16} />
                 </button>
               </div>
@@ -350,13 +435,20 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
               {/* Weekday Headers */}
               <div className="grid grid-cols-7 gap-0.5 mb-1">
                 {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                  <div key={i} className="text-center text-[10px] font-semibold text-slate-500 py-1">{day}</div>
+                  <div
+                    key={i}
+                    className="text-center text-[10px] font-semibold text-slate-500 py-1"
+                  >
+                    {day}
+                  </div>
                 ))}
               </div>
 
               {/* Days Grid */}
               <div className="grid grid-cols-7 gap-0.5">
-                {Array.from({ length: startPadding }).map((_, i) => <div key={`pad-${i}`} className="w-8 h-8" />)}
+                {Array.from({ length: startPadding }).map((_, i) => (
+                  <div key={`pad-${i}`} className="w-8 h-8" />
+                ))}
                 {days.map((day) => {
                   const isSelected = selectedDate && isSameDay(day, selectedDate);
                   const isTodayDate = isToday(day);
@@ -384,19 +476,19 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
                 <div className="mt-3 pt-3 border-t border-slate-700">
                   <div className="flex items-center justify-center gap-3">
                     <Clock size={14} className="text-slate-400" />
-                    <TimeSpinner 
-                      value={hour12} 
-                      onChange={(v) => handleTimeChange(v, minutes, isPM)} 
-                      min={1} 
-                      max={12} 
+                    <TimeSpinner
+                      value={hour12}
+                      onChange={(v) => handleTimeChange(v, minutes, isPM)}
+                      min={1}
+                      max={12}
                     />
                     <span className="text-white font-bold">:</span>
-                    <TimeSpinner 
-                      value={minutes} 
-                      onChange={(v) => handleTimeChange(hour12, v, isPM)} 
-                      min={0} 
-                      max={55} 
-                      step={5} 
+                    <TimeSpinner
+                      value={minutes}
+                      onChange={(v) => handleTimeChange(hour12, v, isPM)}
+                      min={0}
+                      max={55}
+                      step={5}
                     />
                     {/* AM/PM Toggle */}
                     <button
@@ -426,7 +518,10 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
                 >
                   Now
                 </button>
-                <button onClick={() => setIsOpen(false)} className="flex-1 py-1.5 text-xs font-medium text-slate-400 bg-slate-800 hover:bg-slate-700 rounded-md transition-colors">
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="flex-1 py-1.5 text-xs font-medium text-slate-400 bg-slate-800 hover:bg-slate-700 rounded-md transition-colors"
+                >
                   Done
                 </button>
               </div>

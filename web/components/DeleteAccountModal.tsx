@@ -12,11 +12,11 @@ interface DeleteAccountModalProps {
   userEmail: string;
 }
 
-const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({ 
-  isOpen, 
-  onClose, 
+const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
+  isOpen,
+  onClose,
   onDeleted,
-  userEmail 
+  userEmail,
 }) => {
   const [password, setPassword] = useState('');
   const [confirmText, setConfirmText] = useState('');
@@ -45,7 +45,7 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke('account-deletion', {
-        body: { action: 'delete-with-password', password }
+        body: { action: 'delete-with-password', password },
       });
 
       if (fnError) {
@@ -67,13 +67,12 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
 
       // Success - show success state
       setIsDeleted(true);
-      
+
       // Sign out and notify parent
       setTimeout(async () => {
         await supabase.auth.signOut();
         onDeleted();
       }, 2000);
-
     } catch (err: any) {
       logger.error('Delete account error', err as Error);
       setError(err.message || 'Failed to delete account. Please try again.');
@@ -110,14 +109,15 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
         aria-modal="true"
         aria-labelledby="delete-account-title"
       >
-        
         {/* Header */}
         <div className="bg-gradient-to-r from-red-500 to-red-600 p-5 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <AlertTriangle size={24} />
               <div>
-                <h2 id="delete-account-title" className="text-xl font-bold">Delete Account</h2>
+                <h2 id="delete-account-title" className="text-xl font-bold">
+                  Delete Account
+                </h2>
                 <p className="text-red-100 text-sm">This action is permanent</p>
               </div>
             </div>
@@ -151,10 +151,12 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
               <div className="bg-red-50 dark:bg-red-500/10 rounded-xl p-4 border border-red-200 dark:border-red-500/20">
                 <p className="text-sm text-red-600/80 dark:text-red-300/80 space-y-1">
                   <strong className="block text-red-700 dark:text-red-400">⚠️ Warning:</strong>
-                  • All your tasks, events, and reminders will be deleted<br />
-                  • All your budget data will be erased<br />
-                  • All settings and partnerships will be removed<br />
-                  • <strong>This cannot be undone</strong>
+                  • All your tasks, events, and reminders will be deleted
+                  <br />
+                  • All your budget data will be erased
+                  <br />
+                  • All settings and partnerships will be removed
+                  <br />• <strong>This cannot be undone</strong>
                 </p>
               </div>
 
@@ -168,7 +170,7 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
               <div className="relative">
                 <Input
                   label="Enter your password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
@@ -180,7 +182,7 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-[35px] text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/50"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>

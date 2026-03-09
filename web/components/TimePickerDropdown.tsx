@@ -18,7 +18,7 @@ const TimeSpinner: React.FC<TimeSpinnerProps> = ({
   max,
   step = 1,
   display,
-  unitLabel
+  unitLabel,
 }) => {
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
@@ -94,7 +94,7 @@ const TimePickerDropdown: React.FC<TimePickerDropdownProps> = ({
   value,
   onChange,
   label,
-  className = ''
+  className = '',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -150,11 +150,14 @@ const TimePickerDropdown: React.FC<TimePickerDropdownProps> = ({
         }}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
-        aria-label={label ? `Select time for ${label}` : "Select time"}
+        aria-label={label ? `Select time for ${label}` : 'Select time'}
         className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 cursor-pointer hover:border-emerald-500/50 transition-colors flex items-center justify-between group focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
       >
         <div className="flex items-center gap-2">
-          <Clock size={16} className="text-slate-400 group-hover:text-emerald-500 transition-colors" />
+          <Clock
+            size={16}
+            className="text-slate-400 group-hover:text-emerald-500 transition-colors"
+          />
           <span>{formatDisplayValue()}</span>
         </div>
       </button>
@@ -163,20 +166,22 @@ const TimePickerDropdown: React.FC<TimePickerDropdownProps> = ({
         <div className="absolute z-50 top-full left-0 mt-2 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden animate-scale-in p-4">
           <div className="flex items-center justify-center gap-3">
             <Clock size={14} className="text-slate-400" />
-            <TimeSpinner 
-              value={hours12} 
-              onChange={(v) => handleTimeChange(v, minutes, isPM)} 
-              min={1} 
-              max={12} 
+            <TimeSpinner
+              value={hours12}
+              onChange={(v) => handleTimeChange(v, minutes, isPM)}
+              min={1}
+              max={12}
               unitLabel="hours"
             />
-            <span className="text-white font-bold" aria-hidden="true">:</span>
-            <TimeSpinner 
-              value={minutes} 
-              onChange={(v) => handleTimeChange(hours12, v, isPM)} 
-              min={0} 
-              max={55} 
-              step={5} 
+            <span className="text-white font-bold" aria-hidden="true">
+              :
+            </span>
+            <TimeSpinner
+              value={minutes}
+              onChange={(v) => handleTimeChange(hours12, v, isPM)}
+              min={0}
+              max={55}
+              step={5}
               unitLabel="minutes"
             />
             <button

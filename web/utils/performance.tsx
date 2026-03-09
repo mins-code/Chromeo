@@ -1,6 +1,6 @@
 /**
  * Performance monitoring utilities for Core Web Vitals
- * 
+ *
  * Provides tools to measure and track application performance metrics.
  * Use in production to monitor real user performance.
  */
@@ -96,22 +96,20 @@ export const performanceMonitor = {
   ): Promise<T> => {
     const startMark = `${componentName}-start`;
     const endMark = `${componentName}-end`;
-    
+
     performanceMonitor.mark(startMark);
     const result = await callback();
     performanceMonitor.mark(endMark);
-    
-    const measure = performanceMonitor.measure(
-      `${componentName}-render`,
-      startMark,
-      endMark
-    );
-    
+
+    const measure = performanceMonitor.measure(`${componentName}-render`, startMark, endMark);
+
     if (measure && measure.duration > 16) {
       // Log if render takes longer than 1 frame (16ms)
-      logger.debug(`Slow render: ${componentName}`, { duration: `${measure.duration.toFixed(2)}ms` });
+      logger.debug(`Slow render: ${componentName}`, {
+        duration: `${measure.duration.toFixed(2)}ms`,
+      });
     }
-    
+
     return result;
   },
 
@@ -149,10 +147,10 @@ export function withPerformanceTracking<T extends object>(
     // In production, return component as-is to avoid overhead
     return WrappedComponent;
   }
-  
+
   const TrackedComponent = (props: T) => {
     performanceMonitor.mark(`${componentName}-render-start`);
-    
+
     // Use useEffect equivalent timing
     requestAnimationFrame(() => {
       performanceMonitor.mark(`${componentName}-render-end`);
@@ -162,10 +160,10 @@ export function withPerformanceTracking<T extends object>(
         `${componentName}-render-end`
       );
     });
-    
+
     return <WrappedComponent {...props} />;
   };
-  
+
   TrackedComponent.displayName = `WithPerformance(${componentName})`;
   return TrackedComponent;
 }

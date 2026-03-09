@@ -38,7 +38,10 @@ interface SettingsPageProps {
   notificationSettings: NotificationSettings;
   notificationPermission: NotificationPermission | 'unsupported';
   onNotificationToggle: (enabled: boolean) => void;
-  onNotificationPreferenceChange: (key: keyof NotificationSettings, value: boolean | number | string) => void;
+  onNotificationPreferenceChange: (
+    key: keyof NotificationSettings,
+    value: boolean | number | string
+  ) => void;
   onNavigate: (path: string) => void;
   // Google Calendar Integration
   googleCalendarEnabled?: boolean;
@@ -66,7 +69,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
 }) => {
   const { theme, setTheme } = useTheme();
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
-  const [customReminderUnit, setCustomReminderUnit] = useState<'minutes' | 'hours' | 'days'>('minutes');
+  const [customReminderUnit, setCustomReminderUnit] = useState<'minutes' | 'hours' | 'days'>(
+    'minutes'
+  );
 
   const themes: ThemeOption[] = ['dark', 'light', 'cyberpunk', 'sunset', 'onepiece'];
 
@@ -104,7 +109,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
     <div className="space-y-8 animate-fade-in h-full flex flex-col">
       <header className="border-b border-slate-200 dark:border-white/5 pb-6">
         <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2">Settings</h2>
-        <p className="text-slate-500 dark:text-slate-400">Manage your preferences, account, and team.</p>
+        <p className="text-slate-500 dark:text-slate-400">
+          Manage your preferences, account, and team.
+        </p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 overflow-y-auto pb-20">
@@ -162,7 +169,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                   >
                     {getThemeIcon(t)}
                   </div>
-                  <p className="text-sm font-bold text-slate-700 dark:text-slate-200 capitalize">{t}</p>
+                  <p className="text-sm font-bold text-slate-700 dark:text-slate-200 capitalize">
+                    {t}
+                  </p>
                   {theme === t && (
                     <div className="absolute top-2 right-2 text-brand-500">
                       <CheckCircle2 size={16} />
@@ -193,7 +202,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               </div>
               <button
                 type="button"
-                onClick={() => notificationPermission !== 'denied' && onNotificationToggle(!notificationSettings.enabled)}
+                onClick={() =>
+                  notificationPermission !== 'denied' &&
+                  onNotificationToggle(!notificationSettings.enabled)
+                }
                 disabled={notificationPermission === 'denied'}
                 className={`relative w-14 h-7 rounded-full transition-colors duration-200 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
                   notificationSettings.enabled ? 'bg-brand-500' : 'bg-slate-300 dark:bg-slate-600'
@@ -244,13 +256,22 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 <div className="flex items-center justify-between group">
                   <div className="flex items-center gap-3">
                     <CheckSquare size={18} className="text-blue-500" />
-                    <span className="text-slate-800 dark:text-slate-100 font-medium">Task Reminders</span>
+                    <span className="text-slate-800 dark:text-slate-100 font-medium">
+                      Task Reminders
+                    </span>
                   </div>
                   <button
                     type="button"
-                    onClick={() => onNotificationPreferenceChange('taskReminders', !notificationSettings.taskReminders)}
+                    onClick={() =>
+                      onNotificationPreferenceChange(
+                        'taskReminders',
+                        !notificationSettings.taskReminders
+                      )
+                    }
                     className={`relative w-11 h-6 rounded-full transition-colors duration-200 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
-                      notificationSettings.taskReminders ? 'bg-brand-500' : 'bg-slate-300 dark:bg-slate-600'
+                      notificationSettings.taskReminders
+                        ? 'bg-brand-500'
+                        : 'bg-slate-300 dark:bg-slate-600'
                     }`}
                     role="switch"
                     aria-checked={notificationSettings.taskReminders}
@@ -274,9 +295,16 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                   </div>
                   <button
                     type="button"
-                    onClick={() => onNotificationPreferenceChange('eventReminders', !notificationSettings.eventReminders)}
+                    onClick={() =>
+                      onNotificationPreferenceChange(
+                        'eventReminders',
+                        !notificationSettings.eventReminders
+                      )
+                    }
                     className={`relative w-11 h-6 rounded-full transition-colors duration-200 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
-                      notificationSettings.eventReminders ? 'bg-brand-500' : 'bg-slate-300 dark:bg-slate-600'
+                      notificationSettings.eventReminders
+                        ? 'bg-brand-500'
+                        : 'bg-slate-300 dark:bg-slate-600'
                     }`}
                     role="switch"
                     aria-checked={notificationSettings.eventReminders}
@@ -294,13 +322,22 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 <div className="flex items-center justify-between group">
                   <div className="flex items-center gap-3">
                     <AlertCircle size={18} className="text-amber-500" />
-                    <span className="text-slate-800 dark:text-slate-100 font-medium">Budget Alerts</span>
+                    <span className="text-slate-800 dark:text-slate-100 font-medium">
+                      Budget Alerts
+                    </span>
                   </div>
                   <button
                     type="button"
-                    onClick={() => onNotificationPreferenceChange('budgetAlerts', !notificationSettings.budgetAlerts)}
+                    onClick={() =>
+                      onNotificationPreferenceChange(
+                        'budgetAlerts',
+                        !notificationSettings.budgetAlerts
+                      )
+                    }
                     className={`relative w-11 h-6 rounded-full transition-colors duration-200 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
-                      notificationSettings.budgetAlerts ? 'bg-brand-500' : 'bg-slate-300 dark:bg-slate-600'
+                      notificationSettings.budgetAlerts
+                        ? 'bg-brand-500'
+                        : 'bg-slate-300 dark:bg-slate-600'
                     }`}
                     role="switch"
                     aria-checked={notificationSettings.budgetAlerts}
@@ -330,7 +367,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                     ].map((option) => (
                       <button
                         key={option.value}
-                        onClick={() => onNotificationPreferenceChange('reminderMinutesBefore', option.value)}
+                        onClick={() =>
+                          onNotificationPreferenceChange('reminderMinutesBefore', option.value)
+                        }
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                           notificationSettings.reminderMinutesBefore === option.value
                             ? 'bg-brand-500 text-slate-900 shadow-md scale-105'
@@ -371,7 +410,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                         onChange={(e) => {
                           const num = parseInt(e.target.value) || 1;
                           const multiplier =
-                            customReminderUnit === 'days' ? 1440 : customReminderUnit === 'hours' ? 60 : 1;
+                            customReminderUnit === 'days'
+                              ? 1440
+                              : customReminderUnit === 'hours'
+                                ? 60
+                                : 1;
                           onNotificationPreferenceChange('reminderMinutesBefore', num * multiplier);
                         }}
                         className="w-20 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-center text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
@@ -383,10 +426,17 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                           setCustomReminderUnit(unit);
                           const currentTotal = notificationSettings.reminderMinutesBefore;
                           const currentMultiplier =
-                            customReminderUnit === 'days' ? 1440 : customReminderUnit === 'hours' ? 60 : 1;
+                            customReminderUnit === 'days'
+                              ? 1440
+                              : customReminderUnit === 'hours'
+                                ? 60
+                                : 1;
                           const currentNum = Math.floor(currentTotal / currentMultiplier) || 1;
                           const newMultiplier = unit === 'days' ? 1440 : unit === 'hours' ? 60 : 1;
-                          onNotificationPreferenceChange('reminderMinutesBefore', currentNum * newMultiplier);
+                          onNotificationPreferenceChange(
+                            'reminderMinutesBefore',
+                            currentNum * newMultiplier
+                          );
                         }}
                         options={[
                           { value: 'minutes', label: 'minutes' },
@@ -430,31 +480,33 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                       )
                     }
                     options={[
-                      { value: 'sound_default',   label: '🔔 Default' },
-                      { value: 'sound_chime',     label: '🎵 Chime' },
-                      { value: 'sound_beep',      label: '📡 Digital Beep' },
-                      { value: 'sound_synth',     label: '🎹 Synth' },
-                      { value: 'sound_alarm',     label: '🚨 Loud Alarm' },
+                      { value: 'sound_default', label: '🔔 Default' },
+                      { value: 'sound_chime', label: '🎵 Chime' },
+                      { value: 'sound_beep', label: '📡 Digital Beep' },
+                      { value: 'sound_synth', label: '🎹 Synth' },
+                      { value: 'sound_alarm', label: '🚨 Loud Alarm' },
                       { value: 'sound_custom_os', label: '⚙️ Custom OS Alert' },
                     ]}
                     currentTheme={theme}
                     className="w-full"
                   />
-                  {(notificationSettings.defaultNotificationSound === 'sound_custom_os') && isNativePlatform() && (
-                    <div className="space-y-2">
-                      <Button
-                        variant="secondary"
-                        onClick={openNativeAppSettings}
-                        className="w-full flex items-center justify-center gap-2"
-                      >
-                        <Settings size={14} />
-                        Configure Custom Sound in OS Settings
-                      </Button>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
-                        Tap this, select &apos;Notifications&apos;, tap &apos;Custom OS Alert&apos;, and choose your preferred sound.
-                      </p>
-                    </div>
-                  )}
+                  {notificationSettings.defaultNotificationSound === 'sound_custom_os' &&
+                    isNativePlatform() && (
+                      <div className="space-y-2">
+                        <Button
+                          variant="secondary"
+                          onClick={openNativeAppSettings}
+                          className="w-full flex items-center justify-center gap-2"
+                        >
+                          <Settings size={14} />
+                          Configure Custom Sound in OS Settings
+                        </Button>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+                          Tap this, select &apos;Notifications&apos;, tap &apos;Custom OS
+                          Alert&apos;, and choose your preferred sound.
+                        </p>
+                      </div>
+                    )}
                 </div>
               </div>
             )}
@@ -514,9 +566,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                     }`}
                   />
                   <span className="text-sm text-slate-600 dark:text-slate-300 flex-1">
-                    {hasGoogleToken
-                      ? 'Connected to Google Calendar'
-                      : 'Re-authentication required'}
+                    {hasGoogleToken ? 'Connected to Google Calendar' : 'Re-authentication required'}
                   </span>
                   {!hasGoogleToken && (
                     <button
@@ -549,17 +599,21 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         {/* Advanced Section */}
         <div className="col-span-1 lg:col-span-2 space-y-4">
           <div className="flex items-center gap-2 text-xl font-bold text-slate-800 dark:text-slate-200">
-             <Terminal className="text-brand-500" />
+            <Terminal className="text-brand-500" />
             <h3>Advanced</h3>
           </div>
           <div className="glass-panel p-6 rounded-2xl">
-            <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">Diagnostics</h4>
+            <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">
+              Diagnostics
+            </h4>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-slate-800 dark:text-slate-200 font-medium">Debug Logging</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">View internal application logs for troubleshooting</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  View internal application logs for troubleshooting
+                </p>
               </div>
-              <Button 
+              <Button
                 variant="secondary"
                 onClick={() => onNavigate('debug-logs')}
                 className="flex items-center gap-2"
@@ -586,8 +640,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
           <div className="bg-red-50 dark:bg-red-500/10 rounded-xl p-4 border border-red-200 dark:border-red-500/20">
             <h4 className="font-semibold text-red-700 dark:text-red-400 mb-2">Delete Account</h4>
             <p className="text-sm text-red-600/80 dark:text-red-300/80 mb-4">
-              Once you delete your account, all your data will be permanently erased. This action cannot be
-              undone.
+              Once you delete your account, all your data will be permanently erased. This action
+              cannot be undone.
             </p>
             <Button
               variant="danger"

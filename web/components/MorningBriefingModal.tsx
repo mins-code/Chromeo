@@ -42,13 +42,13 @@ const MorningBriefingModal: React.FC<MorningBriefingModalProps> = ({
   };
 
   const handleMoveAllToToday = () => {
-    const taskIds = tasks.map(t => t.id);
+    const taskIds = tasks.map((t) => t.id);
     onMoveToToday(taskIds);
     onClose();
   };
 
   const handleDeleteAll = () => {
-    const taskIds = tasks.map(t => t.id);
+    const taskIds = tasks.map((t) => t.id);
     onDelete(taskIds);
     onClose();
   };
@@ -63,7 +63,6 @@ const MorningBriefingModal: React.FC<MorningBriefingModalProps> = ({
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
       <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden animate-scale-in border border-slate-200 dark:border-white/10">
-        
         {/* Header */}
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-5 text-white">
           <div className="flex items-center justify-between">
@@ -72,9 +71,12 @@ const MorningBriefingModal: React.FC<MorningBriefingModalProps> = ({
                 <Sun size={24} />
               </div>
               <div>
-                <h2 className="text-xl font-bold">{getGreeting()}, {username}!</h2>
+                <h2 className="text-xl font-bold">
+                  {getGreeting()}, {username}!
+                </h2>
                 <p className="text-amber-100 text-sm">
-                  You have {tasks.length} pending {tasks.length === 1 ? 'task' : 'tasks'} from previous days
+                  You have {tasks.length} pending {tasks.length === 1 ? 'task' : 'tasks'} from
+                  previous days
                 </p>
               </div>
             </div>
@@ -90,7 +92,7 @@ const MorningBriefingModal: React.FC<MorningBriefingModalProps> = ({
 
         {/* Task List */}
         <div className="p-4 max-h-[50vh] overflow-y-auto space-y-2">
-          {tasks.map(task => {
+          {tasks.map((task) => {
             const config = priorityConfig[task.priority];
             return (
               <div
@@ -111,7 +113,9 @@ const MorningBriefingModal: React.FC<MorningBriefingModalProps> = ({
                     </p>
                   )}
                 </div>
-                <span className={`text-xs font-medium px-2 py-1 rounded-full ${config.bg} ${config.color} ${config.border} border`}>
+                <span
+                  className={`text-xs font-medium px-2 py-1 rounded-full ${config.bg} ${config.color} ${config.border} border`}
+                >
                   {task.priority}
                 </span>
               </div>

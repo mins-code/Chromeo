@@ -9,15 +9,27 @@ interface MiniCalendarProps {
 }
 
 const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 const DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, onDateSelect }) => {
   const today = new Date();
-  const [currentDate, setCurrentDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [currentDate, setCurrentDate] = useState(
+    new Date(today.getFullYear(), today.getMonth(), 1)
+  );
   const [showPicker, setShowPicker] = useState(false);
   const [pickerYear, setPickerYear] = useState(currentDate.getFullYear());
 
@@ -59,20 +71,18 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
       days.push({
         day: daysInPrevMonth - i,
         isCurrentMonth: false,
-        isToday: false
+        isToday: false,
       });
     }
 
     // Current month days
     for (let i = 1; i <= daysInMonth; i++) {
-      const isToday = 
-        i === today.getDate() && 
-        month === today.getMonth() && 
-        year === today.getFullYear();
+      const isToday =
+        i === today.getDate() && month === today.getMonth() && year === today.getFullYear();
       days.push({
         day: i,
         isCurrentMonth: true,
-        isToday
+        isToday,
       });
     }
 
@@ -82,7 +92,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
       days.push({
         day: i,
         isCurrentMonth: false,
-        isToday: false
+        isToday: false,
       });
     }
 
@@ -102,17 +112,17 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
           accentText: 'text-[#0a0014]',
           hover: 'hover:bg-[#00FFFF]/10',
           border: 'border-[#00FFFF]/20',
-          headerBg: 'bg-[#00FFFF]/5'
+          headerBg: 'bg-[#00FFFF]/5',
         };
       case 'sunset':
         return {
           text: 'text-rose-50',
-          textMuted: 'text-rose-200/70', /* Improved: brighter for better visibility */
+          textMuted: 'text-rose-200/70' /* Improved: brighter for better visibility */,
           accent: 'bg-rose-500',
           accentText: 'text-white',
           hover: 'hover:bg-rose-500/15',
           border: 'border-rose-400/30',
-          headerBg: 'bg-rose-500/10'
+          headerBg: 'bg-rose-500/10',
         };
       case 'onepiece':
         return {
@@ -122,7 +132,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
           accentText: 'text-[#0A0A0A]',
           hover: 'hover:bg-[#D4A574]/10',
           border: 'border-[#D4A574]/20',
-          headerBg: 'bg-[#D4A574]/5'
+          headerBg: 'bg-[#D4A574]/5',
         };
       case 'light':
         return {
@@ -132,7 +142,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
           accentText: 'text-white',
           hover: 'hover:bg-slate-100',
           border: 'border-slate-200',
-          headerBg: 'bg-slate-50'
+          headerBg: 'bg-slate-50',
         };
       default: // dark
         return {
@@ -142,7 +152,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
           accentText: 'text-slate-900',
           hover: 'hover:bg-white/5',
           border: 'border-white/10',
-          headerBg: 'bg-white/5'
+          headerBg: 'bg-white/5',
         };
     }
   };
@@ -153,7 +163,9 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
     // Collapsed view - just show current day number
     return (
       <div className="flex flex-col items-center py-3">
-        <div className={`w-10 h-10 rounded-xl ${colors.accent} ${colors.accentText} flex items-center justify-center font-bold text-lg shadow-lg`}>
+        <div
+          className={`w-10 h-10 rounded-xl ${colors.accent} ${colors.accentText} flex items-center justify-center font-bold text-lg shadow-lg`}
+        >
           {today.getDate()}
         </div>
       </div>
@@ -172,9 +184,12 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
           className={`flex items-center gap-1 text-sm font-semibold ${colors.text} ${colors.hover} rounded-lg px-2 py-1 transition-colors`}
         >
           {MONTHS[month]} {year}
-          <ChevronDown size={14} className={`transition-transform ${showPicker ? 'rotate-180' : ''}`} />
+          <ChevronDown
+            size={14}
+            className={`transition-transform ${showPicker ? 'rotate-180' : ''}`}
+          />
         </button>
-        
+
         <div className="flex items-center gap-1">
           <button
             onClick={goToPrevMonth}
@@ -195,7 +210,9 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
 
       {/* Month/Year Picker Dropdown */}
       {showPicker && (
-        <div className={`mb-3 p-3 rounded-xl ${colors.headerBg} border ${colors.border} animate-fade-in`}>
+        <div
+          className={`mb-3 p-3 rounded-xl ${colors.headerBg} border ${colors.border} animate-fade-in`}
+        >
           {/* Year Selector with Decade Navigation + Manual Input */}
           <div className="mb-3">
             {/* Year Range Navigation */}
@@ -208,7 +225,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
               >
                 <ChevronLeft size={14} />
               </button>
-              
+
               {/* Manual Year Input */}
               <div className="flex items-center gap-2">
                 <input
@@ -230,7 +247,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
                   max={2100}
                 />
               </div>
-              
+
               <button
                 onClick={() => setPickerYear(pickerYear + 12)}
                 className={`p-1 rounded ${colors.textMuted} ${colors.hover}`}
@@ -240,7 +257,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
                 <ChevronRight size={14} />
               </button>
             </div>
-            
+
             {/* Year Grid - 12 years at a time */}
             <div className="grid grid-cols-4 gap-1 mb-3">
               {Array.from({ length: 12 }, (_, i) => {
@@ -266,7 +283,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
               })}
             </div>
           </div>
-          
+
           {/* Month Grid */}
           <div className="grid grid-cols-3 gap-1">
             {MONTHS.map((m, idx) => {
@@ -291,7 +308,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
 
       {/* Day Headers */}
       <div className="grid grid-cols-7 gap-0.5 mb-1">
-        {DAYS.map(day => (
+        {DAYS.map((day) => (
           <div
             key={day}
             className={`text-center text-[10px] font-semibold ${colors.textMuted} py-1`}

@@ -12,13 +12,13 @@
 export interface CalendarEvent {
   id: string;
   title: string;
-  start: string;        // ISO date string
-  end?: string;         // ISO date string
+  start: string; // ISO date string
+  end?: string; // ISO date string
   description?: string;
   location?: string;
-  htmlLink: string;     // Direct link to view in Google Calendar
-  source: 'google';     // Identifier for external source
-  allDay?: boolean;     // Whether this is an all-day event
+  htmlLink: string; // Direct link to view in Google Calendar
+  source: 'google'; // Identifier for external source
+  allDay?: boolean; // Whether this is an all-day event
 }
 
 /** Google Calendar API response item */
@@ -29,8 +29,8 @@ interface GoogleCalendarEventItem {
   location?: string;
   htmlLink: string;
   start: {
-    dateTime?: string;  // ISO date-time for timed events
-    date?: string;      // YYYY-MM-DD for all-day events
+    dateTime?: string; // ISO date-time for timed events
+    date?: string; // YYYY-MM-DD for all-day events
   };
   end: {
     dateTime?: string;
@@ -68,7 +68,7 @@ export class GoogleCalendarError extends Error {
 
 /**
  * Fetch events from the user's primary Google Calendar within a date range.
- * 
+ *
  * @param accessToken - Google OAuth access token
  * @param timeMin - Start of date range (ISO string)
  * @param timeMax - End of date range (ISO string)
@@ -83,9 +83,9 @@ export async function listGoogleEvents(
   const params = new URLSearchParams({
     timeMin,
     timeMax,
-    singleEvents: 'true',       // Expand recurring events into instances
-    orderBy: 'startTime',       // Sort by start time
-    maxResults: '250',          // Reasonable limit for a month view
+    singleEvents: 'true', // Expand recurring events into instances
+    orderBy: 'startTime', // Sort by start time
+    maxResults: '250', // Reasonable limit for a month view
   });
 
   const url = `${GOOGLE_CALENDAR_API_BASE}/calendars/primary/events?${params}`;
@@ -99,8 +99,8 @@ export async function listGoogleEvents(
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({})) as GoogleCalendarResponse;
-      
+      const errorData = (await response.json().catch(() => ({}))) as GoogleCalendarResponse;
+
       switch (response.status) {
         case 401:
           throw new GoogleCalendarError(
@@ -113,10 +113,7 @@ export async function listGoogleEvents(
             'FORBIDDEN'
           );
         case 404:
-          throw new GoogleCalendarError(
-            'Google Calendar not found.',
-            'NOT_FOUND'
-          );
+          throw new GoogleCalendarError('Google Calendar not found.', 'NOT_FOUND');
         default:
           throw new GoogleCalendarError(
             errorData.error?.message || `Google Calendar API error: ${response.status}`,
@@ -125,8 +122,8 @@ export async function listGoogleEvents(
       }
     }
 
-    const data = await response.json() as GoogleCalendarResponse;
-    
+    const data = (await response.json()) as GoogleCalendarResponse;
+
     if (!data.items) {
       return [];
     }
@@ -136,7 +133,7 @@ export async function listGoogleEvents(
       .filter((item): item is GoogleCalendarEventItem => !!item.start)
       .map((item): CalendarEvent => {
         const isAllDay = !!item.start.date;
-        
+
         return {
           id: `google_${item.id}`,
           title: item.summary || '(No title)',
@@ -153,7 +150,7 @@ export async function listGoogleEvents(
     if (error instanceof GoogleCalendarError) {
       throw error;
     }
-    
+
     // Network or parsing errors
     throw new GoogleCalendarError(
       'Failed to connect to Google Calendar. Please check your internet connection.',
@@ -169,17 +166,17 @@ export async function listGoogleEvents(
 export function doesEventOccurOnDate(event: CalendarEvent, date: Date): boolean {
   const eventStart = new Date(event.start);
   const eventEnd = event.end ? new Date(event.end) : eventStart;
-  
+
   // Normalize dates to midnight for comparison
   const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const startDate = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
-  
+
   if (event.allDay && event.end) {
     // All-day events: end date is exclusive in Google Calendar
     const endDate = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate());
     return targetDate >= startDate && targetDate < endDate;
   }
-  
+
   // Timed events: check if event spans the target date
   const endDate = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate());
   return targetDate >= startDate && targetDate <= endDate;
@@ -192,21 +189,21 @@ export function formatEventTime(event: CalendarEvent): string {
   if (event.allDay) {
     return 'All day';
   }
-  
+
   const startDate = new Date(event.start);
   const endDate = event.end ? new Date(event.end) : null;
-  
-  const timeOptions: Intl.DateTimeFormatOptions = { 
-    hour: '2-digit', 
-    minute: '2-digit' 
+
+  const timeOptions: Intl.DateTimeFormatOptions = {
+    hour: '2-digit',
+    minute: '2-digit',
   };
-  
+
   const startTime = startDate.toLocaleTimeString([], timeOptions);
-  
+
   if (endDate) {
     const endTime = endDate.toLocaleTimeString([], timeOptions);
     return `${startTime} - ${endTime}`;
   }
-  
+
   return startTime;
 }

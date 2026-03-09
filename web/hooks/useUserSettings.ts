@@ -48,28 +48,32 @@ export function useUserSettings() {
   }, [session?.user?.id]);
 
   // Update display name
-  const updateDisplayName = useCallback(async (newName: string) => {
-    setDisplayName(newName);
+  const updateDisplayName = useCallback(
+    async (newName: string) => {
+      setDisplayName(newName);
 
-    if (!session?.user) return;
+      if (!session?.user) return;
 
-    try {
-      const { error } = await supabase
-        .from('user_settings')
-        .upsert({
-          user_id: session.user.id,
-          display_name: newName
-        }, {
-          onConflict: 'user_id'
-        });
+      try {
+        const { error } = await supabase.from('user_settings').upsert(
+          {
+            user_id: session.user.id,
+            display_name: newName,
+          },
+          {
+            onConflict: 'user_id',
+          }
+        );
 
-      if (error) {
-        logger.error('Error updating display name', error);
+        if (error) {
+          logger.error('Error updating display name', error);
+        }
+      } catch (err) {
+        logger.error('Failed to update display name', err);
       }
-    } catch (err) {
-      logger.error('Failed to update display name', err);
-    }
-  }, [session?.user?.id]);
+    },
+    [session?.user?.id]
+  );
 
   return {
     displayName,

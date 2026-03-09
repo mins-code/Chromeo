@@ -20,7 +20,7 @@ export const VALIDATION_RULES = {
  */
 export function sanitizeString(input: string): string {
   if (typeof input !== 'string') return '';
-  
+
   return input
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -33,17 +33,21 @@ export function sanitizeString(input: string): string {
 /**
  * Validate and sanitize email address
  */
-export function validateEmail(email: string): { valid: boolean; sanitized: string; error?: string } {
+export function validateEmail(email: string): {
+  valid: boolean;
+  sanitized: string;
+  error?: string;
+} {
   const sanitized = sanitizeString(email).toLowerCase();
-  
+
   if (!sanitized) {
     return { valid: false, sanitized: '', error: 'Email is required' };
   }
-  
+
   if (!VALIDATION_RULES.EMAIL_REGEX.test(sanitized)) {
     return { valid: false, sanitized, error: 'Invalid email format' };
   }
-  
+
   return { valid: true, sanitized };
 }
 
@@ -58,9 +62,9 @@ export function validateText(
   if (typeof text !== 'string') {
     return { valid: false, sanitized: '', error: `${fieldName} must be a string` };
   }
-  
+
   const sanitized = sanitizeString(text);
-  
+
   if (sanitized.length > maxLength) {
     return {
       valid: false,
@@ -68,7 +72,7 @@ export function validateText(
       error: `${fieldName} exceeds maximum length of ${maxLength} characters`,
     };
   }
-  
+
   return { valid: true, sanitized };
 }
 
@@ -84,22 +88,26 @@ export function validateNumber(
   if (typeof value !== 'number' || isNaN(value)) {
     return { valid: false, value: 0, error: `${fieldName} must be a valid number` };
   }
-  
+
   if (value < min) {
     return { valid: false, value, error: `${fieldName} must be at least ${min}` };
   }
-  
+
   if (value > max) {
     return { valid: false, value, error: `${fieldName} must not exceed ${max}` };
   }
-  
+
   return { valid: true, value };
 }
 
 /**
  * Validate budget amount
  */
-export function validateBudgetAmount(amount: number): { valid: boolean; value: number; error?: string } {
+export function validateBudgetAmount(amount: number): {
+  valid: boolean;
+  value: number;
+  error?: string;
+} {
   return validateNumber(
     amount,
     VALIDATION_RULES.MIN_BUDGET_AMOUNT,
@@ -111,25 +119,29 @@ export function validateBudgetAmount(amount: number): { valid: boolean; value: n
 /**
  * Validate date string
  */
-export function validateDate(dateString: string): { valid: boolean; date: Date | null; error?: string } {
+export function validateDate(dateString: string): {
+  valid: boolean;
+  date: Date | null;
+  error?: string;
+} {
   if (!dateString) {
     return { valid: false, date: null, error: 'Date is required' };
   }
-  
+
   const date = new Date(dateString);
-  
+
   if (isNaN(date.getTime())) {
     return { valid: false, date: null, error: 'Invalid date format' };
   }
-  
+
   // Check if date is reasonable (not too far in past or future)
   const minDate = new Date('1900-01-01');
   const maxDate = new Date('2100-12-31');
-  
+
   if (date < minDate || date > maxDate) {
     return { valid: false, date: null, error: 'Date must be between 1900 and 2100' };
   }
-  
+
   return { valid: true, date };
 }
 
@@ -140,13 +152,13 @@ export function validateFile(file: File): { valid: boolean; error?: string } {
   if (!file) {
     return { valid: false, error: 'No file provided' };
   }
-  
+
   // Check file size
   if (file.size > VALIDATION_RULES.MAX_FILE_SIZE) {
     const maxSizeMB = VALIDATION_RULES.MAX_FILE_SIZE / (1024 * 1024);
     return { valid: false, error: `File size exceeds ${maxSizeMB}MB limit` };
   }
-  
+
   // Check file type
   if (!VALIDATION_RULES.ALLOWED_IMAGE_TYPES.includes(file.type)) {
     return {
@@ -154,28 +166,40 @@ export function validateFile(file: File): { valid: boolean; error?: string } {
       error: `Invalid file type. Allowed types: ${VALIDATION_RULES.ALLOWED_IMAGE_TYPES.join(', ')}`,
     };
   }
-  
+
   return { valid: true };
 }
 
 /**
  * Validate task title
  */
-export function validateTaskTitle(title: string): { valid: boolean; sanitized: string; error?: string } {
+export function validateTaskTitle(title: string): {
+  valid: boolean;
+  sanitized: string;
+  error?: string;
+} {
   return validateText(title, VALIDATION_RULES.MAX_TITLE_LENGTH, 'Task title');
 }
 
 /**
  * Validate task description
  */
-export function validateTaskDescription(description: string): { valid: boolean; sanitized: string; error?: string } {
+export function validateTaskDescription(description: string): {
+  valid: boolean;
+  sanitized: string;
+  error?: string;
+} {
   return validateText(description, VALIDATION_RULES.MAX_DESCRIPTION_LENGTH, 'Task description');
 }
 
 /**
  * Validate AI message input
  */
-export function validateAIMessage(message: string): { valid: boolean; sanitized: string; error?: string } {
+export function validateAIMessage(message: string): {
+  valid: boolean;
+  sanitized: string;
+  error?: string;
+} {
   return validateText(message, VALIDATION_RULES.MAX_MESSAGE_LENGTH, 'Message');
 }
 
@@ -197,15 +221,15 @@ export function sanitizeJSON(jsonString: string): string {
  */
 export function validateURL(url: string): { valid: boolean; sanitized: string; error?: string } {
   const sanitized = sanitizeString(url);
-  
+
   try {
     const urlObj = new URL(sanitized);
-    
+
     // Only allow http and https protocols
     if (!['http:', 'https:'].includes(urlObj.protocol)) {
       return { valid: false, sanitized, error: 'Only HTTP and HTTPS URLs are allowed' };
     }
-    
+
     return { valid: true, sanitized: urlObj.toString() };
   } catch {
     return { valid: false, sanitized, error: 'Invalid URL format' };

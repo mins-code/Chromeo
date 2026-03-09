@@ -6,8 +6,10 @@ import type { Partnership, Team, TeamMember, UserSearchResult } from '../types';
 
 export async function searchUsersByEmail(query: string): Promise<UserSearchResult[]> {
   if (!query || query.length < 2) return [];
-  
-  const { data: { user } } = await supabase.auth.getUser();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return [];
 
   const { data, error } = await supabase
@@ -22,29 +24,33 @@ export async function searchUsersByEmail(query: string): Promise<UserSearchResul
     return [];
   }
 
-  return (data || []).map(p => ({
+  return (data || []).map((p) => ({
     id: p.id,
     email: p.email || '',
-    fullName: p.full_name || undefined
+    fullName: p.full_name || undefined,
   }));
 }
 
 // ============ PARTNERSHIPS ============
 
 export async function getPartnerships(): Promise<Partnership[]> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return [];
 
   const { data, error } = await supabase
     .from('partnerships')
-    .select(`
+    .select(
+      `
       id,
       user_id_1,
       user_id_2,
       status,
       profile1:profiles!partnerships_user_id_1_fkey(id, email, full_name),
       profile2:profiles!partnerships_user_id_2_fkey(id, email, full_name)
-    `)
+    `
+    )
     .or(`user_id_1.eq.${user.id},user_id_2.eq.${user.id}`);
 
   if (error) {
@@ -52,30 +58,34 @@ export async function getPartnerships(): Promise<Partnership[]> {
     return [];
   }
 
-  return (data || []).map(p => {
+  return (data || []).map((p) => {
     const isIncoming = p.user_id_2 === user.id;
     const partner = isIncoming ? p.profile1 : p.profile2;
-    
+
     return {
       id: p.id,
       partnerId: isIncoming ? p.user_id_1 : p.user_id_2,
       partnerEmail: (partner as any)?.email || '',
       partnerName: (partner as any)?.full_name || undefined,
       status: p.status as 'pending' | 'accepted',
-      isIncoming
+      isIncoming,
     };
   });
 }
 
 export async function sendPartnerRequest(targetUserId: string): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return false;
 
   // Check if partnership already exists
   const { data: existing } = await supabase
     .from('partnerships')
     .select('id')
-    .or(`and(user_id_1.eq.${user.id},user_id_2.eq.${targetUserId}),and(user_id_1.eq.${targetUserId},user_id_2.eq.${user.id})`)
+    .or(
+      `and(user_id_1.eq.${user.id},user_id_2.eq.${targetUserId}),and(user_id_1.eq.${targetUserId},user_id_2.eq.${user.id})`
+    )
     .single();
 
   if (existing) {
@@ -83,13 +93,11 @@ export async function sendPartnerRequest(targetUserId: string): Promise<boolean>
     return false;
   }
 
-  const { error } = await supabase
-    .from('partnerships')
-    .insert({
-      user_id_1: user.id,
-      user_id_2: targetUserId,
-      status: 'pending'
-    });
+  const { error } = await supabase.from('partnerships').insert({
+    user_id_1: user.id,
+    user_id_2: targetUserId,
+    status: 'pending',
+  });
 
   if (error) {
     logger.error('Error sending partner request', error);
@@ -114,10 +122,7 @@ export async function acceptPartnerRequest(partnershipId: string): Promise<boole
 }
 
 export async function rejectPartnerRequest(partnershipId: string): Promise<boolean> {
-  const { error } = await supabase
-    .from('partnerships')
-    .delete()
-    .eq('id', partnershipId);
+  const { error } = await supabase.from('partnerships').delete().eq('id', partnershipId);
 
   if (error) {
     logger.error('Error rejecting partner request', error);
@@ -128,10 +133,7 @@ export async function rejectPartnerRequest(partnershipId: string): Promise<boole
 }
 
 export async function removePartner(partnershipId: string): Promise<boolean> {
-  const { error } = await supabase
-    .from('partnerships')
-    .delete()
-    .eq('id', partnershipId);
+  const { error } = await supabase.from('partnerships').delete().eq('id', partnershipId);
 
   if (error) {
     logger.error('Error removing partner', error);
@@ -144,7 +146,9 @@ export async function removePartner(partnershipId: string): Promise<boolean> {
 // ============ TEAMS ============
 
 export async function getTeams(): Promise<Team[]> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return [];
 
   // Get teams user owns
@@ -160,9 +164,11 @@ export async function getTeams(): Promise<Team[]> {
   // Get teams user is a member of
   const { data: memberTeams, error: memberError } = await supabase
     .from('team_members')
-    .select(`
+    .select(
+      `
       team:teams(id, name, description, owner_id, created_at)
-    `)
+    `
+    )
     .eq('user_id', user.id)
     .eq('status', 'accepted');
 
@@ -191,7 +197,7 @@ export async function getTeams(): Promise<Team[]> {
         ownerId: t.owner_id,
         isOwner: true,
         memberCount: (count || 0) + 1, // +1 for owner
-        createdAt: t.created_at
+        createdAt: t.created_at,
       });
     }
   }
@@ -213,7 +219,7 @@ export async function getTeams(): Promise<Team[]> {
         ownerId: t.owner_id,
         isOwner: t.owner_id === user.id,
         memberCount: (count || 0) + 1,
-        createdAt: t.created_at
+        createdAt: t.created_at,
       });
     }
   }
@@ -222,14 +228,18 @@ export async function getTeams(): Promise<Team[]> {
 }
 
 export async function getTeamInvites(): Promise<Team[]> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return [];
 
   const { data, error } = await supabase
     .from('team_members')
-    .select(`
+    .select(
+      `
       team:teams(id, name, description, owner_id, created_at)
-    `)
+    `
+    )
     .eq('user_id', user.id)
     .eq('status', 'pending');
 
@@ -238,7 +248,7 @@ export async function getTeamInvites(): Promise<Team[]> {
     return [];
   }
 
-  return (data || []).map(m => {
+  return (data || []).map((m) => {
     const t = m.team as any;
     return {
       id: t.id,
@@ -247,13 +257,15 @@ export async function getTeamInvites(): Promise<Team[]> {
       ownerId: t.owner_id,
       isOwner: false,
       memberCount: 0,
-      createdAt: t.created_at
+      createdAt: t.created_at,
     };
   });
 }
 
 export async function createTeam(name: string, description?: string): Promise<Team | null> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return null;
 
   const { data, error } = await supabase
@@ -261,7 +273,7 @@ export async function createTeam(name: string, description?: string): Promise<Te
     .insert({
       owner_id: user.id,
       name,
-      description: description || null
+      description: description || null,
     })
     .select()
     .single();
@@ -278,12 +290,17 @@ export async function createTeam(name: string, description?: string): Promise<Te
     ownerId: data.owner_id,
     isOwner: true,
     memberCount: 1, // Just the owner
-    createdAt: data.created_at
+    createdAt: data.created_at,
   };
 }
 
-export async function updateTeam(id: string, updates: { name?: string; description?: string }): Promise<Team | null> {
-  const { data: { user } } = await supabase.auth.getUser();
+export async function updateTeam(
+  id: string,
+  updates: { name?: string; description?: string }
+): Promise<Team | null> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return null;
 
   const { data, error } = await supabase
@@ -311,15 +328,12 @@ export async function updateTeam(id: string, updates: { name?: string; descripti
     ownerId: data.owner_id,
     isOwner: data.owner_id === user.id,
     memberCount: (count || 0) + 1,
-    createdAt: data.created_at
+    createdAt: data.created_at,
   };
 }
 
 export async function deleteTeam(id: string): Promise<boolean> {
-  const { error } = await supabase
-    .from('teams')
-    .delete()
-    .eq('id', id);
+  const { error } = await supabase.from('teams').delete().eq('id', id);
 
   if (error) {
     logger.error('Error deleting team', error);
@@ -334,13 +348,15 @@ export async function deleteTeam(id: string): Promise<boolean> {
 export async function getTeamMembers(teamId: string): Promise<TeamMember[]> {
   const { data, error } = await supabase
     .from('team_members')
-    .select(`
+    .select(
+      `
       id,
       user_id,
       role,
       status,
       profile:profiles!team_members_user_id_fkey(email, full_name)
-    `)
+    `
+    )
     .eq('team_id', teamId);
 
   if (error) {
@@ -348,25 +364,27 @@ export async function getTeamMembers(teamId: string): Promise<TeamMember[]> {
     return [];
   }
 
-  return (data || []).map(m => ({
+  return (data || []).map((m) => ({
     id: m.id,
     userId: m.user_id,
     email: (m.profile as any)?.email || '',
     name: (m.profile as any)?.full_name || undefined,
     role: m.role as 'admin' | 'member',
-    status: m.status as 'pending' | 'accepted'
+    status: m.status as 'pending' | 'accepted',
   }));
 }
 
-export async function addTeamMember(teamId: string, userId: string, role: 'admin' | 'member' = 'member'): Promise<boolean> {
-  const { error } = await supabase
-    .from('team_members')
-    .insert({
-      team_id: teamId,
-      user_id: userId,
-      role,
-      status: 'pending'
-    });
+export async function addTeamMember(
+  teamId: string,
+  userId: string,
+  role: 'admin' | 'member' = 'member'
+): Promise<boolean> {
+  const { error } = await supabase.from('team_members').insert({
+    team_id: teamId,
+    user_id: userId,
+    role,
+    status: 'pending',
+  });
 
   if (error) {
     logger.error('Error adding team member', error);
@@ -376,11 +394,11 @@ export async function addTeamMember(teamId: string, userId: string, role: 'admin
   return true;
 }
 
-export async function updateMemberRole(memberId: string, role: 'admin' | 'member'): Promise<boolean> {
-  const { error } = await supabase
-    .from('team_members')
-    .update({ role })
-    .eq('id', memberId);
+export async function updateMemberRole(
+  memberId: string,
+  role: 'admin' | 'member'
+): Promise<boolean> {
+  const { error } = await supabase.from('team_members').update({ role }).eq('id', memberId);
 
   if (error) {
     logger.error('Error updating member role', error);
@@ -391,10 +409,7 @@ export async function updateMemberRole(memberId: string, role: 'admin' | 'member
 }
 
 export async function removeTeamMember(memberId: string): Promise<boolean> {
-  const { error } = await supabase
-    .from('team_members')
-    .delete()
-    .eq('id', memberId);
+  const { error } = await supabase.from('team_members').delete().eq('id', memberId);
 
   if (error) {
     logger.error('Error removing team member', error);
@@ -405,7 +420,9 @@ export async function removeTeamMember(memberId: string): Promise<boolean> {
 }
 
 export async function acceptTeamInvite(teamId: string): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return false;
 
   const { error } = await supabase
@@ -423,7 +440,9 @@ export async function acceptTeamInvite(teamId: string): Promise<boolean> {
 }
 
 export async function rejectTeamInvite(teamId: string): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return false;
 
   const { error } = await supabase

@@ -10,26 +10,26 @@ import ReactDOM from 'react-dom/client';
 // them trapped inside the app.  This mirrors what native apps do by default.
 // ---------------------------------------------------------------------------
 (function installWebBackGuard() {
-    // Only needed in a browser context (not in SSR / Capacitor native).
-    if (typeof window === 'undefined') return;
+  // Only needed in a browser context (not in SSR / Capacitor native).
+  if (typeof window === 'undefined') return;
 
-    // Skip in Capacitor native — the Android hardware back button is handled
-    // separately via @capacitor/app in App.tsx.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((window as any).Capacitor?.isNativePlatform?.()) return;
+  // Skip in Capacitor native — the Android hardware back button is handled
+  // separately via @capacitor/app in App.tsx.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if ((window as any).Capacitor?.isNativePlatform?.()) return;
 
-    const SENTINEL = { appBackGuard: true };
+  const SENTINEL = { appBackGuard: true };
 
-    // Push the sentinel below the current page so there is always a "previous"
-    // entry within the app history stack.
-    window.history.pushState(SENTINEL, '');
+  // Push the sentinel below the current page so there is always a "previous"
+  // entry within the app history stack.
+  window.history.pushState(SENTINEL, '');
 
-    window.addEventListener('popstate', (event) => {
-        if (event.state && event.state.appBackGuard) {
-            // Reached the sentinel — push it again so the guard resets.
-            window.history.pushState(SENTINEL, '');
-        }
-    });
+  window.addEventListener('popstate', (event) => {
+    if (event.state && event.state.appBackGuard) {
+      // Reached the sentinel — push it again so the guard resets.
+      window.history.pushState(SENTINEL, '');
+    }
+  });
 })();
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from './App';
@@ -44,7 +44,7 @@ const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
+  throw new Error('Could not find root element to mount to');
 }
 
 const LoadingFallback = () => (
@@ -62,21 +62,21 @@ root.render(
           <AuthProvider>
             <ThemeProvider>
               <Routes>
-                <Route 
-                  path="/confirm-delete" 
+                <Route
+                  path="/confirm-delete"
                   element={
                     <Suspense fallback={<LoadingFallback />}>
                       <ConfirmDeletePage />
                     </Suspense>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/reset-password" 
+                <Route
+                  path="/reset-password"
                   element={
                     <Suspense fallback={<LoadingFallback />}>
                       <ResetPasswordPage />
                     </Suspense>
-                  } 
+                  }
                 />
                 <Route path="/*" element={<App />} />
               </Routes>
@@ -87,4 +87,3 @@ root.render(
     </ErrorBoundary>
   </React.StrictMode>
 );
-

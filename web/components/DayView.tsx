@@ -29,37 +29,39 @@ interface DroppableHourCellProps {
  * Wrapped in React.memo to prevent grid re-renders when `currentTime` updates every minute.
  * Props `dayDate` (from parent) and `children` (undefined in loop) are stable.
  */
-const DroppableHourCell = React.memo(({ dayDate, hour, height, intervalHours, children }: DroppableHourCellProps) => {
-  const id = `${format(dayDate, 'yyyy-MM-dd')}-${hour.toString().padStart(2, '0')}`;
-  const { setNodeRef, isOver } = useDroppable({
-    id,
-    data: { date: dayDate, hour },
-  });
+const DroppableHourCell = React.memo(
+  ({ dayDate, hour, height, intervalHours, children }: DroppableHourCellProps) => {
+    const id = `${format(dayDate, 'yyyy-MM-dd')}-${hour.toString().padStart(2, '0')}`;
+    const { setNodeRef, isOver } = useDroppable({
+      id,
+      data: { date: dayDate, hour },
+    });
 
-  return (
-    <div
-      ref={setNodeRef}
-      className={`relative border-b border-slate-200 dark:border-white/5 transition-colors ${
-        isOver ? 'bg-brand-500/10' : ''
-      }`}
-      style={{ height }}
-    >
-      {/* Show hour subdivisions in compact mode */}
-      {intervalHours > 1 && (
-        <>
-          {Array.from({ length: intervalHours - 1 }, (_, i) => (
-            <div
-              key={i}
-              className="absolute left-0 right-0 border-b border-dashed border-slate-200/50 dark:border-white/5"
-              style={{ top: `${((i + 1) / intervalHours) * 100}%` }}
-            />
-          ))}
-        </>
-      )}
-      {children}
-    </div>
-  );
-});
+    return (
+      <div
+        ref={setNodeRef}
+        className={`relative border-b border-slate-200 dark:border-white/5 transition-colors ${
+          isOver ? 'bg-brand-500/10' : ''
+        }`}
+        style={{ height }}
+      >
+        {/* Show hour subdivisions in compact mode */}
+        {intervalHours > 1 && (
+          <>
+            {Array.from({ length: intervalHours - 1 }, (_, i) => (
+              <div
+                key={i}
+                className="absolute left-0 right-0 border-b border-dashed border-slate-200/50 dark:border-white/5"
+                style={{ top: `${((i + 1) / intervalHours) * 100}%` }}
+              />
+            ))}
+          </>
+        )}
+        {children}
+      </div>
+    );
+  }
+);
 
 // Helper functions moved outside to be stable for memoization
 const getTaskTime = (task: Task): { hour: number; minutes: number } | null => {
@@ -85,9 +87,9 @@ const getTaskDate = (task: Task): Date | null => {
 };
 
 interface TaskBlockProps {
-    task: Task;
-    style: React.CSSProperties;
-    onEditTask: (task: Task) => void;
+  task: Task;
+  style: React.CSSProperties;
+  onEditTask: (task: Task) => void;
 }
 
 /**
@@ -96,15 +98,11 @@ interface TaskBlockProps {
  * Uses stable `style` object from `taskStyles` map.
  */
 const TaskBlock = React.memo(({ task, style, onEditTask }: TaskBlockProps) => {
-    return (
-        <div
-            style={style}
-            className="absolute left-1 right-1 z-10"
-            onClick={() => onEditTask(task)}
-        >
-            <DraggableTask task={task} variant="block" />
-        </div>
-    );
+  return (
+    <div style={style} className="absolute left-1 right-1 z-10" onClick={() => onEditTask(task)}>
+      <DraggableTask task={task} variant="block" />
+    </div>
+  );
 });
 
 const DayView: React.FC<DayViewProps> = ({ tasks, currentDate, onEditTask }) => {
@@ -116,7 +114,7 @@ const DayView: React.FC<DayViewProps> = ({ tasks, currentDate, onEditTask }) => 
 
   // Filter tasks for the current day
   const dayTasks = useMemo(() => {
-    return tasks.filter(task => {
+    return tasks.filter((task) => {
       const taskDate = getTaskDate(task);
       if (!taskDate) return false;
       return (
@@ -131,23 +129,23 @@ const DayView: React.FC<DayViewProps> = ({ tasks, currentDate, onEditTask }) => 
   const taskStyles = useMemo(() => {
     const styles = new Map<string, React.CSSProperties>();
 
-    dayTasks.forEach(task => {
-        const time = getTaskTime(task);
-        if (!time) {
-            styles.set(task.id, { display: 'none' });
-            return;
-        }
+    dayTasks.forEach((task) => {
+      const time = getTaskTime(task);
+      if (!time) {
+        styles.set(task.id, { display: 'none' });
+        return;
+      }
 
-        // Calculate position based on interval
-        const cellHeight = HOUR_HEIGHT * INTERVAL_HOURS;
-        const top = (time.hour / INTERVAL_HOURS) * cellHeight + (time.minutes / 60) * (HOUR_HEIGHT);
-        const duration = task.duration || 60; // Default 60 minutes
-        const height = Math.max((duration / 60) * HOUR_HEIGHT, 24); // Minimum 24px
+      // Calculate position based on interval
+      const cellHeight = HOUR_HEIGHT * INTERVAL_HOURS;
+      const top = (time.hour / INTERVAL_HOURS) * cellHeight + (time.minutes / 60) * HOUR_HEIGHT;
+      const duration = task.duration || 60; // Default 60 minutes
+      const height = Math.max((duration / 60) * HOUR_HEIGHT, 24); // Minimum 24px
 
-        styles.set(task.id, {
-            top: `${top}px`,
-            height: `${height}px`,
-        });
+      styles.set(task.id, {
+        top: `${top}px`,
+        height: `${height}px`,
+      });
     });
     return styles;
   }, [dayTasks, HOUR_HEIGHT, INTERVAL_HOURS]);
@@ -163,25 +161,21 @@ const DayView: React.FC<DayViewProps> = ({ tasks, currentDate, onEditTask }) => 
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-            title={isExpanded ? "Compact view (4hr)" : "Expanded view (1hr)"}
+            title={isExpanded ? 'Compact view (4hr)' : 'Expanded view (1hr)'}
           >
             {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
         </div>
-        <div
-          className={`flex-1 text-center py-4 ${
-            isTodayView ? 'bg-brand-500/5' : ''
-          }`}
-        >
+        <div className={`flex-1 text-center py-4 ${isTodayView ? 'bg-brand-500/5' : ''}`}>
           <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
             {format(currentDate, 'EEEE')}
           </div>
-          <div className={`text-2xl font-bold ${isTodayView ? 'text-brand-500' : 'text-slate-700 dark:text-slate-200'}`}>
+          <div
+            className={`text-2xl font-bold ${isTodayView ? 'text-brand-500' : 'text-slate-700 dark:text-slate-200'}`}
+          >
             {format(currentDate, 'd')}
           </div>
-          <div className="text-sm text-slate-500">
-            {format(currentDate, 'MMMM yyyy')}
-          </div>
+          <div className="text-sm text-slate-500">{format(currentDate, 'MMMM yyyy')}</div>
         </div>
       </div>
 
@@ -190,7 +184,7 @@ const DayView: React.FC<DayViewProps> = ({ tasks, currentDate, onEditTask }) => 
         <div className="flex min-h-full">
           {/* Time column */}
           <div className="w-16 flex-shrink-0 border-r border-slate-200 dark:border-white/5">
-            {HOURS.map(hour => (
+            {HOURS.map((hour) => (
               <div
                 key={hour}
                 className="text-right pr-2 text-xs text-slate-400 font-medium flex items-start pt-1"
@@ -204,10 +198,10 @@ const DayView: React.FC<DayViewProps> = ({ tasks, currentDate, onEditTask }) => 
           {/* Day column */}
           <div className={`flex-1 relative ${isTodayView ? 'bg-brand-500/5' : ''}`}>
             {/* Hour cells (droppable) */}
-            {HOURS.map(hour => (
-              <DroppableHourCell 
-                key={hour} 
-                dayDate={currentDate} 
+            {HOURS.map((hour) => (
+              <DroppableHourCell
+                key={hour}
+                dayDate={currentDate}
                 hour={hour}
                 height={HOUR_HEIGHT * INTERVAL_HOURS}
                 intervalHours={INTERVAL_HOURS}
@@ -215,7 +209,7 @@ const DayView: React.FC<DayViewProps> = ({ tasks, currentDate, onEditTask }) => 
             ))}
 
             {/* Task blocks */}
-            {dayTasks.map(task => (
+            {dayTasks.map((task) => (
               <TaskBlock
                 key={task.id}
                 task={task}
@@ -225,9 +219,7 @@ const DayView: React.FC<DayViewProps> = ({ tasks, currentDate, onEditTask }) => 
             ))}
 
             {/* Current time indicator */}
-            {isTodayView && (
-              <CurrentTimeIndicator hourHeight={HOUR_HEIGHT} />
-            )}
+            {isTodayView && <CurrentTimeIndicator hourHeight={HOUR_HEIGHT} />}
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 /**
  * Budget Forecast Chart Component
- * 
+ *
  * Displays a 30-day cash flow projection using recharts AreaChart.
  */
 
@@ -14,7 +14,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-  TooltipProps
+  TooltipProps,
 } from 'recharts';
 import { ForecastDataPoint, formatForecastDate } from '../utils/financialForecasting';
 
@@ -28,11 +28,9 @@ interface BudgetForecastChartProps {
 /**
  * Custom tooltip component for the forecast chart.
  */
-const CustomTooltip: React.FC<TooltipProps<number, string> & { formatCurrency?: (value: number) => string }> = ({
-  active,
-  payload,
-  formatCurrency = (v) => `₹${v.toLocaleString('en-IN')}`
-}) => {
+const CustomTooltip: React.FC<
+  TooltipProps<number, string> & { formatCurrency?: (value: number) => string }
+> = ({ active, payload, formatCurrency = (v) => `₹${v.toLocaleString('en-IN')}` }) => {
   if (!active || !payload || payload.length === 0) {
     return null;
   }
@@ -54,9 +52,7 @@ const CustomTooltip: React.FC<TooltipProps<number, string> & { formatCurrency?: 
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">
             Transactions
           </p>
-          <p className="text-sm text-slate-600 dark:text-slate-300">
-            {data.label}
-          </p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">{data.label}</p>
         </div>
       )}
     </div>
@@ -65,7 +61,7 @@ const CustomTooltip: React.FC<TooltipProps<number, string> & { formatCurrency?: 
 
 /**
  * Budget Forecast Chart displays a visual projection of future balance.
- * 
+ *
  * Features:
  * - Area chart with gradient fill
  * - Zero reference line for debt threshold
@@ -74,21 +70,22 @@ const CustomTooltip: React.FC<TooltipProps<number, string> & { formatCurrency?: 
  */
 const BudgetForecastChart: React.FC<BudgetForecastChartProps> = ({
   data,
-  formatCurrency = (v) => v.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })
+  formatCurrency = (v) =>
+    v.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }),
 }) => {
   // Calculate min/max for Y axis domain
   const { minBalance, maxBalance } = useMemo(() => {
     if (data.length === 0) return { minBalance: 0, maxBalance: 100 };
-    
-    const balances = data.map(d => d.balance);
+
+    const balances = data.map((d) => d.balance);
     const min = Math.min(...balances);
     const max = Math.max(...balances);
-    
+
     // Add 10% padding
     const padding = (max - min) * 0.1 || 100;
     return {
       minBalance: Math.floor((min - padding) / 100) * 100,
-      maxBalance: Math.ceil((max + padding) / 100) * 100
+      maxBalance: Math.ceil((max + padding) / 100) * 100,
     };
   }, [data]);
 
@@ -118,10 +115,7 @@ const BudgetForecastChart: React.FC<BudgetForecastChartProps> = ({
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
-          data={data}
-          margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
-        >
+        <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
           <defs>
             {/* Gradient for positive values */}
             <linearGradient id="forecastGradientPositive" x1="0" y1="0" x2="0" y2="1">
@@ -136,16 +130,16 @@ const BudgetForecastChart: React.FC<BudgetForecastChartProps> = ({
               <stop offset="100%" stopColor="rgb(239, 68, 68)" stopOpacity={0.3} />
             </linearGradient>
           </defs>
-          
-          <CartesianGrid 
-            strokeDasharray="3 3" 
+
+          <CartesianGrid
+            strokeDasharray="3 3"
             stroke="currentColor"
             className="text-slate-200 dark:text-white/5"
             vertical={false}
           />
-          
-          <XAxis 
-            dataKey="date" 
+
+          <XAxis
+            dataKey="date"
             tickFormatter={formatXAxisTick}
             stroke="currentColor"
             className="text-slate-400"
@@ -155,8 +149,8 @@ const BudgetForecastChart: React.FC<BudgetForecastChartProps> = ({
             interval="preserveStartEnd"
             minTickGap={40}
           />
-          
-          <YAxis 
+
+          <YAxis
             tickFormatter={formatYAxisTick}
             stroke="currentColor"
             className="text-slate-400"
@@ -166,20 +160,20 @@ const BudgetForecastChart: React.FC<BudgetForecastChartProps> = ({
             domain={[minBalance, maxBalance]}
             width={60}
           />
-          
-          <Tooltip 
+
+          <Tooltip
             content={<CustomTooltip formatCurrency={formatCurrency} />}
-            cursor={{ 
-              stroke: 'rgb(34, 211, 238)', 
+            cursor={{
+              stroke: 'rgb(34, 211, 238)',
               strokeWidth: 1,
-              strokeDasharray: '4 4'
+              strokeDasharray: '4 4',
             }}
           />
-          
+
           {/* Zero reference line */}
-          <ReferenceLine 
-            y={0} 
-            stroke="rgb(239, 68, 68)" 
+          <ReferenceLine
+            y={0}
+            stroke="rgb(239, 68, 68)"
             strokeDasharray="4 4"
             strokeWidth={1.5}
             label={{
@@ -187,10 +181,10 @@ const BudgetForecastChart: React.FC<BudgetForecastChartProps> = ({
               position: 'left',
               fill: 'rgb(239, 68, 68)',
               fontSize: 10,
-              fontWeight: 'bold'
+              fontWeight: 'bold',
             }}
           />
-          
+
           <Area
             type="monotone"
             dataKey="balance"
@@ -202,7 +196,7 @@ const BudgetForecastChart: React.FC<BudgetForecastChartProps> = ({
               r: 6,
               stroke: 'rgb(34, 211, 238)',
               strokeWidth: 2,
-              fill: 'white'
+              fill: 'white',
             }}
           />
         </AreaChart>

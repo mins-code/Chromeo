@@ -64,13 +64,16 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
         setDayPlan(existingPlan);
         return;
       }
-      
+
       // No existing plan - check for recurring templates
-      const recurringTemplate = await DayPlanService.checkForRecurringPlans(dateKey, 'current-user');
+      const recurringTemplate = await DayPlanService.checkForRecurringPlans(
+        dateKey,
+        'current-user'
+      );
       if (recurringTemplate) {
         logger.debug('[DayPlanner] Recurring template found', { recurringTemplate });
       }
-      
+
       // Create empty day plan for this date
       const newPlan: DayPlan = {
         id: crypto.randomUUID(),
@@ -102,7 +105,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
       const taskDate = format(new Date(t.dueDate), 'yyyy-MM-dd');
       return taskDate === dateKey;
     });
-    
+
     // Exclude tasks already in the plan
     if (!dayPlan) return tasksForDate;
     return tasksForDate.filter((t) => !dayPlan.taskIds.includes(t.id));
@@ -204,8 +207,8 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
       if (!dayPlan) return;
 
       // Find the tasks to check their due times
-      const fromTask = tasks.find(t => t.id === fromTaskId);
-      const toTask = tasks.find(t => t.id === toTaskId);
+      const fromTask = tasks.find((t) => t.id === fromTaskId);
+      const toTask = tasks.find((t) => t.id === toTaskId);
 
       // Determine correct direction based on due times
       let actualFromId = fromTaskId;
@@ -229,8 +232,9 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
 
       // Check if this link already exists
       const linkExists = dayPlan.links.some(
-        l => (l.fromTaskId === actualFromId && l.toTaskId === actualToId) ||
-             (l.fromTaskId === actualToId && l.toTaskId === actualFromId)
+        (l) =>
+          (l.fromTaskId === actualFromId && l.toTaskId === actualToId) ||
+          (l.fromTaskId === actualToId && l.toTaskId === actualFromId)
       );
 
       if (linkExists) {
@@ -286,20 +290,20 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
   // Handle adding a task between two linked tasks
   const handleAddTaskBetween = useCallback(
     (sourceTaskId: string, targetTaskId: string) => {
-      const sourceTask = tasks.find(t => t.id === sourceTaskId);
-      const targetTask = tasks.find(t => t.id === targetTaskId);
-      
+      const sourceTask = tasks.find((t) => t.id === sourceTaskId);
+      const targetTask = tasks.find((t) => t.id === targetTaskId);
+
       if (!sourceTask || !targetTask) return;
-      
+
       // Calculate the midpoint time between source end and target start
       let newTaskDate: Date | undefined;
-      
+
       if (sourceTask.dueDate && targetTask.dueDate) {
         const sourceStart = new Date(sourceTask.dueDate).getTime();
         const sourceDuration = (sourceTask.duration || 30) * 60 * 1000;
         const sourceEnd = sourceStart + sourceDuration;
         const targetStart = new Date(targetTask.dueDate).getTime();
-        
+
         // Put new task at the midpoint between source end and target start
         const midpoint = sourceEnd + (targetStart - sourceEnd) / 2;
         newTaskDate = new Date(midpoint);
@@ -307,7 +311,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
         // Default to current date if no times available
         newTaskDate = currentDate;
       }
-      
+
       // Open the create task modal with the calculated date
       onCreateTask(newTaskDate);
     },
@@ -317,15 +321,15 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
   // Handle creating a task from a node handle
   const handleCreateFromHandle = useCallback(
     (taskId: string, position: 'top' | 'bottom' | 'left' | 'right') => {
-      const task = tasks.find(t => t.id === taskId);
+      const task = tasks.find((t) => t.id === taskId);
       if (!task) return;
 
       let newTaskDate: Date;
-      
+
       if (task.dueDate) {
         const taskStart = new Date(task.dueDate);
         const taskDuration = (task.duration || 30) * 60 * 1000;
-        
+
         // For bottom/right handles, create task AFTER this one
         // For top/left handles, create task BEFORE this one
         if (position === 'bottom' || position === 'right') {
@@ -338,7 +342,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
       } else {
         newTaskDate = currentDate;
       }
-      
+
       onCreateTask(newTaskDate);
     },
     [tasks, currentDate, onCreateTask]
@@ -381,8 +385,8 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
 
     // Filter tasks with due dates and sort by due time
     const tasksWithTime = planTasks
-      .filter(t => t.dueDate)
-      .map(t => ({
+      .filter((t) => t.dueDate)
+      .map((t) => ({
         task: t,
         dueTime: new Date(t.dueDate!).getTime(),
         endTime: new Date(t.dueDate!).getTime() + (t.duration || 30) * 60 * 1000,
@@ -402,7 +406,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
 
       // Check if link already exists
       const linkExists = dayPlan.links.some(
-        l => l.fromTaskId === currentTask.task.id && l.toTaskId === nextTask.task.id
+        (l) => l.fromTaskId === currentTask.task.id && l.toTaskId === nextTask.task.id
       );
 
       if (!linkExists) {
@@ -585,8 +589,8 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
           const createdTask = await createTask(newTaskPayload);
           if (createdTask) {
             // Map the _tempId (source ID) to the new real ID
-          // @ts-expect-error _tempId is a temporary property added during template creation
-          const sourceId = templateTask._tempId || templateTask.id; // Fallback if id leaked
+            // @ts-expect-error _tempId is a temporary property added during template creation
+            const sourceId = templateTask._tempId || templateTask.id; // Fallback if id leaked
             if (sourceId) {
               idMap.set(sourceId, createdTask.id);
             }
@@ -648,34 +652,38 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
 
       setIsTemplatesModalOpen(false);
       alert('Template applied successfully!');
-    }, [dayPlan, planTasks, currentDate, createTask, dateKey]
+    },
+    [dayPlan, planTasks, currentDate, createTask, dateKey]
   );
 
   // Handle save recurring rule
-  const handleSaveRecurring = useCallback(async (config: RecurrenceConfig) => {
-    if (!dayPlan || planTasks.length === 0) {
-      alert('Plan is empty. Add tasks before setting a recurring rule.');
-      return;
-    }
-    
-    // We need to create a "Template" from the current plan to be the recurring source
-    // Similar to saveAsTemplate but internal
-    const tasksForTemplate = planTasks.map(t => ({
-      ...t,
-      _tempId: t.id
-    }));
+  const handleSaveRecurring = useCallback(
+    async (config: RecurrenceConfig) => {
+      if (!dayPlan || planTasks.length === 0) {
+        alert('Plan is empty. Add tasks before setting a recurring rule.');
+        return;
+      }
 
-     const templateName = `Recurring Rule - ${config.frequency}`;
-     const template = await DayPlanService.saveAsTemplate(
-       dayPlan, 
-       tasksForTemplate, 
-       templateName, 
-       'Auto-generated for recurring rule'
-     );
+      // We need to create a "Template" from the current plan to be the recurring source
+      // Similar to saveAsTemplate but internal
+      const tasksForTemplate = planTasks.map((t) => ({
+        ...t,
+        _tempId: t.id,
+      }));
 
-     DayPlanService.saveRecurringRule(template, config, 'current-user');
-     alert(`Recurring rule set: ${config.frequency}!`);
-  }, [dayPlan, planTasks]);
+      const templateName = `Recurring Rule - ${config.frequency}`;
+      const template = await DayPlanService.saveAsTemplate(
+        dayPlan,
+        tasksForTemplate,
+        templateName,
+        'Auto-generated for recurring rule'
+      );
+
+      DayPlanService.saveRecurringRule(template, config, 'current-user');
+      alert(`Recurring rule set: ${config.frequency}!`);
+    },
+    [dayPlan, planTasks]
+  );
 
   return (
     <div className="h-full flex flex-col animate-fade-in">
@@ -724,9 +732,9 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
           </Button>
 
           {/* Mobile Task Panel Toggle */}
-          <Button 
-            variant="secondary" 
-            size="sm" 
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => setIsMobileTaskPanelOpen(!isMobileTaskPanelOpen)}
             className="lg:hidden"
           >
@@ -734,37 +742,74 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
             <span className="hidden sm:inline">Tasks ({unusedTasks.length})</span>
           </Button>
 
-          <Button variant="secondary" size="sm" onClick={() => setIsCloneModalOpen(true)} aria-label="Clone Plan">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsCloneModalOpen(true)}
+            aria-label="Clone Plan"
+          >
             <Copy size={16} />
             <span className="hidden md:inline">Clone</span>
           </Button>
 
-          <Button variant="secondary" size="sm" onClick={() => setIsTemplatesModalOpen(true)} aria-label="Load Templates">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsTemplatesModalOpen(true)}
+            aria-label="Load Templates"
+          >
             <Download size={16} />
             <span className="hidden lg:inline">Templates</span>
           </Button>
 
-          <Button variant="secondary" size="sm" onClick={() => setIsSaveTemplateModalOpen(true)} aria-label="Save Template">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsSaveTemplateModalOpen(true)}
+            aria-label="Save Template"
+          >
             <Save size={16} />
             <span className="hidden lg:inline">Save</span>
           </Button>
 
-      <Button variant="secondary" size="sm" onClick={() => setIsRecurringModalOpen(true)} aria-label="Recurring Plan">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsRecurringModalOpen(true)}
+            aria-label="Recurring Plan"
+          >
             <RefreshCw size={16} />
             <span className="hidden md:inline">Recurring</span>
           </Button>
 
-          <Button variant="secondary" size="sm" onClick={handleAutoArrange} className="hidden sm:flex">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleAutoArrange}
+            className="hidden sm:flex"
+          >
             <LayoutIcon size={16} />
             <span className="hidden xl:inline">Arrange</span>
           </Button>
 
-          <Button variant="secondary" size="sm" onClick={handleAutoLink} title="Auto-link tasks by time" className="hidden sm:flex">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleAutoLink}
+            title="Auto-link tasks by time"
+            className="hidden sm:flex"
+          >
             <Link2 size={16} />
             <span className="hidden xl:inline">Auto-Link</span>
           </Button>
 
-          <Button variant="secondary" size="sm" onClick={() => setIsFullscreen(true)} title="Fullscreen mode" className="hidden md:flex">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsFullscreen(true)}
+            title="Fullscreen mode"
+            className="hidden md:flex"
+          >
             <Maximize2 size={16} />
             <span className="hidden xl:inline">Fullscreen</span>
           </Button>
@@ -880,7 +925,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
         {isMobileTaskPanelOpen && (
           <div className="lg:hidden fixed inset-0 z-50">
             {/* Backdrop */}
-            <div 
+            <div
               className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
               onClick={() => setIsMobileTaskPanelOpen(false)}
             />
@@ -888,7 +933,9 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
             <div className="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-white/5 flex flex-col animate-slide-in-right">
               <div className="p-4 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-slate-800 dark:text-slate-100">Available Tasks</h3>
+                  <h3 className="font-semibold text-slate-800 dark:text-slate-100">
+                    Available Tasks
+                  </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     {unusedTasks.length} tasks not in plan
                   </p>
@@ -946,9 +993,9 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
               </div>
 
               <div className="p-4 border-t border-slate-200 dark:border-white/5">
-                <Button 
-                  variant="primary" 
-                  size="sm" 
+                <Button
+                  variant="primary"
+                  size="sm"
                   className="w-full"
                   onClick={() => {
                     onCreateTask(currentDate);
@@ -973,9 +1020,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
               <h2 className="text-xl font-bold text-white">
                 {format(currentDate, 'EEEE, MMMM d, yyyy')}
               </h2>
-              <span className="text-sm text-slate-400">
-                {planTasks.length} tasks in plan
-              </span>
+              <span className="text-sm text-slate-400">{planTasks.length} tasks in plan</span>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="secondary" size="sm" onClick={handleAutoArrange}>
@@ -986,9 +1031,9 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
                 <Link2 size={16} />
                 Auto-Link
               </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={handleClearLinks}
                 className="text-amber-500 hover:text-amber-600"
               >
@@ -1003,11 +1048,11 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
               </button>
             </div>
           </div>
-          
+
           {/* Fullscreen Content */}
           <div className="flex-1 flex overflow-hidden">
             {/* Flowchart Area */}
-            <div 
+            <div
               className="flex-1 min-w-0"
               onDrop={handleCanvasDrop}
               onDragOver={handleCanvasDragOver}
@@ -1028,9 +1073,11 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
                 />
               </ReactFlowProvider>
             </div>
-            
+
             {/* Collapsible Task Panel */}
-            <div className={`flex flex-col transition-all duration-300 ${isTaskPanelOpen ? 'w-80' : 'w-12'}`}>
+            <div
+              className={`flex flex-col transition-all duration-300 ${isTaskPanelOpen ? 'w-80' : 'w-12'}`}
+            >
               {/* Panel Toggle */}
               <button
                 onClick={() => setIsTaskPanelOpen(!isTaskPanelOpen)}
@@ -1045,7 +1092,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
                   <ChevronLeft size={16} />
                 )}
               </button>
-              
+
               {/* Task List */}
               {isTaskPanelOpen && (
                 <div className="flex-1 overflow-y-auto bg-slate-800/50 p-4 space-y-2">
@@ -1064,9 +1111,7 @@ const DayPlannerPage: React.FC<DayPlannerPageProps> = ({
                         onDragStart={() => handleDragStart(task)}
                         className="p-3 bg-slate-700/50 rounded-xl border border-white/10 hover:border-indigo-500/50 cursor-move transition-all hover:shadow-md"
                       >
-                        <div className="font-medium text-sm text-white">
-                          {task.title}
-                        </div>
+                        <div className="font-medium text-sm text-white">{task.title}</div>
                         {task.dueDate && (
                           <div className="text-xs text-slate-400 mt-1 flex items-center gap-1">
                             <Calendar size={10} />
