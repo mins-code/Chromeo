@@ -23,7 +23,12 @@ interface FlowchartCanvasProps {
   links: TaskLink[];
   layout: { taskId: string; x: number; y: number }[];
   onTaskMove: (taskId: string, x: number, y: number) => void;
-  onLinkCreate: (fromTaskId: string, toTaskId: string, sourceHandle?: string, targetHandle?: string) => void;
+  onLinkCreate: (
+    fromTaskId: string,
+    toTaskId: string,
+    sourceHandle?: string,
+    targetHandle?: string
+  ) => void;
   onLinkDelete: (linkId: string) => void;
   onTaskClick: (task: Task) => void;
   onAutoArrange?: () => void;
@@ -54,22 +59,27 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
   onCreateFromHandle,
 }) => {
   // Handle selection change
-  const handleSelectionChange = useCallback(({ nodes }: { nodes: Node[] }) => {
-    if (onSelectionChange) {
-      onSelectionChange(nodes.map(node => node.id));
-    }
-  }, [onSelectionChange]);
-  
+  const handleSelectionChange = useCallback(
+    ({ nodes }: { nodes: Node[] }) => {
+      if (onSelectionChange) {
+        onSelectionChange(nodes.map((node) => node.id));
+      }
+    },
+    [onSelectionChange]
+  );
+
   // Convert tasks to React Flow nodes
   const initialNodes: Node[] = useMemo(() => {
-    return tasks.map(task => {
-      const position = layout.find(l => l.taskId === task.id);
+    return tasks.map((task) => {
+      const position = layout.find((l) => l.taskId === task.id);
       return {
         id: task.id,
         type: 'taskNode',
-        position: position ? { x: position.x, y: position.y } : { x: Math.random() * 500, y: Math.random() * 500 },
-        data: { 
-          task, 
+        position: position
+          ? { x: position.x, y: position.y }
+          : { x: Math.random() * 500, y: Math.random() * 500 },
+        data: {
+          task,
           onClick: () => onTaskClick(task),
           onCreateFromHandle,
         },
@@ -79,19 +89,19 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
 
   // Convert links to React Flow edges
   const initialEdges: Edge[] = useMemo(() => {
-    return links.map(link => {
+    return links.map((link) => {
       // Find the source and target tasks to calculate time gap
-      const sourceTask = tasks.find(t => t.id === link.fromTaskId);
-      const targetTask = tasks.find(t => t.id === link.toTaskId);
-      
+      const sourceTask = tasks.find((t) => t.id === link.fromTaskId);
+      const targetTask = tasks.find((t) => t.id === link.toTaskId);
+
       let timeGap: number | null = null;
-      
+
       if (sourceTask?.dueDate && targetTask?.dueDate) {
         const sourceStart = new Date(sourceTask.dueDate).getTime();
         const sourceDuration = (sourceTask.duration || 30) * 60 * 1000; // Convert minutes to ms
         const sourceEnd = sourceStart + sourceDuration;
         const targetStart = new Date(targetTask.dueDate).getTime();
-        
+
         // Time gap in minutes (can be negative if tasks overlap)
         timeGap = Math.round((targetStart - sourceEnd) / (60 * 1000));
       }
@@ -142,7 +152,7 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
     (connection: Connection) => {
       if (connection.source && connection.target) {
         onLinkCreate(
-          connection.source, 
+          connection.source,
           connection.target,
           connection.sourceHandle || undefined,
           connection.targetHandle || undefined
@@ -163,7 +173,7 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
   // Handle edge deletion
   const onEdgesDelete = useCallback(
     (edgesToDelete: Edge[]) => {
-      edgesToDelete.forEach(edge => {
+      edgesToDelete.forEach((edge) => {
         onLinkDelete(edge.id);
       });
     },
@@ -203,32 +213,36 @@ const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
         attributionPosition="bottom-left"
         className="bg-slate-50 dark:bg-black/20"
       >
-        <Background 
-          variant={BackgroundVariant.Dots} 
-          gap={16} 
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={16}
           size={1}
           className="bg-slate-50 dark:bg-black/20"
         />
-        <Controls 
+        <Controls
           className="!bg-white/80 dark:!bg-slate-800/90 !border !border-slate-200/50 dark:!border-white/10 !rounded-xl !shadow-xl backdrop-blur-sm [&>button]:!bg-transparent [&>button]:!border-none [&>button]:!text-slate-600 dark:[&>button]:!text-slate-300 [&>button:hover]:!bg-slate-100 dark:[&>button:hover]:!bg-slate-700 [&>button]:!rounded-lg [&>button]:!m-1 [&>button>svg]:!fill-current"
           showInteractive={false}
         />
-        <MiniMap 
+        <MiniMap
           className="!bg-white/80 dark:!bg-slate-800/90 !border !border-slate-200/50 dark:!border-white/10 !rounded-xl !shadow-xl backdrop-blur-sm"
           nodeColor={(node) => {
-            const task = tasks.find(t => t.id === node.id);
+            const task = tasks.find((t) => t.id === node.id);
             if (!task) return '#94a3b8';
             switch (task.priority) {
-              case 'HIGH': return '#ef4444';
-              case 'MEDIUM': return '#f59e0b';
-              case 'LOW': return '#10b981';
-              default: return '#94a3b8';
+              case 'HIGH':
+                return '#ef4444';
+              case 'MEDIUM':
+                return '#f59e0b';
+              case 'LOW':
+                return '#10b981';
+              default:
+                return '#94a3b8';
             }
           }}
           maskColor="rgba(0, 0, 0, 0.2)"
           nodeBorderRadius={8}
         />
-        
+
         {/* Instructions Panel */}
         {tasks.length === 0 && (
           <Panel position="top-center" className="pointer-events-none">

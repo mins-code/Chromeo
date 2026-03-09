@@ -1,6 +1,6 @@
 /**
  * Supabase Custom Types & Transformation Layer
- * 
+ *
  * This file provides:
  * 1. Convenience type aliases for database tables
  * 2. Functions to transform snake_case DB types to camelCase frontend types
@@ -104,7 +104,7 @@ export const mapTransactionFromDb = (dbTx: DbTransaction): Transaction => ({
  */
 export const mapRecurringTransactionFromDb = (dbTx: DbTransaction): RecurringTransaction | null => {
   if (!dbTx.frequency || !dbTx.next_due_date) return null;
-  
+
   return {
     id: dbTx.id,
     description: dbTx.description,
@@ -174,7 +174,8 @@ export const mapTaskToDbInsert = (
   location: task.location ?? null,
   dependency_ids: task.dependencyIds,
   is_shared: task.isShared,
-  recurrence: task.recurrence as unknown as Database['public']['Tables']['tasks']['Row']['recurrence'],
+  recurrence:
+    task.recurrence as unknown as Database['public']['Tables']['tasks']['Row']['recurrence'],
   next_recurrence_date: nextRecurrenceDate ?? null,
   notification_enabled: task.notificationEnabled ?? null,
   notification_minutes_before: task.notificationMinutesBefore ?? null,
@@ -197,17 +198,21 @@ export const mapTaskToDbUpdate = (
   if (task.priority !== undefined) update.priority = task.priority;
   if (task.dueDate !== undefined) update.due_date = task.dueDate ?? null;
   if (task.reminderTime !== undefined) update.reminder_time = task.reminderTime ?? null;
-  if (task.subtasks !== undefined) update.subtasks = task.subtasks as unknown as DbTaskUpdate['subtasks'];
+  if (task.subtasks !== undefined)
+    update.subtasks = task.subtasks as unknown as DbTaskUpdate['subtasks'];
   if (task.tags !== undefined) update.tags = task.tags;
   if (task.type !== undefined) update.type = task.type;
   if (task.duration !== undefined) update.duration = task.duration ?? null;
   if (task.location !== undefined) update.location = task.location ?? null;
   if (task.dependencyIds !== undefined) update.dependency_ids = task.dependencyIds;
   if (task.isShared !== undefined) update.is_shared = task.isShared;
-  if (task.recurrence !== undefined) update.recurrence = task.recurrence as unknown as DbTaskUpdate['recurrence'];
+  if (task.recurrence !== undefined)
+    update.recurrence = task.recurrence as unknown as DbTaskUpdate['recurrence'];
   if (nextRecurrenceDate !== undefined) update.next_recurrence_date = nextRecurrenceDate;
-  if (task.notificationEnabled !== undefined) update.notification_enabled = task.notificationEnabled ?? null;
-  if (task.notificationMinutesBefore !== undefined) update.notification_minutes_before = task.notificationMinutesBefore ?? null;
+  if (task.notificationEnabled !== undefined)
+    update.notification_enabled = task.notificationEnabled ?? null;
+  if (task.notificationMinutesBefore !== undefined)
+    update.notification_minutes_before = task.notificationMinutesBefore ?? null;
   if (task.notificationTime !== undefined) update.notification_time = task.notificationTime ?? null;
 
   return update;
@@ -224,7 +229,8 @@ export const mapNoteToDbInsert = (
   title: note.title,
   content: note.content,
   is_checklist: note.isChecklist,
-  checklist_items: note.checklistItems as unknown as Database['public']['Tables']['notes']['Row']['checklist_items'],
+  checklist_items:
+    note.checklistItems as unknown as Database['public']['Tables']['notes']['Row']['checklist_items'],
   is_shared: note.isShared,
 });
 

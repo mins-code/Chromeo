@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Button from './Button';
 import { X, RefreshCw } from 'lucide-react';
@@ -11,16 +10,20 @@ interface RecurringPlanModalProps {
   initialConfig?: RecurrenceConfig;
 }
 
-const RecurringPlanModal: React.FC<RecurringPlanModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  onSave, 
-  initialConfig 
+const RecurringPlanModal: React.FC<RecurringPlanModalProps> = ({
+  isOpen,
+  onClose,
+  onSave,
+  initialConfig,
 }) => {
-  const [frequency, setFrequency] = useState<RecurrenceConfig['frequency']>(initialConfig?.frequency || 'weekly');
+  const [frequency, setFrequency] = useState<RecurrenceConfig['frequency']>(
+    initialConfig?.frequency || 'weekly'
+  );
   const [interval, setInterval] = useState(initialConfig?.interval || 1);
-  const [selectedDays, setSelectedDays] = useState<number[]>(initialConfig?.days || [1, 2, 3, 4, 5]); // Default Mon-Fri
-  
+  const [selectedDays, setSelectedDays] = useState<number[]>(
+    initialConfig?.days || [1, 2, 3, 4, 5]
+  ); // Default Mon-Fri
+
   // Close on Escape key
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -43,10 +46,8 @@ const RecurringPlanModal: React.FC<RecurringPlanModalProps> = ({
   };
 
   const toggleDay = (day: number) => {
-    setSelectedDays(prev => 
-      prev.includes(day) 
-        ? prev.filter(d => d !== day)
-        : [...prev, day].sort()
+    setSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort()
     );
   };
 
@@ -68,7 +69,6 @@ const RecurringPlanModal: React.FC<RecurringPlanModalProps> = ({
         aria-modal="true"
         aria-labelledby="recurring-plan-title"
       >
-        
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/5">
           <h3
@@ -88,7 +88,6 @@ const RecurringPlanModal: React.FC<RecurringPlanModalProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          
           {/* Frequency */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">

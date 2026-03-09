@@ -1,7 +1,7 @@
 /**
  * Notification Service
  * Handles Web Push Notifications for background/offline notifications
- * 
+ *
  * This service uses the Push API to deliver notifications even when:
  * - The browser tab is closed
  * - The PWA is in the background
@@ -71,7 +71,7 @@ export const getPermissionStatus = (): NotificationPermission | 'unsupported' =>
   if (isNativePlatform()) {
     return 'granted';
   }
-  
+
   // On web, check for Web Notification API support
   if (!isSupported()) return 'unsupported';
   return Notification.permission;
@@ -93,10 +93,10 @@ export const requestPermission = async (): Promise<boolean> => {
       return false;
     }
   }
-  
+
   // On web, request browser notification permission
   if (!isSupported()) return false;
-  
+
   try {
     const permission = await Notification.requestPermission();
     return permission === 'granted';
@@ -137,9 +137,7 @@ export const saveSettings = (settings: NotificationSettings): void => {
  */
 const urlBase64ToUint8Array = (base64String: string): Uint8Array => {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const rawData = window.atob(base64);
   const outputArray = new Uint8Array(rawData.length);
   for (let i = 0; i < rawData.length; ++i) {
@@ -173,10 +171,11 @@ export const subscribeToPush = async (): Promise<boolean> => {
     const registration = await navigator.serviceWorker.ready;
 
     // Helper to perform the actual subscribe call
-    const doSubscribe = () => registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
-    });
+    const doSubscribe = () =>
+      registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
+      });
 
     // Check for existing subscription
     let subscription = await registration.pushManager.getSubscription();
@@ -189,13 +188,20 @@ export const subscribeToPush = async (): Promise<boolean> => {
         // holds a stale push registration that no longer matches the VAPID key
         // or the FCM endpoint is invalid. Unsubscribe any residual state and
         // retry once with a fresh subscription.
-        if (subscribeErr?.message?.includes('push service error') ||
-            subscribeErr?.message?.includes('Registration failed')) {
-          logger.warn('Push service error on first subscribe attempt — clearing stale registration and retrying', subscribeErr);
+        if (
+          subscribeErr?.message?.includes('push service error') ||
+          subscribeErr?.message?.includes('Registration failed')
+        ) {
+          logger.warn(
+            'Push service error on first subscribe attempt — clearing stale registration and retrying',
+            subscribeErr
+          );
           try {
             const stale = await registration.pushManager.getSubscription();
             if (stale) await stale.unsubscribe();
-          } catch (_) { /* ignore cleanup errors */ }
+          } catch (_) {
+            /* ignore cleanup errors */
+          }
           subscription = await doSubscribe(); // second attempt
         } else {
           throw subscribeErr;
@@ -204,14 +210,18 @@ export const subscribeToPush = async (): Promise<boolean> => {
     }
 
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       logger.error('User not authenticated');
       return false;
     }
 
     // Check for valid session to avoid 401 errors
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session) {
       logger.error('No valid session');
       return false;
@@ -234,7 +244,10 @@ export const subscribeToPush = async (): Promise<boolean> => {
     logger.info('Push notification subscription successful');
     return true;
   } catch (error) {
-    logger.warn('Error subscribing to push notifications (web push may be unavailable in this browser/network)', error as Error);
+    logger.warn(
+      'Error subscribing to push notifications (web push may be unavailable in this browser/network)',
+      error as Error
+    );
     return false;
   }
 };
@@ -250,7 +263,7 @@ export const unsubscribeFromPush = async (): Promise<boolean> => {
   try {
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
-    
+
     // Capture subscription data before unsubscribing
     const subscriptionJSON = subscription ? subscription.toJSON() : null;
 
@@ -259,8 +272,12 @@ export const unsubscribeFromPush = async (): Promise<boolean> => {
     }
 
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (user && session) {
       await supabase.functions.invoke('push-notification', {
         body: {
@@ -285,7 +302,7 @@ export const unsubscribeFromPush = async (): Promise<boolean> => {
  */
 export const isPushSubscribed = async (): Promise<boolean> => {
   if (!isPushSupported()) return false;
-  
+
   try {
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
@@ -310,7 +327,7 @@ export const sendNotification = async (
 ): Promise<boolean> => {
   if (!isSupported()) return false;
   if (Notification.permission !== 'granted') return false;
-  
+
   const settings = getSettings();
   if (!settings.enabled) return false;
 
@@ -394,10 +411,14 @@ export const scheduleNotification = async (
   if (!PUSH_NOTIFICATIONS_BACKEND_ENABLED) return true;
 
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return true;
 
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session) return true;
 
     const schedulePayload = {
@@ -420,17 +441,19 @@ export const scheduleNotification = async (
       return true;
     }
 
-    const { error } = await supabase.functions.invoke('push-notification', {
-      body: schedulePayload,
-    }).catch(async (err) => {
-      if (err?.message?.includes('401') || err?.status === 401) {
-        return { error: null }; // Silently ignore auth errors — not a network problem
-      }
-      // Network-level failure: persist so flushSyncQueue can retry
-      logger.debug('[Notifications] Network error scheduling — queuing for later', err);
-      await OfflineNotifications.addSyncAction({ action: 'schedule', payload: schedulePayload });
-      return { error: null };
-    });
+    const { error } = await supabase.functions
+      .invoke('push-notification', {
+        body: schedulePayload,
+      })
+      .catch(async (err) => {
+        if (err?.message?.includes('401') || err?.status === 401) {
+          return { error: null }; // Silently ignore auth errors — not a network problem
+        }
+        // Network-level failure: persist so flushSyncQueue can retry
+        logger.debug('[Notifications] Network error scheduling — queuing for later', err);
+        await OfflineNotifications.addSyncAction({ action: 'schedule', payload: schedulePayload });
+        return { error: null };
+      });
 
     if (error) {
       console.debug('Push notification scheduling skipped:', error.message);
@@ -453,14 +476,19 @@ export const cancelNotification = async (taskId: string): Promise<boolean> => {
     await OfflineNotifications.removeCachedNotificationByTaskId(taskId);
     logger.debug(`[Notifications] Removed notification from local cache: ${taskId}`);
   } catch (cacheError) {
-    logger.error('[Notifications] Failed to remove notification from local cache', cacheError as Error);
+    logger.error(
+      '[Notifications] Failed to remove notification from local cache',
+      cacheError as Error
+    );
   }
 
   // Skip server-side cancellation if backend is disabled
   if (!PUSH_NOTIFICATIONS_BACKEND_ENABLED) return true;
 
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session) return true;
 
     const cancelPayload = { action: 'cancel' as const, taskId };
@@ -472,16 +500,18 @@ export const cancelNotification = async (taskId: string): Promise<boolean> => {
       return true;
     }
 
-    const { error } = await supabase.functions.invoke('push-notification', {
-      body: cancelPayload,
-    }).catch(async (err) => {
-      if (err?.message?.includes('401') || err?.status === 401) {
+    const { error } = await supabase.functions
+      .invoke('push-notification', {
+        body: cancelPayload,
+      })
+      .catch(async (err) => {
+        if (err?.message?.includes('401') || err?.status === 401) {
+          return { error: null };
+        }
+        logger.debug('[Notifications] Network error cancelling — queuing for later', err);
+        await OfflineNotifications.addSyncAction({ action: 'cancel', payload: cancelPayload });
         return { error: null };
-      }
-      logger.debug('[Notifications] Network error cancelling — queuing for later', err);
-      await OfflineNotifications.addSyncAction({ action: 'cancel', payload: cancelPayload });
-      return { error: null };
-    });
+      });
 
     if (error) {
       console.debug('Push notification cancellation skipped:', error.message);
@@ -517,7 +547,9 @@ export const flushSyncQueue = async (): Promise<void> => {
 
   for (const action of actions) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) {
         logger.debug('[Notifications] flushSyncQueue: no session, stopping flush');
         break; // All remaining actions need auth too — stop early
@@ -528,7 +560,10 @@ export const flushSyncQueue = async (): Promise<void> => {
       });
 
       if (error) {
-        logger.warn(`[Notifications] flushSyncQueue: action ${action.id} failed, keeping in queue`, error);
+        logger.warn(
+          `[Notifications] flushSyncQueue: action ${action.id} failed, keeping in queue`,
+          error
+        );
         // Leave it in the queue — will retry on next flush
         continue;
       }
@@ -536,7 +571,10 @@ export const flushSyncQueue = async (): Promise<void> => {
       await OfflineNotifications.removeSyncAction(action.id);
       logger.debug(`[Notifications] flushSyncQueue: action ${action.id} replayed and removed`);
     } catch (err) {
-      logger.warn(`[Notifications] flushSyncQueue: network error for action ${action.id}, keeping in queue`, err as Error);
+      logger.warn(
+        `[Notifications] flushSyncQueue: network error for action ${action.id}, keeping in queue`,
+        err as Error
+      );
     }
   }
 };
@@ -586,7 +624,10 @@ export const addToSyncQueue = async (
     } catch (syncError) {
       // Non-fatal: the notification is already in IndexedDB and will fire
       // the next time checkOfflineNotifications runs via the SW interval.
-      logger.warn('[Notifications] Background sync registration failed (may not be supported)', syncError as Error);
+      logger.warn(
+        '[Notifications] Background sync registration failed (may not be supported)',
+        syncError as Error
+      );
     }
   }
 };
@@ -602,7 +643,7 @@ export const cancelAllNotifications = async (): Promise<void> => {
   } catch (error) {
     logger.error('[Notifications] Failed to cleanup local cache', error as Error);
   }
-  
+
   // This would require a backend endpoint to delete all user's scheduled notifications
   logger.debug('Cancel all notifications - server-side not implemented for push');
 };
@@ -628,19 +669,25 @@ export const sendTestNotification = async (): Promise<boolean> => {
   }
 
   const platform = nativeNotifications.getPlatform();
-  logger.info(`[Notifications] sendTestNotification: platform="${platform}", initialized=${initialized}`);
+  logger.info(
+    `[Notifications] sendTestNotification: platform="${platform}", initialized=${initialized}`
+  );
 
   // Native path — Web Notification API is not reliable inside Capacitor WebView
   if (nativeNotifications.isNative()) {
     if (!initialized) {
-      logger.warn('[Notifications] sendTestNotification: native init failed — permission denied or plugin error');
+      logger.warn(
+        '[Notifications] sendTestNotification: native init failed — permission denied or plugin error'
+      );
       return false;
     }
     try {
       // LocalNotifications requires a future scheduledAt date.
       // 5 s gives the OS time to register the alarm and display it.
       const fiveSecondsFromNow = new Date(Date.now() + 5_000);
-      logger.info(`[Notifications] sendTestNotification: scheduling native notification for ${fiveSecondsFromNow.toISOString()}`);
+      logger.info(
+        `[Notifications] sendTestNotification: scheduling native notification for ${fiveSecondsFromNow.toISOString()}`
+      );
       const scheduled = await nativeNotifications.scheduleLocal({
         id: 'test-notification',
         title: 'ChronoDeX Notifications Enabled! 🎉',
@@ -675,7 +722,7 @@ export const scheduleTaskReminder = async (
   soundId?: string
 ): Promise<void> => {
   const settings = getSettings();
-  
+
   // Check if this type of notification is enabled
   if (!settings.enabled) return;
   if (taskType === 'TASK' && !settings.taskReminders) return;
@@ -687,10 +734,10 @@ export const scheduleTaskReminder = async (
   const notifyTime = new Date(reminderTime.getTime() - leadTime * 60 * 1000);
 
   const typeLabels: Record<string, string> = {
-    'TASK': '📋 Task Reminder',
-    'EVENT': '🎉 Upcoming Event',
-    'APPOINTMENT': '📅 Appointment Soon',
-    'REMINDER': '⏰ Reminder',
+    TASK: '📋 Task Reminder',
+    EVENT: '🎉 Upcoming Event',
+    APPOINTMENT: '📅 Appointment Soon',
+    REMINDER: '⏰ Reminder',
   };
 
   const notificationTitle = typeLabels[taskType] || 'Reminder';
@@ -709,22 +756,18 @@ export const scheduleTaskReminder = async (
       data: { taskId, url: '/activities' },
       soundId: resolvedSoundId,
     });
-    logger.debug(`[Notifications] Scheduled native notification for ${notifyTime.toISOString()} with sound: ${resolvedSoundId}`);
+    logger.debug(
+      `[Notifications] Scheduled native notification for ${notifyTime.toISOString()} with sound: ${resolvedSoundId}`
+    );
     return;
   }
 
   // Web Push for browsers (requires server-side scheduling)
-  await scheduleNotification(
-    `task-${taskId}`,
-    notificationTitle,
-    notifyTime,
-    {
-      body: title,
-      taskId: taskId,
-    }
-  );
+  await scheduleNotification(`task-${taskId}`, notificationTitle, notifyTime, {
+    body: title,
+    taskId: taskId,
+  });
 };
-
 
 /**
  * Send budget alert notification
@@ -762,28 +805,28 @@ export const sendBudgetAlert = async (
  */
 export const initializePushNotifications = async (): Promise<boolean> => {
   const settings = getSettings();
-  
+
   // Initialize offline notification database regardless of settings
   // This ensures we can cache notifications for offline use
   try {
     await OfflineNotifications.initDB();
     logger.debug('[Notifications] Offline notification database initialized');
-    
+
     // Cleanup old notifications
     await OfflineNotifications.cleanupOldNotifications();
-    
+
     // Notify service worker to check for any pending notifications
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({
-        type: 'CHECK_NOTIFICATIONS'
+        type: 'CHECK_NOTIFICATIONS',
       });
     }
   } catch (error) {
     logger.error('[Notifications] Failed to initialize offline notifications', error as Error);
   }
-  
+
   if (!settings.enabled) return false;
-  
+
   if (getPermissionStatus() !== 'granted') {
     return false;
   }
@@ -810,7 +853,7 @@ export const getOfflineNotificationStats = async () => {
 export const checkPendingOfflineNotifications = async () => {
   if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
     navigator.serviceWorker.controller.postMessage({
-      type: 'CHECK_NOTIFICATIONS'
+      type: 'CHECK_NOTIFICATIONS',
     });
   }
 };

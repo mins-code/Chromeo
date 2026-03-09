@@ -54,13 +54,13 @@ export const saveChatHistory = (messages: ChatMessage[]): void => {
 export const loadChatHistory = (): ChatMessage[] | null => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    
+
     if (!stored) {
       return null;
     }
 
     const data: StorageData = JSON.parse(stored);
-    
+
     // Check version compatibility
     if (data.version !== STORAGE_VERSION) {
       logger.warn('Chat history version mismatch, clearing old data');
@@ -71,7 +71,7 @@ export const loadChatHistory = (): ChatMessage[] | null => {
     // Check if data is too old
     const age = Date.now() - data.lastUpdated;
     const maxAge = MAX_RETENTION_DAYS * 24 * 60 * 60 * 1000;
-    
+
     if (age > maxAge) {
       logger.warn('Chat history expired, clearing old data');
       clearChatHistory();

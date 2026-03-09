@@ -6,7 +6,11 @@ export const useNotes = () => {
   const queryClient = useQueryClient();
 
   // Fetch all notes
-  const { data: notes = [], isLoading, error } = useQuery({
+  const {
+    data: notes = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['notes'],
     queryFn: NotesService.getNotes,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -32,8 +36,13 @@ export const useNotes = () => {
 
   // Update note mutation
   const updateNoteMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<Omit<Note, 'id' | 'user_id' | 'createdAt' | 'updatedAt'>> }) =>
-      NotesService.updateNote(id, updates),
+    mutationFn: ({
+      id,
+      updates,
+    }: {
+      id: string;
+      updates: Partial<Omit<Note, 'id' | 'user_id' | 'createdAt' | 'updatedAt'>>;
+    }) => NotesService.updateNote(id, updates),
     onMutate: async ({ id, updates }) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['notes'] });
@@ -105,12 +114,19 @@ export const useNotes = () => {
     notes,
     isLoading,
     error,
-    createNote: (title: string, content: string, isChecklist?: boolean, checklistItems?: ChecklistItem[]) =>
-      createNoteMutation.mutateAsync({ title, content, isChecklist, checklistItems }),
-    updateNote: (id: string, updates: Partial<Omit<Note, 'id' | 'user_id' | 'createdAt' | 'updatedAt'>>) =>
-      updateNoteMutation.mutateAsync({ id, updates }),
+    createNote: (
+      title: string,
+      content: string,
+      isChecklist?: boolean,
+      checklistItems?: ChecklistItem[]
+    ) => createNoteMutation.mutateAsync({ title, content, isChecklist, checklistItems }),
+    updateNote: (
+      id: string,
+      updates: Partial<Omit<Note, 'id' | 'user_id' | 'createdAt' | 'updatedAt'>>
+    ) => updateNoteMutation.mutateAsync({ id, updates }),
     deleteNote: (id: string) => deleteNoteMutation.mutateAsync(id),
-    shareNote: (noteId: string, partnerId: string) => shareNoteMutation.mutateAsync({ noteId, partnerId }),
+    shareNote: (noteId: string, partnerId: string) =>
+      shareNoteMutation.mutateAsync({ noteId, partnerId }),
     unshareNote: (shareId: string) => unshareNoteMutation.mutateAsync(shareId),
   };
 };

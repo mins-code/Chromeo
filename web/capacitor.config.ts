@@ -21,10 +21,7 @@ const config: CapacitorConfig = {
   },
   android: {
     // Include all necessary permissions
-    includePlugins: [
-      '@capacitor/local-notifications',
-      '@capacitor/push-notifications',
-    ],
+    includePlugins: ['@capacitor/local-notifications', '@capacitor/push-notifications'],
   },
 };
 

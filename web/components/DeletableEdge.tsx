@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-import {
-  BaseEdge,
-  EdgeLabelRenderer,
-  getSmoothStepPath,
-  Edge,
-} from '@xyflow/react';
+import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, Edge } from '@xyflow/react';
 import type { EdgeProps } from '@xyflow/react';
 import { X, Plus } from 'lucide-react';
 
@@ -58,7 +53,7 @@ const DeletableEdge: React.FC<EdgeProps<DeletableEdgeType>> = ({
   });
 
   // Get stroke color from style or use default
-  const strokeColor = (style as React.CSSProperties)?.stroke as string || '#6366f1';
+  const strokeColor = ((style as React.CSSProperties)?.stroke as string) || '#6366f1';
 
   const handleDelete = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -138,11 +133,11 @@ const DeletableEdge: React.FC<EdgeProps<DeletableEdgeType>> = ({
           )}
           {/* Time gap badge - always visible if data exists */}
           {hasTimeGap && (
-            <div 
+            <div
               className={`px-2.5 py-1 rounded-lg text-xs font-semibold shadow-lg backdrop-blur-sm border ${
-                isOverlap 
-                  ? 'bg-red-500/80 text-white border-red-400/50' 
-                  : isShortGap 
+                isOverlap
+                  ? 'bg-red-500/80 text-white border-red-400/50'
+                  : isShortGap
                     ? 'bg-amber-500/80 text-white border-amber-400/50'
                     : 'bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 border-slate-200/50 dark:border-white/10'
               }`}

@@ -1,97 +1,101 @@
-
-import { Transaction } from "../types";
-import { supabase } from "./supabaseClient";
-import { categorizeTransaction } from "./geminiService";
-import { logger } from "../utils/logger";
+import { Transaction } from '../types';
+import { supabase } from './supabaseClient';
+import { categorizeTransaction } from './geminiService';
+import { logger } from '../utils/logger';
 
 // Regex patterns for Indian Bank SMS
 const REGEX_PATTERNS = {
-    // Matches: INR 1,200.00 or Rs. 500 or Rs 500
-    AMOUNT: /(?:INR|Rs\.?)\s*([\d,]+\.?\d*)/i,
-    
-    // Keywords for types
-    DEBIT: /(?:debited|spent|paid|sent|purchase|dr)/i,
-    CREDIT: /(?:credited|deposited|received|added|cr|salary)/i,
-    
-    // Attempt to find merchant/source: "at STARBUCKS" or "to AMAZON"
-    MERCHANT: /(?:at|to|from)\s+([A-Za-z0-9\s\*\.\-]+?)(?:\s+on|with|using|$)/i
+  // Matches: INR 1,200.00 or Rs. 500 or Rs 500
+  AMOUNT: /(?:INR|Rs\.?)\s*([\d,]+\.?\d*)/i,
+
+  // Keywords for types
+  DEBIT: /(?:debited|spent|paid|sent|purchase|dr)/i,
+  CREDIT: /(?:credited|deposited|received|added|cr|salary)/i,
+
+  // Attempt to find merchant/source: "at STARBUCKS" or "to AMAZON"
+  MERCHANT: /(?:at|to|from)\s+([A-Za-z0-9\s\*\.\-]+?)(?:\s+on|with|using|$)/i,
 };
 
 export interface ParsedSMS {
-    amount: number;
-    type: 'income' | 'expense';
-    description: string;
-    originalText: string;
-    category?: string;
+  amount: number;
+  type: 'income' | 'expense';
+  description: string;
+  originalText: string;
+  category?: string;
 }
 
 export const parseSMS = (text: string, sender: string): ParsedSMS | null => {
-    // 1. Check for Amount
-    const amountMatch = text.match(REGEX_PATTERNS.AMOUNT);
-    if (!amountMatch) return null;
+  // 1. Check for Amount
+  const amountMatch = text.match(REGEX_PATTERNS.AMOUNT);
+  if (!amountMatch) return null;
 
-    const amountStr = amountMatch[1].replace(/,/g, ''); // Remove commas
-    const amount = parseFloat(amountStr);
-    
-    if (isNaN(amount) || amount === 0) return null;
+  const amountStr = amountMatch[1].replace(/,/g, ''); // Remove commas
+  const amount = parseFloat(amountStr);
 
-    // 2. Determine Type
-    let type: 'income' | 'expense' = 'expense'; // Default to expense if ambiguous but usually safe
-    if (REGEX_PATTERNS.CREDIT.test(text)) {
-        type = 'income';
-    } else if (REGEX_PATTERNS.DEBIT.test(text)) {
-        type = 'expense';
-    } else {
-        // If neither keyword found, it might not be a transactional SMS
-        return null;
-    }
+  if (isNaN(amount) || amount === 0) return null;
 
-    // 3. Extract Description (Merchant or Bank info)
-    let description = sender; // Fallback to sender ID
-    const merchantMatch = text.match(REGEX_PATTERNS.MERCHANT);
-    
-    if (merchantMatch && merchantMatch[1]) {
-        description = merchantMatch[1].trim();
-    } else {
-        // Fallback: Use first few words or Sender
-        description = `${type === 'income' ? 'Received from' : 'Paid to'} Unknown`;
-    }
+  // 2. Determine Type
+  let type: 'income' | 'expense' = 'expense'; // Default to expense if ambiguous but usually safe
+  if (REGEX_PATTERNS.CREDIT.test(text)) {
+    type = 'income';
+  } else if (REGEX_PATTERNS.DEBIT.test(text)) {
+    type = 'expense';
+  } else {
+    // If neither keyword found, it might not be a transactional SMS
+    return null;
+  }
 
-    // Clean description
-    description = description.replace(/\s+/g, ' ').trim();
+  // 3. Extract Description (Merchant or Bank info)
+  let description = sender; // Fallback to sender ID
+  const merchantMatch = text.match(REGEX_PATTERNS.MERCHANT);
 
-    return {
-        amount,
-        type,
-        description,
-        originalText: text
-    };
+  if (merchantMatch && merchantMatch[1]) {
+    description = merchantMatch[1].trim();
+  } else {
+    // Fallback: Use first few words or Sender
+    description = `${type === 'income' ? 'Received from' : 'Paid to'} Unknown`;
+  }
+
+  // Clean description
+  description = description.replace(/\s+/g, ' ').trim();
+
+  return {
+    amount,
+    type,
+    description,
+    originalText: text,
+  };
 };
 
-export const processAndSaveSMS = async (text: string, sender: string): Promise<ParsedSMS | null> => {
-    const parsed = parseSMS(text, sender);
-    if (!parsed) return null;
+export const processAndSaveSMS = async (
+  text: string,
+  sender: string
+): Promise<ParsedSMS | null> => {
+  const parsed = parseSMS(text, sender);
+  if (!parsed) return null;
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return parsed; // Just return parsed data if not auth, for UI display
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return parsed; // Just return parsed data if not auth, for UI display
 
-    // Auto-categorize the transaction using AI
-    const category = await categorizeTransaction(parsed.description);
-    parsed.category = category;
+  // Auto-categorize the transaction using AI
+  const category = await categorizeTransaction(parsed.description);
+  parsed.category = category;
 
-    // Save to DB with category
-    const { error } = await supabase.from('transactions').insert({
-        user_id: user.id,
-        description: parsed.description,
-        amount: parsed.amount,
-        type: parsed.type,
-        date: new Date().toISOString(),
-        category: category
-    });
+  // Save to DB with category
+  const { error } = await supabase.from('transactions').insert({
+    user_id: user.id,
+    description: parsed.description,
+    amount: parsed.amount,
+    type: parsed.type,
+    date: new Date().toISOString(),
+    category: category,
+  });
 
-    if (error) {
-        logger.error('Error saving SMS transaction', error);
-    }
+  if (error) {
+    logger.error('Error saving SMS transaction', error);
+  }
 
-    return parsed;
+  return parsed;
 };

@@ -1,4 +1,3 @@
-
 import React, { useId } from 'react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -7,16 +6,22 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   helperText?: string;
 }
 
-const Input: React.FC<InputProps> = ({ label, error, helperText, className = '', id, ...props }) => {
+const Input: React.FC<InputProps> = ({
+  label,
+  error,
+  helperText,
+  className = '',
+  id,
+  ...props
+}) => {
   const generatedId = useId();
   const inputId = id || generatedId;
   const errorId = `${inputId}-error`;
   const helperId = `${inputId}-helper`;
 
-  const ariaDescribedBy = [
-    error ? errorId : undefined,
-    helperText ? helperId : undefined
-  ].filter(Boolean).join(' ') || undefined;
+  const ariaDescribedBy =
+    [error ? errorId : undefined, helperText ? helperId : undefined].filter(Boolean).join(' ') ||
+    undefined;
 
   return (
     <div className="w-full">
@@ -46,10 +51,7 @@ const Input: React.FC<InputProps> = ({ label, error, helperText, className = '',
           {error}
         </p>
       ) : helperText ? (
-        <p
-          id={helperId}
-          className="mt-1 text-xs text-slate-500 dark:text-slate-400 ml-1 font-mono"
-        >
+        <p id={helperId} className="mt-1 text-xs text-slate-500 dark:text-slate-400 ml-1 font-mono">
           {helperText}
         </p>
       ) : null}

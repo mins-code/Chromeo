@@ -24,11 +24,16 @@ const HandleWithAdd: React.FC<{
   // Position the add button based on handle position
   const getButtonPosition = () => {
     switch (position) {
-      case Position.Top: return { bottom: '100%', left: '50%', transform: 'translate(-50%, -4px)' };
-      case Position.Bottom: return { top: '100%', left: '50%', transform: 'translate(-50%, 4px)' };
-      case Position.Left: return { right: '100%', top: '50%', transform: 'translate(-4px, -50%)' };
-      case Position.Right: return { left: '100%', top: '50%', transform: 'translate(4px, -50%)' };
-      default: return {};
+      case Position.Top:
+        return { bottom: '100%', left: '50%', transform: 'translate(-50%, -4px)' };
+      case Position.Bottom:
+        return { top: '100%', left: '50%', transform: 'translate(-50%, 4px)' };
+      case Position.Left:
+        return { right: '100%', top: '50%', transform: 'translate(-4px, -50%)' };
+      case Position.Right:
+        return { left: '100%', top: '50%', transform: 'translate(4px, -50%)' };
+      default:
+        return {};
     }
   };
 
@@ -72,11 +77,16 @@ const HandleWithAdd: React.FC<{
 // Get container position for handle wrapper
 const getHandleContainerPosition = (position: Position): React.CSSProperties => {
   switch (position) {
-    case Position.Top: return { top: 0, left: '50%', transform: 'translate(-50%, -50%)' };
-    case Position.Bottom: return { bottom: 0, left: '50%', transform: 'translate(-50%, 50%)' };
-    case Position.Left: return { left: 0, top: '50%', transform: 'translate(-50%, -50%)' };
-    case Position.Right: return { right: 0, top: '50%', transform: 'translate(50%, -50%)' };
-    default: return {};
+    case Position.Top:
+      return { top: 0, left: '50%', transform: 'translate(-50%, -50%)' };
+    case Position.Bottom:
+      return { bottom: 0, left: '50%', transform: 'translate(-50%, 50%)' };
+    case Position.Left:
+      return { left: 0, top: '50%', transform: 'translate(-50%, -50%)' };
+    case Position.Right:
+      return { right: 0, top: '50%', transform: 'translate(50%, -50%)' };
+    default:
+      return {};
   }
 };
 
@@ -85,17 +95,31 @@ const TaskNode: React.FC<TaskNodeProps> = ({ data }) => {
 
   // Priority colors
   const priorityConfig = {
-    HIGH: { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-600 dark:text-red-400', dot: 'bg-red-500' },
-    MEDIUM: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/30', text: 'text-yellow-600 dark:text-yellow-400', dot: 'bg-yellow-500' },
-    LOW: { bg: 'bg-green-500/10', border: 'border-green-500/30', text: 'text-green-600 dark:text-green-400', dot: 'bg-green-500' },
+    HIGH: {
+      bg: 'bg-red-500/10',
+      border: 'border-red-500/30',
+      text: 'text-red-600 dark:text-red-400',
+      dot: 'bg-red-500',
+    },
+    MEDIUM: {
+      bg: 'bg-yellow-500/10',
+      border: 'border-yellow-500/30',
+      text: 'text-yellow-600 dark:text-yellow-400',
+      dot: 'bg-yellow-500',
+    },
+    LOW: {
+      bg: 'bg-green-500/10',
+      border: 'border-green-500/30',
+      text: 'text-green-600 dark:text-green-400',
+      dot: 'bg-green-500',
+    },
   };
 
   const config = priorityConfig[task.priority] || priorityConfig.LOW;
 
   // Status icon
-  const StatusIcon = task.status === 'DONE' ? CheckCircle2 : 
-                     task.status === 'IN_PROGRESS' ? AlertCircle : 
-                     Clock;
+  const StatusIcon =
+    task.status === 'DONE' ? CheckCircle2 : task.status === 'IN_PROGRESS' ? AlertCircle : Clock;
 
   const handleCreateTask = (position: 'top' | 'bottom' | 'left' | 'right') => {
     if (onCreateFromHandle) {
@@ -104,7 +128,7 @@ const TaskNode: React.FC<TaskNodeProps> = ({ data }) => {
   };
 
   return (
-    <div 
+    <div
       onClick={onClick}
       className={`relative bg-white dark:bg-slate-800 rounded-xl border-2 ${config.border} shadow-lg hover:shadow-xl transition-all cursor-pointer min-w-[240px] max-w-[280px]`}
     >
@@ -135,7 +159,9 @@ const TaskNode: React.FC<TaskNodeProps> = ({ data }) => {
       />
 
       {/* Header */}
-      <div className={`${config.bg} px-4 py-2 border-b ${config.border} flex items-center justify-between`}>
+      <div
+        className={`${config.bg} px-4 py-2 border-b ${config.border} flex items-center justify-between`}
+      >
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${config.dot}`} />
           <span className={`text-xs font-bold uppercase tracking-wide ${config.text}`}>
@@ -153,9 +179,11 @@ const TaskNode: React.FC<TaskNodeProps> = ({ data }) => {
       {/* Content */}
       <div className="p-4 space-y-2">
         {/* Title */}
-        <h4 className={`font-semibold text-slate-800 dark:text-slate-100 line-clamp-2 ${
-          task.status === 'DONE' ? 'line-through opacity-60' : ''
-        }`}>
+        <h4
+          className={`font-semibold text-slate-800 dark:text-slate-100 line-clamp-2 ${
+            task.status === 'DONE' ? 'line-through opacity-60' : ''
+          }`}
+        >
           <button
             type="button"
             className="nodrag text-left w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-sm hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
@@ -205,21 +233,21 @@ const TaskNode: React.FC<TaskNodeProps> = ({ data }) => {
           <div className="mt-2">
             <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
               <span id={`progress-label-${task.id}`}>
-                {task.subtasks.filter(s => s.isCompleted).length}/{task.subtasks.length} subtasks
+                {task.subtasks.filter((s) => s.isCompleted).length}/{task.subtasks.length} subtasks
               </span>
             </div>
             <div
               role="progressbar"
-              aria-valuenow={task.subtasks.filter(s => s.isCompleted).length}
+              aria-valuenow={task.subtasks.filter((s) => s.isCompleted).length}
               aria-valuemin={0}
               aria-valuemax={task.subtasks.length}
               aria-labelledby={`progress-label-${task.id}`}
               className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden"
             >
-              <div 
+              <div
                 className="h-full bg-indigo-500 rounded-full transition-all"
-                style={{ 
-                  width: `${(task.subtasks.filter(s => s.isCompleted).length / task.subtasks.length) * 100}%` 
+                style={{
+                  width: `${(task.subtasks.filter((s) => s.isCompleted).length / task.subtasks.length) * 100}%`,
                 }}
               />
             </div>

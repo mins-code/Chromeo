@@ -45,7 +45,7 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
     if (!isOpen || !isRunning || timeRemaining <= 0) return;
 
     const interval = setInterval(() => {
-      setTimeRemaining(prev => {
+      setTimeRemaining((prev) => {
         if (prev <= 1) {
           setIsRunning(false);
           setIsTimerComplete(true);
@@ -81,18 +81,18 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
       setTimeRemaining(DEFAULT_FOCUS_TIME);
       setIsTimerComplete(false);
       setIsRunning(true);
-      setA11yStatus("Timer restarted");
+      setA11yStatus('Timer restarted');
     } else {
-      setIsRunning(prev => {
+      setIsRunning((prev) => {
         const nextState = !prev;
-        setA11yStatus(nextState ? "Timer resumed" : "Timer paused");
+        setA11yStatus(nextState ? 'Timer resumed' : 'Timer paused');
         return nextState;
       });
     }
   }, [isTimerComplete]);
 
   const addFiveMinutes = useCallback(() => {
-    setTimeRemaining(prev => {
+    setTimeRemaining((prev) => {
       const next = prev + 5 * 60;
       const mins = Math.floor(next / 60);
       setA11yStatus(`Added 5 minutes. ${mins} minutes remaining.`);
@@ -105,7 +105,7 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
   }, [isTimerComplete]);
 
   const handleComplete = useCallback(() => {
-    setA11yStatus("Task completed");
+    setA11yStatus('Task completed');
     onComplete(task);
     onClose();
   }, [task, onComplete, onClose]);
@@ -186,12 +186,12 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
 
         {/* Timer Display */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span 
+          <span
             role="timer"
             aria-live="off"
             className={`font-mono font-bold tracking-tight transition-all duration-300 ${
-              isTimerComplete 
-                ? 'text-6xl sm:text-7xl text-emerald-400 animate-pulse' 
+              isTimerComplete
+                ? 'text-6xl sm:text-7xl text-emerald-400 animate-pulse'
                 : 'text-7xl sm:text-9xl text-white'
             }`}
           >
@@ -211,9 +211,7 @@ const FocusSession: React.FC<FocusSessionProps> = ({ task, isOpen, onClose, onCo
           {task.title}
         </h1>
         {task.description && (
-          <p className="text-slate-400 text-base sm:text-lg line-clamp-3">
-            {task.description}
-          </p>
+          <p className="text-slate-400 text-base sm:text-lg line-clamp-3">{task.description}</p>
         )}
       </div>
 

@@ -39,13 +39,13 @@ class AICache {
    */
   get<T>(key: string): T | null {
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       return null;
     }
 
     const isExpired = Date.now() - entry.timestamp > entry.ttl;
-    
+
     if (isExpired) {
       this.cache.delete(key);
       return null;
@@ -81,7 +81,7 @@ class AICache {
       }
     });
 
-    keysToDelete.forEach(key => this.cache.delete(key));
+    keysToDelete.forEach((key) => this.cache.delete(key));
   }
 
   /**

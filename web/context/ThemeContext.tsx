@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, PropsWithChildren, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  PropsWithChildren,
+  useCallback,
+} from 'react';
 import { ThemeOption } from '../types';
 import { supabase } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
@@ -31,14 +38,14 @@ export const ThemeProvider: React.FC<PropsWithChildren> = ({ children }) => {
           .select('theme')
           .eq('user_id', session.user.id)
           .single();
-        
+
         if (data?.theme) {
           applyThemeToDOM(data.theme as ThemeOption);
           setThemeState(data.theme as ThemeOption);
           return;
         }
       }
-      
+
       // Fallback to localStorage
       const savedTheme = localStorage.getItem('chronodex_theme') as ThemeOption | null;
       if (savedTheme) {
@@ -51,7 +58,12 @@ export const ThemeProvider: React.FC<PropsWithChildren> = ({ children }) => {
   }, [session]);
 
   const applyThemeToDOM = (newTheme: ThemeOption) => {
-    document.documentElement.classList.remove('dark', 'theme-cyberpunk', 'theme-sunset', 'theme-onepiece');
+    document.documentElement.classList.remove(
+      'dark',
+      'theme-cyberpunk',
+      'theme-sunset',
+      'theme-onepiece'
+    );
 
     if (newTheme === 'dark') {
       document.documentElement.classList.add('dark');
@@ -66,19 +78,18 @@ export const ThemeProvider: React.FC<PropsWithChildren> = ({ children }) => {
     }
   };
 
-  const setTheme = useCallback((newTheme: ThemeOption, saveToDb = true) => {
-    setThemeState(newTheme);
-    localStorage.setItem('chronodex_theme', newTheme);
-    applyThemeToDOM(newTheme);
+  const setTheme = useCallback(
+    (newTheme: ThemeOption, saveToDb = true) => {
+      setThemeState(newTheme);
+      localStorage.setItem('chronodex_theme', newTheme);
+      applyThemeToDOM(newTheme);
 
-    if (saveToDb && session?.user) {
-      supabase.from('user_settings').upsert({ user_id: session.user.id, theme: newTheme }).then();
-    }
-  }, [session]);
-
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
-      {children}
-    </ThemeContext.Provider>
+      if (saveToDb && session?.user) {
+        supabase.from('user_settings').upsert({ user_id: session.user.id, theme: newTheme }).then();
+      }
+    },
+    [session]
   );
+
+  return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>;
 };

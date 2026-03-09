@@ -1,10 +1,10 @@
 /**
  * Native Notification Service
- * 
+ *
  * Provides a unified interface for notifications on both web and native platforms.
  * On web: Uses Web Push API (existing notificationService.ts)
  * On native (Android): Uses Capacitor Local Notifications for reliable background notifications
- * 
+ *
  * Local notifications work offline and don't require a server - they're scheduled
  * directly on the device, just like native apps!
  */
@@ -89,7 +89,7 @@ class NativeNotificationService {
       // Dynamic import to avoid issues in web context
       const { Capacitor } = await import('@capacitor/core');
       this.Capacitor = Capacitor;
-      
+
       if (Capacitor.isNativePlatform()) {
         this.platform = Capacitor.getPlatform() as 'android' | 'ios';
         logger.info(`[NativeNotifications] Native platform detected: ${this.platform}`);
@@ -133,14 +133,14 @@ class NativeNotificationService {
       // Dynamic import Capacitor plugins
       logger.debug('[NativeNotifications] Importing LocalNotifications plugin...');
       const { LocalNotifications } = await import('@capacitor/local-notifications');
-      
+
       this.LocalNotifications = LocalNotifications;
 
       // Request permission for local notifications
       logger.debug('[NativeNotifications] Requesting local notification permissions...');
       const localPerm = await LocalNotifications.requestPermissions();
       logger.info(`[NativeNotifications] Local permission status: ${localPerm.display}`);
-      
+
       if (localPerm.display !== 'granted') {
         logger.warn('[NativeNotifications] Local notification permission denied');
         return false;
@@ -157,7 +157,7 @@ class NativeNotificationService {
         // Without it, calling register() crashes the app on some devices.
         // We are disabling this by default to prevent crashes for users without Firebase.
         // Uncomment the code below ONLY if you have set up Firebase.
-        
+
         /*
         const { PushNotifications } = await import('@capacitor/push-notifications');
         this.PushNotifications = PushNotifications;
@@ -208,13 +208,18 @@ class NativeNotificationService {
       } catch (pushError) {
         // This is expected if google-services.json is missing or Firebase isn't configured
         // The app will continue to work with Local Notifications only
-        logger.info('[NativeNotifications] Push notifications not available (Firebase not configured). Local notifications will work normally.');
+        logger.info(
+          '[NativeNotifications] Push notifications not available (Firebase not configured). Local notifications will work normally.'
+        );
         // Don't log as error since this is expected behavior
       }
 
       // Listen for local notification tap
       LocalNotifications.addListener('localNotificationActionPerformed', (action: unknown) => {
-        logger.info('[NativeNotifications] Local notification tapped:', action as Record<string, unknown>);
+        logger.info(
+          '[NativeNotifications] Local notification tapped:',
+          action as Record<string, unknown>
+        );
       });
 
       this.initialized = true;
@@ -302,23 +307,26 @@ class NativeNotificationService {
   private async saveFcmToken(token: string): Promise<void> {
     try {
       const { supabase } = await import('./supabaseClient');
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
         logger.warn('[NativeNotifications] Cannot save FCM token: No user');
         return;
       }
 
-      const { error } = await supabase
-        .from('push_subscriptions')
-        .upsert({
+      const { error } = await supabase.from('push_subscriptions').upsert(
+        {
           user_id: user.id,
           fcm_token: token,
           platform: this.platform,
           updated_at: new Date().toISOString(),
-        }, {
+        },
+        {
           onConflict: 'user_id',
-        });
+        }
+      );
 
       if (error) {
         logger.error('[NativeNotifications] Failed to save FCM token', error);
@@ -350,9 +358,9 @@ class NativeNotificationService {
     try {
       // Generate a numeric ID from the string ID
       const numericId = this.stringToNumericId(notification.id);
-      
+
       const scheduleAt = notification.scheduledAt || new Date();
-      
+
       // Don't schedule if time has passed
       if (scheduleAt.getTime() <= Date.now()) {
         logger.debug(`[NativeNotifications] Skipping past notification: ${notification.title}`);
@@ -360,21 +368,25 @@ class NativeNotificationService {
       }
 
       await this.LocalNotifications.schedule({
-        notifications: [{
-          id: numericId,
-          title: notification.title,
-          body: notification.body,
-          schedule: { at: scheduleAt },
-          extra: notification.data,
-          smallIcon: 'ic_stat_icon',
-          largeIcon: 'ic_launcher',
-          // Use the task-specific channel (sound). Falls back to 'sound_default'
-          // which maps to the standard device notification sound.
-          channelId: notification.soundId || 'sound_default',
-        }],
+        notifications: [
+          {
+            id: numericId,
+            title: notification.title,
+            body: notification.body,
+            schedule: { at: scheduleAt },
+            extra: notification.data,
+            smallIcon: 'ic_stat_icon',
+            largeIcon: 'ic_launcher',
+            // Use the task-specific channel (sound). Falls back to 'sound_default'
+            // which maps to the standard device notification sound.
+            channelId: notification.soundId || 'sound_default',
+          },
+        ],
       });
 
-      logger.debug(`[NativeNotifications] Scheduled: "${notification.title}" for ${scheduleAt.toISOString()}`);
+      logger.debug(
+        `[NativeNotifications] Scheduled: "${notification.title}" for ${scheduleAt.toISOString()}`
+      );
       return true;
     } catch (error) {
       logger.error('[NativeNotifications] Failed to schedule local notification', error as Error);
@@ -415,7 +427,9 @@ class NativeNotificationService {
       const pending = await this.LocalNotifications.getPending();
       if (pending.notifications.length > 0) {
         await this.LocalNotifications.cancel({ notifications: pending.notifications });
-        logger.debug(`[NativeNotifications] Cancelled ${pending.notifications.length} notifications`);
+        logger.debug(
+          `[NativeNotifications] Cancelled ${pending.notifications.length} notifications`
+        );
       }
     } catch (error) {
       logger.error('[NativeNotifications] Failed to cancel all notifications', error as Error);
@@ -430,7 +444,7 @@ class NativeNotificationService {
     let hash = 0;
     for (let i = 0; i < id.length; i++) {
       const char = id.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     // Ensure positive number and limit to safe range

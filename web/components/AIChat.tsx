@@ -1,7 +1,29 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, XCircle, Check, Pencil, Trash2, RefreshCw, Copy, CheckCheck, ImagePlus, X, Image } from 'lucide-react';
+import {
+  Send,
+  Bot,
+  User,
+  XCircle,
+  Check,
+  Pencil,
+  Trash2,
+  RefreshCw,
+  Copy,
+  CheckCheck,
+  ImagePlus,
+  X,
+  Image,
+} from 'lucide-react';
 import { chatWithAI, parseTransactionScreenshot } from '../services/geminiService';
-import { ChatMessage, Task, TaskStatus, TaskType, SuggestedPrompt, Routine, ChecklistItem } from '../types';
+import {
+  ChatMessage,
+  Task,
+  TaskStatus,
+  TaskType,
+  SuggestedPrompt,
+  Routine,
+  ChecklistItem,
+} from '../types';
 import * as BudgetService from '../services/budgetService';
 import * as RoutineService from '../services/routineService';
 import * as NotesService from '../services/notesService';
@@ -17,8 +39,16 @@ interface AIChatProps {
 }
 
 interface AIDraftItem {
-    category: 'TASK' | 'EVENT' | 'APPOINTMENT' | 'REMINDER' | 'TRANSACTION' | 'BUDGET_UPDATE' | 'ROUTINE' | 'NOTE';
-    data: any;
+  category:
+    | 'TASK'
+    | 'EVENT'
+    | 'APPOINTMENT'
+    | 'REMINDER'
+    | 'TRANSACTION'
+    | 'BUDGET_UPDATE'
+    | 'ROUTINE'
+    | 'NOTE';
+  data: any;
 }
 
 const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
@@ -45,7 +75,11 @@ const renderMessageText = (text: string) => {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((part, index) => {
     if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={index} className="font-bold text-slate-900 dark:text-brand-300">{part.substring(2, part.length - 2)}</strong>;
+      return (
+        <strong key={index} className="font-bold text-slate-900 dark:text-brand-300">
+          {part.substring(2, part.length - 2)}
+        </strong>
+      );
     }
     return part;
   });
@@ -101,30 +135,43 @@ interface ChatMessageItemProps {
   onDiscardDraft: (msgId: string, index: number) => void;
 }
 
-const ChatMessageItem = React.memo(({
-  msg,
-  drafts,
-  isCopied,
-  onRetry,
-  onCopy,
-  onConfirmDraft,
-  onEditDraft,
-  onDiscardDraft
-}: ChatMessageItemProps) => {
-  return (
-    <div>
-        <div className={`flex gap-4 animate-slide-up ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-          <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg ${
-              msg.role === 'user' ? 'bg-gradient-to-br from-brand-500 to-brand-600' : 'bg-gradient-to-br from-purple-500 to-indigo-600'
-          }`}>
-              {msg.role === 'user' ? <User size={16} className="text-white" /> : <Bot size={16} className="text-white" />}
+const ChatMessageItem = React.memo(
+  ({
+    msg,
+    drafts,
+    isCopied,
+    onRetry,
+    onCopy,
+    onConfirmDraft,
+    onEditDraft,
+    onDiscardDraft,
+  }: ChatMessageItemProps) => {
+    return (
+      <div>
+        <div
+          className={`flex gap-4 animate-slide-up ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+        >
+          <div
+            className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg ${
+              msg.role === 'user'
+                ? 'bg-gradient-to-br from-brand-500 to-brand-600'
+                : 'bg-gradient-to-br from-purple-500 to-indigo-600'
+            }`}
+          >
+            {msg.role === 'user' ? (
+              <User size={16} className="text-white" />
+            ) : (
+              <Bot size={16} className="text-white" />
+            )}
           </div>
           <div className="flex-1 max-w-[85%]">
-            <div className={`rounded-2xl px-5 py-3.5 text-sm leading-relaxed shadow-md whitespace-pre-wrap ${
+            <div
+              className={`rounded-2xl px-5 py-3.5 text-sm leading-relaxed shadow-md whitespace-pre-wrap ${
                 msg.role === 'user'
-                ? 'bg-white/90 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-tr-none border border-slate-200 dark:border-white/10'
-                : 'bg-white/80 dark:bg-slate-800 border border-slate-200 dark:border-white/5 text-slate-700 dark:text-slate-200 rounded-tl-none'
-            }`}>
+                  ? 'bg-white/90 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-tr-none border border-slate-200 dark:border-white/10'
+                  : 'bg-white/80 dark:bg-slate-800 border border-slate-200 dark:border-white/5 text-slate-700 dark:text-slate-200 rounded-tl-none'
+              }`}
+            >
               {renderMessageText(msg.text)}
               {msg.status === 'error' && (
                 <div className="mt-2 pt-2 border-t border-white/20 dark:border-white/10 flex items-center gap-2">
@@ -142,7 +189,9 @@ const ChatMessageItem = React.memo(({
               )}
             </div>
             <div className="flex items-center gap-2 mt-1 px-2">
-              <span className="text-xs text-slate-500 dark:text-slate-400">{getRelativeTime(msg.timestamp)}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {getRelativeTime(msg.timestamp)}
+              </span>
               {msg.status === 'sent' && (
                 <button
                   onClick={() => onCopy(msg.text, msg.id)}
@@ -158,56 +207,73 @@ const ChatMessageItem = React.memo(({
         </div>
 
         {drafts && drafts.length > 0 && (
-            <div className="ml-14 mt-4 max-w-[85%] animate-scale-in space-y-3" role="list" aria-label="Draft items">
-                {drafts.map((draft, idx) => (
-                    <div key={idx} className="bg-white/80 dark:bg-slate-800/80 border border-brand-500/30 rounded-xl p-4 shadow-xl backdrop-blur-md" role="listitem">
-                        <div className="flex justify-between items-start mb-2">
-                            <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-600 dark:text-brand-400">{draft.category}</span>
-                            <div className="flex gap-1" role="group" aria-label="Draft actions">
-                                {['TASK', 'EVENT', 'APPOINTMENT', 'REMINDER'].includes(draft.category) && (
-                                  <button
-                                    onClick={() => onEditDraft(msg.id, idx)}
-                                    className="p-1.5 text-blue-500 hover:bg-blue-500/10 rounded transition-colors"
-                                    title="Edit before saving"
-                                    aria-label="Edit draft"
-                                  >
-                                    <Pencil size={16} />
-                                  </button>
-                                )}
-                                <button
-                                  onClick={() => onConfirmDraft(msg.id, idx)}
-                                  className="p-1.5 text-emerald-500 hover:bg-emerald-500/10 rounded transition-colors"
-                                  title="Confirm and Save"
-                                  aria-label="Confirm and save draft"
-                                >
-                                  <Check size={16} />
-                                </button>
-                                <button
-                                  onClick={() => onDiscardDraft(msg.id, idx)}
-                                  className="p-1.5 text-red-500 hover:bg-red-500/10 rounded transition-colors"
-                                  title="Discard"
-                                  aria-label="Discard draft"
-                                >
-                                  <XCircle size={16} />
-                                </button>
-                            </div>
-                        </div>
-                        <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2">{draft.data.title || draft.data.description}</h4>
-                        {draft.data.description && draft.data.title && (
-                          <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">{draft.data.description}</p>
-                        )}
-                        <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-400">
-                          {renderDraftDetails(draft).map((detail, i) => (
-                            <span key={i} className="bg-slate-100 dark:bg-slate-700/50 px-2 py-0.5 rounded">{detail}</span>
-                          ))}
-                        </div>
-                    </div>
-                ))}
-            </div>
+          <div
+            className="ml-14 mt-4 max-w-[85%] animate-scale-in space-y-3"
+            role="list"
+            aria-label="Draft items"
+          >
+            {drafts.map((draft, idx) => (
+              <div
+                key={idx}
+                className="bg-white/80 dark:bg-slate-800/80 border border-brand-500/30 rounded-xl p-4 shadow-xl backdrop-blur-md"
+                role="listitem"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-600 dark:text-brand-400">
+                    {draft.category}
+                  </span>
+                  <div className="flex gap-1" role="group" aria-label="Draft actions">
+                    {['TASK', 'EVENT', 'APPOINTMENT', 'REMINDER'].includes(draft.category) && (
+                      <button
+                        onClick={() => onEditDraft(msg.id, idx)}
+                        className="p-1.5 text-blue-500 hover:bg-blue-500/10 rounded transition-colors"
+                        title="Edit before saving"
+                        aria-label="Edit draft"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => onConfirmDraft(msg.id, idx)}
+                      className="p-1.5 text-emerald-500 hover:bg-emerald-500/10 rounded transition-colors"
+                      title="Confirm and Save"
+                      aria-label="Confirm and save draft"
+                    >
+                      <Check size={16} />
+                    </button>
+                    <button
+                      onClick={() => onDiscardDraft(msg.id, idx)}
+                      className="p-1.5 text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                      title="Discard"
+                      aria-label="Discard draft"
+                    >
+                      <XCircle size={16} />
+                    </button>
+                  </div>
+                </div>
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2">
+                  {draft.data.title || draft.data.description}
+                </h4>
+                {draft.data.description && draft.data.title && (
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">
+                    {draft.data.description}
+                  </p>
+                )}
+                <div className="flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-400">
+                  {renderDraftDetails(draft).map((detail, i) => (
+                    <span key={i} className="bg-slate-100 dark:bg-slate-700/50 px-2 py-0.5 rounded">
+                      {detail}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
-    </div>
-  );
-});
+      </div>
+    );
+  }
+);
 
 const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, existingTags }) => {
   const WELCOME_MESSAGE: ChatMessage = {
@@ -215,7 +281,7 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
     role: 'model',
     text: "Hi! I'm ChronoDeX AI. I can create Tasks, Reminders, Events, Appointments, or help manage your Budget. Just tell me what you need.",
     timestamp: Date.now(),
-    status: 'sent'
+    status: 'sent',
   };
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
@@ -255,10 +321,10 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
       role: 'user',
       text: input,
       timestamp: Date.now(),
-      status: 'sending'
+      status: 'sending',
     };
 
-    setMessages(prev => [...prev, userMsg]);
+    setMessages((prev) => [...prev, userMsg]);
     setInput('');
     setIsLoading(true);
 
@@ -266,47 +332,52 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
     if (selectedImage) {
       try {
         const transactions = await parseTransactionScreenshot(selectedImage);
-        
+
         // Update user message status
-        setMessages(prev => prev.map(m => m.id === userMsg.id ? { ...m, status: 'sent' as const } : m));
-        
+        setMessages((prev) =>
+          prev.map((m) => (m.id === userMsg.id ? { ...m, status: 'sent' as const } : m))
+        );
+
         // Create AI response with extracted transactions
         const aiMsg: ChatMessage = {
           id: crypto.randomUUID(),
           role: 'model',
           text: `I found ${transactions.length} transaction(s) in your image. Please review and confirm:`,
           timestamp: Date.now(),
-          status: 'sent'
+          status: 'sent',
         };
-        
-        setMessages(prev => [...prev, aiMsg]);
-        
+
+        setMessages((prev) => [...prev, aiMsg]);
+
         // Create drafts for each transaction
-        const drafts: AIDraftItem[] = transactions.map(t => ({
+        const drafts: AIDraftItem[] = transactions.map((t) => ({
           category: 'TRANSACTION' as const,
           data: {
             description: t.description,
             amount: t.amount,
             type: t.type,
-            date: t.date
-          }
+            date: t.date,
+          },
         }));
-        
+
         if (drafts.length > 0) {
-          setDraftGroups(prev => ({ ...prev, [aiMsg.id]: drafts }));
+          setDraftGroups((prev) => ({ ...prev, [aiMsg.id]: drafts }));
         }
       } catch (error) {
         // Update user message status to error
-        setMessages(prev => prev.map(m => m.id === userMsg.id ? { ...m, status: 'error' as const } : m));
-        
+        setMessages((prev) =>
+          prev.map((m) => (m.id === userMsg.id ? { ...m, status: 'error' as const } : m))
+        );
+
         const errorMsg: ChatMessage = {
           id: crypto.randomUUID(),
           role: 'model',
-          text: error instanceof Error ? error.message : 'Failed to process image. Please try again.',
+          text:
+            error instanceof Error ? error.message : 'Failed to process image. Please try again.',
           timestamp: Date.now(),
-          status: 'error'
+          status: 'error',
         };
-        setMessages(prev => [...prev, errorMsg]);
+        setMessages((prev) => [...prev, errorMsg]);
       } finally {
         setIsLoading(false);
         handleRemoveImage();
@@ -315,78 +386,85 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
     }
 
     try {
-        const history = messages
-          .filter(m => m.status !== 'error') // Exclude error messages from history
-          .map(m => ({
-            role: m.role,
-            parts: [{ text: m.text }] as [{ text: string }]
+      const history = messages
+        .filter((m) => m.status !== 'error') // Exclude error messages from history
+        .map((m) => ({
+          role: m.role,
+          parts: [{ text: m.text }] as [{ text: string }],
+        }));
+
+      const responseText = await chatWithAI(userMsg.text, history, userName, existingTags);
+
+      // Update user message status to sent
+      setMessages((prev) =>
+        prev.map((m) => (m.id === userMsg.id ? { ...m, status: 'sent' as const } : m))
+      );
+
+      const jsonMatch = responseText.match(/```json\n([\s\S]*?)\n```/);
+
+      let displayText = responseText;
+      let newDrafts: AIDraftItem[] = [];
+
+      if (jsonMatch) {
+        try {
+          const jsonStr = jsonMatch[1];
+          const parsed = JSON.parse(jsonStr);
+          const parsedArray = Array.isArray(parsed) ? parsed : [parsed];
+          displayText = responseText.replace(jsonMatch[0], '').trim();
+          newDrafts = parsedArray.map((p: any) => ({
+            category: p.category || (p.title ? 'TASK' : 'UNKNOWN'),
+            data: p.data || p,
           }));
-        
-        const responseText = await chatWithAI(userMsg.text, history, userName, existingTags);
-        
-        // Update user message status to sent
-        setMessages(prev => prev.map(m => m.id === userMsg.id ? { ...m, status: 'sent' as const } : m));
-        
-        const jsonMatch = responseText.match(/```json\n([\s\S]*?)\n```/);
-        
-        let displayText = responseText;
-        let newDrafts: AIDraftItem[] = [];
-
-        if (jsonMatch) {
-            try {
-                const jsonStr = jsonMatch[1];
-                const parsed = JSON.parse(jsonStr);
-                const parsedArray = Array.isArray(parsed) ? parsed : [parsed];
-                displayText = responseText.replace(jsonMatch[0], '').trim();
-                newDrafts = parsedArray.map((p: any) => ({
-                    category: p.category || (p.title ? 'TASK' : 'UNKNOWN'),
-                    data: p.data || p
-                }));
-            } catch (e) {
-                logger.error('Failed to parse AI JSON', e as Error);
-            }
+        } catch (e) {
+          logger.error('Failed to parse AI JSON', e as Error);
         }
+      }
 
-        const aiMsg: ChatMessage = {
-            id: crypto.randomUUID(),
-            role: 'model',
-            text: displayText,
-            timestamp: Date.now(),
-            status: 'sent'
-        };
-        
-        setMessages(prev => [...prev, aiMsg]);
-        if (newDrafts.length > 0) {
-            setDraftGroups(prev => ({ ...prev, [aiMsg.id]: newDrafts }));
-        }
+      const aiMsg: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'model',
+        text: displayText,
+        timestamp: Date.now(),
+        status: 'sent',
+      };
+
+      setMessages((prev) => [...prev, aiMsg]);
+      if (newDrafts.length > 0) {
+        setDraftGroups((prev) => ({ ...prev, [aiMsg.id]: newDrafts }));
+      }
     } catch (error) {
-        logger.error('Chat error', error as Error);
-        // Mark user message as error
-        setMessages(prev => prev.map(m => 
-          m.id === userMsg.id 
-            ? { ...m, status: 'error' as const, error: 'Failed to send' } 
-            : m
-        ));
-        
-        const errorMsg: ChatMessage = {
-            id: crypto.randomUUID(),
-            role: 'model',
-            text: error instanceof Error ? error.message : "Sorry, I encountered a connection error. Please try again.",
-            timestamp: Date.now(),
-            status: 'error'
-        };
-        setMessages(prev => [...prev, errorMsg]);
+      logger.error('Chat error', error as Error);
+      // Mark user message as error
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === userMsg.id ? { ...m, status: 'error' as const, error: 'Failed to send' } : m
+        )
+      );
+
+      const errorMsg: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'model',
+        text:
+          error instanceof Error
+            ? error.message
+            : 'Sorry, I encountered a connection error. Please try again.',
+        timestamp: Date.now(),
+        status: 'error',
+      };
+      setMessages((prev) => [...prev, errorMsg]);
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
   const handleRetry = (msgId: string) => {
-    const msg = messages.find(m => m.id === msgId);
+    const msg = messages.find((m) => m.id === msgId);
     if (!msg || msg.role !== 'user') return;
-    
+
     // Remove error message and retry
-    setMessages(prev => prev.filter(m => m.id !== msgId && !(m.timestamp > msg.timestamp && m.status === 'error')));
+    setMessages((prev) =>
+      prev.filter((m) => m.id !== msgId && !(m.timestamp > msg.timestamp && m.status === 'error'))
+    );
     setInput(msg.text);
     setTimeout(() => handleSend(), 100);
   };
@@ -446,109 +524,132 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
   // Helper to ensure AI dates are treated as local time if they lack time component
   const normalizeDraftData = (data: any) => {
     const newData = { ...data };
-    
+
     const fixDate = (dateStr: string) => {
-        if (dateStr && typeof dateStr === 'string' && dateStr.length === 10 && !dateStr.includes('T')) {
-            return `${dateStr}T09:00:00`;
-        }
-        return dateStr;
+      if (
+        dateStr &&
+        typeof dateStr === 'string' &&
+        dateStr.length === 10 &&
+        !dateStr.includes('T')
+      ) {
+        return `${dateStr}T09:00:00`;
+      }
+      return dateStr;
     };
 
     if (newData.dueDate) newData.dueDate = fixDate(newData.dueDate);
     if (newData.reminderTime) newData.reminderTime = fixDate(newData.reminderTime);
-    
+
     return newData;
   };
 
   const discardSingleDraft = useCallback((msgId: string, index: number) => {
-      setDraftGroups(prev => {
-          const group = [...(prev[msgId] || [])];
-          group.splice(index, 1);
-          if (group.length === 0) {
-              const { [msgId]: _, ...rest } = prev;
-              return rest;
-          }
-          return { ...prev, [msgId]: group };
-      });
+    setDraftGroups((prev) => {
+      const group = [...(prev[msgId] || [])];
+      group.splice(index, 1);
+      if (group.length === 0) {
+        const { [msgId]: _, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [msgId]: group };
+    });
   }, []);
 
-  const confirmSingleDraft = useCallback((msgId: string, index: number) => {
+  const confirmSingleDraft = useCallback(
+    (msgId: string, index: number) => {
       const draft = draftGroups[msgId]?.[index];
       if (!draft) return;
 
       if (['TASK', 'EVENT', 'APPOINTMENT', 'REMINDER'].includes(draft.category)) {
-          const normalizedData = normalizeDraftData(draft.data);
-          onConfirmTask?.({
-              ...normalizedData,
-              type: draft.category as TaskType,
-              status: TaskStatus.TODO,
-              subtasks: normalizedData.subtasks || [],
-              tags: normalizedData.tags || ['AI-Created'],
-          });
+        const normalizedData = normalizeDraftData(draft.data);
+        onConfirmTask?.({
+          ...normalizedData,
+          type: draft.category as TaskType,
+          status: TaskStatus.TODO,
+          subtasks: normalizedData.subtasks || [],
+          tags: normalizedData.tags || ['AI-Created'],
+        });
       } else if (draft.category === 'TRANSACTION') {
-          BudgetService.addTransaction(draft.data.description, Number(draft.data.amount), draft.data.type || 'expense');
+        BudgetService.addTransaction(
+          draft.data.description,
+          Number(draft.data.amount),
+          draft.data.type || 'expense'
+        );
       } else if (draft.category === 'BUDGET_UPDATE') {
-          BudgetService.updateBudgetSettings(Number(draft.data.limit), draft.data.duration || 'Monthly');
+        BudgetService.updateBudgetSettings(
+          Number(draft.data.limit),
+          draft.data.duration || 'Monthly'
+        );
       } else if (draft.category === 'ROUTINE') {
-          // Create routine from AI draft
-          const routineData: Routine = {
-              id: crypto.randomUUID(),
-              name: draft.data.name || 'New Routine',
-              description: draft.data.description || '',
-              pattern: draft.data.pattern || { type: 'weekday', days: [1, 2, 3, 4, 5] },
-              time: draft.data.time || '09:00',
-              duration: draft.data.duration || 60,
-              isActive: draft.data.isActive !== false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-          };
-          RoutineService.saveRoutine(routineData);
+        // Create routine from AI draft
+        const routineData: Routine = {
+          id: crypto.randomUUID(),
+          name: draft.data.name || 'New Routine',
+          description: draft.data.description || '',
+          pattern: draft.data.pattern || { type: 'weekday', days: [1, 2, 3, 4, 5] },
+          time: draft.data.time || '09:00',
+          duration: draft.data.duration || 60,
+          isActive: draft.data.isActive !== false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        RoutineService.saveRoutine(routineData);
       } else if (draft.category === 'NOTE') {
-          // Create note from AI draft
-          const checklistItems: ChecklistItem[] = draft.data.isChecklist && draft.data.checklistItems
-              ? draft.data.checklistItems.map((item: any) => ({
-                  id: item.id || crypto.randomUUID(),
-                  text: item.text || '',
-                  isCompleted: item.isCompleted || false
-                }))
-              : [];
-          NotesService.createNote(
-              draft.data.title || 'New Note',
-              draft.data.content || '',
-              draft.data.isChecklist || false,
-              checklistItems
-          );
+        // Create note from AI draft
+        const checklistItems: ChecklistItem[] =
+          draft.data.isChecklist && draft.data.checklistItems
+            ? draft.data.checklistItems.map((item: any) => ({
+                id: item.id || crypto.randomUUID(),
+                text: item.text || '',
+                isCompleted: item.isCompleted || false,
+              }))
+            : [];
+        NotesService.createNote(
+          draft.data.title || 'New Note',
+          draft.data.content || '',
+          draft.data.isChecklist || false,
+          checklistItems
+        );
       }
       discardSingleDraft(msgId, index);
-  }, [draftGroups, onConfirmTask, discardSingleDraft]);
+    },
+    [draftGroups, onConfirmTask, discardSingleDraft]
+  );
 
-  const editSingleDraft = useCallback((msgId: string, index: number) => {
-    const draft = draftGroups[msgId]?.[index];
-    if (!draft) return;
+  const editSingleDraft = useCallback(
+    (msgId: string, index: number) => {
+      const draft = draftGroups[msgId]?.[index];
+      if (!draft) return;
 
-    if (['TASK', 'EVENT', 'APPOINTMENT', 'REMINDER'].includes(draft.category)) {
+      if (['TASK', 'EVENT', 'APPOINTMENT', 'REMINDER'].includes(draft.category)) {
         const normalizedData = normalizeDraftData(draft.data);
         onEditTask?.({
-            ...normalizedData,
-            type: draft.category as TaskType,
-            status: TaskStatus.TODO,
-            subtasks: normalizedData.subtasks || [],
-            tags: normalizedData.tags || ['AI-Created'],
+          ...normalizedData,
+          type: draft.category as TaskType,
+          status: TaskStatus.TODO,
+          subtasks: normalizedData.subtasks || [],
+          tags: normalizedData.tags || ['AI-Created'],
         });
         discardSingleDraft(msgId, index);
-    }
-  }, [draftGroups, onEditTask, discardSingleDraft]);
+      }
+    },
+    [draftGroups, onEditTask, discardSingleDraft]
+  );
 
   return (
     <div className="flex flex-col h-full glass rounded-2xl overflow-hidden">
       <div className="p-4 pr-16 border-b border-slate-200 dark:border-white/5 flex items-center justify-between gap-3 bg-white/60 dark:bg-slate-900/80 backdrop-blur-xl sticky top-0 z-10">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-gradient-to-br from-purple-500/20 to-indigo-500/20 border border-purple-500/20 rounded-xl text-purple-500 dark:text-purple-400">
-              <Bot size={22} />
+            <Bot size={22} />
           </div>
           <div>
-              <h2 className="font-semibold text-slate-800 dark:text-slate-100 leading-tight">AI Assistant</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Smart Scheduling & Budgeting</p>
+            <h2 className="font-semibold text-slate-800 dark:text-slate-100 leading-tight">
+              AI Assistant
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Smart Scheduling & Budgeting
+            </p>
           </div>
         </div>
         <button
@@ -597,7 +698,9 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
         {isLoading && (
           <div className="flex items-center gap-3 ml-14 animate-slide-up" role="status">
             <div className="w-8 h-8 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
-            <span className="text-sm text-slate-500 dark:text-slate-400 animate-pulse">AI is thinking...</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400 animate-pulse">
+              AI is thinking...
+            </span>
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -605,52 +708,52 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
 
       <div className="p-4 border-t border-slate-200 dark:border-white/5 bg-white/60 dark:bg-slate-900/80 backdrop-blur-xl">
         <div className="flex gap-3 relative">
-            <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                placeholder="Ask me to schedule tasks or budget..."
-                className="flex-1 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl px-5 py-3.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-brand-500 transition-all"
-                disabled={isLoading}
-                aria-label="Chat message input"
-                maxLength={500}
-            />
-            <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageSelect}
-                className="hidden"
-                aria-label="Upload image"
-            />
-            <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isLoading}
-                className="p-3 text-slate-500 hover:text-brand-500 hover:bg-brand-500/10 rounded-xl transition-colors disabled:opacity-50"
-                title="Attach image for transaction scanning"
-                aria-label="Attach image"
-            >
-                <ImagePlus size={20} />
-            </button>
-            <Button 
-              onClick={handleSend} 
-              disabled={isLoading || (!input.trim() && !selectedImage)} 
-              variant="primary" 
-              className="rounded-xl w-14 px-0"
-              aria-label="Send message"
-            >
-                <Send size={20} />
-            </Button>
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+            placeholder="Ask me to schedule tasks or budget..."
+            className="flex-1 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl px-5 py-3.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-brand-500 transition-all"
+            disabled={isLoading}
+            aria-label="Chat message input"
+            maxLength={500}
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageSelect}
+            className="hidden"
+            aria-label="Upload image"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading}
+            className="p-3 text-slate-500 hover:text-brand-500 hover:bg-brand-500/10 rounded-xl transition-colors disabled:opacity-50"
+            title="Attach image for transaction scanning"
+            aria-label="Attach image"
+          >
+            <ImagePlus size={20} />
+          </button>
+          <Button
+            onClick={handleSend}
+            disabled={isLoading || (!input.trim() && !selectedImage)}
+            variant="primary"
+            className="rounded-xl w-14 px-0"
+            aria-label="Send message"
+          >
+            <Send size={20} />
+          </Button>
         </div>
-        
+
         {/* Image Preview */}
         {imagePreview && (
           <div className="mt-3 relative inline-block">
-            <img 
-              src={imagePreview} 
-              alt="Selected" 
+            <img
+              src={imagePreview}
+              alt="Selected"
               className="max-h-32 rounded-lg border border-slate-200 dark:border-white/10"
             />
             <button
@@ -667,7 +770,10 @@ const AIChat: React.FC<AIChatProps> = ({ onConfirmTask, onEditTask, userName, ex
           </div>
         )}
         {input.length > 400 && (
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-right" aria-live="polite">
+          <p
+            className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-right"
+            aria-live="polite"
+          >
             {500 - input.length} characters remaining
           </p>
         )}

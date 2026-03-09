@@ -53,10 +53,9 @@ const CloneDayModal: React.FC<CloneDayModalProps> = ({
             Clone Day Plan
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {selectedTaskCount > 0 
+            {selectedTaskCount > 0
               ? `Copy ${selectedTaskCount} selected tasks to another day`
-              : `Copy all ${taskCount} tasks from ${format(sourceDate, 'MMMM d')} to another day`
-            }
+              : `Copy all ${taskCount} tasks from ${format(sourceDate, 'MMMM d')} to another day`}
           </p>
         </div>
 
@@ -123,9 +122,7 @@ const CloneDayModal: React.FC<CloneDayModalProps> = ({
                     className="flex-1 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-sm"
                     placeholder="0"
                   />
-                  <div className="text-xs text-slate-400">
-                    Use negative for earlier
-                  </div>
+                  <div className="text-xs text-slate-400">Use negative for earlier</div>
                 </div>
               </div>
             )}
@@ -133,19 +130,10 @@ const CloneDayModal: React.FC<CloneDayModalProps> = ({
 
           {/* Actions */}
           <div className="flex items-center gap-3 pt-2">
-            <Button
-              type="button"
-              variant="secondary"
-              className="flex-1"
-              onClick={onClose}
-            >
+            <Button type="button" variant="secondary" className="flex-1" onClick={onClose}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              className="flex-1"
-            >
+            <Button type="submit" variant="primary" className="flex-1">
               <ArrowRight size={18} />
               Clone Plan
             </Button>

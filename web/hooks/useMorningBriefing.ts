@@ -1,6 +1,6 @@
 /**
  * useMorningBriefing Hook
- * 
+ *
  * Manages the "Morning Briefing" feature which shows overdue tasks
  * when the user opens the app for the first time each day.
  */
@@ -41,7 +41,7 @@ export function useMorningBriefing({ tasks }: UseMorningBriefingProps): UseMorni
     // Filter tasks that are overdue:
     // - Has a dueDate that is before today's start
     // - Status is not DONE
-    const overdue = tasks.filter(task => {
+    const overdue = tasks.filter((task) => {
       if (task.status === TaskStatus.DONE) return false;
       if (!task.dueDate) return false;
 

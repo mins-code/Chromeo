@@ -16,7 +16,7 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSupported, setIsSupported] = useState(false);
-  
+
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   // Check for browser support on mount
@@ -56,7 +56,7 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
       recognition.onerror = (event: Event) => {
         const errorEvent = event as unknown as { error: string };
         let errorMessage = 'Speech recognition error';
-        
+
         switch (errorEvent.error) {
           case 'not-allowed':
             errorMessage = 'Microphone access denied. Please allow microphone permissions.';
@@ -73,7 +73,7 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
           default:
             errorMessage = `Speech recognition error: ${errorEvent.error}`;
         }
-        
+
         setError(errorMessage);
         setIsListening(false);
       };

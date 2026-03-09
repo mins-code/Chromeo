@@ -94,7 +94,10 @@ export function useBudget() {
   });
 
   const updateRecurringMutation = useMutation({
-    mutationFn: ({ id, updates }: {
+    mutationFn: ({
+      id,
+      updates,
+    }: {
       id: string;
       updates: {
         description?: string;

@@ -1,6 +1,6 @@
 /**
  * useUniversalSearch Hook
- * 
+ *
  * Provides aggregated search across tasks, notes, transactions, and static pages.
  * Used by CommandBar for the Universal Search feature.
  */
@@ -22,12 +22,36 @@ export interface SearchResult {
 // Static pages available in the app
 const STATIC_PAGES: SearchResult[] = [
   { type: 'PAGE', id: 'dashboard', title: 'Dashboard', subtitle: 'Home overview', url: '/' },
-  { type: 'PAGE', id: 'calendar', title: 'Calendar', subtitle: 'View your schedule', url: '/calendar' },
+  {
+    type: 'PAGE',
+    id: 'calendar',
+    title: 'Calendar',
+    subtitle: 'View your schedule',
+    url: '/calendar',
+  },
   { type: 'PAGE', id: 'budget', title: 'Budget', subtitle: 'Manage finances', url: '/budget' },
   { type: 'PAGE', id: 'notes', title: 'Notes', subtitle: 'Your notes & lists', url: '/notes' },
-  { type: 'PAGE', id: 'activities', title: 'Activities', subtitle: 'Tasks & reminders', url: '/activities' },
-  { type: 'PAGE', id: 'day-planner', title: 'Day Planner', subtitle: 'Plan your day', url: '/day-planner' },
-  { type: 'PAGE', id: 'settings', title: 'Settings', subtitle: 'App preferences', url: '/settings' },
+  {
+    type: 'PAGE',
+    id: 'activities',
+    title: 'Activities',
+    subtitle: 'Tasks & reminders',
+    url: '/activities',
+  },
+  {
+    type: 'PAGE',
+    id: 'day-planner',
+    title: 'Day Planner',
+    subtitle: 'Plan your day',
+    url: '/day-planner',
+  },
+  {
+    type: 'PAGE',
+    id: 'settings',
+    title: 'Settings',
+    subtitle: 'App preferences',
+    url: '/settings',
+  },
 ];
 
 interface UseUniversalSearchOptions {
@@ -50,7 +74,7 @@ export function useUniversalSearch({
 }: UseUniversalSearchOptions): { results: SearchResult[] } {
   const results = useMemo(() => {
     const trimmedQuery = query.trim().toLowerCase();
-    
+
     // Return empty if no query
     if (!trimmedQuery) {
       return [];
@@ -62,53 +86,59 @@ export function useUniversalSearch({
     const matchingTasks = tasks
       .filter((task) => task.title.toLowerCase().includes(trimmedQuery))
       .slice(0, 3)
-      .map((task): SearchResult => ({
-        type: 'TASK',
-        id: task.id,
-        title: task.title,
-        subtitle: task.dueDate 
-          ? `Due: ${new Date(task.dueDate).toLocaleDateString()}`
-          : task.type,
-        url: `/activities`, // Navigate to activities page
-      }));
+      .map(
+        (task): SearchResult => ({
+          type: 'TASK',
+          id: task.id,
+          title: task.title,
+          subtitle: task.dueDate
+            ? `Due: ${new Date(task.dueDate).toLocaleDateString()}`
+            : task.type,
+          url: `/activities`, // Navigate to activities page
+        })
+      );
     searchResults.push(...matchingTasks);
 
     // Filter notes by title or content
     const matchingNotes = notes
-      .filter((note) => 
-        note.title.toLowerCase().includes(trimmedQuery) ||
-        note.content.toLowerCase().includes(trimmedQuery)
+      .filter(
+        (note) =>
+          note.title.toLowerCase().includes(trimmedQuery) ||
+          note.content.toLowerCase().includes(trimmedQuery)
       )
       .slice(0, 3)
-      .map((note): SearchResult => ({
-        type: 'NOTE',
-        id: note.id,
-        title: note.title,
-        subtitle: note.content.slice(0, 50) + (note.content.length > 50 ? '...' : ''),
-        url: '/notes',
-      }));
+      .map(
+        (note): SearchResult => ({
+          type: 'NOTE',
+          id: note.id,
+          title: note.title,
+          subtitle: note.content.slice(0, 50) + (note.content.length > 50 ? '...' : ''),
+          url: '/notes',
+        })
+      );
     searchResults.push(...matchingNotes);
 
     // Filter transactions by description
     const matchingTransactions = transactions
       .filter((tx) => tx.description.toLowerCase().includes(trimmedQuery))
       .slice(0, 3)
-      .map((tx): SearchResult => ({
-        type: 'TRANSACTION',
-        id: tx.id,
-        title: tx.description,
-        subtitle: `${tx.type === 'income' ? '+' : '-'}$${tx.amount.toFixed(2)}`,
-        url: '/budget',
-      }));
+      .map(
+        (tx): SearchResult => ({
+          type: 'TRANSACTION',
+          id: tx.id,
+          title: tx.description,
+          subtitle: `${tx.type === 'income' ? '+' : '-'}$${tx.amount.toFixed(2)}`,
+          url: '/budget',
+        })
+      );
     searchResults.push(...matchingTransactions);
 
     // Filter static pages
-    const matchingPages = STATIC_PAGES
-      .filter((page) => 
+    const matchingPages = STATIC_PAGES.filter(
+      (page) =>
         page.title.toLowerCase().includes(trimmedQuery) ||
         (page.subtitle && page.subtitle.toLowerCase().includes(trimmedQuery))
-      )
-      .slice(0, 2);
+    ).slice(0, 2);
     searchResults.push(...matchingPages);
 
     // Return limited results

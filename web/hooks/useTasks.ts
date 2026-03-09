@@ -1,6 +1,6 @@
 /**
  * useTasks Hook
- * 
+ *
  * Provides task CRUD operations with React Query.
  * Implements optimistic updates for instant UI feedback.
  */
@@ -96,9 +96,7 @@ export function useTasks() {
       const previousTasks = queryClient.getQueryData<Task[]>(['tasks']);
 
       // Optimistically update the cache
-      queryClient.setQueryData<Task[]>(['tasks'], (old = []) =>
-        old.filter((t) => t.id !== id)
-      );
+      queryClient.setQueryData<Task[]>(['tasks'], (old = []) => old.filter((t) => t.id !== id));
 
       // Return a context object with the snapshot
       return { previousTasks };
@@ -141,9 +139,7 @@ export function useTasks() {
 
       // Optimistically update the cache with flipped status
       queryClient.setQueryData<Task[]>(['tasks'], (old = []) =>
-        old.map((t) =>
-          t.id === task.id ? { ...t, status: newStatus } : t
-        )
+        old.map((t) => (t.id === task.id ? { ...t, status: newStatus } : t))
       );
 
       // Return context with snapshot for rollback
