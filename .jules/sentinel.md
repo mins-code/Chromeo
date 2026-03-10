@@ -117,3 +117,7 @@
 **Vulnerability:** The `push-notification` Edge Function used a `service_role` client to schedule notifications. It allowed any authenticated user to schedule a notification for ANY task ID, regardless of ownership. Since notifications are unique per task, this allowed an attacker to "lock" the notification slot for a victim's task, preventing the victim from scheduling their own notification (DoS).
 **Learning:** Using `service_role` clients in user-facing functions bypasses RLS. You cannot rely on "implied" permissions.
 **Prevention:** Always verify resource ownership (e.g., `task.user_id === userId`) explicitly when performing operations on behalf of a user using a privileged client.
+## $(date +%Y-%m-%d) - Fix IDOR in Task Service
+**Vulnerability:** In `web/services/taskService.ts`, the `updateTask` and `deleteTask` functions relied solely on the frontend passing the correct `task.id` without explicitly verifying that the task belonged to the currently authenticated user.
+**Learning:** While Supabase relies heavily on Row Level Security (RLS) configured in the database, missing explicit ownership checks in client-side API calls removes a critical layer of defense-in-depth, creating an Insecure Direct Object Reference (IDOR) vulnerability if RLS is misconfigured or bypassed.
+**Prevention:** To prevent IDOR vulnerabilities, all Supabase client-side mutations (delete/update) on user-owned resources must explicitly chain an ownership check like `.eq('user_id', user.id)`.
