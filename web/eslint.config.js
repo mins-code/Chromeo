@@ -4,6 +4,7 @@ import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 
 export default tseslint.config(
+  { ignores: ['dist', 'dist-android', 'src/sw.js'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
