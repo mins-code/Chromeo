@@ -13,7 +13,7 @@ import RecurringBillsManager from './RecurringBillsManager';
 import BudgetForecastChart from './BudgetForecastChart';
 import BudgetCategoryChart from './BudgetCategoryChart';
 import { calculateForecast, formatForecastDate } from '../utils/financialForecasting';
-import { Wallet, Plus, Trash2, IndianRupee, Eye, EyeOff, Repeat, ArrowRight, Settings, Share2, User, X, Loader2, UserPlus, Camera, LineChart, PieChart } from 'lucide-react';
+import { Wallet, Plus, IndianRupee, Eye, EyeOff, Repeat, ArrowRight, Settings, Share2, User, X, Loader2, UserPlus, Camera, LineChart, PieChart } from 'lucide-react';
 import { t } from '../themeText';
 import { logger } from '../utils/logger';
 
@@ -167,15 +167,17 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
     };
 
     // Memoized computed values to avoid recalculation on every render
-    const totalIncome = useMemo(() => 
-        budget.transactions.filter(t => t.type === 'income').reduce((acc, curr) => acc + curr.amount, 0),
-        [budget.transactions]
-    );
-    
-    const totalExpenses = useMemo(() => 
-        budget.transactions.filter(t => t.type === 'expense').reduce((acc, curr) => acc + curr.amount, 0),
-        [budget.transactions]
-    );
+    // ⚡ Bolt: Replaced multiple O(N) filter/reduce chains with a single O(N) loop for better performance
+    const { totalIncome, totalExpenses } = useMemo(() => {
+        let income = 0;
+        let expenses = 0;
+        for (let i = 0; i < budget.transactions.length; i++) {
+            const t = budget.transactions[i];
+            if (t.type === 'income') income += t.amount;
+            else if (t.type === 'expense') expenses += t.amount;
+        }
+        return { totalIncome: income, totalExpenses: expenses };
+    }, [budget.transactions]);
     
     const remaining = useMemo(() => budget.limit - totalExpenses, [budget.limit, totalExpenses]);
 
@@ -236,6 +238,26 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
         partnerships.filter(p => !budgetShares.some(s => s.partnerId === p.partnerId)),
         [partnerships, budgetShares]
     );
+
+    // ⚡ Bolt: Memoize expanded partner calculations to avoid repetitive O(N) operations in JSX
+    const partnerBudgetStats = useMemo(() => {
+        if (!expandedPartnerBudget) return { income: 0, expenses: 0, remaining: 0, progressPercentage: 0 };
+
+        let income = 0;
+        let expenses = 0;
+        const limit = expandedPartnerBudget.budget.limit || 0;
+
+        for (let i = 0; i < expandedPartnerBudget.budget.transactions.length; i++) {
+            const t = expandedPartnerBudget.budget.transactions[i];
+            if (t.type === 'income') income += t.amount;
+            else if (t.type === 'expense') expenses += t.amount;
+        }
+
+        const remaining = limit - expenses;
+        const progressPercentage = Math.min(100, (expenses / (limit || 1)) * 100);
+
+        return { income, expenses, remaining, progressPercentage };
+    }, [expandedPartnerBudget]);
 
     return (
         <div className="space-y-8 animate-fade-in h-full flex flex-col">
@@ -639,26 +661,19 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                                             <div>
                                                 <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Expenses</p>
                                                 <p className="text-lg font-bold text-red-500">
-                                                    {expandedPartnerBudget.budget.transactions
-                                                        .filter(t => t.type === 'expense')
-                                                        .reduce((acc, t) => acc + t.amount, 0)
-                                                        .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                    {partnerBudgetStats.expenses.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
                                                 </p>
                                             </div>
                                             <div>
                                                 <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Remaining</p>
-                                                <p className={`text-lg font-bold ${(expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0)) >= 0 ? 'text-brand-500' : 'text-red-500'}`}>
-                                                    {(expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0))
-                                                        .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                <p className={`text-lg font-bold ${partnerBudgetStats.remaining >= 0 ? 'text-brand-500' : 'text-red-500'}`}>
+                                                    {partnerBudgetStats.remaining.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
                                                 </p>
                                             </div>
                                             <div>
                                                 <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Income</p>
                                                 <p className="text-lg font-bold text-emerald-500">
-                                                    {expandedPartnerBudget.budget.transactions
-                                                        .filter(t => t.type === 'income')
-                                                        .reduce((acc, t) => acc + t.amount, 0)
-                                                        .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                    {partnerBudgetStats.income.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
                                                 </p>
                                             </div>
                                         </div>
@@ -666,12 +681,12 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                                         <div className="h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
                                             <div
                                                 className={`h-full transition-all duration-500 ${
-                                                    (expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0)) < 0 
+                                                    partnerBudgetStats.remaining < 0
                                                         ? 'bg-red-500' 
                                                         : 'bg-brand-500'
                                                 }`}
                                                 style={{ 
-                                                    width: `${Math.min(100, (expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0) / (expandedPartnerBudget.budget.limit || 1)) * 100)}%` 
+                                                    width: `${partnerBudgetStats.progressPercentage}%`
                                                 }}
                                             />
                                         </div>
