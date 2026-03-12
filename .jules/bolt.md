@@ -31,3 +31,7 @@
 ## 2026-03-03 - Optimizing Date Parsing for Sorting
 **Learning:** `new Date(dateStr).getTime()` creates a full Date object just to extract the timestamp, adding unnecessary memory allocation and garbage collection overhead. In functions called frequently (like sorting algorithms iterating over thousands of items in `taskScoring.ts`), this is a measurable bottleneck.
 **Action:** Use `Date.parse(dateStr)` when only the timestamp is needed. Benchmark shows this avoids object creation and improves date parsing time by ~30% for ISO-8601 strings.
+
+## 2026-03-04 - Optimizing Date Formatting for Object Keys
+**Learning:** `date-fns` `format()` is an expensive operation when called thousands of times inside tight loops (like iterating over days and tasks to group them by date string keys in `WeekView`, `DayView`, and `CustomIntervalView`). Benchmarking showed `date-fns format` taking ~377ms for 100k iterations compared to just ~15ms for manual string concatenation (`${year}-${month}-${date}`).
+**Action:** Use manual string concatenation with `String.prototype.padStart` instead of `date-fns format` when generating string keys for date-based grouping in high-frequency loops.
