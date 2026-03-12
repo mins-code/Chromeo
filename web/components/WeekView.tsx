@@ -136,9 +136,14 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
     const grouped: Record<string, Task[]> = {};
     const weekMap = new Map<string, Task[]>();
 
-    // Initialize buckets for the week days
+    // Initialize buckets for the week days using numeric dates for faster hashing
+    // Fallback to format only for component state
     weekDays.forEach(day => {
-      const key = format(day, 'yyyy-MM-dd');
+      // ⚡ Bolt Optimization: Replace slow format() calls with manual string concatenation
+      const year = day.getFullYear();
+      const month = String(day.getMonth() + 1).padStart(2, '0');
+      const date = String(day.getDate()).padStart(2, '0');
+      const key = `${year}-${month}-${date}`;
       grouped[key] = [];
       weekMap.set(key, grouped[key]);
     });
@@ -147,8 +152,12 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
     tasks.forEach(task => {
       const taskDate = getTaskDate(task);
       if (taskDate) {
-        // We use the same format logic as the keys to ensure matching local dates
-        const key = format(taskDate, 'yyyy-MM-dd');
+        // ⚡ Bolt Optimization: Replace slow format() calls with manual string concatenation
+        const year = taskDate.getFullYear();
+        const month = String(taskDate.getMonth() + 1).padStart(2, '0');
+        const date = String(taskDate.getDate()).padStart(2, '0');
+        const key = `${year}-${month}-${date}`;
+
         const bucket = weekMap.get(key);
         if (bucket) {
           bucket.push(task);

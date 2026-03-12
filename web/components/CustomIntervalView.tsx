@@ -96,15 +96,39 @@ const CustomIntervalView: React.FC<CustomIntervalViewProps> = ({
   };
 
   // Group tasks by day
+  // Optimized: O(N) single pass instead of O(Days * N) nested loop
   const tasksByDay = useMemo(() => {
     const grouped: Record<string, Task[]> = {};
+    const dayMap = new Map<string, Task[]>();
+
+    // Initialize buckets for the days
     displayDays.forEach(day => {
-      const key = format(day, 'yyyy-MM-dd');
-      grouped[key] = tasks.filter(task => {
-        const taskDate = getTaskDate(task);
-        return taskDate && isSameDay(taskDate, day);
-      });
+      // ⚡ Bolt Optimization: Replace slow format() calls with manual string concatenation
+      const year = day.getFullYear();
+      const month = String(day.getMonth() + 1).padStart(2, '0');
+      const date = String(day.getDate()).padStart(2, '0');
+      const key = `${year}-${month}-${date}`;
+      grouped[key] = [];
+      dayMap.set(key, grouped[key]);
     });
+
+    // Single pass through tasks
+    tasks.forEach(task => {
+      const taskDate = getTaskDate(task);
+      if (taskDate) {
+        // ⚡ Bolt Optimization: Replace slow format() calls with manual string concatenation
+        const year = taskDate.getFullYear();
+        const month = String(taskDate.getMonth() + 1).padStart(2, '0');
+        const date = String(taskDate.getDate()).padStart(2, '0');
+        const key = `${year}-${month}-${date}`;
+
+        const bucket = dayMap.get(key);
+        if (bucket) {
+          bucket.push(task);
+        }
+      }
+    });
+
     return grouped;
   }, [tasks, displayDays]);
 
