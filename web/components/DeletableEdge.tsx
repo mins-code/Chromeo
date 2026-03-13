@@ -123,6 +123,7 @@ const DeletableEdge: React.FC<EdgeProps<DeletableEdgeType>> = ({
                 onClick={handleAddTask}
                 className="flex items-center justify-center w-7 h-7 bg-emerald-500/90 hover:bg-emerald-600 text-white rounded-lg shadow-lg backdrop-blur-sm border border-emerald-400/50 transition-all hover:scale-110"
                 title="Add task between"
+                aria-label="Add task between"
               >
                 <Plus size={14} />
               </button>
@@ -131,6 +132,7 @@ const DeletableEdge: React.FC<EdgeProps<DeletableEdgeType>> = ({
                 onClick={handleDelete}
                 className="flex items-center justify-center w-7 h-7 bg-red-500/90 hover:bg-red-600 text-white rounded-lg shadow-lg backdrop-blur-sm border border-red-400/50 transition-all hover:scale-110"
                 title="Delete link"
+                aria-label="Delete link"
               >
                 <X size={14} />
               </button>
