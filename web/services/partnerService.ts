@@ -114,10 +114,14 @@ export async function acceptPartnerRequest(partnershipId: string): Promise<boole
 }
 
 export async function rejectPartnerRequest(partnershipId: string): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
   const { error } = await supabase
     .from('partnerships')
     .delete()
-    .eq('id', partnershipId);
+    .eq('id', partnershipId)
+    .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`); // 🛡️ SECURITY: Prevent IDOR (Defense in Depth)
 
   if (error) {
     logger.error('Error rejecting partner request', error);
@@ -128,10 +132,14 @@ export async function rejectPartnerRequest(partnershipId: string): Promise<boole
 }
 
 export async function removePartner(partnershipId: string): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
   const { error } = await supabase
     .from('partnerships')
     .delete()
-    .eq('id', partnershipId);
+    .eq('id', partnershipId)
+    .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`); // 🛡️ SECURITY: Prevent IDOR (Defense in Depth)
 
   if (error) {
     logger.error('Error removing partner', error);
@@ -316,10 +324,14 @@ export async function updateTeam(id: string, updates: { name?: string; descripti
 }
 
 export async function deleteTeam(id: string): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
   const { error } = await supabase
     .from('teams')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('owner_id', user.id); // 🛡️ SECURITY: Prevent IDOR (Defense in Depth)
 
   if (error) {
     logger.error('Error deleting team', error);
@@ -391,10 +403,33 @@ export async function updateMemberRole(memberId: string, role: 'admin' | 'member
 }
 
 export async function removeTeamMember(memberId: string): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  // We must verify the user is the owner of the team before removing the member
+  // First, get the team_id for this member
+  const { data: member } = await supabase
+    .from('team_members')
+    .select('team_id')
+    .eq('id', memberId)
+    .single();
+
+  if (!member) return false;
+
+  // Then check if current user owns this team
+  const { data: team } = await supabase
+    .from('teams')
+    .select('id')
+    .eq('id', member.team_id)
+    .eq('owner_id', user.id)
+    .single();
+
+  if (!team) return false;
+
   const { error } = await supabase
     .from('team_members')
     .delete()
-    .eq('id', memberId);
+    .eq('id', memberId); // 🛡️ SECURITY: Prevent IDOR (Defense in Depth)
 
   if (error) {
     logger.error('Error removing team member', error);
