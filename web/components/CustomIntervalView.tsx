@@ -28,7 +28,12 @@ interface DroppableHourCellProps {
   children?: React.ReactNode;
 }
 
-const DroppableHourCell: React.FC<DroppableHourCellProps> = ({ dayDate, hour, children }) => {
+/**
+ * ⚡ Performance Optimization:
+ * Wrapped in React.memo to prevent grid re-renders when `currentTime` updates every minute.
+ * Props `dayDate` (from parent) and `children` (undefined in loop) are stable.
+ */
+const DroppableHourCell = React.memo(({ dayDate, hour, children }: DroppableHourCellProps) => {
   const id = `${format(dayDate, 'yyyy-MM-dd')}-${hour.toString().padStart(2, '0')}`;
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -46,7 +51,30 @@ const DroppableHourCell: React.FC<DroppableHourCellProps> = ({ dayDate, hour, ch
       {children}
     </div>
   );
-};
+});
+
+interface TaskBlockProps {
+    task: Task;
+    style: React.CSSProperties;
+    onEditTask: (task: Task) => void;
+}
+
+/**
+ * ⚡ Performance Optimization:
+ * Memoized component to prevent re-renders of task blocks when parent re-renders (e.g. time updates).
+ * Uses stable `style` object from `taskStyles` map.
+ */
+const TaskBlock = React.memo(({ task, style, onEditTask }: TaskBlockProps) => {
+    return (
+        <div
+            style={style}
+            className="absolute left-1 right-1 z-10"
+            onClick={() => onEditTask(task)}
+        >
+            <DraggableTask task={task} variant="block" />
+        </div>
+    );
+});
 
 const CustomIntervalView: React.FC<CustomIntervalViewProps> = ({ 
   tasks, 
@@ -96,32 +124,63 @@ const CustomIntervalView: React.FC<CustomIntervalViewProps> = ({
   };
 
   // Group tasks by day
+  // Optimized: O(N) single pass instead of O(Days * N) nested loop
   const tasksByDay = useMemo(() => {
     const grouped: Record<string, Task[]> = {};
+    const daysMap = new Map<string, Task[]>();
+
+    // Initialize buckets for the display days
     displayDays.forEach(day => {
-      const key = format(day, 'yyyy-MM-dd');
-      grouped[key] = tasks.filter(task => {
-        const taskDate = getTaskDate(task);
-        return taskDate && isSameDay(taskDate, day);
-      });
+      // ⚡ Bolt Optimization: Using string concatenation instead of format() for speed
+      const year = day.getFullYear();
+      const month = String(day.getMonth() + 1).padStart(2, '0');
+      const date = String(day.getDate()).padStart(2, '0');
+      const key = `${year}-${month}-${date}`;
+      grouped[key] = [];
+      daysMap.set(key, grouped[key]);
     });
+
+    // Single pass through tasks
+    tasks.forEach(task => {
+      const taskDate = getTaskDate(task);
+      if (taskDate) {
+        const year = taskDate.getFullYear();
+        const month = String(taskDate.getMonth() + 1).padStart(2, '0');
+        const date = String(taskDate.getDate()).padStart(2, '0');
+        const key = `${year}-${month}-${date}`;
+
+        const bucket = daysMap.get(key);
+        if (bucket) {
+          bucket.push(task);
+        }
+      }
+    });
+
     return grouped;
   }, [tasks, displayDays]);
 
-  // Calculate task block position and height
-  const getTaskStyle = (task: Task): React.CSSProperties => {
-    const time = getTaskTime(task);
-    if (!time) return { display: 'none' };
+  // Pre-calculate task styles to prevent object recreation on every render
+  const taskStyles = useMemo(() => {
+    const styles = new Map<string, React.CSSProperties>();
 
-    const top = time.hour * HOUR_HEIGHT + (time.minutes / 60) * HOUR_HEIGHT;
-    const duration = task.duration || 60; // Default 60 minutes
-    const height = Math.max((duration / 60) * HOUR_HEIGHT, 24); // Minimum 24px
+    tasks.forEach(task => {
+      const time = getTaskTime(task);
+      if (!time) {
+        styles.set(task.id, { display: 'none' });
+        return;
+      }
 
-    return {
-      top: `${top}px`,
-      height: `${height}px`,
-    };
-  };
+      const top = time.hour * HOUR_HEIGHT + (time.minutes / 60) * HOUR_HEIGHT;
+      const duration = task.duration || 60; // Default 60 minutes
+      const height = Math.max((duration / 60) * HOUR_HEIGHT, 24); // Minimum 24px
+
+      styles.set(task.id, {
+        top: `${top}px`,
+        height: `${height}px`,
+      });
+    });
+    return styles;
+  }, [tasks]);
 
   // Current time indicator position
   const currentTimePosition = useMemo(() => {
@@ -208,14 +267,12 @@ const CustomIntervalView: React.FC<CustomIntervalViewProps> = ({
 
                     {/* Task blocks */}
                     {dayTasks.map(task => (
-                      <div
+                      <TaskBlock
                         key={task.id}
-                        style={getTaskStyle(task)}
-                        className="absolute left-1 right-1 z-10"
-                        onClick={() => onEditTask(task)}
-                      >
-                        <DraggableTask task={task} variant="block" />
-                      </div>
+                        task={task}
+                        style={taskStyles.get(task.id) || { display: 'none' }}
+                        onEditTask={onEditTask}
+                      />
                     ))}
 
                     {/* Current time indicator */}
