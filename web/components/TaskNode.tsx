@@ -61,6 +61,7 @@ const HandleWithAdd: React.FC<{
           }}
           className="flex items-center justify-center w-6 h-6 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg transition-all hover:scale-110 animate-fade-in"
           title="Create new task"
+          aria-label="Create new task"
         >
           <Plus size={12} />
         </button>
