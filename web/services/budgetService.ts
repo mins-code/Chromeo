@@ -324,10 +324,14 @@ export const shareBudgetWithPartner = async (partnerId: string): Promise<boolean
 };
 
 export const unshareBudgetWithPartner = async (shareId: string): Promise<boolean> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
     const { error } = await supabase
         .from('budget_shares')
         .delete()
-        .eq('id', shareId);
+        .eq('id', shareId)
+        .eq('owner_id', user.id); // 🛡️ SECURITY: Prevent IDOR (Defense in Depth)
 
     if (error) {
         logger.error('Error removing budget share', error);
