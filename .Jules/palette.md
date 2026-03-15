@@ -71,3 +71,7 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+
+## 2025-03-15 - Add ARIA attributes to Layout buttons
+**Learning:** Found that primary navigation toggle buttons (like "Create" dropdown, "Theme Toggle", and "Settings") in the `Layout` component were missing critical accessibility attributes (`aria-expanded`, `aria-haspopup`, `aria-label`, and `title`).
+**Action:** When adding or reviewing layout and navigation components, always verify that interactive buttons include proper ARIA roles and labels, especially when they control popups or state changes that aren't visually obvious to screen readers.
