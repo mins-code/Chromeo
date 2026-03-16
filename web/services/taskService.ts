@@ -110,6 +110,12 @@ export const createTask = async (task: Omit<Task, 'id' | 'createdAt'>): Promise<
  * Updates an existing task.
  */
 export const updateTask = async (updatedTask: Task): Promise<Task | null> => {
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
   // Calculate next_recurrence_date if task has recurrence
   let nextRecurrenceDate: string | null = null;
   if (updatedTask.recurrence && updatedTask.recurrence.frequency !== 'none') {
@@ -124,6 +130,7 @@ export const updateTask = async (updatedTask: Task): Promise<Task | null> => {
     .from('tasks')
     .update(dbPayload)
     .eq('id', updatedTask.id)
+    .eq('user_id', user.id) // Security: only update own tasks
     .select()
     .single();
 
@@ -140,10 +147,17 @@ export const updateTask = async (updatedTask: Task): Promise<Task | null> => {
  * Deletes a task by ID.
  */
 export const deleteTask = async (id: string): Promise<boolean> => {
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
   const { error } = await supabase
     .from('tasks')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('user_id', user.id); // Security: only delete own tasks
 
   if (error) {
     logger.error('Error deleting task', error);
