@@ -84,7 +84,16 @@ export function getUrgencyScore(task: Task, now: number = Date.now()): number {
  * @returns New array sorted by urgency (does not mutate original)
  */
 export function sortByUrgency(tasks: Task[]): Task[] {
-  return [...tasks].sort((a, b) => getUrgencyScore(b) - getUrgencyScore(a));
+  // ⚡ Bolt Optimization: Schwartzian Transform
+  // Instead of recalculating getUrgencyScore for every comparison (O(N log N)),
+  // we calculate the score exactly once per item (O(N)), sort by the cached score,
+  // and then extract the original items. This drastically improves sorting performance
+  // for large task lists.
+  const now = Date.now();
+  return tasks
+    .map(task => ({ task, score: getUrgencyScore(task, now) }))
+    .sort((a, b) => b.score - a.score)
+    .map(item => item.task);
 }
 
 /**
