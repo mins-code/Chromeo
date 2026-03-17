@@ -74,6 +74,7 @@ const RoutineCard: React.FC<RoutineCardProps> = ({ routine, onEdit, onDelete, on
               : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
           }`}
           aria-label={routine.isActive ? `Disable routine: ${routine.name}` : `Enable routine: ${routine.name}`}
+          aria-pressed={routine.isActive}
         >
           {routine.isActive ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
           {routine.isActive ? 'Active' : 'Inactive'}

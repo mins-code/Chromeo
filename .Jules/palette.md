@@ -71,3 +71,7 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+
+## 2024-05-27 - Toggle Button ARIA
+**Learning:** Visual toggle buttons that manage active/inactive states (like the routine toggle in `RoutineCard`) must use the `aria-pressed` attribute reflecting their state to properly convey activation status to screen readers.
+**Action:** Always add `aria-pressed={isActive}` to toggle buttons so screen readers announce the state correctly.
