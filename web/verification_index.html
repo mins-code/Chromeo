@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <!-- Apple PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="ChronoDeX" />
+    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
+    <meta
+      name="description"
+      content="ChronoDeX - Your intelligent productivity companion. Manage tasks, budgets, routines, and collaborate with partners. AI-powered task management with smart scheduling."
+    />
+    <meta
+      name="keywords"
+      content="task management, productivity, budget tracker, AI assistant, calendar, routine planner, collaboration"
+    />
+    <meta name="author" content="ChronoDeX" />
+    <meta name="theme-color" content="#1e3a5f" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="ChronoDeX - Intelligent Productivity Companion" />
+    <meta
+      property="og:description"
+      content="Manage tasks, budgets, and routines with AI-powered assistance. Collaborate with partners and stay organized."
+    />
+    <meta property="og:site_name" content="ChronoDeX" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ChronoDeX - Intelligent Productivity Companion" />
+    <meta
+      name="twitter:description"
+      content="Manage tasks, budgets, and routines with AI-powered assistance."
+    />
+
+    <!-- Security -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://esm.sh; object-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://generativelanguage.googleapis.com https://www.googleapis.com https://fonts.googleapis.com https://fonts.gstatic.com; base-uri 'self'; form-action 'self';"
+    />
+
+    <title>ChronoDeX - Intelligent Productivity Companion</title>
+    <link rel="icon" id="app-favicon" type="image/png" href="/favicon-light.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;700&family=Rye&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Dependencies are bundled by Vite, no importmap needed -->
+  </head>
+
+  <body
+    class="antialiased overflow-hidden h-screen w-screen selection:bg-brand-500 selection:text-white"
+  >
+    <div id="root" class="h-full w-full"></div>
+    <script type="module" src="/verification_index.tsx"></script>
+  </body>
+</html>
