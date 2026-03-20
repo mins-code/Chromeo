@@ -114,8 +114,12 @@ serve(async (req) => {
       console.log(`Password verified. Deleting all data for user ${userId}`);
 
       // Delete in order of foreign key dependencies
+      // 🛡️ SECURITY: [Data Privacy] Complete data removal is legally required (GDPR/CCPA).
+      // ALL tables containing user data must be listed here in dependency order.
+      // Remember to add new tables here when updating the database schema!
       const tablesToDelete = [
         "account_deletion_requests",
+        "day_plans",
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
@@ -125,6 +129,7 @@ serve(async (req) => {
         "transactions",
         "routines",
         "tasks",
+        "notes",
         "user_settings",
         "profiles",
       ];
@@ -142,6 +147,10 @@ serve(async (req) => {
       try {
         await supabase.from("teams").delete().eq("owner_id", userId);
         await supabase.from("budget_shares").delete().eq("owner_id", userId);
+
+        // 🛡️ SECURITY: [Data Privacy] Also remove related non-user_id data like shares
+        await supabase.from("note_shares").delete().eq("owner_id", userId);
+        await supabase.from("note_shares").delete().eq("shared_with_id", userId);
       } catch (e) {
         console.log(`Owner cleanup: ${e}`);
       }
@@ -344,7 +353,11 @@ serve(async (req) => {
       console.log(`Deleting all data for user ${userId}`);
 
       // Delete in order of foreign key dependencies
+      // 🛡️ SECURITY: [Data Privacy] Complete data removal is legally required (GDPR/CCPA).
+      // ALL tables containing user data must be listed here in dependency order.
+      // Remember to add new tables here when updating the database schema!
       const tablesToDelete = [
+        "day_plans",
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
@@ -354,6 +367,7 @@ serve(async (req) => {
         "transactions",
         "routines",
         "tasks",
+        "notes",
         "user_settings",
         "profiles",
       ];
@@ -371,6 +385,10 @@ serve(async (req) => {
       try {
         await supabase.from("teams").delete().eq("owner_id", userId);
         await supabase.from("budget_shares").delete().eq("owner_id", userId);
+
+        // 🛡️ SECURITY: [Data Privacy] Also remove related non-user_id data like shares
+        await supabase.from("note_shares").delete().eq("owner_id", userId);
+        await supabase.from("note_shares").delete().eq("shared_with_id", userId);
       } catch (e) {
         console.log(`Owner cleanup: ${e}`);
       }
