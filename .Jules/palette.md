@@ -71,3 +71,7 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+
+## 2024-03-09 - Missing Mobile ARIA Labels
+**Learning:** Responsive layouts sometimes duplicate navigational buttons for mobile drawers/sidebars. While desktop versions might have `aria-label`s, the mobile equivalents are easily missed.
+**Action:** Always double-check responsive versions of icon-only buttons (like theme toggles or settings) to ensure `aria-label` attributes are consistently applied across all breakpoints.
