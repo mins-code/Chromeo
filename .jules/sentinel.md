@@ -1,5 +1,10 @@
 # Sentinel's Journal
 
+## 2026-02-23 - Overly Permissive CORS Configuration
+**Vulnerability:** The `account-deletion` Edge Function used a hardcoded `Access-Control-Allow-Origin: "*"` in its CORS headers, which would allow unauthorized domains to trigger account deletion requests if they had a valid user token, and could lead to other cross-origin attacks.
+**Learning:** Hardcoding `"*"` for the origin in CORS headers effectively bypasses the browser's Same-Origin Policy for that endpoint. Even for public APIs, it's safer to explicitly allow known origins if possible, and for authenticated endpoints, it's required.
+**Prevention:** Dynamically validate the `Origin` header from the incoming request against a strict whitelist of trusted domains (e.g., the app's production URL and development localhost). Set `Access-Control-Allow-Origin` to the matched origin and include `Vary: Origin` to prevent cache poisoning issues.
+
 ## 2024-05-25 - Securing Cron-Triggered Functions
 **Vulnerability:** The `notification-scheduler` Edge Function was exposed publicly without authentication, allowing any internet user to trigger the notification dispatch process, leading to potential DoS.
 **Learning:** "Cron jobs" in Supabase are just HTTP requests. Unless the target function *explicitly* checks for an Authorization header (usually matching `SUPABASE_SERVICE_ROLE_KEY`), the endpoint is public.
