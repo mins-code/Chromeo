@@ -4,6 +4,7 @@ import { format, differenceInCalendarDays } from 'date-fns';
 import { Task, RecurringTransaction } from '../types';
 import DraggableTask from './DraggableTask';
 import { DollarSign, X } from 'lucide-react';
+import { toLocalDateKey } from '../utils/fastDate';
 
 interface CalendarDayCellProps {
   day: number | null;
@@ -23,7 +24,7 @@ const CalendarDayCell = memo(({ day, date, tasks, financialItems = [], isToday, 
   // Calculate distance of this cell to today once (constant for the cell)
   const daysFromTodayCurrent = date ? Math.abs(differenceInCalendarDays(today, date)) : 0;
   
-  const droppableId = date ? format(date, 'yyyy-MM-dd') : `empty-${day}`;
+  const droppableId = date ? toLocalDateKey(date) : `empty-${day}`;
   const { setNodeRef, isOver } = useDroppable({
     id: droppableId,
     data: { date },
