@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useId } from 'react';
 import { Calendar, Clock, ChevronLeft, ChevronRight, X, Keyboard, ChevronUp, ChevronDown } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, setHours, setMinutes, getHours, getMinutes, parse, isValid, addDays } from 'date-fns';
+import { toLocalDateKey } from '../utils/fastDate';
 
 interface DateTimePickerProps {
   value: string;
@@ -69,7 +70,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   // Focus management for keyboard navigation
   useEffect(() => {
     if (isOpen && mode === 'picker' && selectedDate) {
-      const btn = document.getElementById(`date-${format(selectedDate, 'yyyy-MM-dd')}`);
+      const btn = document.getElementById(`date-${toLocalDateKey(selectedDate)}`);
       if (btn) btn.focus();
     }
   }, [selectedDate, isOpen, mode, currentMonth]);
@@ -365,7 +366,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
                   return (
                     <button
                       key={day.toISOString()}
-                      id={`date-${format(day, 'yyyy-MM-dd')}`}
+                      id={`date-${toLocalDateKey(day)}`}
                       tabIndex={isFocusable ? 0 : -1}
                       onKeyDown={(e) => handleDayKeyDown(e, day)}
                       onClick={() => handleDateSelect(day)}

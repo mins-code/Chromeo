@@ -5,6 +5,7 @@ import DraggableTask from './DraggableTask';
 import { format, isToday, parseISO, getHours, getMinutes } from 'date-fns';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import CurrentTimeIndicator from './CurrentTimeIndicator';
+import { toLocalDateKey } from '../utils/fastDate';
 
 interface DayViewProps {
   tasks: Task[];
@@ -30,7 +31,7 @@ interface DroppableHourCellProps {
  * Props `dayDate` (from parent) and `children` (undefined in loop) are stable.
  */
 const DroppableHourCell = React.memo(({ dayDate, hour, height, intervalHours, children }: DroppableHourCellProps) => {
-  const id = `${format(dayDate, 'yyyy-MM-dd')}-${hour.toString().padStart(2, '0')}`;
+  const id = `${toLocalDateKey(dayDate)}-${hour.toString().padStart(2, '0')}`;
   const { setNodeRef, isOver } = useDroppable({
     id,
     data: { date: dayDate, hour },
