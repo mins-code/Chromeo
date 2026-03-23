@@ -68,12 +68,13 @@ const RoutineCard: React.FC<RoutineCardProps> = ({ routine, onEdit, onDelete, on
       <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/5">
         <button
           onClick={() => onToggle(routine.id)}
-          className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
+          className={`flex items-center gap-1.5 text-sm font-medium transition-colors rounded-lg px-2 py-1 -ml-2 focus:outline-none focus:ring-2 focus:ring-brand-500/50 ${
             routine.isActive
-              ? 'text-brand-600 dark:text-brand-400 hover:text-brand-700'
-              : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              ? 'text-brand-600 dark:text-brand-400 hover:text-brand-700 hover:bg-brand-50 dark:hover:bg-brand-500/10'
+              : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
           }`}
-          aria-label={routine.isActive ? `Disable routine: ${routine.name}` : `Enable routine: ${routine.name}`}
+          aria-label={`Toggle routine: ${routine.name}`}
+          aria-pressed={routine.isActive}
         >
           {routine.isActive ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
           {routine.isActive ? 'Active' : 'Inactive'}
@@ -81,7 +82,7 @@ const RoutineCard: React.FC<RoutineCardProps> = ({ routine, onEdit, onDelete, on
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
           <button
             onClick={() => onEdit(routine)}
-            className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+            className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500/50"
             title="Edit"
             aria-label={`Edit routine: ${routine.name}`}
           >
@@ -89,7 +90,7 @@ const RoutineCard: React.FC<RoutineCardProps> = ({ routine, onEdit, onDelete, on
           </button>
           <button
             onClick={() => onDelete(routine.id)}
-            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50"
             title="Delete"
             aria-label={`Delete routine: ${routine.name}`}
           >

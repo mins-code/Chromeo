@@ -267,7 +267,7 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5"
+            className="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
             aria-label="Close editor"
           >
             <X size={20} />
@@ -563,8 +563,9 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({
             </div>
             <button
               onClick={() => setIsActive(!isActive)}
-              className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${isActive ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}
-              aria-label={isActive ? 'Deactivate routine' : 'Activate routine'}
+              className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-2 dark:focus:ring-offset-slate-900 ${isActive ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}
+              aria-label="Toggle active status"
+              aria-pressed={isActive}
             >
               <div
                 className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${isActive ? 'translate-x-6' : 'translate-x-0'}`}
@@ -601,20 +602,15 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({
                         : undefined;
                   setNotificationEnabled(newValue);
                 }}
-                className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${
+                className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:ring-offset-2 dark:focus:ring-offset-slate-900 ${
                   notificationEnabled === true
                     ? 'bg-amber-500'
                     : notificationEnabled === false
                       ? 'bg-slate-300 dark:bg-slate-600'
                       : 'bg-gradient-to-r from-slate-300 to-amber-400 dark:from-slate-600 dark:to-amber-500'
                 }`}
-                aria-label={
-                  notificationEnabled === true
-                    ? 'Disable notification'
-                    : notificationEnabled === false
-                      ? 'Use global settings'
-                      : 'Enable notification'
-                }
+                aria-label="Toggle notifications"
+                aria-pressed={notificationEnabled === true ? true : notificationEnabled === false ? false : "mixed"}
               >
                 <div
                   className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${

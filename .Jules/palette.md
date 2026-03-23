@@ -71,3 +71,7 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+
+## 2025-03-05 - Consistent Focus Styles and ARIA Toggles in Routine Components
+**Learning:** When implementing custom toggle buttons across different components (`RoutineCard` and `RoutineEditor`), using dynamic `aria-label`s (like "Activate" -> "Deactivate") creates a disjointed experience for screen reader users and can cause double-announcements. Additionally, interactive elements like edit/delete/close icon-only buttons require consistent visible focus states for reliable keyboard navigation.
+**Action:** Always use `aria-pressed` with a static `aria-label` (e.g., "Toggle routine active status") for toggle buttons. Ensure that all custom interactive elements, especially icon-only buttons, have explicit `focus:outline-none focus:ring-2 focus:ring-{color}/50` utility classes applied.
