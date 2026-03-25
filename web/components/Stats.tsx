@@ -25,27 +25,41 @@ const Stats: React.FC<StatsProps> = ({ tasks, budget, onNavigate }) => {
     });
   }, [tasks]);
 
-  // Today's stats
+  // Today's stats - ⚡ Bolt Optimization: Single pass loop over todaysTasks instead of 6 filter passes
   const todayStats = useMemo(() => {
-    const todo = todaysTasks.filter(t => t.status === TaskStatus.TODO).length;
-    const inProgress = todaysTasks.filter(t => t.status === TaskStatus.IN_PROGRESS).length;
-    const done = todaysTasks.filter(t => t.status === TaskStatus.DONE).length;
-    const total = todaysTasks.length;
+    let todo = 0;
+    let inProgress = 0;
+    let done = 0;
+    let lowPriority = 0;
+    let mediumPriority = 0;
+    let highPriority = 0;
     
-    const lowPriority = todaysTasks.filter(t => t.priority === TaskPriority.LOW && t.status !== TaskStatus.DONE).length;
-    const mediumPriority = todaysTasks.filter(t => t.priority === TaskPriority.MEDIUM && t.status !== TaskStatus.DONE).length;
-    const highPriority = todaysTasks.filter(t => t.priority === TaskPriority.HIGH && t.status !== TaskStatus.DONE).length;
+    for (let i = 0; i < todaysTasks.length; i++) {
+      const t = todaysTasks[i];
+      if (t.status === TaskStatus.TODO) todo++;
+      else if (t.status === TaskStatus.IN_PROGRESS) inProgress++;
+      else if (t.status === TaskStatus.DONE) done++;
 
-    return { todo, inProgress, done, total, lowPriority, mediumPriority, highPriority };
+      if (t.status !== TaskStatus.DONE) {
+        if (t.priority === TaskPriority.LOW) lowPriority++;
+        else if (t.priority === TaskPriority.MEDIUM) mediumPriority++;
+        else if (t.priority === TaskPriority.HIGH) highPriority++;
+      }
+    }
+
+    return { todo, inProgress, done, total: todaysTasks.length, lowPriority, mediumPriority, highPriority };
   }, [todaysTasks]);
 
-  // Daily Safe Spend Calculation
+  // Daily Safe Spend Calculation - ⚡ Bolt Optimization: Single pass loop over budget transactions
   const dailySafeSpend = useMemo(() => {
     if (!budget || budget.limit === 0) return null;
     
-    const totalExpenses = budget.transactions
-      .filter(t => t.type === 'expense')
-      .reduce((acc, curr) => acc + curr.amount, 0);
+    let totalExpenses = 0;
+    for (let i = 0; i < budget.transactions.length; i++) {
+      if (budget.transactions[i].type === 'expense') {
+        totalExpenses += budget.transactions[i].amount;
+      }
+    }
     
     const remaining = budget.limit - totalExpenses;
     

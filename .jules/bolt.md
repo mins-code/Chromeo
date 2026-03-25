@@ -31,3 +31,7 @@
 ## 2026-03-03 - Optimizing Date Parsing for Sorting
 **Learning:** `new Date(dateStr).getTime()` creates a full Date object just to extract the timestamp, adding unnecessary memory allocation and garbage collection overhead. In functions called frequently (like sorting algorithms iterating over thousands of items in `taskScoring.ts`), this is a measurable bottleneck.
 **Action:** Use `Date.parse(dateStr)` when only the timestamp is needed. Benchmark shows this avoids object creation and improves date parsing time by ~30% for ISO-8601 strings.
+
+## 2024-05-18 - [Optimizing Multiple Inline Array Calculations in React JSX]
+**Learning:** Performing expensive chained array calculations (like multiple `.filter().reduce()`) directly inside a JSX map loop drastically degrades rendering performance, as it forces O(N) operations to be re-evaluated every time the component renders, allocating intermediate arrays along the way.
+**Action:** Extract repeated array calculations into a single-pass `for` loop either within a `useMemo` block or within an Immediately Invoked Function Expression (IIFE) inside the JSX loop to calculate the values exactly once per render cycle.
