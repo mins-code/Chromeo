@@ -167,15 +167,17 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
     };
 
     // Memoized computed values to avoid recalculation on every render
-    const totalIncome = useMemo(() => 
-        budget.transactions.filter(t => t.type === 'income').reduce((acc, curr) => acc + curr.amount, 0),
-        [budget.transactions]
-    );
-    
-    const totalExpenses = useMemo(() => 
-        budget.transactions.filter(t => t.type === 'expense').reduce((acc, curr) => acc + curr.amount, 0),
-        [budget.transactions]
-    );
+    // ⚡ Bolt Optimization: Use a single pass loop instead of multiple filter/reduce passes
+    const { totalIncome, totalExpenses } = useMemo(() => {
+        let income = 0;
+        let expenses = 0;
+        for (let i = 0; i < budget.transactions.length; i++) {
+            const tx = budget.transactions[i];
+            if (tx.type === 'income') income += tx.amount;
+            else if (tx.type === 'expense') expenses += tx.amount;
+        }
+        return { totalIncome: income, totalExpenses: expenses };
+    }, [budget.transactions]);
     
     const remaining = useMemo(() => budget.limit - totalExpenses, [budget.limit, totalExpenses]);
 
@@ -626,57 +628,60 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                                 </div>
 
                                 {/* Expanded Budget Details */}
-                                {expandedPartnerBudget?.ownerId === sharedBudget.ownerId && (
-                                    <div className="ml-11 p-4 rounded-xl bg-gradient-to-br from-emerald-500/5 to-brand-500/5 border border-emerald-500/10 space-y-3">
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                            <div>
-                                                <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Budget</p>
-                                                <p className="text-lg font-bold text-slate-800 dark:text-slate-100">
-                                                    {expandedPartnerBudget.budget.limit.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
-                                                </p>
-                                                <p className="text-[10px] text-slate-500 font-mono">/ {expandedPartnerBudget.budget.duration}</p>
+                                {expandedPartnerBudget?.ownerId === sharedBudget.ownerId && (() => {
+                                    // ⚡ Bolt Optimization: Calculate partner totals exactly once
+                                    // instead of recalculating 5+ times inside the JSX
+                                    let partnerIncome = 0;
+                                    let partnerExpenses = 0;
+                                    for (let i = 0; i < expandedPartnerBudget.budget.transactions.length; i++) {
+                                        const tx = expandedPartnerBudget.budget.transactions[i];
+                                        if (tx.type === 'income') partnerIncome += tx.amount;
+                                        else if (tx.type === 'expense') partnerExpenses += tx.amount;
+                                    }
+                                    const partnerLimit = expandedPartnerBudget.budget.limit;
+                                    const partnerRemaining = partnerLimit - partnerExpenses;
+                                    const partnerIsOverBudget = partnerRemaining < 0;
+                                    const partnerProgress = Math.min(100, (partnerExpenses / (partnerLimit || 1)) * 100);
+
+                                    return (
+                                        <div className="ml-11 p-4 rounded-xl bg-gradient-to-br from-emerald-500/5 to-brand-500/5 border border-emerald-500/10 space-y-3">
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                                <div>
+                                                    <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Budget</p>
+                                                    <p className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                                                        {partnerLimit.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                    </p>
+                                                    <p className="text-[10px] text-slate-500 font-mono">/ {expandedPartnerBudget.budget.duration}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Expenses</p>
+                                                    <p className="text-lg font-bold text-red-500">
+                                                        {partnerExpenses.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Remaining</p>
+                                                    <p className={`text-lg font-bold ${partnerIsOverBudget ? 'text-red-500' : 'text-brand-500'}`}>
+                                                        {partnerRemaining.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Income</p>
+                                                    <p className="text-lg font-bold text-emerald-500">
+                                                        {partnerIncome.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Expenses</p>
-                                                <p className="text-lg font-bold text-red-500">
-                                                    {expandedPartnerBudget.budget.transactions
-                                                        .filter(t => t.type === 'expense')
-                                                        .reduce((acc, t) => acc + t.amount, 0)
-                                                        .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Remaining</p>
-                                                <p className={`text-lg font-bold ${(expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0)) >= 0 ? 'text-brand-500' : 'text-red-500'}`}>
-                                                    {(expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0))
-                                                        .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Income</p>
-                                                <p className="text-lg font-bold text-emerald-500">
-                                                    {expandedPartnerBudget.budget.transactions
-                                                        .filter(t => t.type === 'income')
-                                                        .reduce((acc, t) => acc + t.amount, 0)
-                                                        .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
-                                                </p>
+                                            {/* Progress bar */}
+                                            <div className="h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
+                                                <div
+                                                    className={`h-full transition-all duration-500 ${partnerIsOverBudget ? 'bg-red-500' : 'bg-brand-500'}`}
+                                                    style={{ width: `${partnerProgress}%` }}
+                                                />
                                             </div>
                                         </div>
-                                        {/* Progress bar */}
-                                        <div className="h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full transition-all duration-500 ${
-                                                    (expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0)) < 0 
-                                                        ? 'bg-red-500' 
-                                                        : 'bg-brand-500'
-                                                }`}
-                                                style={{ 
-                                                    width: `${Math.min(100, (expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0) / (expandedPartnerBudget.budget.limit || 1)) * 100)}%` 
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
+                                    );
+                                })()}
                             </div>
                         ))}
                     </div>
