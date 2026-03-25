@@ -42,6 +42,33 @@ import ErrorBoundary from './components/ErrorBoundary';
 const ConfirmDeletePage = lazy(() => import('./pages/ConfirmDeletePage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 
+// Verification component
+const VerifyA11yLayout = lazy(() => import('./components/Layout').then(module => {
+    return {
+        default: () => (
+            <module.Layout
+                currentView="day"
+                onNavigate={() => {}}
+                onAddTask={() => {}}
+                onEditTags={() => {}}
+                onCreateRoutine={() => {}}
+                onOpenAI={() => {}}
+                onCalendarDateSelect={() => {}}
+                calendarTags={[]}
+                userStats={{
+                    userName: "Test User",
+                    pendingTasks: 0,
+                    totalTasks: 0,
+                    budgetRemaining: 0,
+                }}
+                currentTheme="dark"
+            >
+                <div className="p-10 text-white">Verification Layout View</div>
+            </module.Layout>
+        )
+    };
+}));
+
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error("Could not find root element to mount to");
@@ -77,6 +104,14 @@ root.render(
                       <ResetPasswordPage />
                     </Suspense>
                   } 
+                />
+                <Route
+                  path="/verify-a11y"
+                  element={
+                    <Suspense fallback={<LoadingFallback />}>
+                      <VerifyA11yLayout />
+                    </Suspense>
+                  }
                 />
                 <Route path="/*" element={<App />} />
               </Routes>
