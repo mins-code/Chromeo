@@ -41,15 +41,26 @@ export const nowIso = (): string => {
 // Formatting Functions (Local Timezone)
 // ============================================================================
 
+// ⚡ Bolt Optimization: Cache Intl.DateTimeFormat instances
+// Calling toLocaleDateString/toLocaleTimeString repeatedly in tight render loops
+// creates new formatter instances every time, which is ~100x slower than using a cached formatter.
+const formatters = {
+  dateShort: new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }),
+  dateLong: new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'long', day: 'numeric' }),
+  dateWithWeekday: new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'long', day: 'numeric' }),
+  dateWithWeekdayUS: new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
+  dateNumeric: new Intl.DateTimeFormat(undefined),
+  time: new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }),
+  time24: new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', hour12: false }),
+  dateTimeLong: new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+};
+
 /**
  * Formats a date for display: "Jan 6" or "Dec 25"
  */
 export const formatDateShort = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    month: 'short', 
-    day: 'numeric' 
-  });
+  return formatters.dateShort.format(d);
 };
 
 /**
@@ -57,11 +68,7 @@ export const formatDateShort = (date: string | Date): string => {
  */
 export const formatDateLong = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    year: 'numeric',
-    month: 'long', 
-    day: 'numeric' 
-  });
+  return formatters.dateLong.format(d);
 };
 
 /**
@@ -69,11 +76,7 @@ export const formatDateLong = (date: string | Date): string => {
  */
 export const formatDateWithWeekday = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    weekday: 'long', 
-    month: 'long', 
-    day: 'numeric' 
-  });
+  return formatters.dateWithWeekday.format(d);
 };
 
 /**
@@ -81,11 +84,7 @@ export const formatDateWithWeekday = (date: string | Date): string => {
  */
 export const formatDateWithWeekdayUS = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    month: 'long', 
-    day: 'numeric' 
-  });
+  return formatters.dateWithWeekdayUS.format(d);
 };
 
 /**
@@ -93,7 +92,7 @@ export const formatDateWithWeekdayUS = (date: string | Date): string => {
  */
 export const formatDateNumeric = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleDateString();
+  return formatters.dateNumeric.format(d);
 };
 
 /**
@@ -101,10 +100,7 @@ export const formatDateNumeric = (date: string | Date): string => {
  */
 export const formatTime = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleTimeString(undefined, { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
+  return formatters.time.format(d);
 };
 
 /**
@@ -112,11 +108,7 @@ export const formatTime = (date: string | Date): string => {
  */
 export const formatTime24 = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleTimeString(undefined, { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    hour12: false 
-  });
+  return formatters.time24.format(d);
 };
 
 /**
@@ -132,13 +124,7 @@ export const formatDateTime = (date: string | Date): string => {
  */
 export const formatDateTimeLong = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    year: 'numeric',
-    month: 'long', 
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  return formatters.dateTimeLong.format(d);
 };
 
 // ============================================================================
