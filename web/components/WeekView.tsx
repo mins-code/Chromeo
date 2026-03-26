@@ -196,6 +196,8 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
             onClick={() => setIsExpanded(!isExpanded)}
             className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
             title={isExpanded ? "Compact view (4hr)" : "Expanded view (1hr)"}
+            aria-label={isExpanded ? "Switch to compact view (4hr)" : "Switch to expanded view (1hr)"}
+            aria-expanded={isExpanded}
           >
             {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
