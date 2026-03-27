@@ -70,4 +70,7 @@
 **Action:** Wrap the button group in `role="radiogroup"` with an accessible label, and use `role="radio"` with `aria-checked` on the individual buttons to properly communicate the selection semantics. Ideally, implement arrow key navigation, but even without it, the semantic roles provide significant value.
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
-**Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+
+## 2026-03-27 - Generic Toggle Buttons Accessibility
+**Learning:** Segmented controls implemented as a group of standard `<button>` elements (without full `role="radiogroup"` arrow-key navigation logic) should not use `role="radio"` and `aria-checked`, as this breaks keyboard expectations for screen reader users.
+**Action:** When creating visual "segmented controls" out of standard buttons, simply use `aria-pressed={isActive}` on the active button to provide state context without breaking native keyboard navigation.
