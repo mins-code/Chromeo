@@ -124,7 +124,9 @@ serve(async (req) => {
         "budget_shares",
         "transactions",
         "routines",
+        "day_plans",
         "tasks",
+        "notes",
         "user_settings",
         "profiles",
       ];
@@ -142,6 +144,8 @@ serve(async (req) => {
       try {
         await supabase.from("teams").delete().eq("owner_id", userId);
         await supabase.from("budget_shares").delete().eq("owner_id", userId);
+        await supabase.from("note_shares").delete().eq("owner_id", userId);
+        await supabase.from("note_shares").delete().eq("shared_with_id", userId);
       } catch (e) {
         console.log(`Owner cleanup: ${e}`);
       }
@@ -353,7 +357,9 @@ serve(async (req) => {
         "budget_shares",
         "transactions",
         "routines",
+        "day_plans",
         "tasks",
+        "notes",
         "user_settings",
         "profiles",
       ];
@@ -371,6 +377,8 @@ serve(async (req) => {
       try {
         await supabase.from("teams").delete().eq("owner_id", userId);
         await supabase.from("budget_shares").delete().eq("owner_id", userId);
+        await supabase.from("note_shares").delete().eq("owner_id", userId);
+        await supabase.from("note_shares").delete().eq("shared_with_id", userId);
       } catch (e) {
         console.log(`Owner cleanup: ${e}`);
       }
