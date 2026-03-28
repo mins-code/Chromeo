@@ -158,13 +158,13 @@ const Auth: React.FC = () => {
           )}
 
           {error && (
-            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+            <div role="alert" className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
               {error}
             </div>
           )}
           
           {successMessage && (
-            <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-green-600 text-sm">
+            <div role="status" className="p-3 rounded-lg bg-green-50 border border-green-200 text-green-600 text-sm">
               {successMessage}
             </div>
           )}
