@@ -16,8 +16,37 @@ const Auth: React.FC = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
+  // Basic email validation regex
+  const isValidEmail = (emailStr: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr);
+  };
+
+  const getSecureErrorMessage = (err: any): string => {
+    // 🛡️ SECURITY: Prevent leaking internal stack traces or exact reasons
+    // if they aren't safe for the user to see. We map known safe errors or fallback.
+    const message = err?.message || '';
+    if (message.toLowerCase().includes('invalid login credentials')) {
+      return 'Invalid email or password.';
+    }
+    if (message.toLowerCase().includes('rate limit')) {
+      return 'Too many attempts. Please try again later.';
+    }
+    if (message.toLowerCase().includes('already registered')) {
+      return 'An account with this email already exists.';
+    }
+    // Fallback for unknown errors to prevent information leakage
+    return 'Authentication failed. Please check your credentials and try again.';
+  };
+
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 🛡️ SECURITY: Input validation
+    if (!isValidEmail(email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
     setSuccessMessage('');
@@ -29,7 +58,7 @@ const Auth: React.FC = () => {
       if (error) throw error;
       setSuccessMessage('Password reset instructions sent. Please check your email.');
     } catch (err: any) {
-      setError(err.message);
+      setError(getSecureErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
@@ -37,6 +66,23 @@ const Auth: React.FC = () => {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 🛡️ SECURITY: Input validation
+    if (!isValidEmail(email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
+    if (isSignUp && password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    if (!isSignUp && !password) {
+      setError('Please enter your password.');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
     setSuccessMessage('');
@@ -59,7 +105,7 @@ const Auth: React.FC = () => {
         if (error) throw error;
       }
     } catch (err: any) {
-      setError(err.message);
+      setError(getSecureErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
