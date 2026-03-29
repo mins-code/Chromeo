@@ -117,3 +117,9 @@
 **Vulnerability:** The `push-notification` Edge Function used a `service_role` client to schedule notifications. It allowed any authenticated user to schedule a notification for ANY task ID, regardless of ownership. Since notifications are unique per task, this allowed an attacker to "lock" the notification slot for a victim's task, preventing the victim from scheduling their own notification (DoS).
 **Learning:** Using `service_role` clients in user-facing functions bypasses RLS. You cannot rely on "implied" permissions.
 **Prevention:** Always verify resource ownership (e.g., `task.user_id === userId`) explicitly when performing operations on behalf of a user using a privileged client.
+## 2026-03-29 - Client-Side Input Validation and Secure Error Messaging
+**Vulnerability:** The authentication form directly sent user input (email and password) to the Supabase backend without prior client-side validation. Additionally, the application directly rendered raw backend error messages (`err.message`), which could potentially leak sensitive implementation details, stack traces, or verbose database errors to the user.
+**Learning:** Defense in depth requires both client-side and server-side validation. Sending malformed data to the backend wastes resources and can trigger unexpected error states. Rendering raw backend errors on the frontend is a common source of information leakage (CWE-209), which attackers use to map out the application's architecture and backend technologies.
+**Prevention:**
+1. Implement rigorous client-side input validation (e.g., regex for email format, minimum length checks for passwords) to filter out malformed requests early.
+2. Never display raw backend error messages or stack traces directly in the UI. Instead, use a centralized error handler to map specific, known-safe error codes (like "invalid login credentials") to generic, user-friendly messages, and use a safe fallback for all unknown errors.
