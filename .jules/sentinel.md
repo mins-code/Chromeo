@@ -117,3 +117,8 @@
 **Vulnerability:** The `push-notification` Edge Function used a `service_role` client to schedule notifications. It allowed any authenticated user to schedule a notification for ANY task ID, regardless of ownership. Since notifications are unique per task, this allowed an attacker to "lock" the notification slot for a victim's task, preventing the victim from scheduling their own notification (DoS).
 **Learning:** Using `service_role` clients in user-facing functions bypasses RLS. You cannot rely on "implied" permissions.
 **Prevention:** Always verify resource ownership (e.g., `task.user_id === userId`) explicitly when performing operations on behalf of a user using a privileged client.
+
+## 2024-05-27 - [HIGH] Fix overly permissive CORS configuration in account-deletion
+**Vulnerability:** The Supabase Edge Function `account-deletion` used a static wildcard (`Access-Control-Allow-Origin: *`) for CORS.
+**Learning:** Edge Functions handling sensitive actions (like account deletion) must enforce strict CORS policies to prevent unauthorized cross-origin requests, even if they require an Authorization header (Defense in Depth).
+**Prevention:** Dynamically validate the request `Origin` against a whitelist of trusted domains (e.g., `APP_URL` and `localhost`) and set `Access-Control-Allow-Origin` accordingly. Always include `Vary: Origin` in the headers to prevent cache poisoning when generating CORS headers dynamically.
