@@ -1,1025 +1,1287 @@
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { NAVIGATION_ITEMS, APP_NAME } from '../constants';
 import { ViewMode, TaskType, ThemeOption, ViewSourceMode } from '../types';
-import { Plus, Settings, X, Wallet, CheckCircle2, User, ChevronDown, Calendar, CheckSquare, Clock, Moon, Sun, ChevronLeft, ChevronRight, Menu, PanelLeft, PanelLeftClose, Bell, ChevronUp, Check, Pencil, Repeat, Bot, ArrowRight } from 'lucide-react';
+import {
+  Plus,
+  Settings,
+  X,
+  Wallet,
+  CheckCircle2,
+  User,
+  ChevronDown,
+  Calendar,
+  CheckSquare,
+  Clock,
+  Moon,
+  Sun,
+  ChevronLeft,
+  ChevronRight,
+  Menu,
+  PanelLeft,
+  PanelLeftClose,
+  Bell,
+  ChevronUp,
+  Check,
+  Pencil,
+  Repeat,
+  Bot,
+  ArrowRight,
+} from 'lucide-react';
 import { t, ThemeText } from '../themeText';
 import MiniCalendar from './MiniCalendar';
 
 // Map navigation IDs to themeText keys
 const navIdToTextKey: Record<string, keyof Omit<ThemeText, 'greeting'>> = {
-    'dashboard': 'dashboard',
-    'activities': 'activities',
-    'tasks': 'tasks',
-    'reminders': 'reminders',
-    'events': 'events',
-    'appointments': 'appointments',
-    'calendar': 'calendar',
-    'day-planner': 'dayPlanner',
-    'budget': 'budgetPlan',
-    'notes': 'notes',
-    'ai-chat': 'aiAssistant',
-    'settings': 'settings',
+  dashboard: 'dashboard',
+  activities: 'activities',
+  tasks: 'tasks',
+  reminders: 'reminders',
+  events: 'events',
+  appointments: 'appointments',
+  calendar: 'calendar',
+  'day-planner': 'dayPlanner',
+  budget: 'budgetPlan',
+  notes: 'notes',
+  'ai-chat': 'aiAssistant',
+  settings: 'settings',
 };
 
 export interface UserStats {
-    userName: string;
-    pendingTasks: number;
-    totalTasks: number;
-    budgetRemaining: number;
-    partnerName?: string;
+  userName: string;
+  pendingTasks: number;
+  totalTasks: number;
+  budgetRemaining: number;
+  partnerName?: string;
 }
 
 interface LayoutProps {
-    children: React.ReactNode;
-    currentView: ViewMode;
-    onNavigate: (view: ViewMode) => void;
-    onAddTask: (type?: TaskType) => void;
-    userStats: UserStats;
-    currentTheme: ThemeOption;
-    onThemeChange: (theme: ThemeOption) => void;
-    // New props for Calendar Tag Filtering
-    calendarTags: string[];
-    selectedTags: string[];
-    onToggleTag: (tag: string) => void;
-    // Rename Tag functionality
-    onRenameTag?: (oldTag: string, newTag: string) => void;
-    // View Source Mode for Personal/Partners/Combined views
-    viewSourceMode: ViewSourceMode;
-    onViewSourceModeChange: (mode: ViewSourceMode) => void;
-    hasConnectedPartners?: boolean;
-    // Routine creation callback
-    onCreateRoutine?: () => void;
-    // AI Assistant callback
-    onOpenAI?: () => void;
-    // Calendar date selection callback
-    onCalendarDateSelect?: (date: Date) => void;
+  children: React.ReactNode;
+  currentView: ViewMode;
+  onNavigate: (view: ViewMode) => void;
+  onAddTask: (type?: TaskType) => void;
+  userStats: UserStats;
+  currentTheme: ThemeOption;
+  onThemeChange: (theme: ThemeOption) => void;
+  // New props for Calendar Tag Filtering
+  calendarTags: string[];
+  selectedTags: string[];
+  onToggleTag: (tag: string) => void;
+  // Rename Tag functionality
+  onRenameTag?: (oldTag: string, newTag: string) => void;
+  // View Source Mode for Personal/Partners/Combined views
+  viewSourceMode: ViewSourceMode;
+  onViewSourceModeChange: (mode: ViewSourceMode) => void;
+  hasConnectedPartners?: boolean;
+  // Routine creation callback
+  onCreateRoutine?: () => void;
+  // AI Assistant callback
+  onOpenAI?: () => void;
+  // Calendar date selection callback
+  onCalendarDateSelect?: (date: Date) => void;
 }
 
 export const Layout: React.FC<LayoutProps> = ({
-    children,
-    currentView,
-    onNavigate,
-    onAddTask,
-    userStats,
-    currentTheme,
-    onThemeChange,
-    calendarTags,
-    selectedTags,
-    onToggleTag,
-    onRenameTag,
-    viewSourceMode,
-    onViewSourceModeChange,
-    hasConnectedPartners = false,
-    onCreateRoutine,
-    onOpenAI,
-    onCalendarDateSelect
+  children,
+  currentView,
+  onNavigate,
+  onAddTask,
+  userStats,
+  currentTheme,
+  onThemeChange,
+  calendarTags,
+  selectedTags,
+  onToggleTag,
+  onRenameTag,
+  viewSourceMode,
+  onViewSourceModeChange,
+  hasConnectedPartners = false,
+  onCreateRoutine,
+  onOpenAI,
+  onCalendarDateSelect,
 }) => {
-    const [showProfileStats, setShowProfileStats] = useState(false);
-    const [showCreateMenu, setShowCreateMenu] = useState(false);
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-    const [isSidebarHovered, setIsSidebarHovered] = useState(false);
-    const [ignoreHover, setIgnoreHover] = useState(false);
-    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [showProfileStats, setShowProfileStats] = useState(false);
+  const [showCreateMenu, setShowCreateMenu] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+  const [ignoreHover, setIgnoreHover] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-    // Helper function to get theme-specific navigation label
-    const getNavLabel = (id: string, defaultLabel: string): string => {
-        const textKey = navIdToTextKey[id];
-        return textKey ? t(currentTheme, textKey) : defaultLabel;
-    };
+  // Helper function to get theme-specific navigation label
+  const getNavLabel = (id: string, defaultLabel: string): string => {
+    const textKey = navIdToTextKey[id];
+    return textKey ? t(currentTheme, textKey) : defaultLabel;
+  };
 
+  // Tag Editing State
+  const [editingTag, setEditingTag] = useState<string | null>(null);
+  const [editTagValue, setEditTagValue] = useState('');
 
-    // Tag Editing State
-    const [editingTag, setEditingTag] = useState<string | null>(null);
-    const [editTagValue, setEditTagValue] = useState('');
-
-    // State for expanded nested menus
-    const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => {
-        const initial: Record<string, boolean> = {};
-        NAVIGATION_ITEMS.forEach(item => {
-            const hasChildren = ('children' in item && !!item.children) || item.id === 'calendar';
-            if (hasChildren) {
-                const isChildActive = 'children' in item && item.children?.some(c => c.id === currentView);
-                if (item.id === currentView || isChildActive) {
-                    initial[item.id] = true;
-                }
-            }
-        });
-        return initial;
+  // State for expanded nested menus
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    NAVIGATION_ITEMS.forEach((item) => {
+      const hasChildren = ('children' in item && !!item.children) || item.id === 'calendar';
+      if (hasChildren) {
+        const isChildActive =
+          'children' in item && item.children?.some((c) => c.id === currentView);
+        if (item.id === currentView || isChildActive) {
+          initial[item.id] = true;
+        }
+      }
     });
+    return initial;
+  });
 
-    const profileRef = useRef<HTMLDivElement>(null);
-    const createMenuRef = useRef<HTMLDivElement>(null);
-    const editInputRef = useRef<HTMLInputElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+  const createMenuRef = useRef<HTMLDivElement>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-                setShowProfileStats(false);
-            }
-            if (createMenuRef.current && !createMenuRef.current.contains(event.target as Node)) {
-                setShowCreateMenu(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setShowProfileStats(false);
+      }
+      if (createMenuRef.current && !createMenuRef.current.contains(event.target as Node)) {
+        setShowCreateMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-    useEffect(() => {
-        if (editingTag && editInputRef.current) {
-            editInputRef.current.focus();
-        }
-    }, [editingTag]);
+  useEffect(() => {
+    if (editingTag && editInputRef.current) {
+      editInputRef.current.focus();
+    }
+  }, [editingTag]);
 
-    const toggleTheme = useCallback(() => {
-        if (currentTheme === 'light') {
-            onThemeChange('dark');
+  const toggleTheme = useCallback(() => {
+    if (currentTheme === 'light') {
+      onThemeChange('dark');
+    } else {
+      onThemeChange('light');
+    }
+  }, [currentTheme, onThemeChange]);
+
+  const handleParentClick = useCallback(
+    (itemId: string, hasChildren: boolean) => {
+      onNavigate(itemId as ViewMode);
+
+      if (hasChildren) {
+        // Accordion behavior: Open clicked, close others
+        setExpandedMenus({ [itemId]: true });
+      } else {
+        // Close all dropdowns if clicking a non-expandable item
+        setExpandedMenus({});
+      }
+    },
+    [onNavigate]
+  );
+
+  const handleArrowClick = useCallback(
+    (e: React.MouseEvent, itemId: string) => {
+      e.stopPropagation();
+
+      if (itemId === 'calendar') {
+        if (currentView === 'calendar') {
+          // If already on calendar view, toggle the menu
+          setExpandedMenus((prev) => ({ ...prev, [itemId]: !prev[itemId] }));
         } else {
-            onThemeChange('light');
+          // Navigate to calendar and ensure expanded, close others
+          onNavigate(itemId as ViewMode);
+          setExpandedMenus({ [itemId]: true });
         }
-    }, [currentTheme, onThemeChange]);
+      } else {
+        // Standard behavior for others (like Activities): Toggle only
+        setExpandedMenus((prev) => ({ ...prev, [itemId]: !prev[itemId] }));
+      }
+    },
+    [currentView, onNavigate]
+  );
 
-    const handleParentClick = useCallback((itemId: string, hasChildren: boolean) => {
-        onNavigate(itemId as ViewMode);
+  const handleWrapperEnter = (itemId: string) => {
+    // Calendar: Click only (per previous request)
+    if (itemId === 'calendar') return;
 
-        if (hasChildren) {
-            // Accordion behavior: Open clicked, close others
-            setExpandedMenus({ [itemId]: true });
-        } else {
-            // Close all dropdowns if clicking a non-expandable item
-            setExpandedMenus({});
-        }
-    }, [onNavigate]);
+    // Activities/Others: Open on Hover
+    setExpandedMenus((prev) => ({ ...prev, [itemId]: true }));
+  };
 
-    const handleArrowClick = useCallback((e: React.MouseEvent, itemId: string) => {
-        e.stopPropagation();
+  const handleWrapperLeave = (itemId: string) => {
+    // Calendar: Maintain state (Click to toggle)
+    if (itemId === 'calendar') return;
 
-        if (itemId === 'calendar') {
-            if (currentView === 'calendar') {
-                // If already on calendar view, toggle the menu
-                setExpandedMenus(prev => ({ ...prev, [itemId]: !prev[itemId] }));
-            } else {
-                // Navigate to calendar and ensure expanded, close others
-                onNavigate(itemId as ViewMode);
-                setExpandedMenus({ [itemId]: true });
-            }
-        } else {
-            // Standard behavior for others (like Activities): Toggle only
-            setExpandedMenus(prev => ({ ...prev, [itemId]: !prev[itemId] }));
-        }
-    }, [currentView, onNavigate]);
+    // Activities/Others: Close on Mouse Leave
+    setExpandedMenus((prev) => ({ ...prev, [itemId]: false }));
+  };
 
-    const handleWrapperEnter = (itemId: string) => {
-        // Calendar: Click only (per previous request)
-        if (itemId === 'calendar') return;
+  const handleChildClick = useCallback(
+    (parentId: string, childId: string) => {
+      onNavigate(childId as ViewMode);
+      // Keep parent open when clicking a child, close others
+      setExpandedMenus({ [parentId]: true });
+    },
+    [onNavigate]
+  );
 
-        // Activities/Others: Open on Hover
-        setExpandedMenus(prev => ({ ...prev, [itemId]: true }));
-    };
+  // Logic to allow immediate collapse even if hovered
+  const handleToggleSidebar = useCallback(() => {
+    if (isSidebarCollapsed) {
+      setIsSidebarCollapsed(false);
+    } else {
+      setIsSidebarCollapsed(true);
+      setIgnoreHover(true);
+    }
+  }, [isSidebarCollapsed]);
 
-    const handleWrapperLeave = (itemId: string) => {
-        // Calendar: Maintain state (Click to toggle)
-        if (itemId === 'calendar') return;
+  const handleSidebarEnter = () => {
+    setIsSidebarHovered(true);
+  };
 
-        // Activities/Others: Close on Mouse Leave
-        setExpandedMenus(prev => ({ ...prev, [itemId]: false }));
-    };
+  const handleSidebarLeave = () => {
+    setIsSidebarHovered(false);
+    setIgnoreHover(false);
+  };
 
-    const handleChildClick = useCallback((parentId: string, childId: string) => {
-        onNavigate(childId as ViewMode);
-        // Keep parent open when clicking a child, close others
-        setExpandedMenus({ [parentId]: true });
-    }, [onNavigate]);
+  const startEditingTag = (tag: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingTag(tag);
+    setEditTagValue(tag);
+  };
 
-    // Logic to allow immediate collapse even if hovered
-    const handleToggleSidebar = useCallback(() => {
-        if (isSidebarCollapsed) {
-            setIsSidebarCollapsed(false);
-        } else {
-            setIsSidebarCollapsed(true);
-            setIgnoreHover(true);
-        }
-    }, [isSidebarCollapsed]);
+  const submitEditTag = () => {
+    if (editingTag && onRenameTag) {
+      onRenameTag(editingTag, editTagValue);
+    }
+    setEditingTag(null);
+    setEditTagValue('');
+  };
 
-    const handleSidebarEnter = () => {
-        setIsSidebarHovered(true);
-    };
+  const handleEditKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      submitEditTag();
+    } else if (e.key === 'Escape') {
+      setEditingTag(null);
+    }
+  };
 
-    const handleSidebarLeave = () => {
-        setIsSidebarHovered(false);
-        setIgnoreHover(false);
-    };
+  const isExpanded = !isSidebarCollapsed || (isSidebarHovered && !ignoreHover);
+  const sidebarWidth = isExpanded ? 'w-72' : 'w-20';
 
-    const startEditingTag = (tag: string, e: React.MouseEvent) => {
-        e.stopPropagation();
-        setEditingTag(tag);
-        setEditTagValue(tag);
-    };
+  const userInitials = userStats.userName
+    ? userStats.userName
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    : 'U';
 
-    const submitEditTag = () => {
-        if (editingTag && onRenameTag) {
-            onRenameTag(editingTag, editTagValue);
-        }
-        setEditingTag(null);
-        setEditTagValue('');
-    };
-
-    const handleEditKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            e.stopPropagation();
-            submitEditTag();
-        } else if (e.key === 'Escape') {
-            setEditingTag(null);
-        }
-    };
-
-    const isExpanded = !isSidebarCollapsed || (isSidebarHovered && !ignoreHover);
-    const sidebarWidth = isExpanded ? 'w-72' : 'w-20';
-
-    const userInitials = userStats.userName
-        ? userStats.userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-        : 'U';
-
-    return (
-        <div className={`h-screen w-screen overflow-hidden font-sans transition-colors duration-500`}>
-            {/* Global Background */}
-            <div className="flex h-full w-full bg-gradient-main text-slate-800 dark:text-slate-200">
-
-                {/* Sidebar */}
-                <aside
-                    className={`hidden md:flex flex-col glass z-40 shadow-2xl transition-all duration-300 ease-in-out border-r border-slate-200 dark:border-white/5 relative ${sidebarWidth}`}
-                    onMouseEnter={handleSidebarEnter}
-                    onMouseLeave={handleSidebarLeave}
+  return (
+    <div className={`h-screen w-screen overflow-hidden font-sans transition-colors duration-500`}>
+      {/* Global Background */}
+      <div className="flex h-full w-full bg-gradient-main text-slate-800 dark:text-slate-200">
+        {/* Sidebar */}
+        <aside
+          className={`hidden md:flex flex-col glass z-40 shadow-2xl transition-all duration-300 ease-in-out border-r border-slate-200 dark:border-white/5 relative ${sidebarWidth}`}
+          onMouseEnter={handleSidebarEnter}
+          onMouseLeave={handleSidebarLeave}
+        >
+          {/* Sidebar Header */}
+          <div className="h-20 flex items-center justify-between px-6 border-b border-slate-200 dark:border-white/5 shrink-0">
+            <div
+              className={`transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}`}
+            >
+              {/* Theme-specific logo + text */}
+              <div
+                className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => onNavigate('calendar')}
+                title="Go to Calendar"
+              >
+                <img
+                  src={
+                    currentTheme === 'cyberpunk'
+                      ? '/logo-cyberpunk.jpg'
+                      : currentTheme === 'onepiece'
+                        ? '/logo-onepiece.png'
+                        : currentTheme === 'dark'
+                          ? '/logo-dark.jpg'
+                          : '/logo-light.jpg'
+                  }
+                  alt={APP_NAME}
+                  className="h-9 w-auto rounded-lg"
+                />
+                <span
+                  className={`text-lg font-bold tracking-wide font-display ${currentTheme === 'light' ? 'text-slate-800' : currentTheme === 'onepiece' ? 'text-[#E8DCD0]' : currentTheme === 'cyberpunk' ? 'text-[#E0FFFF]' : 'text-white'}`}
                 >
+                  {APP_NAME}
+                </span>
+              </div>
+            </div>
 
-                    {/* Sidebar Header */}
-                    <div className="h-20 flex items-center justify-between px-6 border-b border-slate-200 dark:border-white/5 shrink-0">
-                        <div className={`transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}`}>
-                            {/* Theme-specific logo + text */}
-                            <div 
-                                className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-                                onClick={() => onNavigate('calendar')}
-                                title="Go to Calendar"
-                            >
-                                <img
-                                    src={currentTheme === 'cyberpunk' ? '/logo-cyberpunk.jpg' : currentTheme === 'onepiece' ? '/logo-onepiece.png' : currentTheme === 'dark' ? '/logo-dark.jpg' : '/logo-light.jpg'}
-                                    alt={APP_NAME}
-                                    className="h-9 w-auto rounded-lg"
-                                />
-                                <span className={`text-lg font-bold tracking-wide font-display ${currentTheme === 'light' ? 'text-slate-800' : currentTheme === 'onepiece' ? 'text-[#E8DCD0]' : currentTheme === 'cyberpunk' ? 'text-[#E0FFFF]' : 'text-white'}`}>
-                                    {APP_NAME}
-                                </span>
-                            </div>
-                        </div>
+            <button
+              onClick={handleToggleSidebar}
+              className={`p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors ${!isExpanded ? 'mx-auto' : ''}`}
+              title={isSidebarCollapsed ? 'Pin Sidebar Open' : 'Collapse Sidebar'}
+              aria-label={isSidebarCollapsed ? 'Pin sidebar open' : 'Collapse sidebar'}
+            >
+              {isSidebarCollapsed ? <PanelLeft size={20} /> : <PanelLeftClose size={20} />}
+            </button>
+          </div>
 
-                        <button
-                            onClick={handleToggleSidebar}
-                            className={`p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors ${!isExpanded ? 'mx-auto' : ''}`}
-                            title={isSidebarCollapsed ? "Pin Sidebar Open" : "Collapse Sidebar"}
-                            aria-label={isSidebarCollapsed ? "Pin sidebar open" : "Collapse sidebar"}
-                        >
-                            {isSidebarCollapsed ? <PanelLeft size={20} /> : <PanelLeftClose size={20} />}
-                        </button>
+          {/* Mini Calendar */}
+          <MiniCalendar
+            currentTheme={currentTheme}
+            isExpanded={isExpanded}
+            onDateSelect={(date) => {
+              // Navigate to calendar view and pass selected date
+              onNavigate('calendar');
+              onCalendarDateSelect?.(date);
+            }}
+          />
+
+          {/* Nav Links */}
+          <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto overflow-x-hidden no-scrollbar">
+            {NAVIGATION_ITEMS.map((item) => {
+              const Icon = item.icon;
+
+              // Dynamic Children Handling
+              const hasChildren =
+                ('children' in item && !!item.children) ||
+                (item.id === 'calendar' && calendarTags.length > 0);
+
+              const isParentActive =
+                (hasChildren && item.children?.some((child) => child.id === currentView)) ||
+                item.id === currentView;
+              const isActive = currentView === item.id;
+              const isMenuExpanded = expandedMenus[item.id];
+
+              return (
+                <div
+                  key={item.id}
+                  onMouseEnter={() => handleWrapperEnter(item.id)}
+                  onMouseLeave={() => handleWrapperLeave(item.id)}
+                >
+                  {/* Parent Item */}
+                  <button
+                    onClick={() => handleParentClick(item.id, hasChildren)}
+                    className={`group w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 font-medium whitespace-nowrap relative ${
+                      isActive || isParentActive
+                        ? 'bg-brand-500/5 text-brand-600 dark:text-brand-300 border border-brand-500/10'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-slate-100'
+                    }`}
+                    title={!isExpanded ? item.label : undefined}
+                  >
+                    <div className="flex items-center justify-center w-6 h-6 shrink-0">
+                      <Icon
+                        size={20}
+                        className={`transition-colors ${isActive || isParentActive ? 'text-brand-500 dark:text-brand-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}
+                      />
                     </div>
 
-                    {/* Mini Calendar */}
-                    <MiniCalendar 
-                        currentTheme={currentTheme} 
-                        isExpanded={isExpanded}
-                        onDateSelect={(date) => {
-                            // Navigate to calendar view and pass selected date
-                            onNavigate('calendar');
-                            onCalendarDateSelect?.(date);
-                        }}
-                    />
+                    <span
+                      className={`transition-all duration-300 flex-1 text-left ${!isExpanded ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 ml-1'}`}
+                    >
+                      {getNavLabel(item.id, item.label)}
+                    </span>
 
-                    {/* Nav Links */}
-                    <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto overflow-x-hidden no-scrollbar">
-                        {NAVIGATION_ITEMS.map((item) => {
-                            const Icon = item.icon;
+                    {hasChildren && isExpanded && (
+                      <div
+                        className="text-slate-400 p-1 hover:text-brand-500 dark:hover:text-brand-400 z-10"
+                        onClick={(e) => handleArrowClick(e, item.id)}
+                      >
+                        {isMenuExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                      </div>
+                    )}
 
-                            // Dynamic Children Handling
-                            const hasChildren = ('children' in item && !!item.children) || (item.id === 'calendar' && calendarTags.length > 0);
+                    {isActive && isExpanded && !hasChildren && (
+                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(14,165,233,0.6)]" />
+                    )}
+                  </button>
 
-                            const isParentActive = (hasChildren && item.children?.some(child => child.id === currentView)) || (item.id === currentView);
-                            const isActive = currentView === item.id;
-                            const isMenuExpanded = expandedMenus[item.id];
+                  {/* Children Items */}
+                  {hasChildren && isMenuExpanded && isExpanded && (
+                    <div className="mt-1 ml-4 pl-3 border-l border-slate-200 dark:border-white/10 space-y-1 animate-slide-up">
+                      {item.id === 'calendar'
+                        ? // Special Calendar Filters
+                          calendarTags.map((tag) => {
+                            const isSelected = selectedTags.includes(tag);
+                            const isEditing = editingTag === tag;
 
                             return (
-                                <div
-                                    key={item.id}
-                                    onMouseEnter={() => handleWrapperEnter(item.id)}
-                                    onMouseLeave={() => handleWrapperLeave(item.id)}
-                                >
-                                    {/* Parent Item */}
-                                    <button
-                                        onClick={() => handleParentClick(item.id, hasChildren)}
-                                        className={`group w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 font-medium whitespace-nowrap relative ${isActive || isParentActive
-                                            ? 'bg-brand-500/5 text-brand-600 dark:text-brand-300 border border-brand-500/10'
-                                            : 'text-slate-600 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-slate-100'
-                                            }`}
-                                        title={!isExpanded ? item.label : undefined}
+                              <div
+                                key={tag}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!isEditing) onToggleTag(tag);
+                                }}
+                                className="group w-full flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors relative"
+                              >
+                                {isEditing ? (
+                                  <div className="flex items-center gap-2 w-full">
+                                    <input
+                                      ref={editInputRef}
+                                      type="text"
+                                      value={editTagValue}
+                                      onChange={(e) => setEditTagValue(e.target.value)}
+                                      onKeyDown={handleEditKeyDown}
+                                      onBlur={submitEditTag}
+                                      className="flex-1 bg-white dark:bg-slate-800 border border-brand-500 rounded px-2 py-0.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none min-w-0"
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div
+                                      className={`w-4 h-4 rounded flex items-center justify-center transition-all flex-shrink-0 ${
+                                        isSelected
+                                          ? 'bg-brand-500 border-brand-500 text-white'
+                                          : 'border-2 border-slate-300 dark:border-slate-600 text-transparent hover:border-brand-400'
+                                      }`}
                                     >
-                                        <div className="flex items-center justify-center w-6 h-6 shrink-0">
-                                            <Icon size={20} className={`transition-colors ${isActive || isParentActive ? 'text-brand-500 dark:text-brand-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`} />
-                                        </div>
-
-                                        <span className={`transition-all duration-300 flex-1 text-left ${!isExpanded ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 ml-1'}`}>
-                                            {getNavLabel(item.id, item.label)}
-                                        </span>
-
-                                        {hasChildren && isExpanded && (
-                                            <div
-                                                className="text-slate-400 p-1 hover:text-brand-500 dark:hover:text-brand-400 z-10"
-                                                onClick={(e) => handleArrowClick(e, item.id)}
-                                            >
-                                                {isMenuExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                                            </div>
-                                        )}
-
-                                        {isActive && isExpanded && !hasChildren && (
-                                            <div className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(14,165,233,0.6)]" />
-                                        )}
-                                    </button>
-
-                                    {/* Children Items */}
-                                    {hasChildren && isMenuExpanded && isExpanded && (
-                                        <div className="mt-1 ml-4 pl-3 border-l border-slate-200 dark:border-white/10 space-y-1 animate-slide-up">
-                                            {item.id === 'calendar' ? (
-                                                // Special Calendar Filters
-                                                calendarTags.map(tag => {
-                                                    const isSelected = selectedTags.includes(tag);
-                                                    const isEditing = editingTag === tag;
-
-                                                    return (
-                                                        <div
-                                                            key={tag}
-                                                            onClick={(e) => { e.stopPropagation(); if (!isEditing) onToggleTag(tag); }}
-                                                            className="group w-full flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors relative"
-                                                        >
-                                                            {isEditing ? (
-                                                                <div className="flex items-center gap-2 w-full">
-                                                                    <input
-                                                                        ref={editInputRef}
-                                                                        type="text"
-                                                                        value={editTagValue}
-                                                                        onChange={(e) => setEditTagValue(e.target.value)}
-                                                                        onKeyDown={handleEditKeyDown}
-                                                                        onBlur={submitEditTag}
-                                                                        className="flex-1 bg-white dark:bg-slate-800 border border-brand-500 rounded px-2 py-0.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none min-w-0"
-                                                                        onClick={(e) => e.stopPropagation()}
-                                                                    />
-                                                                </div>
-                                                            ) : (
-                                                                <>
-                                                                    <div
-                                                                        className={`w-4 h-4 rounded flex items-center justify-center transition-all flex-shrink-0 ${isSelected
-                                                                            ? 'bg-brand-500 border-brand-500 text-white'
-                                                                            : 'border-2 border-slate-300 dark:border-slate-600 text-transparent hover:border-brand-400'
-                                                                            }`}
-                                                                    >
-                                                                        <Check size={10} strokeWidth={4} />
-                                                                    </div>
-                                                                    <span className={`text-sm truncate transition-colors flex-1 ${isSelected ? 'text-slate-700 dark:text-slate-200 font-medium' : 'text-slate-500 dark:text-slate-500'}`}>
-                                                                        {tag}
-                                                                    </span>
-
-                                                                    {onRenameTag && tag !== 'Untagged' && (
-                                                                        <button
-                                                                            onClick={(e) => startEditingTag(tag, e)}
-                                                                            className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-brand-500 p-1 transition-opacity"
-                                                                            title="Rename Tag"
-                                                                            aria-label={`Rename tag ${tag}`}
-                                                                        >
-                                                                            <Pencil size={12} />
-                                                                        </button>
-                                                                    )}
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })
-                                            ) : (
-                                                // Standard Nested Items
-                                                item.children?.map(child => {
-                                                    const ChildIcon = child.icon;
-                                                    const isChildActive = currentView === child.id;
-                                                    return (
-                                                        <button
-                                                            key={child.id}
-                                                            onClick={(e) => { e.stopPropagation(); handleChildClick(item.id, child.id); }}
-                                                            className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium whitespace-nowrap ${isChildActive
-                                                                ? 'bg-brand-500/10 text-brand-600 dark:text-brand-300 shadow-sm'
-                                                                : 'text-slate-500 dark:text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/5'
-                                                                }`}
-                                                        >
-                                                            <div className="flex items-center justify-center w-5 h-5 shrink-0">
-                                                                <ChildIcon size={18} strokeWidth={isChildActive ? 2.5 : 2} className={isChildActive ? 'text-brand-500 dark:text-brand-400' : 'text-current'} />
-                                                            </div>
-                                                            <span>{getNavLabel(child.id, child.label)}</span>
-                                                        </button>
-                                                    )
-                                                })
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Collapsed Parent Indicator dot if nested child is active */}
-                                    {hasChildren && !isExpanded && isParentActive && (
-                                        <div className="mx-auto mt-1 w-1 h-1 rounded-full bg-brand-500" />
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </nav>
-
-                    {/* Bottom Actions */}
-                    <div className="p-3 border-t border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-black/20">
-
-                        <div className={`flex items-center ${isExpanded ? 'justify-between' : 'justify-center flex-col gap-4'}`}>
-
-                            {/* User Profile */}
-                            <button
-                                type="button"
-                                aria-label="User Profile"
-                                aria-haspopup="dialog"
-                                aria-expanded={showProfileStats}
-                                className={`flex items-center gap-2 p-1 rounded-xl transition-colors relative cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 text-left`}
-                                ref={profileRef}
-                                onClick={() => setShowProfileStats(!showProfileStats)}
-                                title="Profile"
-                            >
-                                <div className="w-9 h-9 shrink-0 rounded-full bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold shadow-md ring-2 ring-white/20">
-                                    {userInitials}
-                                </div>
-                                {isExpanded && (
-                                    <div className="min-w-0 pr-2">
-                                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{userStats.userName}</p>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Pro Plan</p>
+                                      <Check size={10} strokeWidth={4} />
                                     </div>
+                                    <span
+                                      className={`text-sm truncate transition-colors flex-1 ${isSelected ? 'text-slate-700 dark:text-slate-200 font-medium' : 'text-slate-500 dark:text-slate-500'}`}
+                                    >
+                                      {tag}
+                                    </span>
+
+                                    {onRenameTag && tag !== 'Untagged' && (
+                                      <button
+                                        onClick={(e) => startEditingTag(tag, e)}
+                                        className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-brand-500 p-1 transition-opacity"
+                                        title="Rename Tag"
+                                        aria-label={`Rename tag ${tag}`}
+                                      >
+                                        <Pencil size={12} />
+                                      </button>
+                                    )}
+                                  </>
                                 )}
-                            </button>
-
-                            {/* Icons Group */}
-                            <div className={`flex ${isExpanded ? 'gap-1' : 'flex-col gap-2'}`}>
-                                {/* Quick Theme Toggle */}
-                                <button
-                                    onClick={toggleTheme}
-                                    className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                                    title="Toggle Theme"
-                                    aria-label="Toggle theme"
-                                >
-                                    {currentTheme === 'light' ? <Sun size={20} /> : <Moon size={20} />}
-                                </button>
-
-                                {/* Settings Icon */}
-                                <button
-                                    onClick={() => { onNavigate('settings'); setExpandedMenus({}); }}
-                                    className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors rounded-lg hover:bg-black/5 dark:hover:bg-white/5"
-                                    title="Settings"
-                                    aria-label="Settings"
-                                >
-                                    <Settings size={20} />
-                                </button>
-                            </div>
-
-                        </div>
-
-                        {/* Profile Popover */}
-                        {showProfileStats && (
-                            <div className="absolute bottom-4 left-full ml-4 w-72 glass-panel rounded-2xl shadow-2xl p-5 animate-scale-in z-50 bg-white/90 dark:bg-slate-900/90">
-                                <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200 dark:border-white/5">
-                                    <h3 className="font-bold text-slate-800 dark:text-slate-200">Account Overview</h3>
-                                    <button onClick={(e) => { e.stopPropagation(); setShowProfileStats(false) }} className="text-slate-500 hover:text-slate-800 dark:hover:text-white" aria-label="Close profile menu">
-                                        <X size={16} />
-                                    </button>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <button 
-                                        onClick={() => {
-                                            onNavigate('calendar');
-                                            onCalendarDateSelect?.(new Date());
-                                            setShowProfileStats(false);
-                                        }}
-                                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group cursor-pointer"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
-                                                <CheckCircle2 size={16} />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-slate-500 font-bold uppercase">Today's Load</p>
-                                                <p className="text-sm text-slate-700 dark:text-slate-200 font-semibold">{userStats.pendingTasks} Pending</p>
-                                            </div>
-                                        </div>
-                                        <ArrowRight size={16} className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    </button>
-
-                                    <button 
-                                        onClick={() => {
-                                            onNavigate('settings');
-                                            setShowProfileStats(false);
-                                        }}
-                                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group cursor-pointer"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:bg-blue-500/20 transition-colors">
-                                                <User size={16} />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-slate-500 font-bold uppercase">Partner</p>
-                                                <p className="text-sm text-slate-700 dark:text-slate-200 font-semibold">{userStats.partnerName || 'Not Connected'}</p>
-                                            </div>
-                                        </div>
-                                        <ArrowRight size={16} className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </aside>
-
-                {/* Main Content Area */}
-                <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-
-                    {/* TOP Header */}
-                    <header className="min-h-[72px] md:min-h-20 glass border-b border-slate-200 dark:border-white/5 flex items-center justify-between px-6 pb-3 md:pb-0 z-30 shrink-0 pt-safe-area">
-                        {/* Brand */}
-                        <div className="flex items-center gap-6">
-                            {/* Mobile Menu Trigger (Visible only on mobile) */}
-                            <button
-                                className="md:hidden text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors"
-                                onClick={() => setIsMobileSidebarOpen(true)}
-                                aria-label="Open navigation menu"
-                            >
-                                <Menu size={24} />
-                            </button>
-
-                            {/* Theme-specific logo + text (mobile) */}
-                            <div 
-                                className="flex md:hidden items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-                                onClick={() => onNavigate('calendar')}
-                            >
-                                <img
-                                    src={currentTheme === 'cyberpunk' ? '/logo-cyberpunk.jpg' : currentTheme === 'onepiece' ? '/logo-onepiece.png' : currentTheme === 'dark' ? '/logo-dark.jpg' : '/logo-light.jpg'}
-                                    alt={APP_NAME}
-                                    className="h-8 w-auto rounded-lg"
-                                />
-                                <span className={`text-lg font-bold tracking-wide font-display ${currentTheme === 'light' ? 'text-slate-800' : currentTheme === 'onepiece' ? 'text-[#E8DCD0]' : currentTheme === 'cyberpunk' ? 'text-[#E0FFFF]' : 'text-white'}`}>
-                                    {APP_NAME}
-                                </span>
-                            </div>
-
-                            {/* Create Button moved to Header */}
-                            <div className="relative hidden md:block" ref={createMenuRef}>
-                                {(() => {
-                                    const getCreateThemeStyles = () => {
-                                        switch (currentTheme) {
-                                            case 'cyberpunk':
-                                                return {
-                                                    btn: 'bg-black border border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:shadow-[0_0_20px_rgba(6,182,212,0.6)] hover:bg-cyan-950/30',
-                                                    menu: 'bg-[#0a0014] border border-[#00FFFF]/30 shadow-[0_0_20px_rgba(0,255,255,0.2)]',
-                                                    item: 'text-cyan-100 hover:bg-[#00FFFF]/10 hover:text-[#00FFFF]',
-                                                    icon: 'text-cyan-400' // Override icon colors for cyberpunk consistency? varying colors is good though.
-                                                };
-                                            case 'onepiece':
-                                                return {
-                                                    btn: 'bg-[#8B4513] border border-[#D4A574] text-[#E8DCD0] shadow-md hover:bg-[#A0522D]',
-                                                    menu: 'bg-[#14100c] border border-[#D4A574]/40 shadow-xl',
-                                                    item: 'text-[#E8DCD0] hover:bg-[#D4A574]/10 hover:text-[#D4A574]'
-                                                };
-                                            case 'sunset':
-                                                return {
-                                                    btn: 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40',
-                                                    menu: 'bg-[#2a1b20] border border-rose-400/30 shadow-xl',
-                                                    item: 'text-rose-100 hover:bg-rose-500/10 hover:text-rose-50'
-                                                };
-                                            case 'light':
-                                                return {
-                                                    btn: 'bg-slate-900 text-white shadow-lg hover:bg-slate-800',
-                                                    menu: 'bg-white border border-slate-200 shadow-xl',
-                                                    item: 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
-                                                };
-                                            default: // dark
-                                                return {
-                                                    btn: 'bg-white text-slate-900 shadow-lg hover:bg-slate-100',
-                                                    menu: 'bg-slate-900 border border-slate-700 shadow-xl',
-                                                    item: 'text-slate-300 hover:bg-white/5 hover:text-white'
-                                                };
-                                        }
-                                    };
-                                    
-                                    const themeStyles = getCreateThemeStyles();
-
-                                    return (
-                                        <>
-                                            <button
-                                                onClick={() => setShowCreateMenu(!showCreateMenu)}
-                                                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all active:scale-95 ${themeStyles.btn}`}
-                                            >
-                                                <Plus size={18} strokeWidth={2.5} />
-                                                <span>Create</span>
-                                                <ChevronDown size={14} className={`opacity-60 transition-transform ${showCreateMenu ? 'rotate-180' : ''}`} />
-                                            </button>
-
-                                            {/* Create Dropdown */}
-                                            {showCreateMenu && (
-                                                <div className={`absolute top-full left-0 mt-2 w-52 rounded-xl overflow-hidden animate-scale-in z-50 flex flex-col p-1.5 ${themeStyles.menu}`}>
-                                                    <button
-                                                        onClick={() => { onAddTask('EVENT'); setShowCreateMenu(false); }}
-                                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group ${themeStyles.item}`}
-                                                    >
-                                                        <Calendar size={16} className={currentTheme === 'cyberpunk' ? 'text-cyan-400' : 'text-brand-500 group-hover:scale-110 transition-transform'} />
-                                                        <span className="text-sm font-semibold">{t(currentTheme, 'eventType')}</span>
-                                                    </button>
-                                                    <button
-                                                        onClick={() => { onAddTask('TASK'); setShowCreateMenu(false); }}
-                                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group ${themeStyles.item}`}
-                                                    >
-                                                        <CheckSquare size={16} className={currentTheme === 'cyberpunk' ? 'text-blue-400' : 'text-blue-500 group-hover:scale-110 transition-transform'} />
-                                                        <span className="text-sm font-semibold">{t(currentTheme, 'taskType')}</span>
-                                                    </button>
-                                                    <button
-                                                        onClick={() => { onAddTask('APPOINTMENT'); setShowCreateMenu(false); }}
-                                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group ${themeStyles.item}`}
-                                                    >
-                                                        <Clock size={16} className={currentTheme === 'cyberpunk' ? 'text-purple-400' : 'text-purple-500 group-hover:scale-110 transition-transform'} />
-                                                        <span className="text-sm font-semibold">{t(currentTheme, 'appointmentType')}</span>
-                                                    </button>
-                                                    <button
-                                                        onClick={() => { onAddTask('REMINDER'); setShowCreateMenu(false); }}
-                                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group ${themeStyles.item}`}
-                                                    >
-                                                        <Bell size={16} className={currentTheme === 'cyberpunk' ? 'text-yellow-400' : 'text-yellow-500 group-hover:scale-110 transition-transform'} />
-                                                        <span className="text-sm font-semibold">{t(currentTheme, 'reminderType')}</span>
-                                                    </button>
-                                                    {onCreateRoutine && (
-                                                        <button
-                                                            onClick={() => { onCreateRoutine(); setShowCreateMenu(false); }}
-                                                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group ${themeStyles.item}`}
-                                                        >
-                                                            <Repeat size={16} className={currentTheme === 'cyberpunk' ? 'text-green-400' : 'text-emerald-500 group-hover:scale-110 transition-transform'} />
-                                                            <span className="text-sm font-semibold">Routine</span>
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </>
-                                    );
-                                })()}
-                            </div>
-                        </div>
-
-                        {/* Right Side Header Items */}
-                        <div className="flex items-center gap-4">
-                            {/* View Source Mode Toggle */}
-                            {hasConnectedPartners && (
-                                <div className="hidden md:flex items-center p-1 rounded-xl bg-slate-100 dark:bg-black/30 border border-slate-200 dark:border-white/10">
-                                    <button
-                                        onClick={() => onViewSourceModeChange('personal')}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                                            viewSourceMode === 'personal'
-                                                ? currentTheme === 'onepiece'
-                                                    ? 'bg-[#D4A574] text-[#0A0A0A] shadow-sm'
-                                                    : currentTheme === 'cyberpunk'
-                                                    ? 'bg-[#00FFFF] text-[#0a0014] shadow-sm'
-                                                    : currentTheme === 'sunset'
-                                                    ? 'bg-rose-500 text-white shadow-sm'
-                                                    : 'bg-blue-500 text-white shadow-sm'
-                                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                                        }`}
-                                        title="View only your data"
-                                    >
-                                        Personal
-                                    </button>
-                                    <button
-                                        onClick={() => onViewSourceModeChange('combined')}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                                            viewSourceMode === 'combined'
-                                                ? currentTheme === 'onepiece'
-                                                    ? 'bg-gradient-to-r from-[#D4A574] to-[#8B4513] text-[#0A0A0A] shadow-sm'
-                                                    : currentTheme === 'cyberpunk'
-                                                    ? 'bg-gradient-to-r from-[#00FFFF] to-[#FF00FF] text-white shadow-sm'
-                                                    : currentTheme === 'sunset'
-                                                    ? 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-sm'
-                                                    : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-sm'
-                                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                                        }`}
-                                        title="View combined data"
-                                    >
-                                        Combined
-                                    </button>
-                                    <button
-                                        onClick={() => onViewSourceModeChange('partners')}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                                            viewSourceMode === 'partners'
-                                                ? currentTheme === 'onepiece'
-                                                    ? 'bg-[#8B4513] text-white shadow-sm'
-                                                    : currentTheme === 'cyberpunk'
-                                                    ? 'bg-[#FF00FF] text-white shadow-sm'
-                                                    : currentTheme === 'sunset'
-                                                    ? 'bg-orange-500 text-white shadow-sm'
-                                                    : 'bg-purple-500 text-white shadow-sm'
-                                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                                        }`}
-                                        title="View partner's shared data"
-                                    >
-                                        Partners
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* Budget Widget */}
-                            <button
-                                type="button"
-                                aria-label="View Budget"
-                                className="hidden md:flex items-center gap-3 px-4 py-2 rounded-xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-white/10 transition-colors cursor-pointer shadow-sm text-left"
-                                onClick={() => onNavigate('budget')}
-                            >
-                                <div className="p-1.5 bg-brand-500/10 rounded-lg text-brand-600 dark:text-brand-400">
-                                    <Wallet size={18} />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">Budget</p>
-                                    <p className={`text-sm font-bold leading-none ${userStats.budgetRemaining < 0 ? 'text-red-500' : 'text-slate-700 dark:text-slate-200'}`}>
-                                        {userStats.budgetRemaining.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
-                                    </p>
-                                </div>
-                            </button>
-                        </div>
-                    </header>
-
-                    {/* Mobile Sidebar Drawer */}
-                    {isMobileSidebarOpen && (
-                        <div className="md:hidden fixed inset-0 z-50">
-                            {/* Backdrop */}
-                            <div
-                                className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
-                                onClick={() => setIsMobileSidebarOpen(false)}
-                            />
-                            {/* Drawer */}
-                            <aside className="absolute left-0 top-0 h-full w-72 glass shadow-2xl border-r border-slate-200 dark:border-white/5 flex flex-col animate-slide-in-left">
-                                {/* Drawer Header */}
-                                <div className="min-h-28 flex items-end justify-between px-6 pb-4 border-b border-slate-200 dark:border-white/5 shrink-0 pt-safe-area">
-                                    <div 
-                                        className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-                                        onClick={() => { onNavigate('calendar'); setIsMobileSidebarOpen(false); }}
-                                    >
-                                        <img
-                                            src={currentTheme === 'cyberpunk' ? '/logo-cyberpunk.jpg' : currentTheme === 'onepiece' ? '/logo-onepiece.png' : currentTheme === 'dark' ? '/logo-dark.jpg' : '/logo-light.jpg'}
-                                            alt={APP_NAME}
-                                            className="h-9 w-auto rounded-lg"
-                                        />
-                                        <span className={`text-lg font-bold tracking-wide font-display ${currentTheme === 'light' ? 'text-slate-800' : currentTheme === 'onepiece' ? 'text-[#E8DCD0]' : currentTheme === 'cyberpunk' ? 'text-[#E0FFFF]' : 'text-white'}`}>
-                                            {APP_NAME}
-                                        </span>
-                                    </div>
-                                    <button
-                                        onClick={() => setIsMobileSidebarOpen(false)}
-                                        className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
-                                        aria-label="Close navigation menu"
-                                    >
-                                        <X size={20} />
-                                    </button>
-                                </div>
-
-                                {/* Mini Calendar for Mobile */}
-                                <MiniCalendar 
-                                    currentTheme={currentTheme} 
-                                    isExpanded={true}
-                                    onDateSelect={(date) => {
-                                        onNavigate('calendar');
-                                        onCalendarDateSelect?.(date);
-                                        setIsMobileSidebarOpen(false);
-                                    }}
-                                />
-
-                                {/* Drawer Nav */}
-                                <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto no-scrollbar">
-                                    {NAVIGATION_ITEMS.map((item) => {
-                                        const Icon = item.icon;
-                                        const isActive = currentView === item.id;
-                                        return (
-                                            <button
-                                                key={item.id}
-                                                onClick={() => { onNavigate(item.id as ViewMode); setIsMobileSidebarOpen(false); }}
-                                                className={`group w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 font-medium whitespace-nowrap ${isActive
-                                                    ? 'bg-brand-500/5 text-brand-600 dark:text-brand-300 border border-brand-500/10'
-                                                    : 'text-slate-600 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-slate-100'
-                                                    }`}
-                                            >
-                                                <div className="flex items-center justify-center w-6 h-6 shrink-0">
-                                                    <Icon size={20} className={`transition-colors ${isActive ? 'text-brand-500 dark:text-brand-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`} />
-                                                </div>
-                                                <span className="flex-1 text-left">{getNavLabel(item.id, item.label)}</span>
-                                                {isActive && (
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(14,165,233,0.6)]" />
-                                                )}
-                                            </button>
-                                        );
-                                    })}
-                                </nav>
-
-                                {/* Drawer Footer */}
-                                <div className="p-3 border-t border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-black/20">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2 p-1">
-                                            <div className="w-9 h-9 shrink-0 rounded-full bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold shadow-md ring-2 ring-white/20">
-                                                {userInitials}
-                                            </div>
-                                            <div className="min-w-0 pr-2">
-                                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{userStats.userName}</p>
-                                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Pro Plan</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-1">
-                                            <button
-                                                onClick={toggleTheme}
-                                                className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                                            >
-                                                {currentTheme === 'light' ? <Sun size={20} /> : <Moon size={20} />}
-                                            </button>
-                                            <button
-                                                onClick={() => { onNavigate('settings'); setIsMobileSidebarOpen(false); }}
-                                                className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors rounded-lg hover:bg-black/5 dark:hover:bg-white/5"
-                                            >
-                                                <Settings size={20} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </aside>
-                        </div>
-                    )}
-
-                    {/* Content Scroll Container */}
-                    <main className="flex-1 overflow-y-auto no-scrollbar pb-mobile-nav md:pb-0 relative scroll-smooth scroll-touch">
-                        <div className="container mx-auto max-w-6xl px-4 pt-8 pb-4 sm:px-5 sm:pt-8 sm:pb-5 md:p-8 lg:p-10 space-y-6 md:space-y-8">
-                            {children}
-                        </div>
-                    </main>
-
-                    {/* Mobile Floating Action Buttons (FAB) - Create Task + AI Assistant */}
-                    <div className="md:hidden fixed bottom-28 z-40 pointer-events-none mb-safe-area flex gap-4 px-6 w-full justify-between">
-                        {/* Create Task FAB - Left */}
-                        <button
-                            onClick={() => onAddTask('TASK')}
-                            className="pointer-events-auto bg-brand-500 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgb(14,165,233,0.4)] active:scale-90 transition-transform border-4 border-slate-50 dark:border-slate-900 touch-target"
-                            aria-label="Add new task"
-                        >
-                            <Plus size={28} />
-                        </button>
-                        
-                        {/* AI Assistant FAB - Right */}
-                        {onOpenAI && (
-                            <button
-                                onClick={onOpenAI}
-                                className={`pointer-events-auto w-14 h-14 rounded-full flex items-center justify-center active:scale-90 transition-transform border-4 border-slate-50 dark:border-slate-900 touch-target ${
-                                    currentTheme === 'cyberpunk'
-                                        ? 'bg-gradient-to-r from-[#00FFFF] to-[#FF00FF] text-[#0a0014] shadow-[0_8px_30px_rgba(0,255,255,0.4)]'
-                                        : currentTheme === 'sunset'
-                                        ? 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-[0_8px_30px_rgba(244,63,94,0.4)]'
-                                        : currentTheme === 'onepiece'
-                                        ? 'bg-gradient-to-r from-[#D4A574] to-[#E8C399] text-[#0A0A0A] shadow-[0_8px_30px_rgba(212,165,116,0.4)]'
-                                        : currentTheme === 'light'
-                                        ? 'bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-[0_8px_30px_rgba(30,58,95,0.3)]'
-                                        : 'bg-gradient-to-r from-white to-slate-200 text-slate-900 shadow-[0_8px_30px_rgba(255,255,255,0.2)]'
+                              </div>
+                            );
+                          })
+                        : // Standard Nested Items
+                          item.children?.map((child) => {
+                            const ChildIcon = child.icon;
+                            const isChildActive = currentView === child.id;
+                            return (
+                              <button
+                                key={child.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleChildClick(item.id, child.id);
+                                }}
+                                className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium whitespace-nowrap ${
+                                  isChildActive
+                                    ? 'bg-brand-500/10 text-brand-600 dark:text-brand-300 shadow-sm'
+                                    : 'text-slate-500 dark:text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/5'
                                 }`}
-                                aria-label="Open AI Assistant"
-                            >
-                                <Bot size={26} />
-                            </button>
-                        )}
+                              >
+                                <div className="flex items-center justify-center w-5 h-5 shrink-0">
+                                  <ChildIcon
+                                    size={18}
+                                    strokeWidth={isChildActive ? 2.5 : 2}
+                                    className={
+                                      isChildActive
+                                        ? 'text-brand-500 dark:text-brand-400'
+                                        : 'text-current'
+                                    }
+                                  />
+                                </div>
+                                <span>{getNavLabel(child.id, child.label)}</span>
+                              </button>
+                            );
+                          })}
                     </div>
+                  )}
 
-                    {/* Mobile Bottom Nav - Day Planner centered with 2 items on each side */}
-                    <div className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-slate-200 dark:border-white/10 z-30 standalone-bottom-nav">
-                        <div className="flex items-end justify-around h-20 px-2 pb-2">
-                            {/* Left Side - Calendar */}
-                            {(() => {
-                                const calendarItem = NAVIGATION_ITEMS.find(item => item.id === 'calendar');
-                                if (!calendarItem) return null;
-                                const Icon = calendarItem.icon;
-                                const isActive = currentView === 'calendar';
-                                return (
-                                    <button
-                                        onClick={() => onNavigate('calendar')}
-                                        className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all ${isActive ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
-                                    >
-                                        <div className={`p-1.5 rounded-full transition-all ${isActive ? 'bg-brand-500/10' : ''}`}>
-                                            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'scale-110 transition-transform' : ''} />
-                                        </div>
-                                        <span className={`text-[10px] font-medium ${isActive ? 'text-brand-500' : 'text-slate-500'}`}>{getNavLabel('calendar', calendarItem.label)}</span>
-                                    </button>
-                                );
-                            })()}
-                            
-                            {/* Left Side - Budget */}
-                            {(() => {
-                                const budgetItem = NAVIGATION_ITEMS.find(item => item.id === 'budget');
-                                if (!budgetItem) return null;
-                                const Icon = budgetItem.icon;
-                                const isActive = currentView === 'budget';
-                                return (
-                                    <button
-                                        onClick={() => onNavigate('budget')}
-                                        className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all ${isActive ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
-                                    >
-                                        <div className={`p-1.5 rounded-full transition-all ${isActive ? 'bg-brand-500/10' : ''}`}>
-                                            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'scale-110 transition-transform' : ''} />
-                                        </div>
-                                        <span className={`text-[10px] font-medium ${isActive ? 'text-brand-500' : 'text-slate-500'}`}>{getNavLabel('budget', budgetItem.label)}</span>
-                                    </button>
-                                );
-                            })()}
-                            
-                            {/* Center - Day Planner (Raised/Prominent) */}
-                            {(() => {
-                                const dayPlannerItem = NAVIGATION_ITEMS.find(item => item.id === 'day-planner');
-                                if (!dayPlannerItem) return null;
-                                const Icon = dayPlannerItem.icon;
-                                const isActive = currentView === 'day-planner';
-                                return (
-                                    <button
-                                        onClick={() => onNavigate('day-planner')}
-                                        className={`flex flex-col items-center justify-center flex-1 transition-all -mt-3 ${isActive ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
-                                    >
-                                        <div className={`p-3 rounded-2xl transition-all shadow-lg ${
-                                            isActive 
-                                                ? 'bg-brand-500 text-white shadow-brand-500/40' 
-                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-brand-500/10'
-                                        }`}>
-                                            <Icon size={26} strokeWidth={2} />
-                                        </div>
-                                        <span className={`text-[10px] font-semibold mt-1 ${isActive ? 'text-brand-500' : 'text-slate-500'}`}>{getNavLabel('day-planner', dayPlannerItem.label)}</span>
-                                    </button>
-                                );
-                            })()}
-                            
-                            {/* Right Side - Notes */}
-                            {(() => {
-                                const notesItem = NAVIGATION_ITEMS.find(item => item.id === 'notes');
-                                if (!notesItem) return null;
-                                const Icon = notesItem.icon;
-                                const isActive = currentView === 'notes';
-                                return (
-                                    <button
-                                        onClick={() => onNavigate('notes')}
-                                        className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all ${isActive ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
-                                    >
-                                        <div className={`p-1.5 rounded-full transition-all ${isActive ? 'bg-brand-500/10' : ''}`}>
-                                            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'scale-110 transition-transform' : ''} />
-                                        </div>
-                                        <span className={`text-[10px] font-medium ${isActive ? 'text-brand-500' : 'text-slate-500'}`}>{getNavLabel('notes', notesItem.label)}</span>
-                                    </button>
-                                );
-                            })()}
-                            
-                            {/* Right Side - Activities */}
-                            {(() => {
-                                const activitiesItem = NAVIGATION_ITEMS.find(item => item.id === 'activities');
-                                if (!activitiesItem) return null;
-                                const Icon = activitiesItem.icon;
-                                const isActive = currentView === 'activities' || currentView === 'tasks' || currentView === 'reminders' || currentView === 'events' || currentView === 'appointments' || currentView === 'routines';
-                                return (
-                                    <button
-                                        onClick={() => onNavigate('activities')}
-                                        className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all ${isActive ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
-                                    >
-                                        <div className={`p-1.5 rounded-full transition-all ${isActive ? 'bg-brand-500/10' : ''}`}>
-                                            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'scale-110 transition-transform' : ''} />
-                                        </div>
-                                        <span className={`text-[10px] font-medium ${isActive ? 'text-brand-500' : 'text-slate-500'}`}>{getNavLabel('activities', activitiesItem.label)}</span>
-                                    </button>
-                                );
-                            })()}
-                        </div>
-                    </div>
-
-                    {/* Floating AI Assistant Widget - Desktop Only */}
-                    {onOpenAI && (
-                        <button
-                            onClick={onOpenAI}
-                            className={`hidden md:flex fixed z-50 items-center gap-2 rounded-2xl hover:scale-105 transition-all active:scale-95 group ${
-                                currentTheme === 'cyberpunk'
-                                    ? 'bg-gradient-to-r from-[#00FFFF] to-[#FF00FF] text-[#0a0014] shadow-[0_8px_30px_rgba(0,255,255,0.4)] hover:shadow-[0_12px_40px_rgba(0,255,255,0.6)]'
-                                    : currentTheme === 'sunset'
-                                    ? 'bg-gradient-to-r from-rose-500 via-orange-500 to-amber-500 text-white shadow-[0_8px_30px_rgba(244,63,94,0.4)] hover:shadow-[0_12px_40px_rgba(244,63,94,0.5)]'
-                                    : currentTheme === 'onepiece'
-                                    ? 'bg-gradient-to-r from-[#D4A574] via-[#E8C399] to-[#D4A574] text-[#0A0A0A] shadow-[0_8px_30px_rgba(212,165,116,0.4)] hover:shadow-[0_12px_40px_rgba(212,165,116,0.5)]'
-                                    : currentTheme === 'light'
-                                    ? 'bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-[0_8px_30px_rgba(30,58,95,0.3)] hover:shadow-[0_12px_40px_rgba(30,58,95,0.4)]'
-                                    : 'bg-gradient-to-r from-white to-slate-200 text-slate-900 shadow-[0_8px_30px_rgba(255,255,255,0.2)] hover:shadow-[0_12px_40px_rgba(255,255,255,0.3)]'
-                            } bottom-6 right-6 px-4 py-3`}
-                        >
-                            <Bot size={22} className="group-hover:animate-pulse" />
-                            <span className="font-semibold">AI Assistant</span>
-                        </button>
-                    )}
+                  {/* Collapsed Parent Indicator dot if nested child is active */}
+                  {hasChildren && !isExpanded && isParentActive && (
+                    <div className="mx-auto mt-1 w-1 h-1 rounded-full bg-brand-500" />
+                  )}
                 </div>
+              );
+            })}
+          </nav>
+
+          {/* Bottom Actions */}
+          <div className="p-3 border-t border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-black/20">
+            <div
+              className={`flex items-center ${isExpanded ? 'justify-between' : 'justify-center flex-col gap-4'}`}
+            >
+              {/* User Profile */}
+              <button
+                type="button"
+                aria-label="User Profile"
+                aria-haspopup="dialog"
+                aria-expanded={showProfileStats}
+                className={`flex items-center gap-2 p-1 rounded-xl transition-colors relative cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 text-left`}
+                ref={profileRef}
+                onClick={() => setShowProfileStats(!showProfileStats)}
+                title="Profile"
+              >
+                <div className="w-9 h-9 shrink-0 rounded-full bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold shadow-md ring-2 ring-white/20">
+                  {userInitials}
+                </div>
+                {isExpanded && (
+                  <div className="min-w-0 pr-2">
+                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">
+                      {userStats.userName}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Pro Plan</p>
+                  </div>
+                )}
+              </button>
+
+              {/* Icons Group */}
+              <div className={`flex ${isExpanded ? 'gap-1' : 'flex-col gap-2'}`}>
+                {/* Quick Theme Toggle */}
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                  title="Toggle Theme"
+                  aria-label={
+                    currentTheme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'
+                  }
+                >
+                  {currentTheme === 'light' ? <Sun size={20} /> : <Moon size={20} />}
+                </button>
+
+                {/* Settings Icon */}
+                <button
+                  onClick={() => {
+                    onNavigate('settings');
+                    setExpandedMenus({});
+                  }}
+                  className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors rounded-lg hover:bg-black/5 dark:hover:bg-white/5"
+                  title="Settings"
+                  aria-label="Settings"
+                >
+                  <Settings size={20} />
+                </button>
+              </div>
             </div>
+
+            {/* Profile Popover */}
+            {showProfileStats && (
+              <div className="absolute bottom-4 left-full ml-4 w-72 glass-panel rounded-2xl shadow-2xl p-5 animate-scale-in z-50 bg-white/90 dark:bg-slate-900/90">
+                <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200 dark:border-white/5">
+                  <h3 className="font-bold text-slate-800 dark:text-slate-200">Account Overview</h3>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowProfileStats(false);
+                    }}
+                    className="text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                    aria-label="Close profile menu"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <button
+                    onClick={() => {
+                      onNavigate('calendar');
+                      onCalendarDateSelect?.(new Date());
+                      setShowProfileStats(false);
+                    }}
+                    className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
+                        <CheckCircle2 size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 font-bold uppercase">Today's Load</p>
+                        <p className="text-sm text-slate-700 dark:text-slate-200 font-semibold">
+                          {userStats.pendingTasks} Pending
+                        </p>
+                      </div>
+                    </div>
+                    <ArrowRight
+                      size={16}
+                      className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                    />
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      onNavigate('settings');
+                      setShowProfileStats(false);
+                    }}
+                    className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:bg-blue-500/20 transition-colors">
+                        <User size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 font-bold uppercase">Partner</p>
+                        <p className="text-sm text-slate-700 dark:text-slate-200 font-semibold">
+                          {userStats.partnerName || 'Not Connected'}
+                        </p>
+                      </div>
+                    </div>
+                    <ArrowRight
+                      size={16}
+                      className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                    />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </aside>
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+          {/* TOP Header */}
+          <header className="min-h-[72px] md:min-h-20 glass border-b border-slate-200 dark:border-white/5 flex items-center justify-between px-6 pb-3 md:pb-0 z-30 shrink-0 pt-safe-area">
+            {/* Brand */}
+            <div className="flex items-center gap-6">
+              {/* Mobile Menu Trigger (Visible only on mobile) */}
+              <button
+                className="md:hidden text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors"
+                onClick={() => setIsMobileSidebarOpen(true)}
+                aria-label="Open navigation menu"
+              >
+                <Menu size={24} />
+              </button>
+
+              {/* Theme-specific logo + text (mobile) */}
+              <div
+                className="flex md:hidden items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => onNavigate('calendar')}
+              >
+                <img
+                  src={
+                    currentTheme === 'cyberpunk'
+                      ? '/logo-cyberpunk.jpg'
+                      : currentTheme === 'onepiece'
+                        ? '/logo-onepiece.png'
+                        : currentTheme === 'dark'
+                          ? '/logo-dark.jpg'
+                          : '/logo-light.jpg'
+                  }
+                  alt={APP_NAME}
+                  className="h-8 w-auto rounded-lg"
+                />
+                <span
+                  className={`text-lg font-bold tracking-wide font-display ${currentTheme === 'light' ? 'text-slate-800' : currentTheme === 'onepiece' ? 'text-[#E8DCD0]' : currentTheme === 'cyberpunk' ? 'text-[#E0FFFF]' : 'text-white'}`}
+                >
+                  {APP_NAME}
+                </span>
+              </div>
+
+              {/* Create Button moved to Header */}
+              <div className="relative hidden md:block" ref={createMenuRef}>
+                {(() => {
+                  const getCreateThemeStyles = () => {
+                    switch (currentTheme) {
+                      case 'cyberpunk':
+                        return {
+                          btn: 'bg-black border border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:shadow-[0_0_20px_rgba(6,182,212,0.6)] hover:bg-cyan-950/30',
+                          menu: 'bg-[#0a0014] border border-[#00FFFF]/30 shadow-[0_0_20px_rgba(0,255,255,0.2)]',
+                          item: 'text-cyan-100 hover:bg-[#00FFFF]/10 hover:text-[#00FFFF]',
+                          icon: 'text-cyan-400', // Override icon colors for cyberpunk consistency? varying colors is good though.
+                        };
+                      case 'onepiece':
+                        return {
+                          btn: 'bg-[#8B4513] border border-[#D4A574] text-[#E8DCD0] shadow-md hover:bg-[#A0522D]',
+                          menu: 'bg-[#14100c] border border-[#D4A574]/40 shadow-xl',
+                          item: 'text-[#E8DCD0] hover:bg-[#D4A574]/10 hover:text-[#D4A574]',
+                        };
+                      case 'sunset':
+                        return {
+                          btn: 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40',
+                          menu: 'bg-[#2a1b20] border border-rose-400/30 shadow-xl',
+                          item: 'text-rose-100 hover:bg-rose-500/10 hover:text-rose-50',
+                        };
+                      case 'light':
+                        return {
+                          btn: 'bg-slate-900 text-white shadow-lg hover:bg-slate-800',
+                          menu: 'bg-white border border-slate-200 shadow-xl',
+                          item: 'text-slate-700 hover:bg-slate-50 hover:text-slate-900',
+                        };
+                      default: // dark
+                        return {
+                          btn: 'bg-white text-slate-900 shadow-lg hover:bg-slate-100',
+                          menu: 'bg-slate-900 border border-slate-700 shadow-xl',
+                          item: 'text-slate-300 hover:bg-white/5 hover:text-white',
+                        };
+                    }
+                  };
+
+                  const themeStyles = getCreateThemeStyles();
+
+                  return (
+                    <>
+                      <button
+                        onClick={() => setShowCreateMenu(!showCreateMenu)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all active:scale-95 ${themeStyles.btn}`}
+                        aria-haspopup="true"
+                        aria-expanded={showCreateMenu}
+                      >
+                        <Plus size={18} strokeWidth={2.5} />
+                        <span>Create</span>
+                        <ChevronDown
+                          size={14}
+                          className={`opacity-60 transition-transform ${showCreateMenu ? 'rotate-180' : ''}`}
+                        />
+                      </button>
+
+                      {/* Create Dropdown */}
+                      {showCreateMenu && (
+                        <div
+                          className={`absolute top-full left-0 mt-2 w-52 rounded-xl overflow-hidden animate-scale-in z-50 flex flex-col p-1.5 ${themeStyles.menu}`}
+                        >
+                          <button
+                            onClick={() => {
+                              onAddTask('EVENT');
+                              setShowCreateMenu(false);
+                            }}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group ${themeStyles.item}`}
+                          >
+                            <Calendar
+                              size={16}
+                              className={
+                                currentTheme === 'cyberpunk'
+                                  ? 'text-cyan-400'
+                                  : 'text-brand-500 group-hover:scale-110 transition-transform'
+                              }
+                            />
+                            <span className="text-sm font-semibold">
+                              {t(currentTheme, 'eventType')}
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              onAddTask('TASK');
+                              setShowCreateMenu(false);
+                            }}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group ${themeStyles.item}`}
+                          >
+                            <CheckSquare
+                              size={16}
+                              className={
+                                currentTheme === 'cyberpunk'
+                                  ? 'text-blue-400'
+                                  : 'text-blue-500 group-hover:scale-110 transition-transform'
+                              }
+                            />
+                            <span className="text-sm font-semibold">
+                              {t(currentTheme, 'taskType')}
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              onAddTask('APPOINTMENT');
+                              setShowCreateMenu(false);
+                            }}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group ${themeStyles.item}`}
+                          >
+                            <Clock
+                              size={16}
+                              className={
+                                currentTheme === 'cyberpunk'
+                                  ? 'text-purple-400'
+                                  : 'text-purple-500 group-hover:scale-110 transition-transform'
+                              }
+                            />
+                            <span className="text-sm font-semibold">
+                              {t(currentTheme, 'appointmentType')}
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              onAddTask('REMINDER');
+                              setShowCreateMenu(false);
+                            }}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group ${themeStyles.item}`}
+                          >
+                            <Bell
+                              size={16}
+                              className={
+                                currentTheme === 'cyberpunk'
+                                  ? 'text-yellow-400'
+                                  : 'text-yellow-500 group-hover:scale-110 transition-transform'
+                              }
+                            />
+                            <span className="text-sm font-semibold">
+                              {t(currentTheme, 'reminderType')}
+                            </span>
+                          </button>
+                          {onCreateRoutine && (
+                            <button
+                              onClick={() => {
+                                onCreateRoutine();
+                                setShowCreateMenu(false);
+                              }}
+                              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group ${themeStyles.item}`}
+                            >
+                              <Repeat
+                                size={16}
+                                className={
+                                  currentTheme === 'cyberpunk'
+                                    ? 'text-green-400'
+                                    : 'text-emerald-500 group-hover:scale-110 transition-transform'
+                                }
+                              />
+                              <span className="text-sm font-semibold">Routine</span>
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* Right Side Header Items */}
+            <div className="flex items-center gap-4">
+              {/* View Source Mode Toggle */}
+              {hasConnectedPartners && (
+                <div className="hidden md:flex items-center p-1 rounded-xl bg-slate-100 dark:bg-black/30 border border-slate-200 dark:border-white/10">
+                  <button
+                    onClick={() => onViewSourceModeChange('personal')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      viewSourceMode === 'personal'
+                        ? currentTheme === 'onepiece'
+                          ? 'bg-[#D4A574] text-[#0A0A0A] shadow-sm'
+                          : currentTheme === 'cyberpunk'
+                            ? 'bg-[#00FFFF] text-[#0a0014] shadow-sm'
+                            : currentTheme === 'sunset'
+                              ? 'bg-rose-500 text-white shadow-sm'
+                              : 'bg-blue-500 text-white shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                    }`}
+                    title="View only your data"
+                  >
+                    Personal
+                  </button>
+                  <button
+                    onClick={() => onViewSourceModeChange('combined')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      viewSourceMode === 'combined'
+                        ? currentTheme === 'onepiece'
+                          ? 'bg-gradient-to-r from-[#D4A574] to-[#8B4513] text-[#0A0A0A] shadow-sm'
+                          : currentTheme === 'cyberpunk'
+                            ? 'bg-gradient-to-r from-[#00FFFF] to-[#FF00FF] text-white shadow-sm'
+                            : currentTheme === 'sunset'
+                              ? 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-sm'
+                              : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                    }`}
+                    title="View combined data"
+                  >
+                    Combined
+                  </button>
+                  <button
+                    onClick={() => onViewSourceModeChange('partners')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      viewSourceMode === 'partners'
+                        ? currentTheme === 'onepiece'
+                          ? 'bg-[#8B4513] text-white shadow-sm'
+                          : currentTheme === 'cyberpunk'
+                            ? 'bg-[#FF00FF] text-white shadow-sm'
+                            : currentTheme === 'sunset'
+                              ? 'bg-orange-500 text-white shadow-sm'
+                              : 'bg-purple-500 text-white shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                    }`}
+                    title="View partner's shared data"
+                  >
+                    Partners
+                  </button>
+                </div>
+              )}
+
+              {/* Budget Widget */}
+              <button
+                type="button"
+                aria-label="View Budget"
+                className="hidden md:flex items-center gap-3 px-4 py-2 rounded-xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-white/10 transition-colors cursor-pointer shadow-sm text-left"
+                onClick={() => onNavigate('budget')}
+              >
+                <div className="p-1.5 bg-brand-500/10 rounded-lg text-brand-600 dark:text-brand-400">
+                  <Wallet size={18} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">
+                    Budget
+                  </p>
+                  <p
+                    className={`text-sm font-bold leading-none ${userStats.budgetRemaining < 0 ? 'text-red-500' : 'text-slate-700 dark:text-slate-200'}`}
+                  >
+                    {userStats.budgetRemaining.toLocaleString('en-IN', {
+                      style: 'currency',
+                      currency: 'INR',
+                    })}
+                  </p>
+                </div>
+              </button>
+            </div>
+          </header>
+
+          {/* Mobile Sidebar Drawer */}
+          {isMobileSidebarOpen && (
+            <div className="md:hidden fixed inset-0 z-50">
+              {/* Backdrop */}
+              <div
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
+                onClick={() => setIsMobileSidebarOpen(false)}
+              />
+              {/* Drawer */}
+              <aside className="absolute left-0 top-0 h-full w-72 glass shadow-2xl border-r border-slate-200 dark:border-white/5 flex flex-col animate-slide-in-left">
+                {/* Drawer Header */}
+                <div className="min-h-28 flex items-end justify-between px-6 pb-4 border-b border-slate-200 dark:border-white/5 shrink-0 pt-safe-area">
+                  <div
+                    className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => {
+                      onNavigate('calendar');
+                      setIsMobileSidebarOpen(false);
+                    }}
+                  >
+                    <img
+                      src={
+                        currentTheme === 'cyberpunk'
+                          ? '/logo-cyberpunk.jpg'
+                          : currentTheme === 'onepiece'
+                            ? '/logo-onepiece.png'
+                            : currentTheme === 'dark'
+                              ? '/logo-dark.jpg'
+                              : '/logo-light.jpg'
+                      }
+                      alt={APP_NAME}
+                      className="h-9 w-auto rounded-lg"
+                    />
+                    <span
+                      className={`text-lg font-bold tracking-wide font-display ${currentTheme === 'light' ? 'text-slate-800' : currentTheme === 'onepiece' ? 'text-[#E8DCD0]' : currentTheme === 'cyberpunk' ? 'text-[#E0FFFF]' : 'text-white'}`}
+                    >
+                      {APP_NAME}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setIsMobileSidebarOpen(false)}
+                    className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
+                    aria-label="Close navigation menu"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Mini Calendar for Mobile */}
+                <MiniCalendar
+                  currentTheme={currentTheme}
+                  isExpanded={true}
+                  onDateSelect={(date) => {
+                    onNavigate('calendar');
+                    onCalendarDateSelect?.(date);
+                    setIsMobileSidebarOpen(false);
+                  }}
+                />
+
+                {/* Drawer Nav */}
+                <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto no-scrollbar">
+                  {NAVIGATION_ITEMS.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = currentView === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          onNavigate(item.id as ViewMode);
+                          setIsMobileSidebarOpen(false);
+                        }}
+                        className={`group w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 font-medium whitespace-nowrap ${
+                          isActive
+                            ? 'bg-brand-500/5 text-brand-600 dark:text-brand-300 border border-brand-500/10'
+                            : 'text-slate-600 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-slate-100'
+                        }`}
+                      >
+                        <div className="flex items-center justify-center w-6 h-6 shrink-0">
+                          <Icon
+                            size={20}
+                            className={`transition-colors ${isActive ? 'text-brand-500 dark:text-brand-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}
+                          />
+                        </div>
+                        <span className="flex-1 text-left">{getNavLabel(item.id, item.label)}</span>
+                        {isActive && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(14,165,233,0.6)]" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </nav>
+
+                {/* Drawer Footer */}
+                <div className="p-3 border-t border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-black/20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 p-1">
+                      <div className="w-9 h-9 shrink-0 rounded-full bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold shadow-md ring-2 ring-white/20">
+                        {userInitials}
+                      </div>
+                      <div className="min-w-0 pr-2">
+                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">
+                          {userStats.userName}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                          Pro Plan
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={toggleTheme}
+                        className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                        aria-label={
+                          currentTheme === 'light'
+                            ? 'Switch to dark theme'
+                            : 'Switch to light theme'
+                        }
+                      >
+                        {currentTheme === 'light' ? <Sun size={20} /> : <Moon size={20} />}
+                      </button>
+                      <button
+                        onClick={() => {
+                          onNavigate('settings');
+                          setIsMobileSidebarOpen(false);
+                        }}
+                        className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors rounded-lg hover:bg-black/5 dark:hover:bg-white/5"
+                      >
+                        <Settings size={20} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          )}
+
+          {/* Content Scroll Container */}
+          <main className="flex-1 overflow-y-auto no-scrollbar pb-mobile-nav md:pb-0 relative scroll-smooth scroll-touch">
+            <div className="container mx-auto max-w-6xl px-4 pt-8 pb-4 sm:px-5 sm:pt-8 sm:pb-5 md:p-8 lg:p-10 space-y-6 md:space-y-8">
+              {children}
+            </div>
+          </main>
+
+          {/* Mobile Floating Action Buttons (FAB) - Create Task + AI Assistant */}
+          <div className="md:hidden fixed bottom-28 z-40 pointer-events-none mb-safe-area flex gap-4 px-6 w-full justify-between">
+            {/* Create Task FAB - Left */}
+            <button
+              onClick={() => onAddTask('TASK')}
+              className="pointer-events-auto bg-brand-500 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgb(14,165,233,0.4)] active:scale-90 transition-transform border-4 border-slate-50 dark:border-slate-900 touch-target"
+              aria-label="Add new task"
+            >
+              <Plus size={28} />
+            </button>
+
+            {/* AI Assistant FAB - Right */}
+            {onOpenAI && (
+              <button
+                onClick={onOpenAI}
+                className={`pointer-events-auto w-14 h-14 rounded-full flex items-center justify-center active:scale-90 transition-transform border-4 border-slate-50 dark:border-slate-900 touch-target ${
+                  currentTheme === 'cyberpunk'
+                    ? 'bg-gradient-to-r from-[#00FFFF] to-[#FF00FF] text-[#0a0014] shadow-[0_8px_30px_rgba(0,255,255,0.4)]'
+                    : currentTheme === 'sunset'
+                      ? 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-[0_8px_30px_rgba(244,63,94,0.4)]'
+                      : currentTheme === 'onepiece'
+                        ? 'bg-gradient-to-r from-[#D4A574] to-[#E8C399] text-[#0A0A0A] shadow-[0_8px_30px_rgba(212,165,116,0.4)]'
+                        : currentTheme === 'light'
+                          ? 'bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-[0_8px_30px_rgba(30,58,95,0.3)]'
+                          : 'bg-gradient-to-r from-white to-slate-200 text-slate-900 shadow-[0_8px_30px_rgba(255,255,255,0.2)]'
+                }`}
+                aria-label="Open AI Assistant"
+              >
+                <Bot size={26} />
+              </button>
+            )}
+          </div>
+
+          {/* Mobile Bottom Nav - Day Planner centered with 2 items on each side */}
+          <div className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-slate-200 dark:border-white/10 z-30 standalone-bottom-nav">
+            <div className="flex items-end justify-around h-20 px-2 pb-2">
+              {/* Left Side - Calendar */}
+              {(() => {
+                const calendarItem = NAVIGATION_ITEMS.find((item) => item.id === 'calendar');
+                if (!calendarItem) return null;
+                const Icon = calendarItem.icon;
+                const isActive = currentView === 'calendar';
+                return (
+                  <button
+                    onClick={() => onNavigate('calendar')}
+                    className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all ${isActive ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
+                  >
+                    <div
+                      className={`p-1.5 rounded-full transition-all ${isActive ? 'bg-brand-500/10' : ''}`}
+                    >
+                      <Icon
+                        size={22}
+                        strokeWidth={isActive ? 2.5 : 2}
+                        className={isActive ? 'scale-110 transition-transform' : ''}
+                      />
+                    </div>
+                    <span
+                      className={`text-[10px] font-medium ${isActive ? 'text-brand-500' : 'text-slate-500'}`}
+                    >
+                      {getNavLabel('calendar', calendarItem.label)}
+                    </span>
+                  </button>
+                );
+              })()}
+
+              {/* Left Side - Budget */}
+              {(() => {
+                const budgetItem = NAVIGATION_ITEMS.find((item) => item.id === 'budget');
+                if (!budgetItem) return null;
+                const Icon = budgetItem.icon;
+                const isActive = currentView === 'budget';
+                return (
+                  <button
+                    onClick={() => onNavigate('budget')}
+                    className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all ${isActive ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
+                  >
+                    <div
+                      className={`p-1.5 rounded-full transition-all ${isActive ? 'bg-brand-500/10' : ''}`}
+                    >
+                      <Icon
+                        size={22}
+                        strokeWidth={isActive ? 2.5 : 2}
+                        className={isActive ? 'scale-110 transition-transform' : ''}
+                      />
+                    </div>
+                    <span
+                      className={`text-[10px] font-medium ${isActive ? 'text-brand-500' : 'text-slate-500'}`}
+                    >
+                      {getNavLabel('budget', budgetItem.label)}
+                    </span>
+                  </button>
+                );
+              })()}
+
+              {/* Center - Day Planner (Raised/Prominent) */}
+              {(() => {
+                const dayPlannerItem = NAVIGATION_ITEMS.find((item) => item.id === 'day-planner');
+                if (!dayPlannerItem) return null;
+                const Icon = dayPlannerItem.icon;
+                const isActive = currentView === 'day-planner';
+                return (
+                  <button
+                    onClick={() => onNavigate('day-planner')}
+                    className={`flex flex-col items-center justify-center flex-1 transition-all -mt-3 ${isActive ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
+                  >
+                    <div
+                      className={`p-3 rounded-2xl transition-all shadow-lg ${
+                        isActive
+                          ? 'bg-brand-500 text-white shadow-brand-500/40'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-brand-500/10'
+                      }`}
+                    >
+                      <Icon size={26} strokeWidth={2} />
+                    </div>
+                    <span
+                      className={`text-[10px] font-semibold mt-1 ${isActive ? 'text-brand-500' : 'text-slate-500'}`}
+                    >
+                      {getNavLabel('day-planner', dayPlannerItem.label)}
+                    </span>
+                  </button>
+                );
+              })()}
+
+              {/* Right Side - Notes */}
+              {(() => {
+                const notesItem = NAVIGATION_ITEMS.find((item) => item.id === 'notes');
+                if (!notesItem) return null;
+                const Icon = notesItem.icon;
+                const isActive = currentView === 'notes';
+                return (
+                  <button
+                    onClick={() => onNavigate('notes')}
+                    className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all ${isActive ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
+                  >
+                    <div
+                      className={`p-1.5 rounded-full transition-all ${isActive ? 'bg-brand-500/10' : ''}`}
+                    >
+                      <Icon
+                        size={22}
+                        strokeWidth={isActive ? 2.5 : 2}
+                        className={isActive ? 'scale-110 transition-transform' : ''}
+                      />
+                    </div>
+                    <span
+                      className={`text-[10px] font-medium ${isActive ? 'text-brand-500' : 'text-slate-500'}`}
+                    >
+                      {getNavLabel('notes', notesItem.label)}
+                    </span>
+                  </button>
+                );
+              })()}
+
+              {/* Right Side - Activities */}
+              {(() => {
+                const activitiesItem = NAVIGATION_ITEMS.find((item) => item.id === 'activities');
+                if (!activitiesItem) return null;
+                const Icon = activitiesItem.icon;
+                const isActive =
+                  currentView === 'activities' ||
+                  currentView === 'tasks' ||
+                  currentView === 'reminders' ||
+                  currentView === 'events' ||
+                  currentView === 'appointments' ||
+                  currentView === 'routines';
+                return (
+                  <button
+                    onClick={() => onNavigate('activities')}
+                    className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all ${isActive ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
+                  >
+                    <div
+                      className={`p-1.5 rounded-full transition-all ${isActive ? 'bg-brand-500/10' : ''}`}
+                    >
+                      <Icon
+                        size={22}
+                        strokeWidth={isActive ? 2.5 : 2}
+                        className={isActive ? 'scale-110 transition-transform' : ''}
+                      />
+                    </div>
+                    <span
+                      className={`text-[10px] font-medium ${isActive ? 'text-brand-500' : 'text-slate-500'}`}
+                    >
+                      {getNavLabel('activities', activitiesItem.label)}
+                    </span>
+                  </button>
+                );
+              })()}
+            </div>
+          </div>
+
+          {/* Floating AI Assistant Widget - Desktop Only */}
+          {onOpenAI && (
+            <button
+              onClick={onOpenAI}
+              className={`hidden md:flex fixed z-50 items-center gap-2 rounded-2xl hover:scale-105 transition-all active:scale-95 group ${
+                currentTheme === 'cyberpunk'
+                  ? 'bg-gradient-to-r from-[#00FFFF] to-[#FF00FF] text-[#0a0014] shadow-[0_8px_30px_rgba(0,255,255,0.4)] hover:shadow-[0_12px_40px_rgba(0,255,255,0.6)]'
+                  : currentTheme === 'sunset'
+                    ? 'bg-gradient-to-r from-rose-500 via-orange-500 to-amber-500 text-white shadow-[0_8px_30px_rgba(244,63,94,0.4)] hover:shadow-[0_12px_40px_rgba(244,63,94,0.5)]'
+                    : currentTheme === 'onepiece'
+                      ? 'bg-gradient-to-r from-[#D4A574] via-[#E8C399] to-[#D4A574] text-[#0A0A0A] shadow-[0_8px_30px_rgba(212,165,116,0.4)] hover:shadow-[0_12px_40px_rgba(212,165,116,0.5)]'
+                      : currentTheme === 'light'
+                        ? 'bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-[0_8px_30px_rgba(30,58,95,0.3)] hover:shadow-[0_12px_40px_rgba(30,58,95,0.4)]'
+                        : 'bg-gradient-to-r from-white to-slate-200 text-slate-900 shadow-[0_8px_30px_rgba(255,255,255,0.2)] hover:shadow-[0_12px_40px_rgba(255,255,255,0.3)]'
+              } bottom-6 right-6 px-4 py-3`}
+            >
+              <Bot size={22} className="group-hover:animate-pulse" />
+              <span className="font-semibold">AI Assistant</span>
+            </button>
+          )}
         </div>
-    );
+      </div>
+    </div>
+  );
 };
