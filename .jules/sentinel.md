@@ -117,3 +117,11 @@
 **Vulnerability:** The `push-notification` Edge Function used a `service_role` client to schedule notifications. It allowed any authenticated user to schedule a notification for ANY task ID, regardless of ownership. Since notifications are unique per task, this allowed an attacker to "lock" the notification slot for a victim's task, preventing the victim from scheduling their own notification (DoS).
 **Learning:** Using `service_role` clients in user-facing functions bypasses RLS. You cannot rely on "implied" permissions.
 **Prevention:** Always verify resource ownership (e.g., `task.user_id === userId`) explicitly when performing operations on behalf of a user using a privileged client.
+
+## 2024-05-28 - GDPR Data Deletion Leak
+**Vulnerability:** The account deletion Edge Function explicitly deleted data table-by-table based on an array (`tablesToDelete`). Newly added feature tables (`notes`, `note_shares`) were missed from this array during their implementation, causing them to be permanently orphaned and leaking user data upon account deletion.
+**Learning:** Hardcoding a list of tables to delete in an external function bypasses database integrity checks. When adding new features with user data, developers easily forget to update external cleanup scripts.
+**Prevention:**
+1. Maintain explicit tracking of all tables containing user data that require cleanup.
+2. In hardcoded deletion scripts, carefully review newly added tables with `user_id` or similar foreign keys (like `owner_id`, `shared_with_id`).
+3. Even better, leverage PostgreSQL's `ON DELETE CASCADE` appropriately and trigger deletion from a single root entity whenever possible, although this must be balanced with the application's audit and soft-delete requirements.
