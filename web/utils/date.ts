@@ -227,10 +227,15 @@ export const addDays = (date: string | Date, days: number): Date => {
 
 /**
  * Gets the date as a YYYY-MM-DD string (for database keys).
+ * Uses UTC date methods to preserve the UTC database storage behavior,
+ * formatted directly to avoid object instantiation overhead in loops.
  */
 export const toDateKey = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toISOString().split('T')[0];
+  const year = d.getUTCFullYear();
+  const month = d.getUTCMonth() + 1;
+  const day = d.getUTCDate();
+  return `${year}-${month < 10 ? '0' : ''}${month}-${day < 10 ? '0' : ''}${day}`;
 };
 
 // ============================================================================
