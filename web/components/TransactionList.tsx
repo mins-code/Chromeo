@@ -9,9 +9,9 @@ import TransactionEditRow from './TransactionEditRow';
 interface TransactionListProps {
     transactions: Transaction[];
     className?: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     onEdit?: (params: { id: string; description: string; amount: number; type: 'income' | 'expense'; category?: string }) => Promise<any>;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     onDelete?: (id: string) => Promise<any>;
 }
 

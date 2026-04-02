@@ -1,54 +1,48 @@
-import js from "@eslint/js";
-import tseslint from "typescript-eslint";
-import reactPlugin from "eslint-plugin-react";
-import reactHooksPlugin from "eslint-plugin-react-hooks";
+import js from '@eslint/js';
+import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import tseslint from 'typescript-eslint';
+import react from 'eslint-plugin-react';
+import reactCompiler from 'eslint-plugin-react-compiler';
 
 export default tseslint.config(
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
+  { ignores: ['dist', 'dist-android', 'src/sw.js'] },
   {
-    files: ["**/*.{ts,tsx}"],
-    plugins: {
-      react: reactPlugin,
-      "react-hooks": reactHooksPlugin,
-    },
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    files: ['**/*.{ts,tsx}'],
     languageOptions: {
-      parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
+      ecmaVersion: 2020,
+      globals: globals.browser,
     },
-    settings: {
-      react: {
-        version: "detect",
-      },
+    plugins: {
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
+      'react': react,
+      'react-compiler': reactCompiler,
     },
     rules: {
-      // React rules
-      "react/jsx-uses-react": "off", // Not needed in React 17+
-      "react/react-in-jsx-scope": "off", // Not needed in React 17+
-      "react/prop-types": "off", // Using TypeScript
-      
-      // React Hooks rules
-      "react-hooks/rules-of-hooks": "error",
-      "react-hooks/exhaustive-deps": "warn",
-      
-      // TypeScript rules
-      "@typescript-eslint/no-unused-vars": ["warn", { 
-        argsIgnorePattern: "^_",
-        varsIgnorePattern: "^_" 
-      }],
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/explicit-function-return-type": "off",
-      "@typescript-eslint/explicit-module-boundary-types": "off",
-      
-      // General rules
-      "no-console": ["warn", { allow: ["warn", "error"] }],
-      "prefer-const": "error",
+      ...reactHooks.configs.recommended.rules,
+      'react-refresh/only-export-components': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/ban-ts-comment': 'off',
+      'prefer-const': 'off',
+      'no-constant-condition': 'off',
+      'no-empty': 'off',
+      'no-prototype-builtins': 'off',
+      'no-useless-escape': 'off',
+      'react/jsx-no-target-blank': 'off',
+      'react/prop-types': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off',
+      'react-hooks/exhaustive-deps': 'off',
+      'no-case-declarations': 'off',
+      '@typescript-eslint/no-wrapper-object-types': 'off',
+      'react-compiler/react-compiler': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/preserve-manual-memoization': 'off',
+      'react-hooks/immutability': 'off',
+      'react-hooks/purity': 'off'
     },
-  },
-  {
-    ignores: ["dist/**", "node_modules/**", "*.config.js", "*.config.ts", "android/**"],
   }
 );

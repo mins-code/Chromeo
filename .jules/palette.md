@@ -1,0 +1,3 @@
+## 2025-04-02 - View Mode Segmented Controls Accessibility
+**Learning:** Segmented controls (e.g., View Mode in CalendarView) implemented as standard buttons without arrow-key navigation logic must use `aria-pressed` rather than `role='radiogroup'` to correctly reflect their active state without breaking screen reader keyboard expectations. Custom dropdown toggles should use `aria-haspopup="true"` and `aria-expanded={isActive}`.
+**Action:** Always verify that custom segmented controls or view mode switchers convey their active state using `aria-pressed`, and custom dropdown toggles reflect their state with `aria-expanded`.
