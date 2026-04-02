@@ -15,7 +15,7 @@ import ReactDOM from 'react-dom/client';
 
     // Skip in Capacitor native — the Android hardware back button is handled
     // separately via @capacitor/app in App.tsx.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     if ((window as any).Capacitor?.isNativePlatform?.()) return;
 
     const SENTINEL = { appBackGuard: true };
