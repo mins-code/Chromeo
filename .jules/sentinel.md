@@ -117,3 +117,7 @@
 **Vulnerability:** The `push-notification` Edge Function used a `service_role` client to schedule notifications. It allowed any authenticated user to schedule a notification for ANY task ID, regardless of ownership. Since notifications are unique per task, this allowed an attacker to "lock" the notification slot for a victim's task, preventing the victim from scheduling their own notification (DoS).
 **Learning:** Using `service_role` clients in user-facing functions bypasses RLS. You cannot rely on "implied" permissions.
 **Prevention:** Always verify resource ownership (e.g., `task.user_id === userId`) explicitly when performing operations on behalf of a user using a privileged client.
+## 2024-04-03 - Overly Permissive CORS in Sensitive Edge Functions
+**Vulnerability:** The `account-deletion` Edge Function used a wildcard (`*`) for the `Access-Control-Allow-Origin` header, allowing requests from any domain, which could expose sensitive endpoints to CSRF-like abuse and violate the principle of least privilege.
+**Learning:** Default CORS headers often use wildcards for convenience, but sensitive functions (especially those handling authentication or deletion) must strictly limit allowed origins to trusted domains.
+**Prevention:** Implement dynamic CORS origin whitelisting that checks the `Origin` header against a predefined list of allowed origins (e.g., `APP_URL`, `localhost`) instead of relying on wildcards.
