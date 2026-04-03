@@ -1,8 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+const baseCorsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "X-Content-Type-Options": "nosniff",
@@ -35,6 +34,19 @@ async function hashToken(token: string): Promise<string> {
 }
 
 serve(async (req) => {
+  // 🛡️ SECURITY: Dynamic CORS to allow only specific origins
+  const origin = req.headers.get("Origin") || "";
+  const allowedOrigins = [
+    Deno.env.get("APP_URL"),
+    "https://chronodex.vercel.app", // Safe fallback for production
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+  ].filter(Boolean) as string[];
+
+  // Strictly check origin. Default to first allowed if match, else null (block)
+  const allowOrigin = allowedOrigins.includes(origin) ? origin : (allowedOrigins[0] || "https://chronodex.vercel.app");
+  const corsHeaders = { ...baseCorsHeaders, "Access-Control-Allow-Origin": allowOrigin };
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
