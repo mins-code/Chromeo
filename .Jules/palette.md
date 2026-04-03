@@ -71,3 +71,6 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+## 2024-04-03 - Icon-Only Toggle Buttons Accessibility
+**Learning:** Icon-only toggle buttons that expand or collapse sections (e.g., view mode toggles in Calendar, Day, or Week views) need more than just a `title`. They must include both an `aria-label` describing the action and an `aria-expanded` attribute representing their current state to ensure screen reader accessibility.
+**Action:** Always verify that icon-only buttons with toggle semantics include `aria-label` and `aria-expanded`.
