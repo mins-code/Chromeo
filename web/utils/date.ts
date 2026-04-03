@@ -1,9 +1,9 @@
 /**
  * Date Utilities
- * 
+ *
  * Centralized date handling to ensure consistent formatting across the app
  * and proper UTC ↔ Local Time conversion.
- * 
+ *
  * All database dates are stored as ISO 8601 strings in UTC.
  * All user-facing dates should be displayed in the user's local timezone.
  */
@@ -41,82 +41,79 @@ export const nowIso = (): string => {
 // Formatting Functions (Local Timezone)
 // ============================================================================
 
+// Cached Intl.DateTimeFormat instances for massive performance boost in tight loops
+const formatters = {
+  dateShort: new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }),
+  dateLong: new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'long', day: 'numeric' }),
+  dateWithWeekday: new Intl.DateTimeFormat(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  }),
+  dateWithWeekdayUS: new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  }),
+  dateNumeric: new Intl.DateTimeFormat(),
+  time: new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }),
+  time24: new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', hour12: false }),
+  dateTimeLong: new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }),
+};
+
 /**
  * Formats a date for display: "Jan 6" or "Dec 25"
  */
 export const formatDateShort = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    month: 'short', 
-    day: 'numeric' 
-  });
+  return formatters.dateShort.format(parseDate(date));
 };
 
 /**
  * Formats a date with full month: "January 6, 2026"
  */
 export const formatDateLong = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    year: 'numeric',
-    month: 'long', 
-    day: 'numeric' 
-  });
+  return formatters.dateLong.format(parseDate(date));
 };
 
 /**
  * Formats a date with weekday: "Monday, January 6"
  */
 export const formatDateWithWeekday = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    weekday: 'long', 
-    month: 'long', 
-    day: 'numeric' 
-  });
+  return formatters.dateWithWeekday.format(parseDate(date));
 };
 
 /**
  * Formats a date with weekday (US format): "Monday, January 6"
  */
 export const formatDateWithWeekdayUS = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    month: 'long', 
-    day: 'numeric' 
-  });
+  return formatters.dateWithWeekdayUS.format(parseDate(date));
 };
 
 /**
  * Formats a date as "MM/DD/YYYY" or locale equivalent
  */
 export const formatDateNumeric = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleDateString();
+  return formatters.dateNumeric.format(parseDate(date));
 };
 
 /**
  * Formats time only: "2:30 PM"
  */
 export const formatTime = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleTimeString(undefined, { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
+  return formatters.time.format(parseDate(date));
 };
 
 /**
  * Formats time in 24-hour format: "14:30"
  */
 export const formatTime24 = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleTimeString(undefined, { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    hour12: false 
-  });
+  return formatters.time24.format(parseDate(date));
 };
 
 /**
@@ -131,14 +128,7 @@ export const formatDateTime = (date: string | Date): string => {
  * Formats date and time with full month: "January 6, 2026 at 2:30 PM"
  */
 export const formatDateTimeLong = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    year: 'numeric',
-    month: 'long', 
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  return formatters.dateTimeLong.format(parseDate(date));
 };
 
 // ============================================================================
@@ -230,7 +220,10 @@ export const addDays = (date: string | Date, days: number): Date => {
  */
 export const toDateKey = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toISOString().split('T')[0];
+  const year = d.getUTCFullYear();
+  const month = d.getUTCMonth() + 1;
+  const day = d.getUTCDate();
+  return `${year}-${month < 10 ? '0' : ''}${month}-${day < 10 ? '0' : ''}${day}`;
 };
 
 // ============================================================================
@@ -243,11 +236,11 @@ export const toDateKey = (date: string | Date): string => {
 export const formatRelativeDate = (date: string | Date): string => {
   if (isToday(date)) return 'Today';
   if (isTomorrow(date)) return 'Tomorrow';
-  
+
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   if (isSameDay(date, yesterday)) return 'Yesterday';
-  
+
   return formatDateShort(date);
 };
 
@@ -267,7 +260,7 @@ export const formatTimeAgo = (date: string | Date): string => {
     const absDiffMins = Math.abs(diffMins);
     const absDiffHours = Math.abs(diffHours);
     const absDiffDays = Math.abs(diffDays);
-    
+
     if (absDiffMins < 60) return `in ${absDiffMins} minute${absDiffMins === 1 ? '' : 's'}`;
     if (absDiffHours < 24) return `in ${absDiffHours} hour${absDiffHours === 1 ? '' : 's'}`;
     return `in ${absDiffDays} day${absDiffDays === 1 ? '' : 's'}`;
@@ -278,7 +271,7 @@ export const formatTimeAgo = (date: string | Date): string => {
   if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
   if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
   if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
-  
+
   return formatDateShort(date);
 };
 
