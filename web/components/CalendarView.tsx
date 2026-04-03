@@ -685,6 +685,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                         : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
                                 aria-label="Month view"
+                                aria-pressed={viewMode === 'month'}
                             >
                                 <Calendar size={14} className="sm:w-4 sm:h-4" />
                                 <span className="hidden sm:inline">Month</span>
@@ -697,6 +698,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                         : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
                                 aria-label="Week view"
+                                aria-pressed={viewMode === 'week'}
                             >
                                 <CalendarDays size={14} className="sm:w-4 sm:h-4" />
                                 <span className="hidden sm:inline">Week</span>
@@ -709,6 +711,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                         : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
                                 aria-label="Day view"
+                                aria-pressed={viewMode === 'day'}
                             >
                                 <CalendarClock size={14} className="sm:w-4 sm:h-4" />
                                 <span className="hidden sm:inline">Day</span>
@@ -726,6 +729,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                             : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                     }`}
                                     aria-label="Custom interval view"
+                                    aria-pressed={viewMode === 'custom'}
                                 >
                                     <Settings2 size={14} className="sm:w-4 sm:h-4" />
                                     <span className="hidden sm:inline">{viewMode === 'custom' ? getCustomIntervalLabel() : 'Custom'}</span>
