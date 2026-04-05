@@ -71,3 +71,6 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+## 2025-04-05 - Add ARIA Labels to Flowchart Edges
+**Learning:** Icon-only interactive elements representing destructive actions (delete link) and additive actions (add task between) embedded within interactive diagrams (like `@xyflow/react` edge labels) often lack semantic context for screen readers when they only use `title` attributes for tooltips.
+**Action:** Always add explicit `aria-label` attributes to icon-only buttons embedded inside canvas or flowchart renderers, as these spaces are highly visual and often overlook semantic labeling for interactive controls.
