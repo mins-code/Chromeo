@@ -41,82 +41,62 @@ export const nowIso = (): string => {
 // Formatting Functions (Local Timezone)
 // ============================================================================
 
+const dateFormatterShort = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
+const dateFormatterLong = new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+const dateFormatterWithWeekday = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+const dateFormatterWithWeekdayUS = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+const dateFormatterNumeric = new Intl.DateTimeFormat();
+const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
+const timeFormatter24 = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+const dateTimeFormatterLong = new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
 /**
  * Formats a date for display: "Jan 6" or "Dec 25"
  */
 export const formatDateShort = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    month: 'short', 
-    day: 'numeric' 
-  });
+  return dateFormatterShort.format(parseDate(date));
 };
 
 /**
  * Formats a date with full month: "January 6, 2026"
  */
 export const formatDateLong = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    year: 'numeric',
-    month: 'long', 
-    day: 'numeric' 
-  });
+  return dateFormatterLong.format(parseDate(date));
 };
 
 /**
  * Formats a date with weekday: "Monday, January 6"
  */
 export const formatDateWithWeekday = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    weekday: 'long', 
-    month: 'long', 
-    day: 'numeric' 
-  });
+  return dateFormatterWithWeekday.format(parseDate(date));
 };
 
 /**
  * Formats a date with weekday (US format): "Monday, January 6"
  */
 export const formatDateWithWeekdayUS = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    month: 'long', 
-    day: 'numeric' 
-  });
+  return dateFormatterWithWeekdayUS.format(parseDate(date));
 };
 
 /**
  * Formats a date as "MM/DD/YYYY" or locale equivalent
  */
 export const formatDateNumeric = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleDateString();
+  return dateFormatterNumeric.format(parseDate(date));
 };
 
 /**
  * Formats time only: "2:30 PM"
  */
 export const formatTime = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleTimeString(undefined, { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
+  return timeFormatter.format(parseDate(date));
 };
 
 /**
  * Formats time in 24-hour format: "14:30"
  */
 export const formatTime24 = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleTimeString(undefined, { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    hour12: false 
-  });
+  return timeFormatter24.format(parseDate(date));
 };
 
 /**
@@ -131,14 +111,7 @@ export const formatDateTime = (date: string | Date): string => {
  * Formats date and time with full month: "January 6, 2026 at 2:30 PM"
  */
 export const formatDateTimeLong = (date: string | Date): string => {
-  const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    year: 'numeric',
-    month: 'long', 
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  return dateTimeFormatterLong.format(parseDate(date));
 };
 
 // ============================================================================
@@ -230,7 +203,10 @@ export const addDays = (date: string | Date, days: number): Date => {
  */
 export const toDateKey = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toISOString().split('T')[0];
+  const y = d.getUTCFullYear();
+  const m = d.getUTCMonth() + 1;
+  const day = d.getUTCDate();
+  return `${y}-${m < 10 ? '0' : ''}${m}-${day < 10 ? '0' : ''}${day}`;
 };
 
 // ============================================================================
