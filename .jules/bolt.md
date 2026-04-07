@@ -31,3 +31,7 @@
 ## 2026-03-03 - Optimizing Date Parsing for Sorting
 **Learning:** `new Date(dateStr).getTime()` creates a full Date object just to extract the timestamp, adding unnecessary memory allocation and garbage collection overhead. In functions called frequently (like sorting algorithms iterating over thousands of items in `taskScoring.ts`), this is a measurable bottleneck.
 **Action:** Use `Date.parse(dateStr)` when only the timestamp is needed. Benchmark shows this avoids object creation and improves date parsing time by ~30% for ISO-8601 strings.
+
+## 2026-04-07 - Optimizing toDateKey via native Date UTC methods
+**Learning:** Replacing `.toISOString().split('T')[0]` with native JavaScript Date UTC methods (`getUTCFullYear()`, `getUTCMonth()`, `getUTCDate()`) and string concatenation is significantly faster (~7x) for generating YYYY-MM-DD date keys, reducing string and array allocation overhead in tight loops while preserving UTC behavior.
+**Action:** Use native UTC extraction and string concatenation with inline ternary operator padding for performance-critical date formatting.
