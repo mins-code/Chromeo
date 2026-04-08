@@ -31,3 +31,7 @@
 ## 2026-03-03 - Optimizing Date Parsing for Sorting
 **Learning:** `new Date(dateStr).getTime()` creates a full Date object just to extract the timestamp, adding unnecessary memory allocation and garbage collection overhead. In functions called frequently (like sorting algorithms iterating over thousands of items in `taskScoring.ts`), this is a measurable bottleneck.
 **Action:** Use `Date.parse(dateStr)` when only the timestamp is needed. Benchmark shows this avoids object creation and improves date parsing time by ~30% for ISO-8601 strings.
+
+## 2024-05-24 - Hash Map Date Grouping in CustomIntervalView
+**Learning:** In components rendering multiple columns of days (like `CustomIntervalView` or `WeekView`), using `tasks.filter()` inside a loop over the displayed days creates an O(Days * Tasks) nested loop. For users with many tasks, this causes noticeable render lag when switching views or dragging tasks.
+**Action:** Always refactor nested date-filtering loops into an O(Tasks) single-pass operation using a hash map to group tasks into pre-initialized daily buckets. This drastic complexity reduction significantly improves React rendering performance.
