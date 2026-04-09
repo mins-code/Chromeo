@@ -125,6 +125,7 @@ serve(async (req) => {
         "transactions",
         "routines",
         "tasks",
+        "notes",
         "user_settings",
         "profiles",
       ];
@@ -142,6 +143,8 @@ serve(async (req) => {
       try {
         await supabase.from("teams").delete().eq("owner_id", userId);
         await supabase.from("budget_shares").delete().eq("owner_id", userId);
+        await supabase.from("note_shares").delete().eq("owner_id", userId);
+        await supabase.from("note_shares").delete().eq("shared_with_id", userId);
       } catch (e) {
         console.log(`Owner cleanup: ${e}`);
       }
@@ -345,6 +348,7 @@ serve(async (req) => {
 
       // Delete in order of foreign key dependencies
       const tablesToDelete = [
+        "account_deletion_requests",
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
@@ -354,6 +358,7 @@ serve(async (req) => {
         "transactions",
         "routines",
         "tasks",
+        "notes",
         "user_settings",
         "profiles",
       ];
@@ -371,6 +376,8 @@ serve(async (req) => {
       try {
         await supabase.from("teams").delete().eq("owner_id", userId);
         await supabase.from("budget_shares").delete().eq("owner_id", userId);
+        await supabase.from("note_shares").delete().eq("owner_id", userId);
+        await supabase.from("note_shares").delete().eq("shared_with_id", userId);
       } catch (e) {
         console.log(`Owner cleanup: ${e}`);
       }
