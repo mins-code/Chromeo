@@ -563,8 +563,9 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({
             </div>
             <button
               onClick={() => setIsActive(!isActive)}
-              className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${isActive ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}
-              aria-label={isActive ? 'Deactivate routine' : 'Activate routine'}
+              className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${isActive ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}
+              aria-pressed={isActive}
+              aria-label="Toggle routine active state"
             >
               <div
                 className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200 ${isActive ? 'translate-x-6' : 'translate-x-0'}`}
