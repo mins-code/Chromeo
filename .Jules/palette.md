@@ -71,3 +71,6 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+## 2024-04-11 - Dynamic ARIA labels for toggles and expanded states
+**Learning:** Static ARIA labels on toggles (like theme switchers) don't provide context on the action's result. Dropdown menus need `aria-expanded` and `aria-haspopup` for screen readers to understand the interaction model.
+**Action:** Always use dynamic `aria-label` values that reflect the action taken on state change (e.g., "Switch to light theme" instead of "Toggle theme"), and properly manage `aria-expanded` and `aria-haspopup` for custom dropdowns.
