@@ -117,3 +117,8 @@
 **Vulnerability:** The `push-notification` Edge Function used a `service_role` client to schedule notifications. It allowed any authenticated user to schedule a notification for ANY task ID, regardless of ownership. Since notifications are unique per task, this allowed an attacker to "lock" the notification slot for a victim's task, preventing the victim from scheduling their own notification (DoS).
 **Learning:** Using `service_role` clients in user-facing functions bypasses RLS. You cannot rely on "implied" permissions.
 **Prevention:** Always verify resource ownership (e.g., `task.user_id === userId`) explicitly when performing operations on behalf of a user using a privileged client.
+
+## 2026-01-24 - Fix Incomplete Data Deletion
+**Vulnerability:** Newly added tables (day_plans, notes, note_shares) were not explicitly deleted in the account-deletion Edge Function.
+**Learning:** The hardcoded `tablesToDelete` array must be manually updated to ensure complete data removal for GDPR compliance when new schema tables are added. Tables without a `user_id` column need explicit handling.
+**Prevention:** Always check and update `account-deletion/index.ts` whenever new tables with user data are introduced.
