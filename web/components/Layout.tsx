@@ -616,6 +616,8 @@ export const Layout: React.FC<LayoutProps> = ({
                                     return (
                                         <>
                                             <button
+                                                aria-haspopup="true"
+                                                aria-expanded={showCreateMenu}
                                                 onClick={() => setShowCreateMenu(!showCreateMenu)}
                                                 className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all active:scale-95 ${themeStyles.btn}`}
                                             >
