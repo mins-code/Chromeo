@@ -31,3 +31,11 @@
 ## 2026-03-03 - Optimizing Date Parsing for Sorting
 **Learning:** `new Date(dateStr).getTime()` creates a full Date object just to extract the timestamp, adding unnecessary memory allocation and garbage collection overhead. In functions called frequently (like sorting algorithms iterating over thousands of items in `taskScoring.ts`), this is a measurable bottleneck.
 **Action:** Use `Date.parse(dateStr)` when only the timestamp is needed. Benchmark shows this avoids object creation and improves date parsing time by ~30% for ISO-8601 strings.
+
+## 2026-03-05 - Intl.DateTimeFormat caching speedup
+**Learning:** `new Date().toLocaleDateString()` and `toLocaleTimeString()` are incredibly slow (~50-100x slower) inside loops because they instantiate new `Intl.DateTimeFormat` objects each time. In a tight loop (e.g. React list rendering), this creates severe overhead.
+**Action:** Cache the `Intl.DateTimeFormat` instances globally and call `.format(date)` instead. This yields up to a 50x performance boost in microbenchmarks and drastically improves list rendering performance.
+
+## 2026-03-05 - Native UTC Date key generation
+**Learning:** Using `new Date().toISOString().split('T')[0]` generates unnecessary intermediate string and array allocations. For high-frequency YYYY-MM-DD generation in UTC, using native methods like `getUTCFullYear()` and inline string concatenation is significantly faster.
+**Action:** Use native UTC methods + inline ternary operators for padding instead of `.toISOString()` and `.padStart()` when converting dates to string keys inside heavy loops.
