@@ -96,15 +96,31 @@ const CustomIntervalView: React.FC<CustomIntervalViewProps> = ({
   };
 
   // Group tasks by day
+  // Optimized: O(N) single pass instead of O(Days * N) nested loop
   const tasksByDay = useMemo(() => {
     const grouped: Record<string, Task[]> = {};
+    const daysMap = new Map<string, Task[]>();
+
+    // Initialize buckets for the displayed days
     displayDays.forEach(day => {
       const key = format(day, 'yyyy-MM-dd');
-      grouped[key] = tasks.filter(task => {
-        const taskDate = getTaskDate(task);
-        return taskDate && isSameDay(taskDate, day);
-      });
+      grouped[key] = [];
+      daysMap.set(key, grouped[key]);
     });
+
+    // Single pass through tasks
+    tasks.forEach(task => {
+      const taskDate = getTaskDate(task);
+      if (taskDate) {
+        // Use the same format logic to ensure matching local dates
+        const key = format(taskDate, 'yyyy-MM-dd');
+        const bucket = daysMap.get(key);
+        if (bucket) {
+          bucket.push(task);
+        }
+      }
+    });
+
     return grouped;
   }, [tasks, displayDays]);
 
