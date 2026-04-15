@@ -906,6 +906,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                 return (
                                     <button
                                         onClick={() => onNavigate('calendar')}
+                                        aria-label="Navigate to Calendar"
                                         className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all ${isActive ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
                                     >
                                         <div className={`p-1.5 rounded-full transition-all ${isActive ? 'bg-brand-500/10' : ''}`}>
@@ -944,6 +945,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                 return (
                                     <button
                                         onClick={() => onNavigate('day-planner')}
+                                        aria-label="Navigate to Day Planner"
                                         className={`flex flex-col items-center justify-center flex-1 transition-all -mt-3 ${isActive ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
                                     >
                                         <div className={`p-3 rounded-2xl transition-all shadow-lg ${
@@ -967,6 +969,7 @@ export const Layout: React.FC<LayoutProps> = ({
                                 return (
                                     <button
                                         onClick={() => onNavigate('notes')}
+                                        aria-label="Navigate to Notes"
                                         className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all ${isActive ? 'text-brand-500' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
                                     >
                                         <div className={`p-1.5 rounded-full transition-all ${isActive ? 'bg-brand-500/10' : ''}`}>
