@@ -467,8 +467,8 @@ export const Layout: React.FC<LayoutProps> = ({
                                 <button
                                     onClick={toggleTheme}
                                     className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                                    title="Toggle Theme"
-                                    aria-label="Toggle theme"
+                                    title={currentTheme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'}
+                                    aria-label={currentTheme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'}
                                 >
                                     {currentTheme === 'light' ? <Sun size={20} /> : <Moon size={20} />}
                                 </button>
@@ -618,6 +618,8 @@ export const Layout: React.FC<LayoutProps> = ({
                                             <button
                                                 onClick={() => setShowCreateMenu(!showCreateMenu)}
                                                 className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all active:scale-95 ${themeStyles.btn}`}
+                                                aria-haspopup="true"
+                                                aria-expanded={showCreateMenu}
                                             >
                                                 <Plus size={18} strokeWidth={2.5} />
                                                 <span>Create</span>
@@ -838,12 +840,16 @@ export const Layout: React.FC<LayoutProps> = ({
                                             <button
                                                 onClick={toggleTheme}
                                                 className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                                                title={currentTheme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'}
+                                                aria-label={currentTheme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'}
                                             >
                                                 {currentTheme === 'light' ? <Sun size={20} /> : <Moon size={20} />}
                                             </button>
                                             <button
                                                 onClick={() => { onNavigate('settings'); setIsMobileSidebarOpen(false); }}
                                                 className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors rounded-lg hover:bg-black/5 dark:hover:bg-white/5"
+                                                title="Settings"
+                                                aria-label="Settings"
                                             >
                                                 <Settings size={20} />
                                             </button>
