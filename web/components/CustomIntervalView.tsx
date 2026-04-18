@@ -11,6 +11,7 @@ import {
   getHours,
   getMinutes,
 } from 'date-fns';
+import { toLocalDateKey } from '../utils/date';
 
 interface CustomIntervalViewProps {
   tasks: Task[];
@@ -29,7 +30,7 @@ interface DroppableHourCellProps {
 }
 
 const DroppableHourCell: React.FC<DroppableHourCellProps> = ({ dayDate, hour, children }) => {
-  const id = `${format(dayDate, 'yyyy-MM-dd')}-${hour.toString().padStart(2, '0')}`;
+  const id = `${toLocalDateKey(dayDate)}-${hour.toString().padStart(2, '0')}`;
   const { setNodeRef, isOver } = useDroppable({
     id,
     data: { date: dayDate, hour },
@@ -99,7 +100,7 @@ const CustomIntervalView: React.FC<CustomIntervalViewProps> = ({
   const tasksByDay = useMemo(() => {
     const grouped: Record<string, Task[]> = {};
     displayDays.forEach(day => {
-      const key = format(day, 'yyyy-MM-dd');
+      const key = toLocalDateKey(day);
       grouped[key] = tasks.filter(task => {
         const taskDate = getTaskDate(task);
         return taskDate && isSameDay(taskDate, day);
@@ -193,7 +194,7 @@ const CustomIntervalView: React.FC<CustomIntervalViewProps> = ({
           <div className="flex-1 overflow-auto">
             <div className="flex min-h-full">
               {displayDays.map((day, dayIdx) => {
-                const dayKey = format(day, 'yyyy-MM-dd');
+                const dayKey = toLocalDateKey(day);
                 const dayTasks = tasksByDay[dayKey] || [];
 
                 return (
