@@ -233,6 +233,18 @@ export const toDateKey = (date: string | Date): string => {
   return d.toISOString().split('T')[0];
 };
 
+/**
+ * Gets the local date as a YYYY-MM-DD string.
+ * This is highly optimized for performance in tight loops compared to date-fns format().
+ */
+export const toLocalDateKey = (date: string | Date): string => {
+  const d = parseDate(date);
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
+  return `${year}-${month < 10 ? '0' : ''}${month}-${day < 10 ? '0' : ''}${day}`;
+};
+
 // ============================================================================
 // Relative Date Formatting
 // ============================================================================

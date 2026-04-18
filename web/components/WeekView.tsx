@@ -12,6 +12,7 @@ import {
   getHours,
   getMinutes,
 } from 'date-fns';
+import { toLocalDateKey } from '../utils/date';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import CurrentTimeIndicator from './CurrentTimeIndicator';
 
@@ -39,7 +40,7 @@ interface DroppableHourCellProps {
  * Props `dayDate` (from memoized `weekDays`) and `children` (undefined in loop) are stable.
  */
 const DroppableHourCell = React.memo(({ dayDate, hour, height, intervalHours, children }: DroppableHourCellProps) => {
-  const id = `${format(dayDate, 'yyyy-MM-dd')}-${hour.toString().padStart(2, '0')}`;
+  const id = `${toLocalDateKey(dayDate)}-${hour.toString().padStart(2, '0')}`;
   const { setNodeRef, isOver } = useDroppable({
     id,
     data: { date: dayDate, hour },
@@ -138,7 +139,7 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
 
     // Initialize buckets for the week days
     weekDays.forEach(day => {
-      const key = format(day, 'yyyy-MM-dd');
+      const key = toLocalDateKey(day);
       grouped[key] = [];
       weekMap.set(key, grouped[key]);
     });
@@ -148,7 +149,7 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
       const taskDate = getTaskDate(task);
       if (taskDate) {
         // We use the same format logic as the keys to ensure matching local dates
-        const key = format(taskDate, 'yyyy-MM-dd');
+        const key = toLocalDateKey(taskDate);
         const bucket = weekMap.get(key);
         if (bucket) {
           bucket.push(task);
@@ -235,7 +236,7 @@ const WeekView: React.FC<WeekViewProps> = ({ tasks, currentDate, onEditTask }) =
 
           {/* Day columns */}
           {weekDays.map((day, dayIdx) => {
-            const dayKey = format(day, 'yyyy-MM-dd');
+            const dayKey = toLocalDateKey(day);
             const dayTasks = tasksByDay[dayKey] || [];
 
             return (
