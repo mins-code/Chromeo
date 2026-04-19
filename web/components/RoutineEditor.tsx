@@ -324,29 +324,26 @@ const RoutineEditor: React.FC<RoutineEditorProps> = ({
               Pattern Type
             </label>
             <div
-              role="radiogroup"
+              role="group"
               aria-label="Pattern Type"
               className="flex bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl p-1"
             >
               <button
-                role="radio"
-                aria-checked={patternType === 'weekday'}
+                aria-pressed={patternType === 'weekday'}
                 onClick={() => setPatternType('weekday')}
                 className={`flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${patternType === 'weekday' ? 'bg-emerald-500 text-white shadow' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
               >
                 Weekdays
               </button>
               <button
-                role="radio"
-                aria-checked={patternType === 'interval'}
+                aria-pressed={patternType === 'interval'}
                 onClick={() => setPatternType('interval')}
                 className={`flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${patternType === 'interval' ? 'bg-emerald-500 text-white shadow' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
               >
                 Interval
               </button>
               <button
-                role="radio"
-                aria-checked={patternType === 'cycle'}
+                aria-pressed={patternType === 'cycle'}
                 onClick={() => setPatternType('cycle')}
                 className={`flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${patternType === 'cycle' ? 'bg-emerald-500 text-white shadow' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
               >
