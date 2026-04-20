@@ -71,3 +71,6 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+## 2024-04-20 - Dropdown Menu Accessibility
+**Learning:** Buttons that control dropdown menus (like the Layout 'Create' menu) must include dynamic `aria-expanded` and `aria-haspopup='true'` attributes for proper screen reader accessibility.
+**Action:** Ensure all dropdown triggers communicate their state to assistive technologies.
