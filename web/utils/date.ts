@@ -41,27 +41,33 @@ export const nowIso = (): string => {
 // Formatting Functions (Local Timezone)
 // ============================================================================
 
+const shortDateFormatter = new Intl.DateTimeFormat(undefined, {
+  month: 'short',
+  day: 'numeric'
+});
+
 /**
  * Formats a date for display: "Jan 6" or "Dec 25"
  */
 export const formatDateShort = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    month: 'short', 
-    day: 'numeric' 
-  });
+  if (Number.isNaN(d.valueOf())) return 'Invalid Date';
+  return shortDateFormatter.format(d);
 };
+
+const longDateFormatter = new Intl.DateTimeFormat(undefined, {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric'
+});
 
 /**
  * Formats a date with full month: "January 6, 2026"
  */
 export const formatDateLong = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    year: 'numeric',
-    month: 'long', 
-    day: 'numeric' 
-  });
+  if (Number.isNaN(d.valueOf())) return 'Invalid Date';
+  return longDateFormatter.format(d);
 };
 
 /**
@@ -96,15 +102,18 @@ export const formatDateNumeric = (date: string | Date): string => {
   return d.toLocaleDateString();
 };
 
+const timeFormatter = new Intl.DateTimeFormat(undefined, {
+  hour: '2-digit',
+  minute: '2-digit'
+});
+
 /**
  * Formats time only: "2:30 PM"
  */
 export const formatTime = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleTimeString(undefined, { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
+  if (Number.isNaN(d.valueOf())) return 'Invalid Time';
+  return timeFormatter.format(d);
 };
 
 /**
@@ -230,7 +239,10 @@ export const addDays = (date: string | Date, days: number): Date => {
  */
 export const toDateKey = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toISOString().split('T')[0];
+  const y = d.getUTCFullYear();
+  const m = d.getUTCMonth() + 1;
+  const day = d.getUTCDate();
+  return `${y}-${m < 10 ? '0' : ''}${m}-${day < 10 ? '0' : ''}${day}`;
 };
 
 // ============================================================================
