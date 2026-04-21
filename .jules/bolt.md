@@ -31,3 +31,6 @@
 ## 2026-03-03 - Optimizing Date Parsing for Sorting
 **Learning:** `new Date(dateStr).getTime()` creates a full Date object just to extract the timestamp, adding unnecessary memory allocation and garbage collection overhead. In functions called frequently (like sorting algorithms iterating over thousands of items in `taskScoring.ts`), this is a measurable bottleneck.
 **Action:** Use `Date.parse(dateStr)` when only the timestamp is needed. Benchmark shows this avoids object creation and improves date parsing time by ~30% for ISO-8601 strings.
+## 2024-04-21 - Extract Inline Array Reductions in React Render
+**Learning:** Inline array reductions (e.g., `.filter().reduce()`) inside the React JSX render body can execute O(K*N) operations per render. In `BudgetPlanner.tsx`, the same expenses array was filtered and reduced 5 separate times per render for progress bars and stat blocks.
+**Action:** Extract expensive or repeated array computations into a single O(N) pass within a `useMemo` block to minimize CPU overhead during re-renders.
