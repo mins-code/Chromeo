@@ -676,7 +676,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                     </h2>
                     <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar">
                         {/* View Toggle */}
-                        <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 sm:p-1 shrink-0">
+                        <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 sm:p-1 shrink-0" role="group" aria-label="View mode">
                             <button
                                 onClick={() => setViewMode('month')}
                                 className={`flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${
@@ -685,6 +685,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                         : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
                                 aria-label="Month view"
+                                aria-pressed={viewMode === 'month'}
                             >
                                 <Calendar size={14} className="sm:w-4 sm:h-4" />
                                 <span className="hidden sm:inline">Month</span>
@@ -697,6 +698,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                         : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
                                 aria-label="Week view"
+                                aria-pressed={viewMode === 'week'}
                             >
                                 <CalendarDays size={14} className="sm:w-4 sm:h-4" />
                                 <span className="hidden sm:inline">Week</span>
@@ -709,6 +711,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                         : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
                                 aria-label="Day view"
+                                aria-pressed={viewMode === 'day'}
                             >
                                 <CalendarClock size={14} className="sm:w-4 sm:h-4" />
                                 <span className="hidden sm:inline">Day</span>
@@ -726,6 +729,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                             : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                     }`}
                                     aria-label="Custom interval view"
+                                    aria-pressed={viewMode === 'custom'}
+                                    aria-expanded={showIntervalDropdown}
+                                    aria-haspopup="true"
                                 >
                                     <Settings2 size={14} className="sm:w-4 sm:h-4" />
                                     <span className="hidden sm:inline">{viewMode === 'custom' ? getCustomIntervalLabel() : 'Custom'}</span>
