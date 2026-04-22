@@ -1,0 +1,3 @@
+## 2026-04-22 - Segmented Control Accessibility
+**Learning:** Segmented controls implemented as standard buttons without arrow-key navigation logic must NOT use role='radiogroup' and role='radio'. They should use a wrapper with role='group' and aria-pressed={isActive} on the active <button> to properly communicate selection semantics. Dropdown toggles within these controls must also explicitly define aria-expanded and aria-haspopup attributes.
+**Action:** Always use role="group" wrapper and aria-pressed on individual buttons for standard visual button groups (like view mode toggles) rather than misusing radio roles.
