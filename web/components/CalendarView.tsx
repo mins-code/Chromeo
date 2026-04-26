@@ -676,7 +676,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                     </h2>
                     <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar">
                         {/* View Toggle */}
-                        <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 sm:p-1 shrink-0">
+                        <div
+                            className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 sm:p-1 shrink-0"
+                            role="group"
+                            aria-label="Calendar view mode"
+                        >
                             <button
                                 onClick={() => setViewMode('month')}
                                 className={`flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all ${
@@ -684,6 +688,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                         ? 'bg-white dark:bg-slate-700 text-brand-500 shadow-sm'
                                         : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
+                                aria-pressed={viewMode === 'month'}
                                 aria-label="Month view"
                             >
                                 <Calendar size={14} className="sm:w-4 sm:h-4" />
@@ -696,6 +701,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                         ? 'bg-white dark:bg-slate-700 text-brand-500 shadow-sm'
                                         : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
+                                aria-pressed={viewMode === 'week'}
                                 aria-label="Week view"
                             >
                                 <CalendarDays size={14} className="sm:w-4 sm:h-4" />
@@ -708,6 +714,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                         ? 'bg-white dark:bg-slate-700 text-brand-500 shadow-sm'
                                         : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
+                                aria-pressed={viewMode === 'day'}
                                 aria-label="Day view"
                             >
                                 <CalendarClock size={14} className="sm:w-4 sm:h-4" />
