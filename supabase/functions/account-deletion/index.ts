@@ -120,12 +120,13 @@ serve(async (req) => {
         "push_subscriptions",
         "team_members",
         "teams",
-        "partnerships",
         "budget_shares",
         "transactions",
         "routines",
         "tasks",
         "user_settings",
+        "notes",
+        "day_plans",
         "profiles",
       ];
 
@@ -144,6 +145,14 @@ serve(async (req) => {
         await supabase.from("budget_shares").delete().eq("owner_id", userId);
       } catch (e) {
         console.log(`Owner cleanup: ${e}`);
+      }
+
+      // Cleanup tables with custom foreign keys
+      try {
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
+      } catch (e) {
+        console.log(`Custom foreign key cleanup: ${e}`);
       }
 
       // Finally, delete the auth user
@@ -349,12 +358,13 @@ serve(async (req) => {
         "push_subscriptions",
         "team_members",
         "teams",
-        "partnerships",
         "budget_shares",
         "transactions",
         "routines",
         "tasks",
         "user_settings",
+        "notes",
+        "day_plans",
         "profiles",
       ];
 
@@ -373,6 +383,14 @@ serve(async (req) => {
         await supabase.from("budget_shares").delete().eq("owner_id", userId);
       } catch (e) {
         console.log(`Owner cleanup: ${e}`);
+      }
+
+      // Cleanup tables with custom foreign keys
+      try {
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
+      } catch (e) {
+        console.log(`Custom foreign key cleanup: ${e}`);
       }
 
       // Finally, delete the auth user
