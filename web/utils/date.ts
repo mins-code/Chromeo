@@ -44,12 +44,15 @@ export const nowIso = (): string => {
 /**
  * Formats a date for display: "Jan 6" or "Dec 25"
  */
+const shortDateFormatter = new Intl.DateTimeFormat(undefined, {
+  month: 'short',
+  day: 'numeric'
+});
+
 export const formatDateShort = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    month: 'short', 
-    day: 'numeric' 
-  });
+  if (Number.isNaN(d.valueOf())) return 'Invalid Date';
+  return shortDateFormatter.format(d);
 };
 
 /**
@@ -91,20 +94,26 @@ export const formatDateWithWeekdayUS = (date: string | Date): string => {
 /**
  * Formats a date as "MM/DD/YYYY" or locale equivalent
  */
+const numericDateFormatter = new Intl.DateTimeFormat();
+
 export const formatDateNumeric = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleDateString();
+  if (Number.isNaN(d.valueOf())) return 'Invalid Date';
+  return numericDateFormatter.format(d);
 };
 
 /**
  * Formats time only: "2:30 PM"
  */
+const timeFormatter = new Intl.DateTimeFormat(undefined, {
+  hour: '2-digit',
+  minute: '2-digit'
+});
+
 export const formatTime = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleTimeString(undefined, { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
+  if (Number.isNaN(d.valueOf())) return 'Invalid Date';
+  return timeFormatter.format(d);
 };
 
 /**
@@ -230,7 +239,12 @@ export const addDays = (date: string | Date, days: number): Date => {
  */
 export const toDateKey = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toISOString().split('T')[0];
+  if (Number.isNaN(d.valueOf())) return 'Invalid Date';
+  const y = d.getUTCFullYear();
+  const m = d.getUTCMonth() + 1;
+  const day = d.getUTCDate();
+  const paddedY = y < 1000 ? String(y).padStart(4, '0') : y;
+  return `${paddedY}-${m < 10 ? '0' : ''}${m}-${day < 10 ? '0' : ''}${day}`;
 };
 
 // ============================================================================
