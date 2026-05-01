@@ -164,6 +164,8 @@ const DayView: React.FC<DayViewProps> = ({ tasks, currentDate, onEditTask }) => 
             onClick={() => setIsExpanded(!isExpanded)}
             className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
             title={isExpanded ? "Compact view (4hr)" : "Expanded view (1hr)"}
+            aria-expanded={isExpanded}
+            aria-label={isExpanded ? "Collapse 1-hour intervals" : "Expand 15-minute intervals"}
           >
             {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
