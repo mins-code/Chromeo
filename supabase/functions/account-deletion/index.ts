@@ -124,6 +124,8 @@ serve(async (req) => {
         "budget_shares",
         "transactions",
         "routines",
+        "day_plans",
+        "notes",
         "tasks",
         "user_settings",
         "profiles",
@@ -138,12 +140,17 @@ serve(async (req) => {
         }
       }
 
-      // Also try owner_id for some tables
+      // Also try owner_id and other specific user associations for some tables
       try {
         await supabase.from("teams").delete().eq("owner_id", userId);
         await supabase.from("budget_shares").delete().eq("owner_id", userId);
+        await supabase.from("budget_shares").delete().eq("partner_id", userId);
+        await supabase.from("partnerships").delete().eq("user_id_1", userId);
+        await supabase.from("partnerships").delete().eq("user_id_2", userId);
+        await supabase.from("note_shares").delete().eq("owner_id", userId);
+        await supabase.from("note_shares").delete().eq("shared_with_id", userId);
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`Owner/Association cleanup: ${e}`);
       }
 
       // Finally, delete the auth user
@@ -353,6 +360,8 @@ serve(async (req) => {
         "budget_shares",
         "transactions",
         "routines",
+        "day_plans",
+        "notes",
         "tasks",
         "user_settings",
         "profiles",
@@ -367,12 +376,17 @@ serve(async (req) => {
         }
       }
 
-      // Also try owner_id for some tables
+      // Also try owner_id and other specific user associations for some tables
       try {
         await supabase.from("teams").delete().eq("owner_id", userId);
         await supabase.from("budget_shares").delete().eq("owner_id", userId);
+        await supabase.from("budget_shares").delete().eq("partner_id", userId);
+        await supabase.from("partnerships").delete().eq("user_id_1", userId);
+        await supabase.from("partnerships").delete().eq("user_id_2", userId);
+        await supabase.from("note_shares").delete().eq("owner_id", userId);
+        await supabase.from("note_shares").delete().eq("shared_with_id", userId);
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`Owner/Association cleanup: ${e}`);
       }
 
       // Finally, delete the auth user
