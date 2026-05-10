@@ -31,3 +31,7 @@
 ## 2026-03-03 - Optimizing Date Parsing for Sorting
 **Learning:** `new Date(dateStr).getTime()` creates a full Date object just to extract the timestamp, adding unnecessary memory allocation and garbage collection overhead. In functions called frequently (like sorting algorithms iterating over thousands of items in `taskScoring.ts`), this is a measurable bottleneck.
 **Action:** Use `Date.parse(dateStr)` when only the timestamp is needed. Benchmark shows this avoids object creation and improves date parsing time by ~30% for ISO-8601 strings.
+
+## 2024-05-24 - Cached Date Formatters and Native Parsing
+**Learning:** Generating multiple dates rapidly via `toLocaleDateString` and `toLocaleTimeString` causes severe O(N) object instantiation overhead (9s vs 140ms in 100k iteration test). Similarly, `toISOString().split('T')[0]` incurs significant parsing overhead vs native UTC operations.
+**Action:** Cache `Intl.DateTimeFormat` instances for date/time formatting and explicitly handle `Invalid Date` range errors. Use `.getUTCFullYear()`, `.getUTCMonth()`, and `.getUTCDate()` with inline ternary padding for performance-critical YYYY-MM-DD string construction.
