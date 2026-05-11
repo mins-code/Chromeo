@@ -71,3 +71,6 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+## 2024-05-11 - Add aria attributes to calendar dropdowns
+**Learning:** Dropdowns in custom UI components (like the month/year picker) need explicit `aria-expanded` and `aria-label` to be accessible, as their functionality is not obvious to screen readers otherwise.
+**Action:** Always add `aria-expanded={isOpen}` and a descriptive `aria-label` to custom dropdown toggle buttons.
