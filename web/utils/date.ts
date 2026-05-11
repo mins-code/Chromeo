@@ -38,6 +38,21 @@ export const nowIso = (): string => {
 };
 
 // ============================================================================
+// Formatters Cache
+// ============================================================================
+
+const formatters = {
+  shortDate: new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }),
+  longDate: new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'long', day: 'numeric' }),
+  weekdayDate: new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'long', day: 'numeric' }),
+  weekdayDateUS: new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
+  numericDate: new Intl.DateTimeFormat(undefined),
+  time: new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }),
+  time24: new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', hour12: false }),
+  dateTimeLong: new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+};
+
+// ============================================================================
 // Formatting Functions (Local Timezone)
 // ============================================================================
 
@@ -46,10 +61,8 @@ export const nowIso = (): string => {
  */
 export const formatDateShort = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    month: 'short', 
-    day: 'numeric' 
-  });
+  if (Number.isNaN(d.valueOf())) return 'Invalid Date';
+  return formatters.shortDate.format(d);
 };
 
 /**
@@ -57,11 +70,8 @@ export const formatDateShort = (date: string | Date): string => {
  */
 export const formatDateLong = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    year: 'numeric',
-    month: 'long', 
-    day: 'numeric' 
-  });
+  if (Number.isNaN(d.valueOf())) return 'Invalid Date';
+  return formatters.longDate.format(d);
 };
 
 /**
@@ -69,11 +79,8 @@ export const formatDateLong = (date: string | Date): string => {
  */
 export const formatDateWithWeekday = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    weekday: 'long', 
-    month: 'long', 
-    day: 'numeric' 
-  });
+  if (Number.isNaN(d.valueOf())) return 'Invalid Date';
+  return formatters.weekdayDate.format(d);
 };
 
 /**
@@ -81,11 +88,8 @@ export const formatDateWithWeekday = (date: string | Date): string => {
  */
 export const formatDateWithWeekdayUS = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    month: 'long', 
-    day: 'numeric' 
-  });
+  if (Number.isNaN(d.valueOf())) return 'Invalid Date';
+  return formatters.weekdayDateUS.format(d);
 };
 
 /**
@@ -93,7 +97,8 @@ export const formatDateWithWeekdayUS = (date: string | Date): string => {
  */
 export const formatDateNumeric = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleDateString();
+  if (Number.isNaN(d.valueOf())) return 'Invalid Date';
+  return formatters.numericDate.format(d);
 };
 
 /**
@@ -101,10 +106,8 @@ export const formatDateNumeric = (date: string | Date): string => {
  */
 export const formatTime = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleTimeString(undefined, { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
+  if (Number.isNaN(d.valueOf())) return 'Invalid Date';
+  return formatters.time.format(d);
 };
 
 /**
@@ -112,11 +115,8 @@ export const formatTime = (date: string | Date): string => {
  */
 export const formatTime24 = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleTimeString(undefined, { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    hour12: false 
-  });
+  if (Number.isNaN(d.valueOf())) return 'Invalid Date';
+  return formatters.time24.format(d);
 };
 
 /**
@@ -124,6 +124,7 @@ export const formatTime24 = (date: string | Date): string => {
  */
 export const formatDateTime = (date: string | Date): string => {
   const d = parseDate(date);
+  if (Number.isNaN(d.valueOf())) return 'Invalid Date';
   return `${formatDateShort(d)}, ${formatTime(d)}`;
 };
 
@@ -132,13 +133,8 @@ export const formatDateTime = (date: string | Date): string => {
  */
 export const formatDateTimeLong = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    year: 'numeric',
-    month: 'long', 
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  if (Number.isNaN(d.valueOf())) return 'Invalid Date';
+  return formatters.dateTimeLong.format(d);
 };
 
 // ============================================================================
@@ -230,7 +226,11 @@ export const addDays = (date: string | Date, days: number): Date => {
  */
 export const toDateKey = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toISOString().split('T')[0];
+  if (Number.isNaN(d.valueOf())) return 'Invalid Date';
+  const year = d.getUTCFullYear();
+  const month = d.getUTCMonth() + 1;
+  const day = d.getUTCDate();
+  return `${year}-${month < 10 ? '0' : ''}${month}-${day < 10 ? '0' : ''}${day}`;
 };
 
 // ============================================================================
