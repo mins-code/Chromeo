@@ -170,6 +170,8 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
             setShowPicker(!showPicker);
           }}
           className={`flex items-center gap-1 text-sm font-semibold ${colors.text} ${colors.hover} rounded-lg px-2 py-1 transition-colors`}
+          aria-label={`Select month and year. Currently ${MONTHS[month]} ${year}`}
+          aria-expanded={showPicker}
         >
           {MONTHS[month]} {year}
           <ChevronDown size={14} className={`transition-transform ${showPicker ? 'rotate-180' : ''}`} />
