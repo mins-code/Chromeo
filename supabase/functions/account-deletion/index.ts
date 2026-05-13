@@ -127,6 +127,8 @@ serve(async (req) => {
         "tasks",
         "user_settings",
         "profiles",
+        "notes",
+        "day_plans",
       ];
 
       for (const table of tablesToDelete) {
@@ -138,12 +140,17 @@ serve(async (req) => {
         }
       }
 
-      // Also try owner_id for some tables
+      // Explicit cleanup for tables without a direct user_id
       try {
         await supabase.from("teams").delete().eq("owner_id", userId);
         await supabase.from("budget_shares").delete().eq("owner_id", userId);
+        await supabase.from("budget_shares").delete().eq("partner_id", userId);
+        await supabase.from("note_shares").delete().eq("owner_id", userId);
+        await supabase.from("note_shares").delete().eq("shared_with_id", userId);
+        await supabase.from("partnerships").delete().eq("user_id_1", userId);
+        await supabase.from("partnerships").delete().eq("user_id_2", userId);
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`Explicit foreign key cleanup failed: ${e}`);
       }
 
       // Finally, delete the auth user
@@ -356,6 +363,8 @@ serve(async (req) => {
         "tasks",
         "user_settings",
         "profiles",
+        "notes",
+        "day_plans",
       ];
 
       for (const table of tablesToDelete) {
@@ -367,12 +376,17 @@ serve(async (req) => {
         }
       }
 
-      // Also try owner_id for some tables
+      // Explicit cleanup for tables without a direct user_id
       try {
         await supabase.from("teams").delete().eq("owner_id", userId);
         await supabase.from("budget_shares").delete().eq("owner_id", userId);
+        await supabase.from("budget_shares").delete().eq("partner_id", userId);
+        await supabase.from("note_shares").delete().eq("owner_id", userId);
+        await supabase.from("note_shares").delete().eq("shared_with_id", userId);
+        await supabase.from("partnerships").delete().eq("user_id_1", userId);
+        await supabase.from("partnerships").delete().eq("user_id_2", userId);
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`Explicit foreign key cleanup failed: ${e}`);
       }
 
       // Finally, delete the auth user
