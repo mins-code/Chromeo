@@ -120,11 +120,11 @@ serve(async (req) => {
         "push_subscriptions",
         "team_members",
         "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
+        "notes",
+        "day_plans",
         "user_settings",
         "profiles",
       ];
@@ -141,7 +141,9 @@ serve(async (req) => {
       // Also try owner_id for some tables
       try {
         await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
+        await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`);
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
       } catch (e) {
         console.log(`Owner cleanup: ${e}`);
       }
@@ -349,11 +351,11 @@ serve(async (req) => {
         "push_subscriptions",
         "team_members",
         "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
+        "notes",
+        "day_plans",
         "user_settings",
         "profiles",
       ];
@@ -370,7 +372,9 @@ serve(async (req) => {
       // Also try owner_id for some tables
       try {
         await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
+        await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`);
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
       } catch (e) {
         console.log(`Owner cleanup: ${e}`);
       }
