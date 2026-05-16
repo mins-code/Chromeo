@@ -71,3 +71,6 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+## 2026-05-16 - Calendar View Mode Accessibility
+**Learning:** Segmented controls implemented as standard buttons without arrow-key navigation logic must NOT use `role='radiogroup'`. Instead, use a wrapper with `role='group'` and `aria-pressed={isActive}` on the active `<button>` to properly communicate selection semantics. Dropdown toggles within these controls must also explicitly define `aria-expanded` and `aria-haspopup` attributes.
+**Action:** Add `role='group'` to toggle wrappers, `aria-pressed={isActive}` to view mode buttons, and `aria-expanded` to the custom interval dropdown toggle in CalendarView.
