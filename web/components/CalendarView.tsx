@@ -726,6 +726,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, recurringTransaction
                                             : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                     }`}
                                     aria-label="Custom interval view"
+                                    aria-haspopup="dialog"
+                                    aria-expanded={showIntervalDropdown}
                                 >
                                     <Settings2 size={14} className="sm:w-4 sm:h-4" />
                                     <span className="hidden sm:inline">{viewMode === 'custom' ? getCustomIntervalLabel() : 'Custom'}</span>

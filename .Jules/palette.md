@@ -71,3 +71,7 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+
+## 2024-05-18 - Timeline and Dropdown ARIA attributes
+**Learning:** Icon-only toggle buttons and custom dropdown buttons lack necessary ARIA attributes by default, making them inaccessible to screen readers. Specifically, expand/collapse toggles need `aria-expanded` and `aria-label`, and custom dropdowns need `aria-haspopup` and `aria-expanded`.
+**Action:** Always include `aria-expanded` and an action-oriented `aria-label` for expand/collapse toggles. Ensure custom dropdowns have `aria-haspopup` (e.g., "dialog" or "menu") and `aria-expanded` to communicate their state to assistive technologies.
