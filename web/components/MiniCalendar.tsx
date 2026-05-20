@@ -165,11 +165,14 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ currentTheme, isExpanded, o
       {/* Header with Month/Year and Navigation */}
       <div className="flex items-center justify-between mb-3">
         <button
+          type="button"
           onClick={() => {
             setPickerYear(year);
             setShowPicker(!showPicker);
           }}
           className={`flex items-center gap-1 text-sm font-semibold ${colors.text} ${colors.hover} rounded-lg px-2 py-1 transition-colors`}
+          aria-expanded={showPicker}
+          aria-label={`Select month and year. Currently ${MONTHS[month]} ${year}`}
         >
           {MONTHS[month]} {year}
           <ChevronDown size={14} className={`transition-transform ${showPicker ? 'rotate-180' : ''}`} />
