@@ -6,17 +6,12 @@ const parseDate = (date) => {
   return new Date(date);
 };
 
-const toDateKeyOriginal = (date) => {
+const toLocalDateKeyOriginal = (date) => {
   const d = parseDate(date);
-  return d.toISOString().split('T')[0];
-};
-
-const toDateKeyOptimized = (date) => {
-  const d = parseDate(date);
-  if (Number.isNaN(d.valueOf())) throw new RangeError('Invalid time value');
-  const year = d.getUTCFullYear();
-  const month = d.getUTCMonth() + 1;
-  const day = d.getUTCDate();
+  // Example of how it might be done currently
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
   return `${year}-${month < 10 ? '0' : ''}${month}-${day < 10 ? '0' : ''}${day}`;
 };
 
@@ -27,14 +22,7 @@ for (let i = 0; i < 10000; i++) {
 
 let start = performance.now();
 for (let i = 0; i < 10000; i++) {
-  toDateKeyOriginal(dates[i]);
+  toLocalDateKeyOriginal(dates[i]);
 }
 let end = performance.now();
 console.log(`Original: ${end - start} ms`);
-
-start = performance.now();
-for (let i = 0; i < 10000; i++) {
-  toDateKeyOptimized(dates[i]);
-}
-end = performance.now();
-console.log(`Optimized: ${end - start} ms`);
