@@ -40,6 +40,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
       disabled={disabled || isLoading}
       aria-busy={isLoading}
+      aria-disabled={disabled || isLoading}
       {...props}
     >
       {isLoading ? (
