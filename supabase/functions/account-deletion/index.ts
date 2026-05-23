@@ -119,12 +119,11 @@ serve(async (req) => {
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
+        "day_plans",
+        "notes",
         "user_settings",
         "profiles",
       ];
@@ -138,12 +137,15 @@ serve(async (req) => {
         }
       }
 
-      // Also try owner_id for some tables
+      // 🛡️ SECURITY: Explicitly delete from relationship tables that don't have a simple 'user_id' column.
+      // Must run AFTER child tables (like team_members) are deleted to avoid FK constraint errors.
       try {
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+        await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`);
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
         await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.error(`Error deleting relational tables: ${e}`);
       }
 
       // Finally, delete the auth user
@@ -348,12 +350,11 @@ serve(async (req) => {
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
+        "day_plans",
+        "notes",
         "user_settings",
         "profiles",
       ];
@@ -367,12 +368,15 @@ serve(async (req) => {
         }
       }
 
-      // Also try owner_id for some tables
+      // 🛡️ SECURITY: Explicitly delete from relationship tables that don't have a simple 'user_id' column.
+      // Must run AFTER child tables (like team_members) are deleted to avoid FK constraint errors.
       try {
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+        await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`);
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
         await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.error(`Error deleting relational tables: ${e}`);
       }
 
       // Finally, delete the auth user
