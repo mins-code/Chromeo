@@ -16,6 +16,7 @@ interface SelectProps {
     currentTheme?: ThemeOption;
     className?: string;
     label?: string;
+    required?: boolean;
 }
 
 const Select: React.FC<SelectProps> = ({ 
@@ -25,7 +26,8 @@ const Select: React.FC<SelectProps> = ({
     placeholder = 'Select...', 
     currentTheme = 'dark',
     className = '',
-    label
+    label,
+    required = false
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -134,6 +136,11 @@ const Select: React.FC<SelectProps> = ({
             {label && (
                 <label className="text-xs font-bold uppercase text-slate-500 mb-1.5 block tracking-wider font-mono">
                     {label}
+                    {required && (
+                        <span className="text-red-500 dark:text-red-400 ml-1" aria-hidden="true" title="Required">
+                            *
+                        </span>
+                    )}
                 </label>
             )}
             <button
