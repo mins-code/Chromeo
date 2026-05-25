@@ -114,36 +114,57 @@ serve(async (req) => {
       console.log(`Password verified. Deleting all data for user ${userId}`);
 
       // Delete in order of foreign key dependencies
+      // Explicitly handle tables without a direct user_id column (dependent child tables MUST be deleted first)
+      try {
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`).throwOnError();
+        console.log(`Deleted from note_shares`);
+      } catch (e) {
+        console.log(`Error deleting from note_shares: ${e}`);
+      }
+
+      try {
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`).throwOnError();
+        console.log(`Deleted from partnerships`);
+      } catch (e) {
+        console.log(`Error deleting from partnerships: ${e}`);
+      }
+
+      try {
+        await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`).throwOnError();
+        console.log(`Deleted from budget_shares`);
+      } catch (e) {
+        console.log(`Error deleting from budget_shares: ${e}`);
+      }
+
       const tablesToDelete = [
         "account_deletion_requests",
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
         "user_settings",
+        "notes",
+        "day_plans",
         "profiles",
       ];
 
       for (const table of tablesToDelete) {
         try {
-          await supabase.from(table).delete().eq("user_id", userId);
+          await supabase.from(table).delete().eq("user_id", userId).throwOnError();
           console.log(`Deleted from ${table}`);
         } catch (e) {
           console.log(`Table ${table} might not exist or have user_id: ${e}`);
         }
       }
 
-      // Also try owner_id for some tables
+      // Teams is a parent table of team_members, so it must be deleted AFTER team_members
       try {
-        await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
+        await supabase.from("teams").delete().eq("owner_id", userId).throwOnError();
+        console.log(`Deleted from teams`);
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`Error deleting from teams: ${e}`);
       }
 
       // Finally, delete the auth user
@@ -344,35 +365,56 @@ serve(async (req) => {
       console.log(`Deleting all data for user ${userId}`);
 
       // Delete in order of foreign key dependencies
+      // Explicitly handle tables without a direct user_id column (dependent child tables MUST be deleted first)
+      try {
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`).throwOnError();
+        console.log(`Deleted from note_shares`);
+      } catch (e) {
+        console.log(`Error deleting from note_shares: ${e}`);
+      }
+
+      try {
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`).throwOnError();
+        console.log(`Deleted from partnerships`);
+      } catch (e) {
+        console.log(`Error deleting from partnerships: ${e}`);
+      }
+
+      try {
+        await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`).throwOnError();
+        console.log(`Deleted from budget_shares`);
+      } catch (e) {
+        console.log(`Error deleting from budget_shares: ${e}`);
+      }
+
       const tablesToDelete = [
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
         "user_settings",
+        "notes",
+        "day_plans",
         "profiles",
       ];
 
       for (const table of tablesToDelete) {
         try {
-          await supabase.from(table).delete().eq("user_id", userId);
+          await supabase.from(table).delete().eq("user_id", userId).throwOnError();
           console.log(`Deleted from ${table}`);
         } catch (e) {
           console.log(`Table ${table} might not exist or have user_id: ${e}`);
         }
       }
 
-      // Also try owner_id for some tables
+      // Teams is a parent table of team_members, so it must be deleted AFTER team_members
       try {
-        await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
+        await supabase.from("teams").delete().eq("owner_id", userId).throwOnError();
+        console.log(`Deleted from teams`);
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`Error deleting from teams: ${e}`);
       }
 
       // Finally, delete the auth user
