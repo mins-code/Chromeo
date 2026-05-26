@@ -113,18 +113,16 @@ serve(async (req) => {
       // Delete all user data from each table
       console.log(`Password verified. Deleting all data for user ${userId}`);
 
-      // Delete in order of foreign key dependencies
+      // Delete in order of foreign key dependencies (tables with user_id)
       const tablesToDelete = [
         "account_deletion_requests",
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
+        "notes",
         "user_settings",
         "profiles",
       ];
@@ -138,12 +136,14 @@ serve(async (req) => {
         }
       }
 
-      // Also try owner_id for some tables
+      // Explicitly delete from tables lacking a direct user_id column
       try {
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+        await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`);
         await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`Explicit foreign key cleanup failed: ${e}`);
       }
 
       // Finally, delete the auth user
@@ -343,17 +343,15 @@ serve(async (req) => {
       // Delete all user data from each table
       console.log(`Deleting all data for user ${userId}`);
 
-      // Delete in order of foreign key dependencies
+      // Delete in order of foreign key dependencies (tables with user_id)
       const tablesToDelete = [
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
+        "notes",
         "user_settings",
         "profiles",
       ];
@@ -367,12 +365,14 @@ serve(async (req) => {
         }
       }
 
-      // Also try owner_id for some tables
+      // Explicitly delete from tables lacking a direct user_id column
       try {
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+        await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`);
         await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`Explicit foreign key cleanup failed: ${e}`);
       }
 
       // Finally, delete the auth user
