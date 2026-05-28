@@ -31,3 +31,6 @@
 ## 2026-03-03 - Optimizing Date Parsing for Sorting
 **Learning:** `new Date(dateStr).getTime()` creates a full Date object just to extract the timestamp, adding unnecessary memory allocation and garbage collection overhead. In functions called frequently (like sorting algorithms iterating over thousands of items in `taskScoring.ts`), this is a measurable bottleneck.
 **Action:** Use `Date.parse(dateStr)` when only the timestamp is needed. Benchmark shows this avoids object creation and improves date parsing time by ~30% for ISO-8601 strings.
+## 2026-05-28 - Optimize Date Formatting with Cached Intl
+**Learning:** `new Date().toLocaleDateString()` and `toLocaleTimeString()` incur significant overhead in tight loops because they re-instantiate `Intl` formatters every time.
+**Action:** Cache `Intl.DateTimeFormat` instances outside function scope and use them to format dates, speeding up rendering for long lists while gracefully handling invalid dates by checking `Number.isNaN(d.valueOf())`.
