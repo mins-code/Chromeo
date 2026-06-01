@@ -117,3 +117,9 @@
 **Vulnerability:** The `push-notification` Edge Function used a `service_role` client to schedule notifications. It allowed any authenticated user to schedule a notification for ANY task ID, regardless of ownership. Since notifications are unique per task, this allowed an attacker to "lock" the notification slot for a victim's task, preventing the victim from scheduling their own notification (DoS).
 **Learning:** Using `service_role` clients in user-facing functions bypasses RLS. You cannot rely on "implied" permissions.
 **Prevention:** Always verify resource ownership (e.g., `task.user_id === userId`) explicitly when performing operations on behalf of a user using a privileged client.
+## 2026-02-22 - Incomplete Cascading Deletion (GDPR Data Leak)
+**Vulnerability:** The `account-deletion` Edge Function deleted user data by explicitly listing tables in a hardcoded array (`tablesToDelete`). It failed to include some newly added tables (like `notes` and `day_plans`) and improperly processed tables where the user's ID was not stored in the generic `user_id` column but rather in role-specific foreign keys (like `owner_id`, `partner_id`, `shared_with_id`, `user_id_1`, `user_id_2`). This resulted in incomplete account deletions, leaving orphaned sensitive user data in the database (a significant GDPR violation).
+**Learning:** Hardcoded arrays for application-layer cascading deletes are extremely brittle and prone to being out of sync with schema updates. If you must use application-layer deletion instead of database-level `ON DELETE CASCADE` foreign keys, you must rigorously account for all foreign key variations.
+**Prevention:**
+1. Use `.or()` filters to ensure comprehensive data removal across all relationship columns for a single user (e.g., `user_id_1.eq.X,user_id_2.eq.X`).
+2. Ideally, rely on database-level `ON DELETE CASCADE` constraints pointing back to the core `profiles` or `auth.users` tables to handle automatic data cleanup.
