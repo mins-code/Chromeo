@@ -167,15 +167,13 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
     };
 
     // Memoized computed values to avoid recalculation on every render
-    const totalIncome = useMemo(() => 
-        budget.transactions.filter(t => t.type === 'income').reduce((acc, curr) => acc + curr.amount, 0),
-        [budget.transactions]
-    );
-    
-    const totalExpenses = useMemo(() => 
-        budget.transactions.filter(t => t.type === 'expense').reduce((acc, curr) => acc + curr.amount, 0),
-        [budget.transactions]
-    );
+    const { totalIncome, totalExpenses } = useMemo(() => {
+        return budget.transactions.reduce((acc, curr) => {
+            if (curr.type === 'income') acc.totalIncome += curr.amount;
+            if (curr.type === 'expense') acc.totalExpenses += curr.amount;
+            return acc;
+        }, { totalIncome: 0, totalExpenses: 0 });
+    }, [budget.transactions]);
     
     const remaining = useMemo(() => budget.limit - totalExpenses, [budget.limit, totalExpenses]);
 
@@ -626,57 +624,54 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                                 </div>
 
                                 {/* Expanded Budget Details */}
-                                {expandedPartnerBudget?.ownerId === sharedBudget.ownerId && (
-                                    <div className="ml-11 p-4 rounded-xl bg-gradient-to-br from-emerald-500/5 to-brand-500/5 border border-emerald-500/10 space-y-3">
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                            <div>
-                                                <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Budget</p>
-                                                <p className="text-lg font-bold text-slate-800 dark:text-slate-100">
-                                                    {expandedPartnerBudget.budget.limit.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
-                                                </p>
-                                                <p className="text-[10px] text-slate-500 font-mono">/ {expandedPartnerBudget.budget.duration}</p>
+                                {expandedPartnerBudget?.ownerId === sharedBudget.ownerId && (() => {
+                                    const { expenses, income } = expandedPartnerBudget.budget.transactions.reduce((acc, t) => {
+                                        if (t.type === 'expense') acc.expenses += t.amount;
+                                        if (t.type === 'income') acc.income += t.amount;
+                                        return acc;
+                                    }, { expenses: 0, income: 0 });
+                                    const limit = expandedPartnerBudget.budget.limit;
+                                    const remaining = limit - expenses;
+
+                                    return (
+                                        <div className="ml-11 p-4 rounded-xl bg-gradient-to-br from-emerald-500/5 to-brand-500/5 border border-emerald-500/10 space-y-3">
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                                <div>
+                                                    <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Budget</p>
+                                                    <p className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                                                        {limit.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                    </p>
+                                                    <p className="text-[10px] text-slate-500 font-mono">/ {expandedPartnerBudget.budget.duration}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Expenses</p>
+                                                    <p className="text-lg font-bold text-red-500">
+                                                        {expenses.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Remaining</p>
+                                                    <p className={`text-lg font-bold ${remaining >= 0 ? 'text-brand-500' : 'text-red-500'}`}>
+                                                        {remaining.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Income</p>
+                                                    <p className="text-lg font-bold text-emerald-500">
+                                                        {income.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Expenses</p>
-                                                <p className="text-lg font-bold text-red-500">
-                                                    {expandedPartnerBudget.budget.transactions
-                                                        .filter(t => t.type === 'expense')
-                                                        .reduce((acc, t) => acc + t.amount, 0)
-                                                        .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Remaining</p>
-                                                <p className={`text-lg font-bold ${(expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0)) >= 0 ? 'text-brand-500' : 'text-red-500'}`}>
-                                                    {(expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0))
-                                                        .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Income</p>
-                                                <p className="text-lg font-bold text-emerald-500">
-                                                    {expandedPartnerBudget.budget.transactions
-                                                        .filter(t => t.type === 'income')
-                                                        .reduce((acc, t) => acc + t.amount, 0)
-                                                        .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
-                                                </p>
+                                            {/* Progress bar */}
+                                            <div className="h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
+                                                <div
+                                                    className={`h-full transition-all duration-500 ${remaining < 0 ? 'bg-red-500' : 'bg-brand-500'}`}
+                                                    style={{ width: `${Math.min(100, (expenses / (limit || 1)) * 100)}%` }}
+                                                />
                                             </div>
                                         </div>
-                                        {/* Progress bar */}
-                                        <div className="h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full transition-all duration-500 ${
-                                                    (expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0)) < 0 
-                                                        ? 'bg-red-500' 
-                                                        : 'bg-brand-500'
-                                                }`}
-                                                style={{ 
-                                                    width: `${Math.min(100, (expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0) / (expandedPartnerBudget.budget.limit || 1)) * 100)}%` 
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
+                                    );
+                                })()}
                             </div>
                         ))}
                     </div>
