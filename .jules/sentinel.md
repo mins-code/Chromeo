@@ -117,3 +117,8 @@
 **Vulnerability:** The `push-notification` Edge Function used a `service_role` client to schedule notifications. It allowed any authenticated user to schedule a notification for ANY task ID, regardless of ownership. Since notifications are unique per task, this allowed an attacker to "lock" the notification slot for a victim's task, preventing the victim from scheduling their own notification (DoS).
 **Learning:** Using `service_role` clients in user-facing functions bypasses RLS. You cannot rely on "implied" permissions.
 **Prevention:** Always verify resource ownership (e.g., `task.user_id === userId`) explicitly when performing operations on behalf of a user using a privileged client.
+
+## 2026-06-02 - Incomplete Account Deletion for Shared Data
+**Vulnerability:** The account deletion edge function looped over a generic array of tables attempting to delete records by `user_id`. Tables like `note_shares`, `partnerships`, and `budget_shares` lack a direct `user_id` column and instead use `owner_id`, `shared_with_id`, `user_id_1`, etc. This caused shared data to be left behind after account deletion, leading to data leaks (GDPR violation).
+**Learning:** Relying on generic deletion loops for complex relational schemas often misses tables with non-standard foreign keys. Dependent child tables must be deleted before parent tables to prevent foreign key constraint errors.
+**Prevention:** When updating the database schema with new tables containing user data, explicitly audit account deletion functions. Tables lacking a direct `user_id` column must be handled in separate deletion blocks using their relevant foreign keys and the Supabase `.or()` syntax. Ensure child tables are processed first.
