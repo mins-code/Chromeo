@@ -119,9 +119,6 @@ serve(async (req) => {
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
@@ -138,12 +135,14 @@ serve(async (req) => {
         }
       }
 
-      // Also try owner_id for some tables
+      // Explicitly delete records where user might be referenced by other foreign keys
       try {
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+        await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`);
         await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`Relationship cleanup: ${e}`);
       }
 
       // Finally, delete the auth user
@@ -348,9 +347,6 @@ serve(async (req) => {
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
@@ -367,12 +363,14 @@ serve(async (req) => {
         }
       }
 
-      // Also try owner_id for some tables
+      // Explicitly delete records where user might be referenced by other foreign keys
       try {
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+        await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`);
         await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`Relationship cleanup: ${e}`);
       }
 
       // Finally, delete the auth user
