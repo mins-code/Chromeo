@@ -71,3 +71,7 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+
+## 2026-06-05 - Dynamic Accessible Labels for State-Toggling Buttons
+**Learning:** When a button toggles a state (like a theme), the `aria-label` and `title` should dynamically reflect the action that will be taken (e.g., 'Switch to dark theme') rather than statically describing the button itself. This improves screen reader clarity and user expectations. Also ensure that secondary/mobile versions of the same button have consistent accessible labels.
+**Action:** Always use dynamic accessible names for buttons that switch between distinct states. Ensure that both primary and mobile versions of components share identical accessibility properties.
