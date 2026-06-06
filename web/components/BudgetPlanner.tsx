@@ -291,7 +291,14 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                         </div>
                     </div>
 
-                    <div className="mt-8 h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
+                    <div
+                        className="mt-8 h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden"
+                        role="progressbar"
+                        aria-valuenow={Math.min(100, (totalExpenses / (budget.limit || 1)) * 100)}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label="Budget usage progress"
+                    >
                         <div
                             className={`h-full transition-all duration-500 ${remaining < 0 ? 'bg-red-500' : 'bg-brand-500'}`}
                             style={{ width: `${Math.min(100, (totalExpenses / (budget.limit || 1)) * 100)}%` }}
@@ -663,7 +670,14 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                                             </div>
                                         </div>
                                         {/* Progress bar */}
-                                        <div className="h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden"
+                                            role="progressbar"
+                                            aria-valuenow={Math.min(100, (expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0) / (expandedPartnerBudget.budget.limit || 1)) * 100)}
+                                            aria-valuemin={0}
+                                            aria-valuemax={100}
+                                            aria-label="Partner budget usage progress"
+                                        >
                                             <div
                                                 className={`h-full transition-all duration-500 ${
                                                     (expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0)) < 0 
