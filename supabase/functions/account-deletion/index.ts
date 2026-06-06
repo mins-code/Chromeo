@@ -118,10 +118,8 @@ serve(async (req) => {
         "account_deletion_requests",
         "scheduled_notifications",
         "push_subscriptions",
-        "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
+        "day_plans",
+        "notes",
         "transactions",
         "routines",
         "tasks",
@@ -138,12 +136,15 @@ serve(async (req) => {
         }
       }
 
-      // Also try owner_id for some tables
+      // Also try owner_id and other relations for some tables
       try {
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+        await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`);
+        await supabase.from("team_members").delete().eq("user_id", userId);
         await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`Relational cleanup error: ${e}`);
       }
 
       // Finally, delete the auth user
@@ -347,10 +348,8 @@ serve(async (req) => {
       const tablesToDelete = [
         "scheduled_notifications",
         "push_subscriptions",
-        "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
+        "day_plans",
+        "notes",
         "transactions",
         "routines",
         "tasks",
@@ -367,12 +366,15 @@ serve(async (req) => {
         }
       }
 
-      // Also try owner_id for some tables
+      // Also try owner_id and other relations for some tables
       try {
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+        await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`);
+        await supabase.from("team_members").delete().eq("user_id", userId);
         await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`Relational cleanup error: ${e}`);
       }
 
       // Finally, delete the auth user
