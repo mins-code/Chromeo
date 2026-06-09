@@ -114,17 +114,21 @@ serve(async (req) => {
       console.log(`Password verified. Deleting all data for user ${userId}`);
 
       // Delete in order of foreign key dependencies
+      // Explicit cleanup for tables lacking a direct user_id column, done first to prevent foreign key constraint errors
+      try { await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`); } catch(e) { console.log(`note_shares cleanup error: ${e}`); }
+      try { await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`); } catch(e) { console.log(`partnerships cleanup error: ${e}`); }
+      try { await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`); } catch(e) { console.log(`budget_shares cleanup error: ${e}`); }
+      try { await supabase.from("teams").delete().eq("owner_id", userId); } catch(e) { console.log(`teams cleanup error: ${e}`); }
+
       const tablesToDelete = [
         "account_deletion_requests",
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
+        "notes",
         "user_settings",
         "profiles",
       ];
@@ -136,14 +140,6 @@ serve(async (req) => {
         } catch (e) {
           console.log(`Table ${table} might not exist or have user_id: ${e}`);
         }
-      }
-
-      // Also try owner_id for some tables
-      try {
-        await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
-      } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
       }
 
       // Finally, delete the auth user
@@ -344,16 +340,20 @@ serve(async (req) => {
       console.log(`Deleting all data for user ${userId}`);
 
       // Delete in order of foreign key dependencies
+      // Explicit cleanup for tables lacking a direct user_id column, done first to prevent foreign key constraint errors
+      try { await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`); } catch(e) { console.log(`note_shares cleanup error: ${e}`); }
+      try { await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`); } catch(e) { console.log(`partnerships cleanup error: ${e}`); }
+      try { await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`); } catch(e) { console.log(`budget_shares cleanup error: ${e}`); }
+      try { await supabase.from("teams").delete().eq("owner_id", userId); } catch(e) { console.log(`teams cleanup error: ${e}`); }
+
       const tablesToDelete = [
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
+        "notes",
         "user_settings",
         "profiles",
       ];
@@ -365,14 +365,6 @@ serve(async (req) => {
         } catch (e) {
           console.log(`Table ${table} might not exist or have user_id: ${e}`);
         }
-      }
-
-      // Also try owner_id for some tables
-      try {
-        await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
-      } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
       }
 
       // Finally, delete the auth user
