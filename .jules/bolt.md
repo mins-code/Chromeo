@@ -31,3 +31,6 @@
 ## 2026-03-03 - Optimizing Date Parsing for Sorting
 **Learning:** `new Date(dateStr).getTime()` creates a full Date object just to extract the timestamp, adding unnecessary memory allocation and garbage collection overhead. In functions called frequently (like sorting algorithms iterating over thousands of items in `taskScoring.ts`), this is a measurable bottleneck.
 **Action:** Use `Date.parse(dateStr)` when only the timestamp is needed. Benchmark shows this avoids object creation and improves date parsing time by ~30% for ISO-8601 strings.
+## 2026-06-11 - Combine and memoize inline array aggregations
+**Learning:** Extracting multiple inline chained `.filter(...).reduce(...)` aggregations on the same array into a single-pass `.reduce()` inside a `useMemo` block prevents redundant O(K*N) operations per re-render.
+**Action:** When a component computes multiple aggregations over the same array (like income and expenses), combine them into a single `.reduce()` pass returning an object with multiple accumulators outside the render return.
