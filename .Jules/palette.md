@@ -71,3 +71,7 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+
+## 2026-03-08 - Segmented Control Dropdown Accessibility
+**Learning:** When a segmented control (like a view toggle) includes a custom option that triggers a dropdown menu instead of immediately activating a state, the trigger button must properly combine segmented control semantics (`aria-pressed`) with dropdown semantics (`aria-expanded`, `aria-haspopup`) to ensure screen readers announce both its relationship to the other options and its interactive behavior.
+**Action:** For dropdown triggers inside a segmented control group, add `aria-expanded` and `aria-haspopup="dialog" (or menu)` alongside the standard `aria-pressed` attribute.
