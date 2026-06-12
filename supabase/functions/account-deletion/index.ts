@@ -119,31 +119,33 @@ serve(async (req) => {
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
+        "day_plans",
+        "notes",
         "user_settings",
         "profiles",
       ];
 
       for (const table of tablesToDelete) {
         try {
-          await supabase.from(table).delete().eq("user_id", userId);
+          // 🛡️ SECURITY: Use .throwOnError() to prevent silent deletion failures (GDPR violation)
+          await supabase.from(table).delete().eq("user_id", userId).throwOnError();
           console.log(`Deleted from ${table}`);
         } catch (e) {
-          console.log(`Table ${table} might not exist or have user_id: ${e}`);
+          console.log(`Failed to delete from ${table}: ${e}`);
         }
       }
 
-      // Also try owner_id for some tables
+      // 🛡️ SECURITY: Explicitly handle tables without a direct user_id column
       try {
-        await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
+        await supabase.from("teams").delete().eq("owner_id", userId).throwOnError();
+        await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`).throwOnError();
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`).throwOnError();
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`).throwOnError();
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`Relational table cleanup failed: ${e}`);
       }
 
       // Finally, delete the auth user
@@ -348,31 +350,33 @@ serve(async (req) => {
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
+        "day_plans",
+        "notes",
         "user_settings",
         "profiles",
       ];
 
       for (const table of tablesToDelete) {
         try {
-          await supabase.from(table).delete().eq("user_id", userId);
+          // 🛡️ SECURITY: Use .throwOnError() to prevent silent deletion failures (GDPR violation)
+          await supabase.from(table).delete().eq("user_id", userId).throwOnError();
           console.log(`Deleted from ${table}`);
         } catch (e) {
-          console.log(`Table ${table} might not exist or have user_id: ${e}`);
+          console.log(`Failed to delete from ${table}: ${e}`);
         }
       }
 
-      // Also try owner_id for some tables
+      // 🛡️ SECURITY: Explicitly handle tables without a direct user_id column
       try {
-        await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
+        await supabase.from("teams").delete().eq("owner_id", userId).throwOnError();
+        await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`).throwOnError();
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`).throwOnError();
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`).throwOnError();
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`Relational table cleanup failed: ${e}`);
       }
 
       // Finally, delete the auth user
