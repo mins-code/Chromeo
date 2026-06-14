@@ -117,3 +117,9 @@
 **Vulnerability:** The `push-notification` Edge Function used a `service_role` client to schedule notifications. It allowed any authenticated user to schedule a notification for ANY task ID, regardless of ownership. Since notifications are unique per task, this allowed an attacker to "lock" the notification slot for a victim's task, preventing the victim from scheduling their own notification (DoS).
 **Learning:** Using `service_role` clients in user-facing functions bypasses RLS. You cannot rely on "implied" permissions.
 **Prevention:** Always verify resource ownership (e.g., `task.user_id === userId`) explicitly when performing operations on behalf of a user using a privileged client.
+## 2026-02-23 - Incomplete GDPR Data Deletion (Silent Query Failures)
+**Vulnerability:** The account deletion edge function iteratively deleted from an array of tables using `eq("user_id", userId)`. Tables without a `user_id` column (like `teams`, `budget_shares`) failed silently because the Supabase JS client returns an `error` object instead of throwing by default. This led to orphaned user data and GDPR compliance violations.
+**Learning:** Database schemas vary, and automated query loops are brittle. Silent failures in critical data operations (like account deletion) mask severe privacy vulnerabilities.
+**Prevention:**
+1. Always append `.throwOnError()` or explicitly handle the returned `error` object for Supabase queries.
+2. Explicitly handle edge-case tables with unique foreign keys (e.g., `owner_id`, `shared_with_id`) outside of generic `user_id` loops.

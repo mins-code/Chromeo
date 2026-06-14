@@ -113,37 +113,40 @@ serve(async (req) => {
       // Delete all user data from each table
       console.log(`Password verified. Deleting all data for user ${userId}`);
 
-      // Delete in order of foreign key dependencies
+      // Delete in order of foreign key dependencies (only tables with user_id)
       const tablesToDelete = [
         "account_deletion_requests",
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
+        "day_plans",
         "tasks",
+        "notes",
         "user_settings",
-        "profiles",
       ];
 
       for (const table of tablesToDelete) {
         try {
-          await supabase.from(table).delete().eq("user_id", userId);
+          // 🛡️ SECURITY: Explicitly check for errors to prevent silent GDPR failures
+          const { error } = await supabase.from(table).delete().eq("user_id", userId);
+          if (error) throw error;
           console.log(`Deleted from ${table}`);
-        } catch (e) {
-          console.log(`Table ${table} might not exist or have user_id: ${e}`);
+        } catch (e: any) {
+          console.error(`Failed to delete from ${table}: ${e.message || e}`);
         }
       }
 
-      // Also try owner_id for some tables
+      // 🛡️ SECURITY: Explicitly delete from tables lacking user_id
       try {
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+        await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`);
         await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
-      } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        await supabase.from("profiles").delete().eq("id", userId);
+      } catch (e: any) {
+        console.error(`Explicit cleanup failed: ${e.message || e}`);
       }
 
       // Finally, delete the auth user
@@ -343,36 +346,39 @@ serve(async (req) => {
       // Delete all user data from each table
       console.log(`Deleting all data for user ${userId}`);
 
-      // Delete in order of foreign key dependencies
+      // Delete in order of foreign key dependencies (only tables with user_id)
       const tablesToDelete = [
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
+        "day_plans",
         "tasks",
+        "notes",
         "user_settings",
-        "profiles",
       ];
 
       for (const table of tablesToDelete) {
         try {
-          await supabase.from(table).delete().eq("user_id", userId);
+          // 🛡️ SECURITY: Explicitly check for errors to prevent silent GDPR failures
+          const { error } = await supabase.from(table).delete().eq("user_id", userId);
+          if (error) throw error;
           console.log(`Deleted from ${table}`);
-        } catch (e) {
-          console.log(`Table ${table} might not exist or have user_id: ${e}`);
+        } catch (e: any) {
+          console.error(`Failed to delete from ${table}: ${e.message || e}`);
         }
       }
 
-      // Also try owner_id for some tables
+      // 🛡️ SECURITY: Explicitly delete from tables lacking user_id
       try {
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+        await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`);
         await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
-      } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        await supabase.from("profiles").delete().eq("id", userId);
+      } catch (e: any) {
+        console.error(`Explicit cleanup failed: ${e.message || e}`);
       }
 
       // Finally, delete the auth user
