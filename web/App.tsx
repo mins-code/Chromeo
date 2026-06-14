@@ -611,7 +611,7 @@ const App: React.FC = () => {
     }, [visibleTasks]);
 
     // Budget Calculations
-    const totalExpenses = budget.transactions.filter(t => t.type === 'expense').reduce((acc, curr) => acc + curr.amount, 0);
+    const totalExpenses = budget.transactions.reduce((acc, curr) => curr.type === 'expense' ? acc + curr.amount : acc, 0);
     const budgetRemaining = budget.limit - totalExpenses;
 
     const userStats = useMemo(() => ({
