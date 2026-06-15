@@ -166,16 +166,14 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
         }
     };
 
-    // Memoized computed values to avoid recalculation on every render
-    const totalIncome = useMemo(() => 
-        budget.transactions.filter(t => t.type === 'income').reduce((acc, curr) => acc + curr.amount, 0),
-        [budget.transactions]
-    );
-    
-    const totalExpenses = useMemo(() => 
-        budget.transactions.filter(t => t.type === 'expense').reduce((acc, curr) => acc + curr.amount, 0),
-        [budget.transactions]
-    );
+    // ⚡ Bolt Optimization: Calculate total income and expenses in a single pass to avoid O(2N) operations
+    const { income: totalIncome, expense: totalExpenses } = useMemo(() => {
+        return budget.transactions.reduce((acc, curr) => {
+            if (curr.type === 'income') acc.income += curr.amount;
+            else if (curr.type === 'expense') acc.expense += curr.amount;
+            return acc;
+        }, { income: 0, expense: 0 });
+    }, [budget.transactions]);
     
     const remaining = useMemo(() => budget.limit - totalExpenses, [budget.limit, totalExpenses]);
 
