@@ -41,15 +41,29 @@ export const nowIso = (): string => {
 // Formatting Functions (Local Timezone)
 // ============================================================================
 
+const shortDateFormatter = new Intl.DateTimeFormat(undefined, {
+  month: 'short',
+  day: 'numeric'
+});
+
+const timeFormatter = new Intl.DateTimeFormat(undefined, {
+  hour: '2-digit',
+  minute: '2-digit'
+});
+
+const time24Formatter = new Intl.DateTimeFormat(undefined, {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false
+});
+
 /**
  * Formats a date for display: "Jan 6" or "Dec 25"
  */
 export const formatDateShort = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleDateString(undefined, { 
-    month: 'short', 
-    day: 'numeric' 
-  });
+  if (Number.isNaN(d.valueOf())) return 'Invalid Date';
+  return shortDateFormatter.format(d);
 };
 
 /**
@@ -101,10 +115,8 @@ export const formatDateNumeric = (date: string | Date): string => {
  */
 export const formatTime = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleTimeString(undefined, { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
+  if (Number.isNaN(d.valueOf())) return 'Invalid Date';
+  return timeFormatter.format(d);
 };
 
 /**
@@ -112,11 +124,8 @@ export const formatTime = (date: string | Date): string => {
  */
 export const formatTime24 = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toLocaleTimeString(undefined, { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    hour12: false 
-  });
+  if (Number.isNaN(d.valueOf())) return 'Invalid Date';
+  return time24Formatter.format(d);
 };
 
 /**
@@ -230,7 +239,11 @@ export const addDays = (date: string | Date, days: number): Date => {
  */
 export const toDateKey = (date: string | Date): string => {
   const d = parseDate(date);
-  return d.toISOString().split('T')[0];
+  if (Number.isNaN(d.valueOf())) throw new RangeError('Invalid time value');
+  const year = d.getUTCFullYear();
+  const month = d.getUTCMonth() + 1;
+  const day = d.getUTCDate();
+  return `${year}-${month < 10 ? '0' : ''}${month}-${day < 10 ? '0' : ''}${day}`;
 };
 
 // ============================================================================
