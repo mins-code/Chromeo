@@ -71,3 +71,6 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+## 2026-06-17 - Dynamic Theme Toggle Labels
+**Learning:** Theme toggle buttons often use static 'Toggle theme' labels, which don't describe the resulting action (e.g. 'Switch to dark theme'), failing to provide actionable context to screen reader users.
+**Action:** Use dynamic `aria-label` and `title` attributes that reflect the *action* the button will perform based on the current state (e.g. `currentTheme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'`).
