@@ -1,6 +1,6 @@
 /**
  * Budget Category Chart Component
- * 
+ *
  * Displays spending breakdown by category using recharts PieChart.
  */
 
@@ -61,7 +61,7 @@ const CustomTooltip: React.FC<TooltipProps<number, string> & { formatCurrency?: 
   return (
     <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl p-3 shadow-lg min-w-[140px]">
       <div className="flex items-center gap-2 mb-1">
-        <div 
+        <div
           className="w-3 h-3 rounded-full"
           style={{ backgroundColor: data.color }}
         />
@@ -89,7 +89,7 @@ const CustomLegend: React.FC<{ payload?: any[] }> = ({ payload }) => {
     <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-4">
       {payload.map((entry, index) => (
         <div key={`legend-${index}`} className="flex items-center gap-1.5">
-          <div 
+          <div
             className="w-2.5 h-2.5 rounded-full"
             style={{ backgroundColor: entry.color }}
           />
@@ -104,7 +104,7 @@ const CustomLegend: React.FC<{ payload?: any[] }> = ({ payload }) => {
 
 /**
  * Budget Category Chart displays spending breakdown by category.
- * 
+ *
  * Features:
  * - Pie chart with smooth animations
  * - Professional color palette
@@ -119,19 +119,18 @@ const BudgetCategoryChart: React.FC<BudgetCategoryChartProps> = ({
   // Aggregate transactions by category (expenses only)
   const categoryData = useMemo<CategoryData[]>(() => {
     const categoryTotals: Record<string, number> = {};
-    
-    let total = 0;
+
     // Sum up expenses by category
     transactions
+      .filter(t => t.type === 'expense')
       .forEach(t => {
-        if (t.type === 'expense') {
-          const category = t.category || 'Uncategorized';
-          categoryTotals[category] = (categoryTotals[category] || 0) + t.amount;
-          total += t.amount;
-        }
+        const category = t.category || 'Uncategorized';
+        categoryTotals[category] = (categoryTotals[category] || 0) + t.amount;
       });
 
-    
+    // Calculate total for percentages
+    const total = Object.values(categoryTotals).reduce((sum, val) => sum + val, 0);
+
     if (total === 0) return [];
 
     // Convert to array and sort by value
@@ -169,17 +168,17 @@ const BudgetCategoryChart: React.FC<BudgetCategoryChartProps> = ({
             animationDuration={500}
           >
             {categoryData.map((entry, index) => (
-              <Cell 
-                key={`cell-${index}`} 
+              <Cell
+                key={`cell-${index}`}
                 fill={entry.color}
                 stroke="transparent"
               />
             ))}
           </Pie>
-          <Tooltip 
+          <Tooltip
             content={<CustomTooltip formatCurrency={formatCurrency} />}
           />
-          <Legend 
+          <Legend
             content={<CustomLegend />}
             verticalAlign="bottom"
           />
