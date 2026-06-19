@@ -97,10 +97,10 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
         const amount = parseFloat(transAmount);
         if (transDesc && !isNaN(amount) && amount > 0) {
             if (isRecurring) {
-                await addRecurringTransaction({ 
-                    description: transDesc, 
-                    amount, 
-                    type: transType, 
+                await addRecurringTransaction({
+                    description: transDesc,
+                    amount,
+                    type: transType,
                     frequency: recurringFrequency,
                     startDate: recurringStartDate
                 });
@@ -121,7 +121,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
         setIsScanning(true);
         try {
             const transactions = await parseTransactionScreenshot(file);
-            
+
             if (transactions.length === 0) {
                 alert('No transactions found in the image. Please try with a clearer screenshot.');
                 return;
@@ -175,14 +175,14 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
         }, { totalIncome: 0, totalExpenses: 0 }),
         [budget.transactions]
     );
-    
+
     const remaining = useMemo(() => budget.limit - totalExpenses, [budget.limit, totalExpenses]);
 
     // Calculate daily safe spend based on remaining budget and days left in period
     const dailySafeSpend = useMemo(() => {
         const now = new Date();
         let daysLeft = 1;
-        
+
         switch (budget.duration) {
             case 'Daily':
                 daysLeft = 1;
@@ -204,12 +204,12 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                 break;
             }
         }
-        
+
         return daysLeft > 0 ? remaining / daysLeft : remaining;
     }, [remaining, budget.duration]);
 
     // Calculate 30-day forecast based on recurring transactions
-    const forecastData = useMemo(() => 
+    const forecastData = useMemo(() =>
         calculateForecast(remaining, budget.recurring, new Date(), 30),
         [remaining, budget.recurring]
     );
@@ -231,7 +231,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
     }, []);
 
     // Get partners not already shared with
-    const availablePartners = useMemo(() => 
+    const availablePartners = useMemo(() =>
         partnerships.filter(p => !budgetShares.some(s => s.partnerId === p.partnerId)),
         [partnerships, budgetShares]
     );
@@ -346,17 +346,17 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                     </h3>
                     {budget.recurring.length > 0 && (
                         <div className={`text-xs font-medium px-3 py-1 rounded-full ${
-                            projectedEndBalance >= 0 
-                                ? 'bg-emerald-500/10 text-emerald-500' 
+                            projectedEndBalance >= 0
+                                ? 'bg-emerald-500/10 text-emerald-500'
                                 : 'bg-red-500/10 text-red-500'
                         }`}>
                             {projectedEndBalance >= 0 ? 'On Track' : 'At Risk'}
                         </div>
                     )}
                 </div>
-                
+
                 <BudgetForecastChart data={forecastData} formatCurrency={formatCurrency} />
-                
+
                 {budget.recurring.length > 0 && (
                     <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
                         Based on your recurring bills, you are projected to have{' '}
@@ -388,7 +388,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                         className="hidden"
                         id="upi-screenshot-input"
                     />
-                    
+
                     {/* Camera Button */}
                     <div className="md:col-span-1">
                         <Button
@@ -415,7 +415,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                             <span className="ml-2 text-xs uppercase font-semibold">{transType === 'expense' ? 'Exp' : 'Inc'}</span>
                         </Button>
                     </div>
-                    
+
                     {/* Amount Input */}
                     <div className="md:col-span-2">
                         <Input label="Amount" type="number" value={transAmount} onChange={e => setTransAmount(e.target.value)} placeholder="0.00" />
@@ -440,15 +440,15 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                     <button
                         onClick={() => setIsRecurring(!isRecurring)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                            isRecurring 
-                                ? 'bg-brand-500/10 text-brand-500 border border-brand-500/30' 
+                            isRecurring
+                                ? 'bg-brand-500/10 text-brand-500 border border-brand-500/30'
                                 : 'bg-slate-100 dark:bg-white/5 text-slate-500 border border-transparent hover:bg-slate-200 dark:hover:bg-white/10'
                         }`}
                     >
                         <Repeat size={16} />
                         Recurring
                     </button>
-                    
+
                     {isRecurring && (
                         <Select
                             value={recurringFrequency}
@@ -467,7 +467,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                     {isRecurring && (
                         <div className="flex flex-col">
                            <label className="text-[10px] font-bold uppercase text-slate-400 font-mono mb-1">Start Date</label>
-                           <input 
+                           <input
                                type="date"
                                value={recurringStartDate}
                                onChange={(e) => setRecurringStartDate(e.target.value)}
@@ -475,7 +475,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                            />
                         </div>
                     )}
-                    
+
                     {isRecurring && (
                         <p className="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
                             This transaction will repeat {recurringFrequency}
@@ -545,7 +545,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                             <div className="space-y-2 pt-2">
                                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Currently Shared With</p>
                                 {budgetShares.map(share => (
-                                    <div 
+                                    <div
                                         key={share.id}
                                         className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5"
                                     >
@@ -562,7 +562,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                                                 )}
                                             </div>
                                         </div>
-                                        <button 
+                                        <button
                                             onClick={() => handleRemoveShare(share.id)}
                                             className="p-1.5 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
                                             title="Remove Share"
@@ -601,7 +601,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                     <div className="space-y-3">
                         {budgetsSharedWithMe.map(sharedBudget => (
                             <div key={sharedBudget.shareId} className="space-y-2">
-                                <div 
+                                <div
                                     className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 cursor-pointer hover:bg-slate-100 dark:hover:bg-black/30 transition-colors"
                                     onClick={() => handleViewPartnerBudget(sharedBudget.ownerId)}
                                 >
@@ -647,21 +647,25 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                                             <div>
                                                 <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Expenses</p>
                                                 <p className="text-lg font-bold text-red-500">
-                                                    {expandedPartnerTotals.expenses
+                                                    {expandedPartnerBudget.budget.transactions
+                                                        .filter(t => t.type === 'expense')
+                                                        .reduce((acc, t) => acc + t.amount, 0)
                                                         .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
                                                 </p>
                                             </div>
                                             <div>
                                                 <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Remaining</p>
-                                                <p className={`text-lg font-bold ${(expandedPartnerBudget.budget.limit - expandedPartnerTotals.expenses) >= 0 ? 'text-brand-500' : 'text-red-500'}`}>
-                                                    {(expandedPartnerBudget.budget.limit - expandedPartnerTotals.expenses)
+                                                <p className={`text-lg font-bold ${(expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0)) >= 0 ? 'text-brand-500' : 'text-red-500'}`}>
+                                                    {(expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0))
                                                         .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
                                                 </p>
                                             </div>
                                             <div>
                                                 <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Income</p>
                                                 <p className="text-lg font-bold text-emerald-500">
-                                                    {expandedPartnerTotals.income
+                                                    {expandedPartnerBudget.budget.transactions
+                                                        .filter(t => t.type === 'income')
+                                                        .reduce((acc, t) => acc + t.amount, 0)
                                                         .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
                                                 </p>
                                             </div>
@@ -670,12 +674,12 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                                         <div className="h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
                                             <div
                                                 className={`h-full transition-all duration-500 ${
-                                                    (expandedPartnerBudget.budget.limit - expandedPartnerTotals.expenses) < 0
-                                                        ? 'bg-red-500' 
+                                                    (expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0)) < 0
+                                                        ? 'bg-red-500'
                                                         : 'bg-brand-500'
                                                 }`}
-                                                style={{ 
-                                                    width: `${Math.min(100, (expandedPartnerTotals.expenses / (expandedPartnerBudget.budget.limit || 1)) * 100)}%`
+                                                style={{
+                                                    width: `${Math.min(100, (expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0) / (expandedPartnerBudget.budget.limit || 1)) * 100)}%`
                                                 }}
                                             />
                                         </div>
@@ -695,7 +699,7 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
             />
 
             {/* Transaction List */}
-            <TransactionList 
+            <TransactionList
                 transactions={budget.transactions}
                 onEdit={updateTransaction}
                 onDelete={deleteTransaction}
@@ -705,4 +709,3 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
 };
 
 export default React.memo(BudgetPlanner);
-
