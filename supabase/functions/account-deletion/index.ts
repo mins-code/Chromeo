@@ -119,32 +119,36 @@ serve(async (req) => {
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
+        "day_plans",
+        "notes",
         "user_settings",
         "profiles",
       ];
 
       for (const table of tablesToDelete) {
-        try {
-          await supabase.from(table).delete().eq("user_id", userId);
+        const { error } = await supabase.from(table).delete().eq("user_id", userId);
+        if (error) {
+          console.log(`Error deleting from ${table}:`, error.message);
+        } else {
           console.log(`Deleted from ${table}`);
-        } catch (e) {
-          console.log(`Table ${table} might not exist or have user_id: ${e}`);
         }
       }
 
-      // Also try owner_id for some tables
-      try {
-        await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
-      } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
-      }
+      // Explicitly delete from tables without a simple user_id column
+      const { error: teamError } = await supabase.from("teams").delete().eq("owner_id", userId);
+      if (teamError) console.log(`Error cleaning up teams: ${teamError.message}`);
+
+      const { error: budgetError } = await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`);
+      if (budgetError) console.log(`Error cleaning up budget_shares: ${budgetError.message}`);
+
+      const { error: partnerError } = await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+      if (partnerError) console.log(`Error cleaning up partnerships: ${partnerError.message}`);
+
+      const { error: noteSharesError } = await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
+      if (noteSharesError) console.log(`Error cleaning up note_shares (by owner/shared_with): ${noteSharesError.message}`);
 
       // Finally, delete the auth user
       const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userId);
@@ -348,32 +352,36 @@ serve(async (req) => {
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
+        "day_plans",
+        "notes",
         "user_settings",
         "profiles",
       ];
 
       for (const table of tablesToDelete) {
-        try {
-          await supabase.from(table).delete().eq("user_id", userId);
+        const { error } = await supabase.from(table).delete().eq("user_id", userId);
+        if (error) {
+          console.log(`Error deleting from ${table}:`, error.message);
+        } else {
           console.log(`Deleted from ${table}`);
-        } catch (e) {
-          console.log(`Table ${table} might not exist or have user_id: ${e}`);
         }
       }
 
-      // Also try owner_id for some tables
-      try {
-        await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
-      } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
-      }
+      // Explicitly delete from tables without a simple user_id column
+      const { error: teamError } = await supabase.from("teams").delete().eq("owner_id", userId);
+      if (teamError) console.log(`Error cleaning up teams: ${teamError.message}`);
+
+      const { error: budgetError } = await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`);
+      if (budgetError) console.log(`Error cleaning up budget_shares: ${budgetError.message}`);
+
+      const { error: partnerError } = await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+      if (partnerError) console.log(`Error cleaning up partnerships: ${partnerError.message}`);
+
+      const { error: noteSharesError } = await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
+      if (noteSharesError) console.log(`Error cleaning up note_shares (by owner/shared_with): ${noteSharesError.message}`);
 
       // Finally, delete the auth user
       const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userId);
