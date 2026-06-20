@@ -26,6 +26,7 @@ const Input: React.FC<InputProps> = ({ label, error, helperText, className = '',
           className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2 ml-1 font-mono"
         >
           {label}
+          {props.required && <span className="text-red-500 ml-1" aria-hidden="true">*</span>}
         </label>
       )}
       <div className="relative">
