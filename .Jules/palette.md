@@ -71,3 +71,6 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+## 2026-03-08 - Dropdown Toggle ARIA Attributes
+**Learning:** Segmented controls with dropdown toggles (like "Custom Interval") often miss critical ARIA attributes (`aria-expanded`, `aria-haspopup`), leaving screen readers unaware of the dropdown functionality. Segmented controls also need `role="group"` and `aria-pressed` instead of `radiogroup` to avoid screen reader issues.
+**Action:** Always add `aria-expanded={isOpen}`, `aria-haspopup="dialog"`, and `aria-pressed={isActive}` to dropdown toggles within segmented controls. Always use `role="group"` with `aria-pressed` on standard buttons acting as segmented controls.
