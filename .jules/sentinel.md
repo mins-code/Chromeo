@@ -117,3 +117,7 @@
 **Vulnerability:** The `push-notification` Edge Function used a `service_role` client to schedule notifications. It allowed any authenticated user to schedule a notification for ANY task ID, regardless of ownership. Since notifications are unique per task, this allowed an attacker to "lock" the notification slot for a victim's task, preventing the victim from scheduling their own notification (DoS).
 **Learning:** Using `service_role` clients in user-facing functions bypasses RLS. You cannot rely on "implied" permissions.
 **Prevention:** Always verify resource ownership (e.g., `task.user_id === userId`) explicitly when performing operations on behalf of a user using a privileged client.
+## 2026-06-24 - Search Path Hijacking in SECURITY DEFINER
+**Vulnerability:** SECURITY DEFINER functions in Supabase migrations did not have an explicit search_path set. This allowed potential search path hijacking, leading to privilege escalation if an attacker creates objects in schemas earlier in the search path.
+**Learning:** Always explicitly set the search_path for SECURITY DEFINER functions to ensure the correct schema is used.
+**Prevention:** Include SET search_path = public (or empty string) in all SECURITY DEFINER function definitions.
