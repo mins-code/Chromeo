@@ -43,9 +43,10 @@ const Stats: React.FC<StatsProps> = ({ tasks, budget, onNavigate }) => {
   const dailySafeSpend = useMemo(() => {
     if (!budget || budget.limit === 0) return null;
     
-    const totalExpenses = budget.transactions
-      .filter(t => t.type === 'expense')
-      .reduce((acc, curr) => acc + curr.amount, 0);
+    const totalExpenses = budget.transactions.reduce(
+      (acc, curr) => (curr.type === 'expense' ? acc + curr.amount : acc),
+      0
+    );
     
     const remaining = budget.limit - totalExpenses;
     
