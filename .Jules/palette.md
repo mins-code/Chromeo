@@ -71,3 +71,6 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+## 2024-06-24 - Form Required Field Indicators
+**Learning:** When adding a visible asterisk `*` to label a functionally required input, screen readers often announce "star" redundantly if the input also uses the `required` attribute.
+**Action:** Explicitly use `aria-hidden="true"` on the visual asterisk so screen readers ignore it, as the input's native `required` state already conveys the information properly.
