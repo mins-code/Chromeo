@@ -71,3 +71,7 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+
+## 2024-06-26 - Dynamic aria-labels on toggles
+**Learning:** Adding an `aria-label` to an element that contains visible text (like a month/year dropdown toggle) must explicitly include that visible text to satisfy WCAG 2.5.3 (Label in Name). Failing to do so causes the static aria-label to override the visible text, breaking voice control commands.
+**Action:** Always include the dynamic visible content in the `aria-label` for toggle buttons, and use `aria-expanded` to communicate state.
