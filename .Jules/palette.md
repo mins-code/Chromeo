@@ -71,3 +71,6 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+## 2024-06-27 - Segmented Controls vs Radiogroups
+**Learning:** Segmented controls implemented as standard buttons without arrow-key navigation logic must NOT use `role='radiogroup'` and `role='radio'`. This breaks screen reader keyboard expectations as standard buttons don't receive focus like radio inputs do.
+**Action:** Instead, use a wrapper with `role='group'` and `aria-pressed={isActive}` on the active `<button>` to properly communicate selection semantics without breaking keyboard expectations.
