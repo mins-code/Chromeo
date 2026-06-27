@@ -387,37 +387,33 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
           <div className="flex items-center gap-3">
              <h2 id="task-editor-title" className="text-lg font-semibold text-slate-800 dark:text-slate-100 tracking-tight">{task ? 'Edit' : 'Create New'}</h2>
              <div
-                role="radiogroup"
+                role="group"
                 aria-label="Task Type"
                 className="flex bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg p-0.5"
              >
                  <button 
-                    role="radio"
-                    aria-checked={type === 'TASK'}
+                    aria-pressed={type === 'TASK'}
                     onClick={() => setType('TASK')}
                     className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${type === 'TASK' ? 'bg-blue-500 text-white shadow' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                  >
                      Task
                  </button>
                  <button 
-                    role="radio"
-                    aria-checked={type === 'REMINDER'}
+                    aria-pressed={type === 'REMINDER'}
                     onClick={() => setType('REMINDER')}
                     className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${type === 'REMINDER' ? 'bg-yellow-500 text-white shadow' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                  >
                      Reminder
                  </button>
                  <button 
-                    role="radio"
-                    aria-checked={type === 'EVENT'}
+                    aria-pressed={type === 'EVENT'}
                     onClick={() => setType('EVENT')}
                     className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${type === 'EVENT' ? 'bg-brand-500 text-white shadow' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                  >
                      Event
                  </button>
                  <button 
-                    role="radio"
-                    aria-checked={type === 'APPOINTMENT'}
+                    aria-pressed={type === 'APPOINTMENT'}
                     onClick={() => setType('APPOINTMENT')}
                     className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${type === 'APPOINTMENT' ? 'bg-purple-500 text-white shadow' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                  >
@@ -666,12 +662,11 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                     {/* Notification Mode Toggle */}
                     <div
                         className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg w-fit"
-                        role="radiogroup"
+                        role="group"
                         aria-label="Notification Mode"
                     >
                         <button
-                            role="radio"
-                            aria-checked={notificationMode === 'relative'}
+                            aria-pressed={notificationMode === 'relative'}
                             onClick={() => {
                               setNotificationMode('relative');
                               // Auto-switch to custom if in default mode
@@ -686,8 +681,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                             Time Before
                         </button>
                         <button
-                            role="radio"
-                            aria-checked={notificationMode === 'absolute'}
+                            aria-pressed={notificationMode === 'absolute'}
                             onClick={() => {
                                 setNotificationMode('absolute');
                                 // Auto-switch to custom if in default mode
@@ -714,7 +708,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                             </label>
                             <div
                                 className="flex flex-wrap gap-2"
-                                role="radiogroup"
+                                role="group"
                                 aria-label="Notification Time"
                             >
                               {[
@@ -727,8 +721,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                               ].map((option) => (
                                 <button
                                   key={option.label}
-                                  role="radio"
-                                  aria-checked={!showCustomNotification && notificationMinutesBefore === option.value}
+                                  aria-pressed={!showCustomNotification && notificationMinutesBefore === option.value}
                                   onClick={() => {
                                     // Auto-switch to custom if in default mode and selecting non-default option
                                     if (notificationEnabled === undefined && option.value !== undefined) {
@@ -747,8 +740,7 @@ const TaskEditor: React.FC<TaskEditorProps> = ({ task, availableTasks, isOpen, o
                                 </button>
                               ))}
                               <button
-                                role="radio"
-                                aria-checked={showCustomNotification}
+                                aria-pressed={showCustomNotification}
                                 onClick={() => {
                                   // Auto-switch to custom if in default mode
                                   if (notificationEnabled === undefined) setNotificationEnabled(true);
