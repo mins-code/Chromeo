@@ -7,7 +7,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   helperText?: string;
 }
 
-const Input: React.FC<InputProps> = ({ label, error, helperText, className = '', id, ...props }) => {
+const Input: React.FC<InputProps> = ({ label, error, helperText, className = '', id, required, ...props }) => {
   const generatedId = useId();
   const inputId = id || generatedId;
   const errorId = `${inputId}-error`;
@@ -26,11 +26,15 @@ const Input: React.FC<InputProps> = ({ label, error, helperText, className = '',
           className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2 ml-1 font-mono"
         >
           {label}
+          {required && (
+            <span className="text-red-500 ml-1" aria-hidden="true">*</span>
+          )}
         </label>
       )}
       <div className="relative">
         <input
           id={inputId}
+          required={required}
           aria-invalid={!!error}
           aria-describedby={ariaDescribedBy}
           className={`w-full bg-white dark:bg-black/30 border border-slate-300 dark:border-white/10 rounded-xl px-4 py-2.5 h-11 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 focus:border-brand-500 transition-all shadow-sm flex items-center ${error ? 'border-red-500/50 focus:ring-red-500' : 'hover:border-slate-400 dark:hover:border-slate-500'} ${className}`}
