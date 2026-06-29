@@ -167,15 +167,13 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
     };
 
     // Memoized computed values to avoid recalculation on every render
-    const totalIncome = useMemo(() => 
-        budget.transactions.filter(t => t.type === 'income').reduce((acc, curr) => acc + curr.amount, 0),
-        [budget.transactions]
-    );
-    
-    const totalExpenses = useMemo(() => 
-        budget.transactions.filter(t => t.type === 'expense').reduce((acc, curr) => acc + curr.amount, 0),
-        [budget.transactions]
-    );
+    const { totalIncome, totalExpenses } = useMemo(() => {
+        return budget.transactions.reduce((acc, curr) => {
+            if (curr.type === 'income') acc.totalIncome += curr.amount;
+            if (curr.type === 'expense') acc.totalExpenses += curr.amount;
+            return acc;
+        }, { totalIncome: 0, totalExpenses: 0 });
+    }, [budget.transactions]);
     
     const remaining = useMemo(() => budget.limit - totalExpenses, [budget.limit, totalExpenses]);
 
@@ -636,45 +634,59 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                                                 </p>
                                                 <p className="text-[10px] text-slate-500 font-mono">/ {expandedPartnerBudget.budget.duration}</p>
                                             </div>
-                                            <div>
-                                                <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Expenses</p>
-                                                <p className="text-lg font-bold text-red-500">
-                                                    {expandedPartnerBudget.budget.transactions
-                                                        .filter(t => t.type === 'expense')
-                                                        .reduce((acc, t) => acc + t.amount, 0)
-                                                        .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Remaining</p>
-                                                <p className={`text-lg font-bold ${(expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0)) >= 0 ? 'text-brand-500' : 'text-red-500'}`}>
-                                                    {(expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0))
-                                                        .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Income</p>
-                                                <p className="text-lg font-bold text-emerald-500">
-                                                    {expandedPartnerBudget.budget.transactions
-                                                        .filter(t => t.type === 'income')
-                                                        .reduce((acc, t) => acc + t.amount, 0)
-                                                        .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
-                                                </p>
-                                            </div>
+                                            {(() => {
+                                                const totals = expandedPartnerBudget.budget.transactions.reduce((acc, curr) => {
+                                                    if (curr.type === 'income') acc.income += curr.amount;
+                                                    if (curr.type === 'expense') acc.expense += curr.amount;
+                                                    return acc;
+                                                }, { income: 0, expense: 0 });
+                                                const remaining = expandedPartnerBudget.budget.limit - totals.expense;
+                                                return (
+                                                    <>
+                                                        <div>
+                                                            <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Expenses</p>
+                                                            <p className="text-lg font-bold text-red-500">
+                                                                {totals.expense.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Remaining</p>
+                                                            <p className={`text-lg font-bold ${remaining >= 0 ? 'text-brand-500' : 'text-red-500'}`}>
+                                                                {remaining.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Income</p>
+                                                            <p className="text-lg font-bold text-emerald-500">
+                                                                {totals.income.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                            </p>
+                                                        </div>
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                         {/* Progress bar */}
-                                        <div className="h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full transition-all duration-500 ${
-                                                    (expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0)) < 0 
-                                                        ? 'bg-red-500' 
-                                                        : 'bg-brand-500'
-                                                }`}
-                                                style={{ 
-                                                    width: `${Math.min(100, (expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0) / (expandedPartnerBudget.budget.limit || 1)) * 100)}%` 
-                                                }}
-                                            />
-                                        </div>
+                                        {(() => {
+                                            const totals = expandedPartnerBudget.budget.transactions.reduce((acc, curr) => {
+                                                if (curr.type === 'expense') acc.expense += curr.amount;
+                                                return acc;
+                                            }, { expense: 0 });
+                                            const remaining = expandedPartnerBudget.budget.limit - totals.expense;
+                                            return (
+                                                <div className="h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full transition-all duration-500 ${
+                                                            remaining < 0
+                                                                ? 'bg-red-500'
+                                                                : 'bg-brand-500'
+                                                        }`}
+                                                        style={{
+                                                            width: `${Math.min(100, (totals.expense / (expandedPartnerBudget.budget.limit || 1)) * 100)}%`
+                                                        }}
+                                                    />
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                 )}
                             </div>
