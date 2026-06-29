@@ -114,17 +114,35 @@ serve(async (req) => {
       console.log(`Password verified. Deleting all data for user ${userId}`);
 
       // Delete in order of foreign key dependencies
+      // Explicitly delete from child tables without a direct user_id column first
+      // to avoid foreign key constraint violations when deleting parent tables later
+      try {
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
+      } catch (e) {
+        console.log(`note_shares cleanup error: ${e}`);
+      }
+      try {
+        await supabase.from("budget_shares").delete().eq("owner_id", userId);
+      } catch (e) {
+        console.log(`budget_shares cleanup error: ${e}`);
+      }
+      try {
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+      } catch (e) {
+        console.log(`partnerships cleanup error: ${e}`);
+      }
+
       const tablesToDelete = [
         "account_deletion_requests",
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
+        "day_plans",
+        "notes",
+        "teams",
         "user_settings",
         "profiles",
       ];
@@ -138,12 +156,11 @@ serve(async (req) => {
         }
       }
 
-      // Also try owner_id for some tables
+      // Some tables like teams have owner_id instead of user_id, but the generic loop won't hit it
       try {
         await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`teams cleanup error: ${e}`);
       }
 
       // Finally, delete the auth user
@@ -344,16 +361,34 @@ serve(async (req) => {
       console.log(`Deleting all data for user ${userId}`);
 
       // Delete in order of foreign key dependencies
+      // Explicitly delete from child tables without a direct user_id column first
+      // to avoid foreign key constraint violations when deleting parent tables later
+      try {
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
+      } catch (e) {
+        console.log(`note_shares cleanup error: ${e}`);
+      }
+      try {
+        await supabase.from("budget_shares").delete().eq("owner_id", userId);
+      } catch (e) {
+        console.log(`budget_shares cleanup error: ${e}`);
+      }
+      try {
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+      } catch (e) {
+        console.log(`partnerships cleanup error: ${e}`);
+      }
+
       const tablesToDelete = [
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
+        "day_plans",
+        "notes",
+        "teams",
         "user_settings",
         "profiles",
       ];
@@ -367,12 +402,11 @@ serve(async (req) => {
         }
       }
 
-      // Also try owner_id for some tables
+      // Some tables like teams have owner_id instead of user_id, but the generic loop won't hit it
       try {
         await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`teams cleanup error: ${e}`);
       }
 
       // Finally, delete the auth user
