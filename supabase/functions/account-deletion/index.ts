@@ -119,31 +119,47 @@ serve(async (req) => {
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
+        "day_plans",
+        "notes",
         "user_settings",
         "profiles",
       ];
 
       for (const table of tablesToDelete) {
         try {
-          await supabase.from(table).delete().eq("user_id", userId);
+          await supabase.from(table).delete().eq("user_id", userId).throwOnError();
           console.log(`Deleted from ${table}`);
         } catch (e) {
           console.log(`Table ${table} might not exist or have user_id: ${e}`);
         }
       }
 
-      // Also try owner_id for some tables
+      // Explicitly delete from tables with complex relationships
       try {
-        await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
+        await supabase.from("teams").delete().eq("owner_id", userId).throwOnError();
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`Owner cleanup for teams: ${e}`);
+      }
+
+      try {
+        await supabase.from("budget_shares").delete().eq("owner_id", userId).throwOnError();
+      } catch (e) {
+        console.log(`Owner cleanup for budget_shares: ${e}`);
+      }
+
+      try {
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`).throwOnError();
+      } catch (e) {
+        console.log(`Cleanup for partnerships: ${e}`);
+      }
+
+      try {
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`).throwOnError();
+      } catch (e) {
+        console.log(`Cleanup for note_shares: ${e}`);
       }
 
       // Finally, delete the auth user
@@ -348,31 +364,47 @@ serve(async (req) => {
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
+        "day_plans",
+        "notes",
         "user_settings",
         "profiles",
       ];
 
       for (const table of tablesToDelete) {
         try {
-          await supabase.from(table).delete().eq("user_id", userId);
+          await supabase.from(table).delete().eq("user_id", userId).throwOnError();
           console.log(`Deleted from ${table}`);
         } catch (e) {
           console.log(`Table ${table} might not exist or have user_id: ${e}`);
         }
       }
 
-      // Also try owner_id for some tables
+      // Explicitly delete from tables with complex relationships
       try {
-        await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
+        await supabase.from("teams").delete().eq("owner_id", userId).throwOnError();
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`Owner cleanup for teams: ${e}`);
+      }
+
+      try {
+        await supabase.from("budget_shares").delete().eq("owner_id", userId).throwOnError();
+      } catch (e) {
+        console.log(`Owner cleanup for budget_shares: ${e}`);
+      }
+
+      try {
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`).throwOnError();
+      } catch (e) {
+        console.log(`Cleanup for partnerships: ${e}`);
+      }
+
+      try {
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`).throwOnError();
+      } catch (e) {
+        console.log(`Cleanup for note_shares: ${e}`);
       }
 
       // Finally, delete the auth user
