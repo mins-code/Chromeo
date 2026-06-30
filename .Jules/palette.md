@@ -71,3 +71,6 @@
 ## 2026-03-07 - Modal Input Labeling
 **Learning:** Input fields in modals often lack proper label associations (`htmlFor`/`id`), especially when using custom styling or layouts. This fails WCAG 1.3.1 and 2.5.3.
 **Action:** Always verify that every `<input>` inside a modal has a corresponding `<label>` with a matching `htmlFor` attribute, or use `aria-label` if a visible label is not possible.
+## 2024-06-30 - Required Field Indicators in Forms
+**Learning:** Adding an asterisk (*) to functionally required form fields improves UX and accessibility. Using `aria-hidden="true"` on the asterisk prevents screen readers from redundantly announcing 'star', since the inputs themselves natively convey the required state. Adding disabled visual styling improves clarity for inactive inputs.
+**Action:** When creating forms, explicitly show an asterisk for required fields and hide it from screen readers using `aria-hidden="true"`. Make sure to style disabled inputs with opacity and a not-allowed cursor to visually indicate they cannot be interacted with.
