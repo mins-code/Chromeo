@@ -31,3 +31,6 @@
 ## 2026-03-03 - Optimizing Date Parsing for Sorting
 **Learning:** `new Date(dateStr).getTime()` creates a full Date object just to extract the timestamp, adding unnecessary memory allocation and garbage collection overhead. In functions called frequently (like sorting algorithms iterating over thousands of items in `taskScoring.ts`), this is a measurable bottleneck.
 **Action:** Use `Date.parse(dateStr)` when only the timestamp is needed. Benchmark shows this avoids object creation and improves date parsing time by ~30% for ISO-8601 strings.
+## 2024-07-02 - Memoize repeated chained array functions inside React component JSX render loops
+**Learning:** Computing array aggregations like `transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0)` repeatedly multiple times inside JSX elements of the component return, or using separate useMemos to compute multiple aggregations over the same array is extremely inefficient because it runs on every component re-render resulting in O(K*N) complexity.
+**Action:** Extract all calculations inside a single useMemo using a single `.reduce()` block to traverse the array once, computing all multiple aggregates. Pass this single useMemo object as standard variables to be used inline in JSX.
