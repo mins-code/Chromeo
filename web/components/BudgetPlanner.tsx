@@ -167,15 +167,13 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
     };
 
     // Memoized computed values to avoid recalculation on every render
-    const totalIncome = useMemo(() => 
-        budget.transactions.filter(t => t.type === 'income').reduce((acc, curr) => acc + curr.amount, 0),
-        [budget.transactions]
-    );
-    
-    const totalExpenses = useMemo(() => 
-        budget.transactions.filter(t => t.type === 'expense').reduce((acc, curr) => acc + curr.amount, 0),
-        [budget.transactions]
-    );
+    const { totalIncome, totalExpenses } = useMemo(() => {
+        return budget.transactions.reduce((acc, curr) => {
+            if (curr.type === 'income') acc.totalIncome += curr.amount;
+            else if (curr.type === 'expense') acc.totalExpenses += curr.amount;
+            return acc;
+        }, { totalIncome: 0, totalExpenses: 0 });
+    }, [budget.transactions]);
     
     const remaining = useMemo(() => budget.limit - totalExpenses, [budget.limit, totalExpenses]);
 
@@ -236,6 +234,22 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
         partnerships.filter(p => !budgetShares.some(s => s.partnerId === p.partnerId)),
         [partnerships, budgetShares]
     );
+
+    const partnerBudgetStats = useMemo(() => {
+        if (!expandedPartnerBudget) return { expenses: 0, income: 0, remaining: 0, progress: 0 };
+        const stats = expandedPartnerBudget.budget.transactions.reduce((acc, t) => {
+            if (t.type === 'expense') acc.expenses += t.amount;
+            else if (t.type === 'income') acc.income += t.amount;
+            return acc;
+        }, { expenses: 0, income: 0 });
+
+        const limit = expandedPartnerBudget.budget.limit || 1;
+        return {
+            ...stats,
+            remaining: expandedPartnerBudget.budget.limit - stats.expenses,
+            progress: Math.min(100, (stats.expenses / limit) * 100)
+        };
+    }, [expandedPartnerBudget]);
 
     return (
         <div className="space-y-8 animate-fade-in h-full flex flex-col">
@@ -639,26 +653,19 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                                             <div>
                                                 <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Expenses</p>
                                                 <p className="text-lg font-bold text-red-500">
-                                                    {expandedPartnerBudget.budget.transactions
-                                                        .filter(t => t.type === 'expense')
-                                                        .reduce((acc, t) => acc + t.amount, 0)
-                                                        .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                    {partnerBudgetStats.expenses.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
                                                 </p>
                                             </div>
                                             <div>
                                                 <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Remaining</p>
-                                                <p className={`text-lg font-bold ${(expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0)) >= 0 ? 'text-brand-500' : 'text-red-500'}`}>
-                                                    {(expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0))
-                                                        .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                <p className={`text-lg font-bold ${partnerBudgetStats.remaining >= 0 ? 'text-brand-500' : 'text-red-500'}`}>
+                                                    {partnerBudgetStats.remaining.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
                                                 </p>
                                             </div>
                                             <div>
                                                 <p className="text-[10px] font-bold uppercase text-slate-400 font-mono">Income</p>
                                                 <p className="text-lg font-bold text-emerald-500">
-                                                    {expandedPartnerBudget.budget.transactions
-                                                        .filter(t => t.type === 'income')
-                                                        .reduce((acc, t) => acc + t.amount, 0)
-                                                        .toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
+                                                    {partnerBudgetStats.income.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}
                                                 </p>
                                             </div>
                                         </div>
@@ -666,13 +673,9 @@ const BudgetPlanner: React.FC<BudgetPlannerProps> = ({ currentTheme }) => {
                                         <div className="h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
                                             <div
                                                 className={`h-full transition-all duration-500 ${
-                                                    (expandedPartnerBudget.budget.limit - expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0)) < 0 
-                                                        ? 'bg-red-500' 
-                                                        : 'bg-brand-500'
+                                                    partnerBudgetStats.remaining < 0 ? 'bg-red-500' : 'bg-brand-500'
                                                 }`}
-                                                style={{ 
-                                                    width: `${Math.min(100, (expandedPartnerBudget.budget.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0) / (expandedPartnerBudget.budget.limit || 1)) * 100)}%` 
-                                                }}
+                                                style={{ width: `${partnerBudgetStats.progress}%` }}
                                             />
                                         </div>
                                     </div>
