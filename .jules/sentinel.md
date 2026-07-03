@@ -117,3 +117,7 @@
 **Vulnerability:** The `push-notification` Edge Function used a `service_role` client to schedule notifications. It allowed any authenticated user to schedule a notification for ANY task ID, regardless of ownership. Since notifications are unique per task, this allowed an attacker to "lock" the notification slot for a victim's task, preventing the victim from scheduling their own notification (DoS).
 **Learning:** Using `service_role` clients in user-facing functions bypasses RLS. You cannot rely on "implied" permissions.
 **Prevention:** Always verify resource ownership (e.g., `task.user_id === userId`) explicitly when performing operations on behalf of a user using a privileged client.
+## 2026-07-03 - [Security Definer Functions Vulnerability]
+**Vulnerability:** PostgreSQL `SECURITY DEFINER` functions created without explicitly setting `search_path = public` (or empty string) are vulnerable to search path hijacking and privilege escalation, allowing attackers with object creation privileges to trick elevated functions into executing arbitrary code.
+**Learning:** `SECURITY DEFINER` functions in Supabase schemas (e.g. `public.handle_new_user`, `public.is_team_owner`) ran without search path restrictions.
+**Prevention:** Always append `SET search_path = public` or `SET search_path = ''` to `SECURITY DEFINER` functions when creating or replacing them to restrict the search path schema lookups safely.
