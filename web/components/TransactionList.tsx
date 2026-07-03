@@ -108,15 +108,14 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, classNa
                     </h3>
                 <div
                     className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-lg"
-                    role="radiogroup"
+                    role="group"
                     aria-label="Transaction view mode"
                 >
                         {(['all', 'month', 'week'] as const).map((mode) => (
                             <button
                                 key={mode}
                                 type="button"
-                                role="radio"
-                                aria-checked={viewMode === mode}
+                                aria-pressed={viewMode === mode}
                                 onClick={() => setViewMode(mode)}
                                 className={`px-3 py-1 text-xs rounded-md capitalize transition-colors ${
                                     viewMode === mode
