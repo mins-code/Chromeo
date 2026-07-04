@@ -119,12 +119,11 @@ serve(async (req) => {
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
+        "notes",
+        "day_plans",
         "user_settings",
         "profiles",
       ];
@@ -138,12 +137,34 @@ serve(async (req) => {
         }
       }
 
-      // Also try owner_id for some tables
+      // 🛡️ SECURITY: GDPR Compliance - Ensure complete data removal for tables without user_id
+      // Use separate try/catch blocks so one failure doesn't silently skip the rest
       try {
         await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
+        console.log(`Deleted from teams`);
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`teams cleanup: ${e}`);
+      }
+
+      try {
+        await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`);
+        console.log(`Deleted from budget_shares`);
+      } catch (e) {
+        console.log(`budget_shares cleanup: ${e}`);
+      }
+
+      try {
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+        console.log(`Deleted from partnerships`);
+      } catch (e) {
+        console.log(`partnerships cleanup: ${e}`);
+      }
+
+      try {
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
+        console.log(`Deleted from note_shares`);
+      } catch (e) {
+        console.log(`note_shares cleanup: ${e}`);
       }
 
       // Finally, delete the auth user
@@ -348,12 +369,11 @@ serve(async (req) => {
         "scheduled_notifications",
         "push_subscriptions",
         "team_members",
-        "teams",
-        "partnerships",
-        "budget_shares",
         "transactions",
         "routines",
         "tasks",
+        "notes",
+        "day_plans",
         "user_settings",
         "profiles",
       ];
@@ -367,12 +387,34 @@ serve(async (req) => {
         }
       }
 
-      // Also try owner_id for some tables
+      // 🛡️ SECURITY: GDPR Compliance - Ensure complete data removal for tables without user_id
+      // Use separate try/catch blocks so one failure doesn't silently skip the rest
       try {
         await supabase.from("teams").delete().eq("owner_id", userId);
-        await supabase.from("budget_shares").delete().eq("owner_id", userId);
+        console.log(`Deleted from teams`);
       } catch (e) {
-        console.log(`Owner cleanup: ${e}`);
+        console.log(`teams cleanup: ${e}`);
+      }
+
+      try {
+        await supabase.from("budget_shares").delete().or(`owner_id.eq.${userId},partner_id.eq.${userId}`);
+        console.log(`Deleted from budget_shares`);
+      } catch (e) {
+        console.log(`budget_shares cleanup: ${e}`);
+      }
+
+      try {
+        await supabase.from("partnerships").delete().or(`user_id_1.eq.${userId},user_id_2.eq.${userId}`);
+        console.log(`Deleted from partnerships`);
+      } catch (e) {
+        console.log(`partnerships cleanup: ${e}`);
+      }
+
+      try {
+        await supabase.from("note_shares").delete().or(`owner_id.eq.${userId},shared_with_id.eq.${userId}`);
+        console.log(`Deleted from note_shares`);
+      } catch (e) {
+        console.log(`note_shares cleanup: ${e}`);
       }
 
       // Finally, delete the auth user
