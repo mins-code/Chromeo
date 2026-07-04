@@ -255,6 +255,7 @@ const CommandBar: React.FC<CommandBarProps> = ({ isOpen, onClose, onTaskParsed, 
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 placeholder={isListening ? "Listening..." : "Search tasks, notes, pages... or create new task"}
+                                aria-label="Search or create task"
                                 disabled={isLoading}
                                 className="w-full px-5 py-4 pr-20 text-lg bg-transparent text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none disabled:opacity-50"
                             />

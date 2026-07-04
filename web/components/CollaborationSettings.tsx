@@ -274,6 +274,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
             <input
               type="text"
               placeholder="Search by email..."
+              aria-label="Search by email"
               value={searchContext === 'partner' ? searchQuery : ''}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -519,6 +520,7 @@ export const CollaborationSettings: React.FC<CollaborationSettingsProps> = ({
                           <input
                             type="text"
                             placeholder="Add member by email..."
+                            aria-label="Add member by email"
                             value={searchContext && typeof searchContext === 'object' && searchContext.teamId === team.id ? searchQuery : ''}
                             onChange={(e) => {
                               setSearchQuery(e.target.value);
