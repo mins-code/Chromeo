@@ -31,3 +31,6 @@
 ## 2026-03-03 - Optimizing Date Parsing for Sorting
 **Learning:** `new Date(dateStr).getTime()` creates a full Date object just to extract the timestamp, adding unnecessary memory allocation and garbage collection overhead. In functions called frequently (like sorting algorithms iterating over thousands of items in `taskScoring.ts`), this is a measurable bottleneck.
 **Action:** Use `Date.parse(dateStr)` when only the timestamp is needed. Benchmark shows this avoids object creation and improves date parsing time by ~30% for ISO-8601 strings.
+## 2026-03-05 - Avoid O(N) Redundant Iterations in React Rendering
+**Learning:** Components computing multiple aggregations over the same array (e.g., total income and total expenses in `BudgetPlanner`) using separate `filter(...).reduce(...)` chains result in O(2N) iterations. If done inline in JSX, it runs on every render.
+**Action:** Combine aggregations into a single `.reduce(...)` pass returning an object with multiple accumulators, and memoize the result with `useMemo` to reduce iteration overhead to O(N) and prevent redundant calculations per render.
