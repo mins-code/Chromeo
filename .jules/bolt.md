@@ -31,3 +31,7 @@
 ## 2026-03-03 - Optimizing Date Parsing for Sorting
 **Learning:** `new Date(dateStr).getTime()` creates a full Date object just to extract the timestamp, adding unnecessary memory allocation and garbage collection overhead. In functions called frequently (like sorting algorithms iterating over thousands of items in `taskScoring.ts`), this is a measurable bottleneck.
 **Action:** Use `Date.parse(dateStr)` when only the timestamp is needed. Benchmark shows this avoids object creation and improves date parsing time by ~30% for ISO-8601 strings.
+
+## 2024-07-06 - Replacing .filter().reduce() with Single-Pass .reduce()
+**Learning:** Using `.filter(...).reduce(...)` creates intermediate arrays and forces multiple O(N) iterations. Moreover, inline usages of these chains inside the JSX (like calculating income/expenses across different places) can execute repeatedly on every re-render.
+**Action:** Combine aggregations over the same array into a single `.reduce()` pass that returns an object containing multiple accumulators. Memoize this result with `useMemo` so it's calculated exactly once when the array changes.
