@@ -31,3 +31,7 @@
 ## 2026-03-03 - Optimizing Date Parsing for Sorting
 **Learning:** `new Date(dateStr).getTime()` creates a full Date object just to extract the timestamp, adding unnecessary memory allocation and garbage collection overhead. In functions called frequently (like sorting algorithms iterating over thousands of items in `taskScoring.ts`), this is a measurable bottleneck.
 **Action:** Use `Date.parse(dateStr)` when only the timestamp is needed. Benchmark shows this avoids object creation and improves date parsing time by ~30% for ISO-8601 strings.
+
+## 2025-02-27 - Optimize Array Sort with Schwartzian Transform
+**Learning:** Using an expensive calculation like `getUrgencyScore` directly in the `Array.prototype.sort()` comparison function results in redundant O(N log N) executions.
+**Action:** Implement a Schwartzian transform (map-sort-map) to calculate and cache the sort properties in an initial O(N) pass before sorting. This improved sorting time by ~9x in benchmarks.

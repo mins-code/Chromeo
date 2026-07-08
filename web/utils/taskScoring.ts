@@ -84,7 +84,12 @@ export function getUrgencyScore(task: Task, now: number = Date.now()): number {
  * @returns New array sorted by urgency (does not mutate original)
  */
 export function sortByUrgency(tasks: Task[]): Task[] {
-  return [...tasks].sort((a, b) => getUrgencyScore(b) - getUrgencyScore(a));
+  if (tasks.length === 0) return [];
+  const now = Date.now();
+  return tasks
+    .map(task => ({ task, score: getUrgencyScore(task, now) }))
+    .sort((a, b) => b.score - a.score)
+    .map(item => item.task);
 }
 
 /**
